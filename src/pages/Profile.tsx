@@ -1,0 +1,378 @@
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Switch } from '@/components/ui/switch';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { ArrowLeft, User, Heart, History, Settings, Shield, HelpCircle, Mail, FileText, Plus, Moon, Sun, LogOut, Camera, BookOpen } from 'lucide-react';
+import Navigation from '@/components/Navigation';
+import StickyHeader from '@/components/StickyHeader';
+import AuthModal from '@/components/AuthModal';
+import { useTheme } from '@/hooks/use-theme';
+import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { useUserRole } from '@/hooks/useUserRole';
+
+const Profile = () => {
+  const navigate = useNavigate();
+  const { theme, toggleTheme } = useTheme();
+  const { user, signOut } = useAuth();
+  const { toast } = useToast();
+  const { isAdmin } = useUserRole();
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+
+  // Charger l'avatar existant
+  useEffect(() => {
+    const loadProfile = async () => {
+      if (!user) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('avatar_url')
+          .eq('id', user.id)
+          .single();
+        
+        if (error && error.code !== 'PGRST116') {
+          console.error('Error loading profile:', error);
+          return;
+        }
+        
+        if (data?.avatar_url) {
+          setProfileImage(data.avatar_url);
+        }
+      } catch (error) {
+        console.error('Error loading profile:', error);
+      }
+    };
+
+    loadProfile();
+  }, [user]);
+
+  const handleSignOut = async () => {
+    const { error } = await signOut();
+    if (error) {
+      toast({
+        title: "Erreur",
+        description: "Erreur lors de la déconnexion",
+        variant: "destructive"
+      });
+    } else {
+      toast({
+        title: "Déconnexion réussie",
+        description: "À bientôt !"
+      });
+    }
+  };
+
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !user) return;
+
+    setUploading(true);
+    try {
+      // Upload vers Supabase Storage
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}/avatar.${fileExt}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      // Obtenir l'URL publique
+      const { data } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(fileName);
+
+      const avatarUrl = data.publicUrl;
+
+      // Mettre à jour le profil dans la base de données
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .upsert({
+          id: user.id,
+          avatar_url: avatarUrl,
+          email: user.email,
+          first_name: user.user_metadata?.first_name,
+          last_name: user.user_metadata?.last_name
+        });
+
+      if (updateError) throw updateError;
+
+      setProfileImage(avatarUrl);
+      toast({
+        title: "Photo de profil mise à jour",
+        description: "Votre avatar a été sauvegardé avec succès"
+      });
+    } catch (error) {
+      console.error('Error uploading avatar:', error);
+      toast({
+        title: "Erreur",
+        description: "Erreur lors de la sauvegarde de l'avatar",
+        variant: "destructive"
+      });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const menuItems = [
+    {
+      title: 'Mes Publications',
+      description: 'Gérez vos publications et leur statut',
+      icon: BookOpen,
+      path: '/profile/publications',
+      color: 'text-blue-500',
+      requiresAuth: true
+    },
+    // Ajout conditionnel du menu admin
+    ...(isAdmin ? [{
+      title: 'Administration',
+      description: 'Gérez les publications en attente de validation',
+      icon: Settings,
+      path: '/admin/publications',
+      color: 'text-red-500',
+      requiresAuth: true
+    }] : []),
+    {
+      title: 'Mes Favoris',
+      description: 'Gérez vos catégories et contenus favoris',
+      icon: Heart,
+      path: '/profile/favorites',
+      color: 'text-pink-500',
+      requiresAuth: true
+    },
+    {
+      title: 'Historique',
+      description: 'Consultez votre historique de navigation',
+      icon: History,
+      path: '/profile/history',
+      color: 'text-blue-500',
+      requiresAuth: true
+    },
+    {
+      title: 'Préférences',
+      description: 'Personnalisez votre expérience',
+      icon: Settings,
+      path: '/profile/preferences',
+      color: 'text-green-500',
+      requiresAuth: true
+    },
+    {
+      title: 'Confidentialité',
+      description: 'Gérez vos paramètres de confidentialité',
+      icon: Shield,
+      path: '/profile/privacy',
+      color: 'text-purple-500',
+      requiresAuth: false
+    },
+    {
+      title: 'Mentions légales',
+      description: 'Conditions d\'utilisation et mentions',
+      icon: FileText,
+      path: '/profile/legal',
+      color: 'text-gray-500',
+      requiresAuth: false
+    },
+    {
+      title: 'Contact',
+      description: 'Nous contacter pour toute question',
+      icon: Mail,
+      path: '/profile/contact',
+      color: 'text-orange-500',
+      requiresAuth: false
+    }
+  ];
+
+  const handleMenuClick = (item: any) => {
+    navigate(item.path);
+  };
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.5 }
+    }
+  };
+
+  return (
+    <div className="min-h-screen pb-20">
+      <StickyHeader showSearchBar={false} />
+      
+      <header className="bg-background border-b p-4 flex items-center justify-between">
+        <div className="flex items-center">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => navigate('/')} 
+            className="mr-2"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <h1 className="text-xl font-semibold">Profil</h1>
+        </div>
+        <Button 
+          size="sm"
+          onClick={() => navigate('/publish')}
+          className="flex items-center gap-2"
+        >
+          <Plus className="h-4 w-4" />
+          Publier
+        </Button>
+      </header>
+
+      <main className="max-w-4xl mx-auto p-4">
+        {/* Profile Header */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="mb-8"
+        >
+          <Card>
+            <CardHeader className="text-center">
+              <div className="relative mx-auto mb-4">
+                <Avatar className="w-20 h-20 mx-auto">
+                  <AvatarImage src={profileImage || undefined} />
+                  <AvatarFallback className="bg-gradient-to-r from-creatik-primary to-creatik-secondary">
+                    <User className="w-10 h-10 text-white" />
+                  </AvatarFallback>
+                </Avatar>
+                <label htmlFor="profile-image" className="absolute -bottom-1 -right-1 cursor-pointer">
+                  <div className="bg-white dark:bg-gray-800 rounded-full p-2 shadow-lg border hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                    {uploading ? (
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600"></div>
+                    ) : (
+                      <Camera className="w-4 h-4 text-gray-600 dark:text-gray-300" />
+                    )}
+                  </div>
+                  <input
+                    id="profile-image"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    disabled={uploading}
+                    className="hidden"
+                  />
+                </label>
+              </div>
+              <CardTitle className="text-2xl">
+                {user ? `${user.user_metadata?.first_name || 'Utilisateur'}` : 'Utilisateur'}
+              </CardTitle>
+              {!user ? (
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowAuthModal(true)}
+                  className="mt-2 mx-auto"
+                >
+                  Se connecter
+                </Button>
+              ) : (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleSignOut}
+                  className="mt-2 mx-auto flex items-center gap-2"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Se déconnecter
+                </Button>
+              )}
+            </CardHeader>
+          </Card>
+        </motion.div>
+
+        {/* Theme Toggle Section */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+          className="mb-6"
+        >
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <div className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800">
+                    {theme === 'dark' ? (
+                      <Moon className="w-6 h-6 text-blue-500" />
+                    ) : (
+                      <Sun className="w-6 h-6 text-yellow-500" />
+                    )}
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-lg">Mode d'affichage</h3>
+                    <p className="text-muted-foreground text-sm">
+                      Basculer entre le mode clair et sombre
+                    </p>
+                  </div>
+                </div>
+                <Switch
+                  checked={theme === 'dark'}
+                  onCheckedChange={toggleTheme}
+                  aria-label="Toggle theme"
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* Menu Items */}
+        <motion.div
+          className="grid gap-4 md:grid-cols-2"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
+          {menuItems.map((item) => (
+            <motion.div key={item.title} variants={itemVariants}>
+              <Card 
+                className="cursor-pointer hover:shadow-lg transition-shadow duration-300 h-full"
+                onClick={() => handleMenuClick(item)}
+              >
+                <CardContent className="p-6 h-full flex items-start">
+                  <div className="flex items-start space-x-4 w-full">
+                    <div className={`p-2 rounded-lg bg-gray-100 dark:bg-gray-800 ${item.color}`}>
+                      <item.icon className="w-6 h-6" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-lg mb-1">{item.title}</h3>
+                      <p className="text-muted-foreground text-sm">{item.description}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          ))}
+        </motion.div>
+      </main>
+
+      <AuthModal 
+        isOpen={showAuthModal} 
+        onClose={() => setShowAuthModal(false)} 
+      />
+
+      <Navigation />
+    </div>
+  );
+};
+
+export default Profile;

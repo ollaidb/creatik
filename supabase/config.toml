@@ -1,0 +1,5 @@
+
+project_id = "eiuhcgvvexoshuopvska"
+
+[functions.auto-generate-subcategory-content]
+verify_jwt = false
