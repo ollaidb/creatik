@@ -6,6 +6,8 @@ export const useContentTitles = (subcategoryId?: string) => {
   return useQuery({
     queryKey: ['content-titles', subcategoryId],
     queryFn: async () => {
+      console.log('🔍 Fetching titles for subcategoryId:', subcategoryId);
+      
       let query = supabase
         .from('content_titles')
         .select('*')
@@ -17,8 +19,12 @@ export const useContentTitles = (subcategoryId?: string) => {
       
       const { data, error } = await query;
       
+      console.log('📊 Titles data:', data);
+      console.log('❌ Error if any:', error);
+      
       if (error) throw error;
       return data;
-    }
+    },
+    enabled: !!subcategoryId
   });
 };

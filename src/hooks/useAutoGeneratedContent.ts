@@ -73,15 +73,19 @@ export const useSubcategoryTemplates = (subcategoryId: string) => {
 // Hook pour déclencher la génération automatique
 export const useAutoGenerateContent = () => {
   const generateContent = async (subcategoryId: string) => {
-    const { data, error } = await supabase.functions.invoke(
-      'auto-generate-subcategory-content',
-      {
-        body: { subcategoryId }
-      }
-    );
+    // Temporarily disabled since Edge Function doesn't exist
+    // const { data, error } = await supabase.functions.invoke(
+    //   'auto-generate-subcategory-content',
+    //   {
+    //     body: { subcategoryId }
+    //   }
+    // );
     
-    if (error) throw error;
-    return data;
+    // if (error) throw error;
+    // return data;
+    
+    // For now, just return success without doing anything
+    return { success: true, message: 'Auto-generation temporarily disabled' };
   };
 
   return { generateContent };

@@ -15,11 +15,16 @@ import History from "./pages/profile/History";
 import Legal from "./pages/profile/Legal";
 import Contact from "./pages/profile/Contact";
 import Publications from "./pages/profile/Publications";
+import Challenges from "./pages/profile/Challenges";
+import Trash from "./pages/profile/Trash";
 import Publish from "./pages/Publish";
+import SearchResults from "./pages/SearchResults";
 import Categories from "./pages/Categories";
-import CategoryDetails from "./pages/CategoryDetails";
-import SubcategoryDetails from "./pages/SubcategoryDetails";
+import Subcategories from "./pages/Subcategories";
+import Titles from "./pages/Titles";
+import PublicChallenges from "./pages/PublicChallenges";
 import AdminPublications from "./pages/admin/Publications";
+import ApprovePublications from "./pages/admin/ApprovePublications";
 
 const queryClient = new QueryClient();
 
@@ -36,8 +41,11 @@ const App = () => (
               
               {/* Categories Routes */}
               <Route path="/categories" element={<Categories />} />
-              <Route path="/categories/:categoryId" element={<CategoryDetails />} />
-              <Route path="/categories/:categoryId/subcategories/:subcategoryId" element={<SubcategoryDetails />} />
+              <Route path="/category/:categoryId/subcategories" element={<Subcategories />} />
+              <Route path="/category/:categoryId/subcategory/:subcategoryId" element={<Titles />} />
+              
+              {/* Challenges Routes */}
+              <Route path="/challenges" element={<PublicChallenges />} />
               
               {/* Profile Routes */}
               <Route path="/profile" element={<ProfilePage />} />
@@ -48,20 +56,23 @@ const App = () => (
               <Route path="/profile/legal" element={<Legal />} />
               <Route path="/profile/contact" element={<Contact />} />
               <Route path="/profile/publications" element={<Publications />} />
+              <Route path="/profile/challenges" element={<Challenges />} />
+              <Route path="/profile/trash" element={<Trash />} />
               
               {/* Admin Routes */}
               <Route path="/admin/publications" element={<AdminPublications />} />
+              <Route path="/admin/approve-publications" element={<ApprovePublications />} />
               
               {/* Publish Route */}
               <Route path="/publish" element={<Publish />} />
+              <Route path="/search" element={<SearchResults />} />
               
               {/* Inspiration Card Routes */}
               <Route path="/ideas/trending" element={<NotFound />} />
               <Route path="/categories/explore" element={<Categories />} />
               <Route path="/ideas/create" element={<NotFound />} />
-              <Route path="/profile/creations" element={<NotFound />} />
               
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              {/* 404 Route */}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

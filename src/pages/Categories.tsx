@@ -2,36 +2,36 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Button } from '@/components/ui/button';
-import { ArrowLeft, Plus, ChevronDown } from 'lucide-react';
-import { useCategoriesByTheme, useThemes } from '@/hooks/useThemes';
+import { Plus, ArrowLeft } from 'lucide-react';
+import { useCategories } from '@/hooks/useCategories';
+import { useThemes } from '@/hooks/useThemes';
 import CategoryCard from '@/components/CategoryCard';
 import Navigation from '@/components/Navigation';
-import StickyHeader from '@/components/StickyHeader';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  Sheet,
-  SheetContent,
-  SheetTrigger,
-} from '@/components/ui/sheet';
+import IntelligentSearchBar from '@/components/IntelligentSearchBar';
+import ChallengeButton from '@/components/ChallengeButton';
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const Categories = () => {
   const navigate = useNavigate();
-  const [selectedTheme, setSelectedTheme] = useState<string>('all');
-  const [isThemeSheetOpen, setIsThemeSheetOpen] = useState(false);
+  const [selectedTheme, setSelectedTheme] = useState('all');
+  const [searchTerm, setSearchTerm] = useState('');
   
+  const { data: categories, isLoading } = useCategories();
   const { data: themes } = useThemes();
-  const { data: categories, isLoading } = useCategoriesByTheme(selectedTheme);
 
-  const selectedThemeName = themes?.find(theme => 
-    theme.name === 'Tout' ? 'all' === selectedTheme : theme.id === selectedTheme
-  )?.name || 'Tous les thèmes';
+  const handleSearch = (query: string) => {
+    navigate(`/search?search=${encodeURIComponent(query)}`);
+  };
+
+  const selectedThemeName = themes?.find(t => t.id === selectedTheme)?.name || 
+                           (selectedTheme === 'all' ? 'Tout' : 'Tout');
+
+  const filteredCategories = categories?.filter(category => {
+    const matchesSearch = category.name.toLowerCase().includes(searchTerm.toLowerCase());
+    // Pour l'instant, on filtre seulement par recherche
+    return matchesSearch;
+  }) || [];
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -45,41 +45,58 @@ const Categories = () => {
 
   const itemVariants = {
     hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.5 }
-    }
+    visible: { opacity: 1, y: 0 }
   };
 
   return (
-    <div className="min-h-screen pb-20">
-      <StickyHeader />
-      
-      <header className="bg-background border-b p-4 flex items-center justify-between">
-        <div className="flex items-center">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      {/* Header fixe pour mobile */}
+      <div className="sticky top-0 z-50 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-4 py-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={() => navigate('/')} 
+              className="p-2 h-10 w-10 rounded-full"
+            >
+              <ArrowLeft size={20} />
+            </Button>
+            <div className="flex-1">
+              <h1 className="text-lg font-semibold text-gray-900 dark:text-white">Catégories</h1>
+            </div>
+          </div>
           <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={() => navigate('/')} 
-            className="mr-2"
+            size="sm"
+            onClick={() => navigate('/publish')}
+            className="px-3 py-2 h-auto rounded-full"
           >
-            <ArrowLeft className="h-5 w-5" />
+            <Plus className="h-4 w-4 mr-2" />
+            Publier
           </Button>
-          <h1 className="text-xl font-semibold">Catégories</h1>
         </div>
-        <Button 
-          size="sm"
-          onClick={() => navigate('/publish')}
-          className="flex items-center gap-2"
-        >
-          <Plus className="h-4 w-4" />
-          <span className="hidden sm:inline">Publier</span>
-        </Button>
-      </header>
+      </div>
 
-      <main className="max-w-7xl mx-auto p-4">
-        {/* Menu des thèmes - Version Desktop (masqué sur mobile) */}
+      <div className="px-4 py-4">
+        {/* Barre de recherche intelligente et bouton Challenge */}
+        <div className="mb-6">
+          <div className="max-w-lg mx-auto md:max-w-2xl space-y-3">
+            <IntelligentSearchBar 
+              onSearch={handleSearch}
+              placeholder="Rechercher une catégorie..."
+              className="w-full"
+            />
+            <div className="flex justify-center">
+              <ChallengeButton 
+                variant="outline"
+                size="sm"
+                className="rounded-full"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Menu des thèmes - Version Desktop (boutons) */}
         <div className="mb-6 hidden md:block">
           <div className="flex flex-wrap gap-2 justify-center">
             {themes?.map((theme) => (
@@ -95,7 +112,7 @@ const Categories = () => {
           </div>
         </div>
 
-        {/* Menu des thèmes - Version Mobile (visible uniquement sur mobile) */}
+        {/* Menu des thèmes - Version Mobile (dropdown) */}
         <div className="mb-6 md:hidden">
           <Select 
             value={selectedTheme} 
@@ -132,7 +149,7 @@ const Categories = () => {
               initial="hidden"
               animate="visible"
             >
-              {categories?.map((category) => (
+              {filteredCategories?.map((category) => (
                 <motion.div key={category.id} variants={itemVariants}>
                   <CategoryCard 
                     category={{
@@ -141,13 +158,13 @@ const Categories = () => {
                       color: category.color
                     }}
                     className="w-full h-20 sm:h-24 md:h-28"
-                    onClick={() => navigate(`/categories/${category.id}`)}
+                    onClick={() => navigate(`/category/${category.id}/subcategories`)}
                   />
                 </motion.div>
               ))}
             </motion.div>
 
-            {categories?.length === 0 && !isLoading && (
+            {filteredCategories?.length === 0 && !isLoading && (
               <div className="flex flex-col items-center justify-center h-60 text-center px-4">
                 <h3 className="text-lg font-medium">Aucune catégorie trouvée</h3>
                 <p className="text-muted-foreground mt-2">
@@ -157,7 +174,7 @@ const Categories = () => {
             )}
           </>
         )}
-      </main>
+      </div>
 
       <Navigation />
     </div>

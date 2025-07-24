@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ArrowLeft, User, Heart, History, Settings, Shield, HelpCircle, Mail, FileText, Plus, Moon, Sun, LogOut, Camera, BookOpen } from 'lucide-react';
+import { ArrowLeft, User, Heart, History, Settings, Shield, HelpCircle, Mail, FileText, Plus, Moon, Sun, LogOut, Camera, BookOpen, Target } from 'lucide-react';
 import Navigation from '@/components/Navigation';
 import StickyHeader from '@/components/StickyHeader';
 import AuthModal from '@/components/AuthModal';
@@ -14,6 +14,15 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserRole } from '@/hooks/useUserRole';
+
+interface MenuItem {
+  title: string;
+  description: string;
+  icon: React.ComponentType<{ className?: string }>;
+  path: string;
+  color: string;
+  requiresAuth: boolean;
+}
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -122,13 +131,21 @@ const Profile = () => {
     }
   };
 
-  const menuItems = [
+  const menuItems: MenuItem[] = [
     {
-      title: 'Mes Publications',
-      description: 'Gérez vos publications et leur statut',
-      icon: BookOpen,
+      title: "Mes Publications",
+      description: "Gérez vos publications et suivez leur statut",
+      icon: FileText,
       path: '/profile/publications',
-      color: 'text-blue-500',
+      color: 'text-blue-600',
+      requiresAuth: true
+    },
+    {
+      title: 'Mes Défis',
+      description: 'Participez aux défis et suivez votre progression',
+      icon: Target,
+      path: '/profile/challenges',
+      color: 'text-orange-500',
       requiresAuth: true
     },
     // Ajout conditionnel du menu admin
@@ -190,7 +207,7 @@ const Profile = () => {
     }
   ];
 
-  const handleMenuClick = (item: any) => {
+  const handleMenuClick = (item: MenuItem) => {
     navigate(item.path);
   };
 
@@ -215,7 +232,6 @@ const Profile = () => {
 
   return (
     <div className="min-h-screen pb-20">
-      <StickyHeader showSearchBar={false} />
       
       <header className="bg-background border-b p-4 flex items-center justify-between">
         <div className="flex items-center">
@@ -229,14 +245,6 @@ const Profile = () => {
           </Button>
           <h1 className="text-xl font-semibold">Profil</h1>
         </div>
-        <Button 
-          size="sm"
-          onClick={() => navigate('/publish')}
-          className="flex items-center gap-2"
-        >
-          <Plus className="h-4 w-4" />
-          Publier
-        </Button>
       </header>
 
       <main className="max-w-4xl mx-auto p-4">
