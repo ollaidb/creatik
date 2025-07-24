@@ -16,7 +16,6 @@ import Legal from "./pages/profile/Legal";
 import Contact from "./pages/profile/Contact";
 import Publications from "./pages/profile/Publications";
 import Challenges from "./pages/profile/Challenges";
-import Trash from "./pages/profile/Trash";
 import Publish from "./pages/Publish";
 import SearchResults from "./pages/SearchResults";
 import Categories from "./pages/Categories";
@@ -57,7 +56,6 @@ const App = () => (
               <Route path="/profile/contact" element={<Contact />} />
               <Route path="/profile/publications" element={<Publications />} />
               <Route path="/profile/challenges" element={<Challenges />} />
-              <Route path="/profile/trash" element={<Trash />} />
               
               {/* Admin Routes */}
               <Route path="/admin/publications" element={<AdminPublications />} />
