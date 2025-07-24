@@ -10,6 +10,7 @@ import { useAuth } from '@/hooks/useAuth';
 import CategoryCard from '@/components/CategoryCard';
 import Navigation from '@/components/Navigation';
 import StickyHeader from '@/components/StickyHeader';
+import ChallengeButton from '@/components/ChallengeButton';
 
 const Favorites = () => {
   const navigate = useNavigate();
@@ -45,7 +46,6 @@ const Favorites = () => {
   if (!user) {
     return (
       <div className="min-h-screen pb-20">
-        <StickyHeader showSearchBar={false} />
         
         <header className="bg-background border-b p-4 flex items-center justify-between">
           <div className="flex items-center">
@@ -79,7 +79,6 @@ const Favorites = () => {
 
   return (
     <div className="min-h-screen pb-20">
-      <StickyHeader />
       
       <header className="bg-background border-b p-4 flex items-center justify-between">
         <div className="flex items-center">
@@ -104,8 +103,8 @@ const Favorites = () => {
       </header>
 
       <main className="max-w-7xl mx-auto p-4">
-        {/* Menu des thèmes horizontal */}
-        <div className="mb-6">
+        {/* Menu des thèmes horizontal et bouton Challenge */}
+        <div className="mb-6 space-y-4">
           <div className="flex flex-wrap gap-2 justify-center">
             {themes?.map((theme) => (
               <Button
@@ -117,6 +116,14 @@ const Favorites = () => {
                 {theme.name}
               </Button>
             ))}
+          </div>
+          <div className="flex justify-center">
+            <ChallengeButton 
+              filterLiked={true}
+              variant="outline"
+              size="sm"
+              className="rounded-full"
+            />
           </div>
         </div>
 
@@ -142,7 +149,7 @@ const Favorites = () => {
                         color: category.color
                       }}
                       className="w-full h-24"
-                      onClick={() => navigate(`/categories/${category.id}`)}
+                      onClick={() => navigate(`/category/${category.id}/subcategories`)}
                     />
                   </motion.div>
                 ))}

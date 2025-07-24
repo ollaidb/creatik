@@ -6,14 +6,27 @@ export const useCategories = () => {
   return useQuery({
     queryKey: ['categories'],
     queryFn: async () => {
+      console.log('🔍 Fetching categories...');
+      
       const { data, error } = await supabase
         .from('categories')
         .select('*')
         .order('name');
       
+      console.log('📊 Categories data:', data);
+      console.log('❌ Error if any:', error);
+      
       if (error) throw error;
       return data;
-    }
+    },
+    // Refetch automatique toutes les 5 secondes pour voir les nouvelles publications
+    refetchInterval: 5000,
+    // Refetch quand la fenêtre redevient active
+    refetchOnWindowFocus: true,
+    // Refetch quand on revient en ligne
+    refetchOnReconnect: true,
+    // Garder les données en cache pendant 10 secondes
+    staleTime: 10000
   });
 };
 
@@ -30,6 +43,11 @@ export const useCategory = (categoryId: string) => {
       if (error) throw error;
       return data;
     },
-    enabled: !!categoryId
+    enabled: !!categoryId,
+    // Refetch automatique pour les catégories individuelles aussi
+    refetchInterval: 5000,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+    staleTime: 10000
   });
 };

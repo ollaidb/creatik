@@ -48,8 +48,8 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ category, onClick, classNam
       )}
     >
       <div className={`absolute inset-0 bg-gradient-to-br ${getGradientClass(category.color)} opacity-90`} />
-      <div className="relative p-4 h-full flex flex-col justify-center items-center text-center min-h-[100px]" onClick={onClick}>
-        <div className="absolute top-2 right-2">
+      <div className="relative p-2 sm:p-4 h-full flex flex-col justify-center items-center text-center" onClick={onClick}>
+        <div className="absolute top-1 right-1 sm:top-2 sm:right-2 z-10">
           {user && (
             <button
               onClick={handleFavoriteClick}
@@ -58,7 +58,7 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ category, onClick, classNam
             >
               <Heart 
                 className={cn(
-                  "w-4 h-4 transition-all",
+                  "w-3 h-3 sm:w-4 sm:h-4 transition-all",
                   isFavorite 
                     ? "text-red-500 fill-red-500" 
                     : "text-white hover:text-red-300"
@@ -67,9 +67,11 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ category, onClick, classNam
             </button>
           )}
         </div>
-        <h3 className="text-white font-semibold text-base md:text-lg leading-tight">
-          {category.name}
-        </h3>
+        <div className="w-full h-full flex items-center justify-center px-1 sm:px-2">
+          <h3 className="text-white font-semibold text-xs sm:text-sm md:text-base lg:text-lg leading-tight text-center break-words">
+            {category.name}
+          </h3>
+        </div>
       </div>
     </div>
   );
