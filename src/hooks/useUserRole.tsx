@@ -1,13 +1,10 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-
 export const useUserRole = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
-
   useEffect(() => {
     const checkRole = async () => {
       if (!user) {
@@ -15,7 +12,6 @@ export const useUserRole = () => {
         setLoading(false);
         return;
       }
-
       try {
         const { data, error } = await supabase
           .from('user_roles')
@@ -23,7 +19,6 @@ export const useUserRole = () => {
           .eq('user_id', user.id)
           .eq('role', 'admin')
           .single();
-
         if (error && error.code !== 'PGRST116') {
           console.error('Error checking role:', error);
           setIsAdmin(false);
@@ -37,9 +32,7 @@ export const useUserRole = () => {
         setLoading(false);
       }
     };
-
     checkRole();
   }, [user]);
-
   return { isAdmin, loading };
 };

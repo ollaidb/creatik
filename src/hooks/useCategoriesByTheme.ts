@@ -1,6 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-
 interface CategoryThemeItem {
   category: {
     id: string;
@@ -9,7 +8,6 @@ interface CategoryThemeItem {
     theme_id?: string;
   };
 }
-
 export const useCategoriesByTheme = (themeId?: string) => {
   return useQuery({
     queryKey: ['categoriesByTheme', themeId],

@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -16,7 +15,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-
 // Données mockées pour l'exemple
 const mockMarketplaceItems: MarketplaceItem[] = [
   {
@@ -73,7 +71,6 @@ const mockMarketplaceItems: MarketplaceItem[] = [
     likes: 37
   },
 ];
-
 // Schéma de validation pour le formulaire de création d'annonce
 const marketplaceFormSchema = z.object({
   publishType: z.enum(["database_contribution", "content_idea", "concept"]),
@@ -85,14 +82,11 @@ const marketplaceFormSchema = z.object({
   target: z.string().optional(),
   format: z.string().optional(),
 });
-
 type MarketplaceFormValues = z.infer<typeof marketplaceFormSchema>;
-
 const Marketplace: React.FC = () => {
   const [activeTab, setActiveTab] = useState("browse");
   const [openPublishDialog, setOpenPublishDialog] = useState(false);
   const { toast } = useToast();
-
   const form = useForm<MarketplaceFormValues>({
     resolver: zodResolver(marketplaceFormSchema),
     defaultValues: {
@@ -106,13 +100,9 @@ const Marketplace: React.FC = () => {
       format: "",
     },
   });
-
   // Surveiller le type de publication pour afficher les champs appropriés
   const publishType = form.watch("publishType");
-
   const handlePublish = (values: MarketplaceFormValues) => {
-    console.log("Publication soumise:", values);
-    
     // Afficher un message de succès
     toast({
       title: "Publication soumise avec succès",
@@ -121,26 +111,22 @@ const Marketplace: React.FC = () => {
         values.publishType === "content_idea" ? "idée de contenu" : "concept"
       } a été soumise et sera bientôt disponible.`,
     });
-    
     // Fermer le dialogue et réinitialiser le formulaire
     setOpenPublishDialog(false);
     form.reset();
   };
-
   const handleBuy = (item: MarketplaceItem) => {
     toast({
       title: "Achat en cours",
       description: `Vous allez être redirigé vers le processus d'achat pour "${item.title}"`,
     });
   };
-
   const handleLike = (id: string) => {
     toast({
       title: "Ajouté aux favoris",
       description: "Cette annonce a été ajoutée à vos favoris.",
     });
   };
-
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -150,7 +136,6 @@ const Marketplace: React.FC = () => {
       }
     }
   };
-
   const itemVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: {
@@ -159,7 +144,6 @@ const Marketplace: React.FC = () => {
       transition: { duration: 0.5 }
     }
   };
-
   return (
     <div className="min-h-screen pb-20">
       <header className="bg-background border-b p-4">
@@ -171,7 +155,6 @@ const Marketplace: React.FC = () => {
           </Button>
         </div>
       </header>
-
       <div className="max-w-4xl mx-auto px-4 py-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid grid-cols-3 w-full mb-6">
@@ -179,7 +162,6 @@ const Marketplace: React.FC = () => {
             <TabsTrigger value="my-purchases">Mes achats</TabsTrigger>
             <TabsTrigger value="my-listings">Mes annonces</TabsTrigger>
           </TabsList>
-          
           <TabsContent value="browse" className="space-y-6">
             <div className="flex justify-between items-center">
               <h2 className="text-xl font-semibold">Annonces récentes</h2>
@@ -188,7 +170,6 @@ const Marketplace: React.FC = () => {
                 Filtrer
               </Button>
             </div>
-            
             <motion.div 
               className="grid grid-cols-1 md:grid-cols-2 gap-6"
               variants={containerVariants}
@@ -223,7 +204,6 @@ const Marketplace: React.FC = () => {
                       <CardTitle className="text-lg">{item.title}</CardTitle>
                       <CardDescription className="line-clamp-2">{item.description}</CardDescription>
                     </CardHeader>
-                    
                     <CardContent className="pb-2 pt-0">
                       <div className="flex flex-wrap gap-1 mb-2">
                         <span className="bg-muted text-xs px-2 py-1 rounded-full flex items-center gap-1">
@@ -236,7 +216,6 @@ const Marketplace: React.FC = () => {
                           </span>
                         )}
                       </div>
-                      
                       {(item.target || item.format) && (
                         <div className="text-sm text-muted-foreground">
                           {item.target && <div className="mb-1">Cible : {item.target}</div>}
@@ -244,7 +223,6 @@ const Marketplace: React.FC = () => {
                         </div>
                       )}
                     </CardContent>
-                    
                     <CardFooter className="pt-2 mt-auto">
                       <div className="flex justify-between items-center w-full">
                         <div className="text-xs text-muted-foreground">
@@ -266,7 +244,6 @@ const Marketplace: React.FC = () => {
               ))}
             </motion.div>
           </TabsContent>
-          
           <TabsContent value="my-purchases">
             <div className="text-center py-12">
               <h3 className="text-xl font-medium mb-2">Aucun achat pour le moment</h3>
@@ -278,7 +255,6 @@ const Marketplace: React.FC = () => {
               </Button>
             </div>
           </TabsContent>
-          
           <TabsContent value="my-listings">
             <div className="text-center py-12">
               <h3 className="text-xl font-medium mb-2">Vous n'avez pas encore d'annonces</h3>
@@ -292,7 +268,6 @@ const Marketplace: React.FC = () => {
           </TabsContent>
         </Tabs>
       </div>
-
       <Dialog open={openPublishDialog} onOpenChange={setOpenPublishDialog}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
@@ -301,7 +276,6 @@ const Marketplace: React.FC = () => {
               Contribuez à la communauté en enrichissant la base de données CréaTik ou proposez vos idées à la vente.
             </DialogDescription>
           </DialogHeader>
-          
           <Form {...form}>
             <form onSubmit={form.handleSubmit(handlePublish)} className="space-y-4">
               <FormField
@@ -329,7 +303,6 @@ const Marketplace: React.FC = () => {
                   </FormItem>
                 )}
               />
-              
               <FormField
                 control={form.control}
                 name="title"
@@ -343,7 +316,6 @@ const Marketplace: React.FC = () => {
                   </FormItem>
                 )}
               />
-              
               <FormField
                 control={form.control}
                 name="category"
@@ -368,7 +340,6 @@ const Marketplace: React.FC = () => {
                   </FormItem>
                 )}
               />
-              
               <FormField
                 control={form.control}
                 name="subcategory"
@@ -393,7 +364,6 @@ const Marketplace: React.FC = () => {
                   </FormItem>
                 )}
               />
-              
               <FormField
                 control={form.control}
                 name="description"
@@ -411,7 +381,6 @@ const Marketplace: React.FC = () => {
                   </FormItem>
                 )}
               />
-              
               {publishType !== "database_contribution" && (
                 <>
                   <FormField
@@ -427,7 +396,6 @@ const Marketplace: React.FC = () => {
                       </FormItem>
                     )}
                   />
-                  
                   <FormField
                     control={form.control}
                     name="target"
@@ -441,7 +409,6 @@ const Marketplace: React.FC = () => {
                       </FormItem>
                     )}
                   />
-                  
                   <FormField
                     control={form.control}
                     name="format"
@@ -457,7 +424,6 @@ const Marketplace: React.FC = () => {
                   />
                 </>
               )}
-              
               <DialogFooter>
                 <Button type="submit">Publier</Button>
               </DialogFooter>
@@ -465,10 +431,8 @@ const Marketplace: React.FC = () => {
           </Form>
         </DialogContent>
       </Dialog>
-
       <Navigation />
     </div>
   );
 };
-
 export default Marketplace;

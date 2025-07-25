@@ -1,27 +1,17 @@
-
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-
 export const useSubcategories = (categoryId?: string) => {
   return useQuery({
     queryKey: ['subcategories', categoryId],
     queryFn: async () => {
-      console.log('🔍 Fetching subcategories for categoryId:', categoryId);
-      
       let query = supabase
         .from('subcategories')
         .select('*')
         .order('name');
-      
       if (categoryId) {
         query = query.eq('category_id', categoryId);
       }
-      
       const { data, error } = await query;
-      
-      console.log('📊 Subcategories data:', data);
-      console.log('❌ Error if any:', error);
-      
       if (error) throw error;
       return data;
     },
@@ -36,7 +26,6 @@ export const useSubcategories = (categoryId?: string) => {
     staleTime: 10000
   });
 };
-
 export const useSubcategory = (subcategoryId: string) => {
   return useQuery({
     queryKey: ['subcategory', subcategoryId],
@@ -49,7 +38,6 @@ export const useSubcategory = (subcategoryId: string) => {
         `)
         .eq('id', subcategoryId)
         .single();
-      
       if (error) throw error;
       return data;
     },

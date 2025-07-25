@@ -14,7 +14,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserRole } from '@/hooks/useUserRole';
-
 interface MenuItem {
   title: string;
   description: string;
@@ -23,7 +22,6 @@ interface MenuItem {
   color: string;
   requiresAuth: boolean;
 }
-
 const Profile = () => {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
@@ -33,24 +31,20 @@ const Profile = () => {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
-
   // Charger l'avatar existant
   useEffect(() => {
     const loadProfile = async () => {
       if (!user) return;
-      
       try {
         const { data, error } = await supabase
           .from('profiles')
           .select('avatar_url')
           .eq('id', user.id)
           .single();
-        
         if (error && error.code !== 'PGRST116') {
           console.error('Error loading profile:', error);
           return;
         }
-        
         if (data?.avatar_url) {
           setProfileImage(data.avatar_url);
         }
@@ -58,10 +52,8 @@ const Profile = () => {
         console.error('Error loading profile:', error);
       }
     };
-
     loadProfile();
   }, [user]);
-
   const handleSignOut = async () => {
     const { error } = await signOut();
     if (error) {
@@ -77,30 +69,23 @@ const Profile = () => {
       });
     }
   };
-
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file || !user) return;
-
     setUploading(true);
     try {
       // Upload vers Supabase Storage
       const fileExt = file.name.split('.').pop();
       const fileName = `${user.id}/avatar.${fileExt}`;
-      
       const { error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(fileName, file, { upsert: true });
-
       if (uploadError) throw uploadError;
-
       // Obtenir l'URL publique
       const { data } = supabase.storage
         .from('avatars')
         .getPublicUrl(fileName);
-
       const avatarUrl = data.publicUrl;
-
       // Mettre à jour le profil dans la base de données
       const { error: updateError } = await supabase
         .from('profiles')
@@ -111,9 +96,7 @@ const Profile = () => {
           first_name: user.user_metadata?.first_name,
           last_name: user.user_metadata?.last_name
         });
-
       if (updateError) throw updateError;
-
       setProfileImage(avatarUrl);
       toast({
         title: "Photo de profil mise à jour",
@@ -130,7 +113,6 @@ const Profile = () => {
       setUploading(false);
     }
   };
-
   const menuItems: MenuItem[] = [
     {
       title: "Mes Publications",
@@ -206,11 +188,9 @@ const Profile = () => {
       requiresAuth: false
     }
   ];
-
   const handleMenuClick = (item: MenuItem) => {
     navigate(item.path);
   };
-
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -220,7 +200,6 @@ const Profile = () => {
       }
     }
   };
-
   const itemVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: {
@@ -229,10 +208,8 @@ const Profile = () => {
       transition: { duration: 0.5 }
     }
   };
-
   return (
     <div className="min-h-screen pb-20">
-      
       <header className="bg-background border-b p-4 flex items-center justify-between">
         <div className="flex items-center">
           <Button 
@@ -246,7 +223,6 @@ const Profile = () => {
           <h1 className="text-xl font-semibold">Profil</h1>
         </div>
       </header>
-
       <main className="max-w-4xl mx-auto p-4">
         {/* Profile Header */}
         <motion.div
@@ -307,7 +283,6 @@ const Profile = () => {
             </CardHeader>
           </Card>
         </motion.div>
-
         {/* Theme Toggle Section */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -342,7 +317,6 @@ const Profile = () => {
             </CardContent>
           </Card>
         </motion.div>
-
         {/* Menu Items */}
         <motion.div
           className="grid gap-4 md:grid-cols-2"
@@ -372,15 +346,12 @@ const Profile = () => {
           ))}
         </motion.div>
       </main>
-
       <AuthModal 
         isOpen={showAuthModal} 
         onClose={() => setShowAuthModal(false)} 
       />
-
       <Navigation />
     </div>
   );
 };
-
 export default Profile;

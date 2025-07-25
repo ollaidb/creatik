@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useThemes } from '@/hooks/useThemes';
 import {
@@ -8,21 +7,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-
 interface ThemeSelectorProps {
   selectedTheme?: string;
   onThemeChange: (themeId: string) => void;
 }
-
 const ThemeSelector = ({ selectedTheme, onThemeChange }: ThemeSelectorProps) => {
   const { data: themes, isLoading } = useThemes();
-
   if (isLoading) {
     return (
       <div className="w-48 h-10 bg-gray-200 dark:bg-gray-700 rounded-md animate-pulse" />
     );
   }
-
   return (
     <Select value={selectedTheme || 'all'} onValueChange={onThemeChange}>
       <SelectTrigger className="w-48">
@@ -38,5 +33,4 @@ const ThemeSelector = ({ selectedTheme, onThemeChange }: ThemeSelectorProps) => 
     </Select>
   );
 };
-
 export default ThemeSelector;

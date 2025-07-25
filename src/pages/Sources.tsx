@@ -10,14 +10,12 @@ import { useFavorites } from '@/hooks/useFavorites';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import Navigation from '@/components/Navigation';
-
 const Sources = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
   const { data: sources = [], isLoading } = useSources();
   const { favorites, toggleFavorite, isFavorite } = useFavorites('source');
-
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -27,7 +25,6 @@ const Sources = () => {
       }
     }
   };
-
   const itemVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: {
@@ -36,7 +33,6 @@ const Sources = () => {
       transition: { duration: 0.5 }
     }
   };
-
   const handleFavorite = (sourceId: string) => {
     if (!user) {
       toast({
@@ -45,7 +41,6 @@ const Sources = () => {
       });
       return;
     }
-    
     toggleFavorite(sourceId);
     toast({
       title: isFavorite(sourceId) ? "Retiré des favoris" : "Ajouté à vos favoris !",
@@ -54,11 +49,9 @@ const Sources = () => {
         : "Vous verrez cette source dans votre page de favoris.",
     });
   };
-
   const handleVisitSource = (url: string) => {
     window.open(url, '_blank');
   };
-
   if (isLoading) {
     return (
       <div className="min-h-screen pb-20">
@@ -85,7 +78,6 @@ const Sources = () => {
       </div>
     );
   }
-
   return (
     <div className="min-h-screen pb-20">
       <header className="bg-background border-b p-4 flex items-center justify-between">
@@ -105,7 +97,6 @@ const Sources = () => {
           {sources.length} sources
         </Badge>
       </header>
-
       <main className="max-w-4xl mx-auto p-4">
         {sources.length > 0 ? (
           <motion.div 
@@ -174,10 +165,8 @@ const Sources = () => {
           </div>
         )}
       </main>
-
       <Navigation />
     </div>
   );
 };
-
 export default Sources; 

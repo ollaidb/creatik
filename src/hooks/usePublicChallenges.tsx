@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { useToast } from './use-toast';
-
 interface PublicChallenge {
   id: string;
   title: string;
@@ -29,14 +28,12 @@ interface PublicChallenge {
   };
   is_liked?: boolean;
 }
-
 export const usePublicChallenges = (filterLikedOnly: boolean = false) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [challenges, setChallenges] = useState<PublicChallenge[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
   // Charger les challenges publics
   const loadPublicChallenges = async () => {
     try {
@@ -52,7 +49,6 @@ export const usePublicChallenges = (filterLikedOnly: boolean = false) => {
         `)
         .eq('is_active', true)
         .order('created_at', { ascending: false });
-
       // Si on veut seulement les challenges likés par l'utilisateur
       if (filterLikedOnly && user) {
         query = query.in('id', 
@@ -62,25 +58,19 @@ export const usePublicChallenges = (filterLikedOnly: boolean = false) => {
             .eq('user_id', user.id)
         );
       }
-
       const { data, error } = await query;
-
       if (error) throw error;
-
       // Ajouter l'information si l'utilisateur a liké chaque challenge
       if (user) {
         const { data: likedChallenges } = await (supabase as any)
           .from('challenge_likes')
           .select('challenge_id')
           .eq('user_id', user.id);
-
         const likedIds = likedChallenges?.map((lc: any) => lc.challenge_id) || [];
-        
         const challengesWithLikes = (data || []).map((challenge: PublicChallenge) => ({
           ...challenge,
           is_liked: likedIds.includes(challenge.id)
         }));
-
         setChallenges(challengesWithLikes);
       } else {
         setChallenges(data || []);
@@ -92,7 +82,6 @@ export const usePublicChallenges = (filterLikedOnly: boolean = false) => {
       setLoading(false);
     }
   };
-
   // Liker/unliker un challenge
   const toggleLike = async (challengeId: string) => {
     if (!user) {
@@ -103,11 +92,9 @@ export const usePublicChallenges = (filterLikedOnly: boolean = false) => {
       });
       return;
     }
-
     try {
       const challenge = challenges.find(c => c.id === challengeId);
       const isCurrentlyLiked = challenge?.is_liked;
-
       if (isCurrentlyLiked) {
         // Unliker
         const { error } = await (supabase as any)
@@ -115,9 +102,7 @@ export const usePublicChallenges = (filterLikedOnly: boolean = false) => {
           .delete()
           .eq('user_id', user.id)
           .eq('challenge_id', challengeId);
-
         if (error) throw error;
-
         toast({
           title: "Like retiré",
           description: "Le challenge a été retiré de vos favoris",
@@ -130,15 +115,12 @@ export const usePublicChallenges = (filterLikedOnly: boolean = false) => {
             user_id: user.id,
             challenge_id: challengeId
           });
-
         if (error) throw error;
-
         toast({
           title: "Challenge liké !",
           description: "Le challenge a été ajouté à vos favoris",
         });
       }
-
       // Recharger les challenges
       await loadPublicChallenges();
     } catch (err) {
@@ -150,7 +132,6 @@ export const usePublicChallenges = (filterLikedOnly: boolean = false) => {
       });
     }
   };
-
   // Ajouter un challenge à ses défis personnels
   const addToPersonalChallenges = async (challengeId: string) => {
     if (!user) {
@@ -161,7 +142,6 @@ export const usePublicChallenges = (filterLikedOnly: boolean = false) => {
       });
       return;
     }
-
     try {
       const { error } = await (supabase as any)
         .from('user_challenges')
@@ -171,9 +151,7 @@ export const usePublicChallenges = (filterLikedOnly: boolean = false) => {
           status: 'active',
           points_earned: 0
         });
-
       if (error) throw error;
-
       toast({
         title: "Défi ajouté !",
         description: "Le challenge a été ajouté à vos défis personnels",
@@ -187,11 +165,9 @@ export const usePublicChallenges = (filterLikedOnly: boolean = false) => {
       });
     }
   };
-
   useEffect(() => {
     loadPublicChallenges();
   }, [user, filterLikedOnly]);
-
   return {
     challenges,
     loading,

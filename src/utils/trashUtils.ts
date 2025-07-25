@@ -1,5 +1,4 @@
 import { supabase } from '@/integrations/supabase/client';
-
 export const addToTrash = async (item: {
   original_publication_id: string;
   publication_type: 'category' | 'subcategory' | 'title';
@@ -23,11 +22,9 @@ export const addToTrash = async (item: {
         deleted_at: new Date().toISOString(),
         will_be_deleted_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() // 30 jours
       });
-
     if (error) {
       throw error;
     }
-
     return { success: true };
   } catch (err) {
     console.error('Erreur lors de l\'ajout à la corbeille:', err);

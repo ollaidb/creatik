@@ -10,14 +10,12 @@ import { ArrowLeft, Trophy, Target, BarChart3, Settings, CheckCircle, Clock, Sta
 import { useAuth } from '@/hooks/useAuth';
 import { useChallenges } from '@/hooks/useChallenges';
 import { useToast } from '@/hooks/use-toast';
-
 const Challenges = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('challenges');
   const [selectedDuration, setSelectedDuration] = useState('3months');
-
   const {
     challenges,
     userChallenges,
@@ -29,7 +27,6 @@ const Challenges = () => {
     completeChallenge,
     updateProgramDuration
   } = useChallenges();
-
   const getDurationText = (duration: string) => {
     switch (duration) {
       case '1month': return '1 mois';
@@ -40,14 +37,12 @@ const Challenges = () => {
       default: return '3 mois';
     }
   };
-
   const getProgressPercentage = () => {
     if (!stats) return 0;
     const totalChallenges = challenges.length;
     if (totalChallenges === 0) return 0;
     return (stats.completed_challenges / totalChallenges) * 100;
   };
-
   const handleDurationChange = async (duration: string) => {
     setSelectedDuration(duration);
     const result = await updateProgramDuration(duration);
@@ -58,7 +53,6 @@ const Challenges = () => {
       });
     }
   };
-
   const handleAssignChallenge = async (challengeId: string) => {
     const result = await assignChallenge(challengeId);
     if (result.error) {
@@ -69,7 +63,6 @@ const Challenges = () => {
       });
     }
   };
-
   const handleCompleteChallenge = async (userChallengeId: string) => {
     const result = await completeChallenge(userChallengeId);
     if (result.error) {
@@ -80,7 +73,6 @@ const Challenges = () => {
       });
     }
   };
-
   if (!user) {
     return (
       <div className="min-h-screen pb-20">
@@ -112,7 +104,6 @@ const Challenges = () => {
       </div>
     );
   }
-
   if (loading) {
     return (
       <div className="min-h-screen pb-20">
@@ -138,7 +129,6 @@ const Challenges = () => {
       </div>
     );
   }
-
   if (error) {
     return (
       <div className="min-h-screen pb-20">
@@ -170,7 +160,6 @@ const Challenges = () => {
       </div>
     );
   }
-
   return (
     <div className="min-h-screen pb-20">
       <header className="bg-background border-b p-4 flex items-center justify-between">
@@ -190,7 +179,6 @@ const Challenges = () => {
           {stats?.total_points || 0} pts
         </Badge>
       </header>
-
       <main className="max-w-4xl mx-auto p-4">
         {/* Sélecteur de durée */}
         <Card className="mb-6">
@@ -222,7 +210,6 @@ const Challenges = () => {
             </div>
           </CardContent>
         </Card>
-
         {/* Menu avec onglets */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-3">
@@ -230,7 +217,6 @@ const Challenges = () => {
             <TabsTrigger value="completed">Accomplis</TabsTrigger>
             <TabsTrigger value="stats">Statistiques</TabsTrigger>
           </TabsList>
-
           {/* Onglet Défis */}
           <TabsContent value="challenges" className="mt-6">
             <div className="space-y-4">
@@ -240,7 +226,6 @@ const Challenges = () => {
                   {challenges.length} défis
                 </Badge>
               </div>
-              
               {challenges.map((challenge) => (
                 <motion.div
                   key={challenge.id}
@@ -286,7 +271,6 @@ const Challenges = () => {
               ))}
             </div>
           </TabsContent>
-
           {/* Onglet Accomplis */}
           <TabsContent value="completed" className="mt-6">
             <div className="space-y-4">
@@ -296,7 +280,6 @@ const Challenges = () => {
                   {userChallenges.filter(c => c.status === 'completed').length} accomplis
                 </Badge>
               </div>
-              
               {userChallenges.filter(c => c.status === 'completed').map((userChallenge) => (
                 <motion.div
                   key={userChallenge.id}
@@ -328,7 +311,6 @@ const Challenges = () => {
               ))}
             </div>
           </TabsContent>
-
           {/* Onglet Statistiques */}
           <TabsContent value="stats" className="mt-6">
             <div className="space-y-6">
@@ -349,7 +331,6 @@ const Challenges = () => {
                       </div>
                       <Progress value={getProgressPercentage()} className="h-3" />
                     </div>
-                    
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       <div className="text-center">
                         <div className="text-2xl font-bold text-blue-600">{stats?.total_points || 0}</div>
@@ -371,7 +352,6 @@ const Challenges = () => {
                   </div>
                 </CardContent>
               </Card>
-
               {/* Classement */}
               <Card>
                 <CardHeader>
@@ -411,7 +391,6 @@ const Challenges = () => {
                   )}
                 </CardContent>
               </Card>
-
               {/* Récompenses */}
               <Card>
                 <CardHeader>
@@ -447,5 +426,4 @@ const Challenges = () => {
     </div>
   );
 };
-
 export default Challenges; 

@@ -8,29 +8,23 @@ import { useFavorites } from '@/hooks/useFavorites';
 import SubcategoryCard from '@/components/SubcategoryCard';
 import { Button } from '@/components/ui/button';
 import IntelligentSearchBar from '@/components/IntelligentSearchBar';
-
 const Subcategories = () => {
   const { categoryId } = useParams();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
-  
   const { data: subcategories, isLoading } = useSubcategories(categoryId);
   const { data: categories } = useCategories();
   const currentCategory = categories?.find(cat => cat.id === categoryId);
   const { favorites, toggleFavorite, isFavorite } = useFavorites('subcategory');
-
   const handleSearch = (query: string) => {
     navigate(`/search?search=${encodeURIComponent(query)}`);
   };
-
   const filteredSubcategories = subcategories?.filter(subcategory => 
     subcategory.name.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
-
   const handleBackClick = () => {
     navigate('/categories');
   };
-
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -40,12 +34,10 @@ const Subcategories = () => {
       }
     }
   };
-
   const itemVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0 }
   };
-
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -67,7 +59,6 @@ const Subcategories = () => {
             </div>
           </div>
         </div>
-
         <div className="px-4 py-4">
           <div className="animate-pulse">
             <div className="h-8 bg-gray-200 rounded w-1/3 mb-6"></div>
@@ -81,7 +72,6 @@ const Subcategories = () => {
       </div>
     );
   }
-
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header fixe pour mobile */}
@@ -113,7 +103,6 @@ const Subcategories = () => {
           </Button>
         </div>
       </div>
-
       {/* Contenu principal */}
       <div className="px-4 py-4">
         {/* Barre de recherche intelligente */}
@@ -126,7 +115,6 @@ const Subcategories = () => {
             />
           </div>
         </div>
-
         {/* Liste des sous-catégories */}
         <motion.div 
           className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4"
@@ -156,7 +144,6 @@ const Subcategories = () => {
             </motion.div>
           ))}
         </motion.div>
-
         {/* Message si pas de sous-catégories */}
         {filteredSubcategories.length === 0 && (
           <div className="text-center py-12">
@@ -174,5 +161,4 @@ const Subcategories = () => {
     </div>
   );
 };
-
 export default Subcategories; 

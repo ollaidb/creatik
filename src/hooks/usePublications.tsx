@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
-
 interface Publication {
   id: string;
   user_id: string;
@@ -15,13 +14,11 @@ interface Publication {
   created_at: string;
   updated_at: string;
 }
-
 export const usePublications = () => {
   const { user } = useAuth();
   const [publications, setPublications] = useState<Publication[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
   // Charger les publications de l'utilisateur
   const loadPublications = async () => {
     if (!user) {
@@ -29,21 +26,17 @@ export const usePublications = () => {
       setLoading(false);
       return;
     }
-
     try {
       setLoading(true);
       setError(null);
-
       const { data, error: fetchError } = await supabase
         .from('user_publications')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
-
       if (fetchError) {
         throw fetchError;
       }
-
       setPublications((data as Publication[]) || []);
     } catch (err) {
       console.error('Erreur lors du chargement des publications:', err);
@@ -52,11 +45,9 @@ export const usePublications = () => {
       setLoading(false);
     }
   };
-
   // Supprimer une publication
   const deletePublication = async (publicationId: string) => {
     if (!user) return { error: 'Utilisateur non connecté' };
-
     try {
       // Récupérer la publication avant de la supprimer
       const { data: publication, error: fetchError } = await supabase
@@ -64,11 +55,9 @@ export const usePublications = () => {
         .select('*')
         .eq('id', publicationId)
         .single();
-
       if (fetchError || !publication) {
         throw new Error('Publication non trouvée');
       }
-
       // Ajouter à la corbeille avec gestion des doublons
       const { error: trashError } = await (supabase as any)
         .from('deleted_content')
@@ -90,21 +79,17 @@ export const usePublications = () => {
         }, {
           onConflict: 'original_id,content_type,user_id'
         });
-
       if (trashError) {
         throw new Error(`Erreur lors de l'ajout à la corbeille: ${trashError.message}`);
       }
-
       // Supprimer de la table user_publications
       const { error: deleteError } = await supabase
         .from('user_publications')
         .delete()
         .eq('id', publicationId);
-
       if (deleteError) {
         throw new Error(`Erreur lors de la suppression: ${deleteError.message}`);
       }
-
       // Recharger les publications
       await loadPublications();
       return { success: true };
@@ -113,11 +98,9 @@ export const usePublications = () => {
       return { error: err instanceof Error ? err.message : 'Impossible de supprimer la publication' };
     }
   };
-
   useEffect(() => {
     loadPublications();
   }, [user]);
-
   return {
     publications,
     loading,

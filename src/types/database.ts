@@ -1,4 +1,3 @@
-
 export interface DatabaseCategory {
   id: string;
   name: string;
@@ -7,7 +6,6 @@ export interface DatabaseCategory {
   created_at: string;
   updated_at: string;
 }
-
 export interface DatabaseSubcategory {
   id: string;
   category_id: string;
@@ -17,7 +15,6 @@ export interface DatabaseSubcategory {
   updated_at: string;
   category?: DatabaseCategory;
 }
-
 export interface DatabaseContentTitle {
   id: string;
   subcategory_id: string;
@@ -27,7 +24,6 @@ export interface DatabaseContentTitle {
   platform?: 'tiktok' | 'instagram' | 'youtube' | 'all';
   created_at: string;
 }
-
 export interface DatabaseExemplaryAccount {
   id: string;
   subcategory_id: string;
@@ -37,7 +33,6 @@ export interface DatabaseExemplaryAccount {
   description?: string;
   created_at: string;
 }
-
 export interface DatabaseContentExample {
   id: string;
   subcategory_id: string;
@@ -49,7 +44,6 @@ export interface DatabaseContentExample {
   platform?: 'tiktok' | 'instagram' | 'youtube' | 'other';
   created_at: string;
 }
-
 export interface DatabaseInspiringContent {
   id: string;
   subcategory_id: string;

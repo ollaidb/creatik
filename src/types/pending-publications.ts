@@ -10,7 +10,6 @@ export interface PendingPublication {
   created_at: string;
   updated_at: string;
 }
-
 export interface PendingPublicationInsert {
   user_id: string;
   content_type: 'category' | 'subcategory' | 'title';
@@ -20,7 +19,6 @@ export interface PendingPublicationInsert {
   status?: 'checking' | 'approved' | 'rejected' | 'duplicate';
   rejection_reason?: string;
 }
-
 export interface PendingPublicationUpdate {
   status?: 'checking' | 'approved' | 'rejected' | 'duplicate';
   rejection_reason?: string;

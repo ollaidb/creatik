@@ -1,4 +1,3 @@
-
 import React from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
@@ -12,15 +11,12 @@ import {
   CarouselNext, 
   CarouselPrevious 
 } from "@/components/ui/carousel";
-
 const Hero: React.FC = () => {
   const navigate = useNavigate();
   const { data: categories, isLoading } = useCategories();
-
   const handleSearch = (query: string) => {
     navigate(`/search?search=${encodeURIComponent(query)}`);
   };
-
   if (isLoading) {
     return (
       <section className="relative py-4 bg-gradient-to-r from-[#f8f9fa] to-[#e9ecef] dark:from-gray-900 dark:to-gray-800/80">
@@ -32,7 +28,6 @@ const Hero: React.FC = () => {
       </section>
     );
   }
-
   return (
     <section className="relative py-4 bg-gradient-to-r from-[#f8f9fa] to-[#e9ecef] dark:from-gray-900 dark:to-gray-800/80">
       <div className="container mx-auto px-4">
@@ -43,7 +38,6 @@ const Hero: React.FC = () => {
             <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
               Creatik
             </h1>
-            
             <div className="w-[600px]">
               <IntelligentSearchBar 
                 onSearch={handleSearch}
@@ -52,13 +46,11 @@ const Hero: React.FC = () => {
               />
             </div>
           </div>
-
           {/* Version Mobile - Titre en haut, barre en bas */}
           <div className="md:hidden">
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white text-center mb-6">
               Creatik
             </h1>
-            
             <div className="w-full">
               <IntelligentSearchBar 
                 onSearch={handleSearch}
@@ -68,7 +60,6 @@ const Hero: React.FC = () => {
             </div>
           </div>
         </div>
-
         {/* Categories Carousel with visible background - Responsive */}
         <div className="relative px-2 mb-4">
           <div className="bg-white/80 dark:bg-gray-800/30 rounded-xl p-2 shadow-sm">
@@ -82,7 +73,6 @@ const Hero: React.FC = () => {
               <div className="absolute left-2 top-1/2 -translate-y-1/2 z-10">
                 <CarouselPrevious className="relative h-8 w-8" />
               </div>
-              
               <CarouselContent className="-ml-1">
                 {categories?.map((category) => (
                   <CarouselItem key={category.id} className="pl-1 basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5">
@@ -100,7 +90,6 @@ const Hero: React.FC = () => {
                   </CarouselItem>
                 ))}
               </CarouselContent>
-              
               <div className="absolute right-2 top-1/2 -translate-y-1/2 z-10">
                 <CarouselNext className="relative h-8 w-8" />
               </div>
@@ -111,5 +100,4 @@ const Hero: React.FC = () => {
     </section>
   );
 };
-
 export default Hero;

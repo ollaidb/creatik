@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -13,20 +12,17 @@ import { usePendingPublish } from '@/hooks/usePendingPublish';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import Navigation from '@/components/Navigation';
-
 interface Category {
   id: string;
   name: string;
   color: string;
 }
-
 interface Subcategory {
   id: string;
   name: string;
   description: string;
   category_id: string;
 }
-
 const Publish = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -40,31 +36,25 @@ const Publish = () => {
     subcategory_id: '',
     description: '' // Added for challenges
   });
-
   // États pour les barres de recherche
   const [categorySearch, setCategorySearch] = useState('');
   const [subcategorySearch, setSubcategorySearch] = useState('');
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   const [showSubcategoryDropdown, setShowSubcategoryDropdown] = useState(false);
-
   // Refs pour les dropdowns
   const categoryDropdownRef = useRef<HTMLDivElement>(null);
   const subcategoryDropdownRef = useRef<HTMLDivElement>(null);
-
   // Récupérer les données
   const { data: categories } = useCategories();
   const { data: subcategories } = useSubcategories(formData.category_id);
-
   // Filtrer les catégories selon la recherche
   const filteredCategories = categories?.filter(category =>
     category.name.toLowerCase().includes(categorySearch.toLowerCase())
   ) || [];
-
   // Filtrer les sous-catégories selon la recherche
   const filteredSubcategories = subcategories?.filter(subcategory =>
     subcategory.name.toLowerCase().includes(subcategorySearch.toLowerCase())
   ) || [];
-
   // Fermer les dropdowns quand on clique à l'extérieur
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -75,16 +65,13 @@ const Publish = () => {
         setShowSubcategoryDropdown(false);
       }
     };
-
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (!user) {
       toast({
         title: "Connexion requise",
@@ -93,7 +80,6 @@ const Publish = () => {
       });
       return;
     }
-
     if (!formData.title || !formData.content_type) {
       toast({
         title: "Champs requis",
@@ -102,7 +88,6 @@ const Publish = () => {
       });
       return;
     }
-
     // Validation selon le type de contenu
     if (formData.content_type === 'subcategory' && !formData.category_id) {
       toast({
@@ -112,7 +97,6 @@ const Publish = () => {
       });
       return;
     }
-
     if (formData.content_type === 'title' && (!formData.category_id || !formData.subcategory_id)) {
       toast({
         title: "Catégorie et sous-catégorie requises",
@@ -121,16 +105,8 @@ const Publish = () => {
       });
       return;
     }
-
     setIsSubmitting(true);
-    
     try {
-      console.log('=== DÉBUT PUBLICATION ===');
-      console.log('Titre:', formData.title);
-      console.log('Type de contenu:', formData.content_type);
-      console.log('Catégorie:', formData.category_id);
-      console.log('Sous-catégorie:', formData.subcategory_id);
-
       // Publier avec vérification des doublons
       const result = await publishContent({
         content_type: formData.content_type,
@@ -139,17 +115,11 @@ const Publish = () => {
         subcategory_id: formData.subcategory_id || undefined,
         description: formData.content_type === 'challenge' ? formData.description : undefined
       });
-
       if (result) {
-        console.log('✅ Publication soumise avec succès');
-        
-        console.log('=== FIN PUBLICATION ===');
-
         toast({
           title: "Publication soumise !",
           description: "Votre contenu sera validé dans quelques secondes"
         });
-
         // Reset form seulement si la publication est réussie
         if (publicationStatus?.status === 'approved') {
           setFormData({
@@ -162,16 +132,13 @@ const Publish = () => {
           setCategorySearch('');
           setSubcategorySearch('');
         }
-
       } else {
         throw new Error('Échec de la publication');
       }
-
     } catch (error) {
       console.error('=== ERREUR PUBLICATION ===');
       console.error('Erreur complète:', error);
       console.error('Message:', error.message);
-      
       toast({
         title: "Erreur",
         description: `Erreur lors de la publication: ${error.message}`,
@@ -181,7 +148,6 @@ const Publish = () => {
       setIsSubmitting(false);
     }
   };
-
   const handleCategorySelect = (category: Category) => {
     setFormData(prev => ({
       ...prev,
@@ -192,7 +158,6 @@ const Publish = () => {
     setShowCategoryDropdown(false);
     setSubcategorySearch(''); // Reset subcategory search
   };
-
   const handleSubcategorySelect = (subcategory: Subcategory) => {
     setFormData(prev => ({
       ...prev,
@@ -201,7 +166,6 @@ const Publish = () => {
     setSubcategorySearch(subcategory.name);
     setShowSubcategoryDropdown(false);
   };
-
   return (
     <div className="min-h-screen pb-20">
       <header className="bg-background border-b p-4">
@@ -217,7 +181,6 @@ const Publish = () => {
             </Button>
             <h1 className="text-xl font-semibold">Publier du contenu</h1>
           </div>
-          
           <Button 
             variant="outline" 
             size="sm"
@@ -229,7 +192,6 @@ const Publish = () => {
         </Button>
         </div>
       </header>
-
       <main className="max-w-7xl mx-auto p-4">
         <div className="text-center mb-8">
           <h2 className="text-2xl font-bold mb-2">Contribuez à CréaTik</h2>
@@ -237,7 +199,6 @@ const Publish = () => {
             Partagez vos idées et enrichissez notre bibliothèque de contenu créatif
           </p>
         </div>
-
         <Card className="max-w-2xl mx-auto">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -286,7 +247,6 @@ const Publish = () => {
                   <option value="challenge">Challenge</option>
                 </select>
               </div>
-
               {/* Titre */}
               <div className="space-y-2">
                 <Label htmlFor="title">
@@ -308,7 +268,6 @@ const Publish = () => {
                   required
                 />
               </div>
-
               {/* Description pour les challenges */}
               {formData.content_type === 'challenge' && (
                 <div className="space-y-2">
@@ -323,7 +282,6 @@ const Publish = () => {
                   />
                 </div>
               )}
-
               {/* Catégorie (pour sous-catégorie et titre) */}
               {(formData.content_type === 'subcategory' || formData.content_type === 'title') && (
                 <div className="space-y-2">
@@ -358,7 +316,6 @@ const Publish = () => {
                         </Button>
                       )}
                     </div>
-                    
                     {showCategoryDropdown && filteredCategories.length > 0 && (
                       <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
                         {filteredCategories.map((category) => (
@@ -382,7 +339,6 @@ const Publish = () => {
                   </div>
                 </div>
               )}
-
               {/* Sous-catégorie (pour titre seulement) */}
               {formData.content_type === 'title' && formData.category_id && (
                 <div className="space-y-2">
@@ -416,7 +372,6 @@ const Publish = () => {
                         </Button>
                       )}
                     </div>
-                    
                     {showSubcategoryDropdown && filteredSubcategories.length > 0 && (
                       <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
                         {filteredSubcategories.map((subcategory) => (
@@ -441,7 +396,6 @@ const Publish = () => {
                   </div>
                 </div>
               )}
-
               <Button 
                 type="submit" 
                 className="w-full" 
@@ -462,7 +416,6 @@ const Publish = () => {
                   </>
                 )}
               </Button>
-
               {/* Afficher le statut de la publication */}
               {publicationStatus && (
                 <div className={`mt-4 p-3 rounded-md ${
@@ -494,10 +447,8 @@ const Publish = () => {
           </CardContent>
         </Card>
       </main>
-
       <Navigation />
     </div>
   );
 };
-
 export default Publish;

@@ -26,9 +26,7 @@ import AdminPublications from "./pages/admin/Publications";
 import ApprovePublications from "./pages/admin/ApprovePublications";
 import Accounts from "./pages/Accounts";
 import Sources from "./pages/Sources";
-
 const queryClient = new QueryClient();
-
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
@@ -39,19 +37,15 @@ const App = () => (
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />
-              
               {/* Categories Routes */}
               <Route path="/categories" element={<Categories />} />
               <Route path="/category/:categoryId/subcategories" element={<Subcategories />} />
               <Route path="/category/:categoryId/subcategory/:subcategoryId" element={<Titles />} />
-              
               {/* Challenges Routes */}
               <Route path="/challenges" element={<PublicChallenges />} />
-              
               {/* Accounts and Sources Routes */}
               <Route path="/accounts" element={<Accounts />} />
               <Route path="/sources" element={<Sources />} />
-              
               {/* Profile Routes */}
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/profile/favorites" element={<Favorites />} />
@@ -62,20 +56,16 @@ const App = () => (
               <Route path="/profile/contact" element={<Contact />} />
               <Route path="/profile/publications" element={<Publications />} />
               <Route path="/profile/challenges" element={<Challenges />} />
-              
               {/* Admin Routes */}
               <Route path="/admin/publications" element={<AdminPublications />} />
               <Route path="/admin/approve-publications" element={<ApprovePublications />} />
-              
               {/* Publish Route */}
               <Route path="/publish" element={<Publish />} />
               <Route path="/search" element={<SearchResults />} />
-              
               {/* Inspiration Card Routes */}
               <Route path="/ideas/trending" element={<NotFound />} />
               <Route path="/categories/explore" element={<Categories />} />
               <Route path="/ideas/create" element={<NotFound />} />
-              
               {/* 404 Route */}
               <Route path="*" element={<NotFound />} />
             </Routes>
@@ -85,5 +75,4 @@ const App = () => (
     </ThemeProvider>
   </QueryClientProvider>
 );
-
 export default App;

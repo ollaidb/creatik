@@ -10,14 +10,12 @@ import { useFavorites } from '@/hooks/useFavorites';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import Navigation from '@/components/Navigation';
-
 const Accounts = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
   const { data: accounts = [], isLoading } = useAccounts();
   const { favorites, toggleFavorite, isFavorite } = useFavorites('account');
-
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -27,7 +25,6 @@ const Accounts = () => {
       }
     }
   };
-
   const itemVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: {
@@ -36,7 +33,6 @@ const Accounts = () => {
       transition: { duration: 0.5 }
     }
   };
-
   const handleFavorite = (accountId: string) => {
     if (!user) {
       toast({
@@ -45,7 +41,6 @@ const Accounts = () => {
       });
       return;
     }
-    
     toggleFavorite(accountId);
     toast({
       title: isFavorite(accountId) ? "Retiré des favoris" : "Ajouté à vos favoris !",
@@ -54,7 +49,6 @@ const Accounts = () => {
         : "Vous verrez ce compte dans votre page de favoris.",
     });
   };
-
   if (isLoading) {
     return (
       <div className="min-h-screen pb-20">
@@ -81,7 +75,6 @@ const Accounts = () => {
       </div>
     );
   }
-
   return (
     <div className="min-h-screen pb-20">
       <header className="bg-background border-b p-4 flex items-center justify-between">
@@ -101,7 +94,6 @@ const Accounts = () => {
           {accounts.length} comptes
         </Badge>
       </header>
-
       <main className="max-w-4xl mx-auto p-4">
         {accounts.length > 0 ? (
           <motion.div 
@@ -174,10 +166,8 @@ const Accounts = () => {
           </div>
         )}
       </main>
-
       <Navigation />
     </div>
   );
 };
-
 export default Accounts; 

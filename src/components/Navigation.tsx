@@ -1,17 +1,13 @@
-
 import React from "react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { useLocation, useNavigate } from "react-router-dom";
-
 interface NavigationProps {
   className?: string;
 }
-
 const Navigation: React.FC<NavigationProps> = ({ className }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  
   // Determine active tab based on current path
   const currentPath = location.pathname;
   const activeTab = 
@@ -20,7 +16,6 @@ const Navigation: React.FC<NavigationProps> = ({ className }) => {
     currentPath.startsWith("/publish") ? "publish" :
     currentPath.startsWith("/favorites") || currentPath.startsWith("/profile/favorites") ? "favorites" :
     currentPath.startsWith("/profile") ? "profile" : "home";
-
   const tabs = [
     { id: "home", label: "Accueil", icon: "home", path: "/" },
     { id: "categories", label: "Catégories", icon: "categories", path: "/categories" },
@@ -28,11 +23,9 @@ const Navigation: React.FC<NavigationProps> = ({ className }) => {
     { id: "favorites", label: "Favoris", icon: "favorites", path: "/profile/favorites" },
     { id: "profile", label: "Profil", icon: "profile", path: "/profile" },
   ];
-
   const handleTabClick = (path: string) => {
     navigate(path);
   };
-
   return (
     <div className={cn(
       "fixed bottom-0 left-0 right-0 bg-white dark:bg-card shadow-lg z-30 border-t",
@@ -76,9 +69,7 @@ const Navigation: React.FC<NavigationProps> = ({ className }) => {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
               </svg>
             )}
-            
             <span className="text-xs mt-0.5 sm:mt-1 truncate leading-tight">{tab.label}</span>
-            
             {activeTab === tab.id && (
               <motion.div
                 layoutId="navigation-indicator"
@@ -93,5 +84,4 @@ const Navigation: React.FC<NavigationProps> = ({ className }) => {
     </div>
   );
 };
-
 export default Navigation;

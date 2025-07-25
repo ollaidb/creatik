@@ -1,24 +1,19 @@
-
 import React from "react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { ExternalLink, AtSign } from "lucide-react";
 import { Database } from "@/integrations/supabase/types";
-
 type ExemplaryAccount = Database['public']['Tables']['exemplary_accounts']['Row'];
-
 interface ExemplaryAccountCardProps {
   account: ExemplaryAccount;
   className?: string;
 }
-
 const ExemplaryAccountCard = ({ account, className }: ExemplaryAccountCardProps) => {
   const handleOpenLink = () => {
     if (account.account_url) {
       window.open(account.account_url, '_blank');
     }
   };
-
   return (
     <motion.div
       whileHover={{ y: -2 }}
@@ -37,7 +32,6 @@ const ExemplaryAccountCard = ({ account, className }: ExemplaryAccountCardProps)
             {account.account_name}
           </h3>
         </div>
-        
         <button
           onClick={handleOpenLink}
           className="p-1 text-gray-500 hover:text-primary transition-colors"
@@ -45,13 +39,11 @@ const ExemplaryAccountCard = ({ account, className }: ExemplaryAccountCardProps)
           <ExternalLink size={16} />
         </button>
       </div>
-
       {account.description && (
         <p className="text-xs text-gray-600 dark:text-gray-300 line-clamp-2">
           {account.description}
         </p>
       )}
-
       <div className="flex justify-end">
         <span className="px-2 py-1 bg-primary/10 text-primary rounded-full text-xs font-medium">
           {account.platform}
@@ -60,5 +52,4 @@ const ExemplaryAccountCard = ({ account, className }: ExemplaryAccountCardProps)
     </motion.div>
   );
 };
-
 export default ExemplaryAccountCard;

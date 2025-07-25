@@ -3,7 +3,6 @@ export type Category = {
   name: string;
   color: string; // Changé de union type vers string pour accepter les valeurs de la DB
 };
-
 export type ContentIdea = {
   id: string;
   title: string;
@@ -14,7 +13,6 @@ export type ContentIdea = {
   popularity: number;
   isFavorite?: boolean;
 };
-
 export type Challenge = {
   id: string;
   title: string;
@@ -22,7 +20,6 @@ export type Challenge = {
   difficulty: "easy" | "medium" | "hard";
   category: string;
 };
-
 export type MarketplaceItem = {
   id: string;
   title: string;

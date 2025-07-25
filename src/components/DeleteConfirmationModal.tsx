@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Trash2, AlertTriangle, X } from 'lucide-react';
-
 interface DeleteConfirmationModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -13,7 +12,6 @@ interface DeleteConfirmationModalProps {
   itemName: string;
   isLoading?: boolean;
 }
-
 const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = ({
   isOpen,
   onClose,
@@ -35,7 +33,6 @@ const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = ({
             className="absolute inset-0 bg-black/50 backdrop-blur-sm"
             onClick={onClose}
           />
-          
           {/* Modal */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -55,7 +52,6 @@ const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = ({
                   {title}
                 </CardTitle>
               </CardHeader>
-              
               <CardContent className="text-center space-y-6">
                 <div className="space-y-2">
                   <p className="text-gray-600 dark:text-gray-300">
@@ -67,12 +63,10 @@ const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = ({
                     </p>
                   </div>
                 </div>
-                
                 <div className="flex items-center gap-2 justify-center text-sm text-orange-600 dark:text-orange-400">
                   <AlertTriangle className="w-4 h-4" />
                   <span>Cette action peut être annulée depuis la corbeille</span>
                 </div>
-                
                 <div className="flex gap-3 pt-4">
                   <Button
                     variant="outline"
@@ -109,5 +103,4 @@ const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = ({
     </AnimatePresence>
   );
 };
-
 export default DeleteConfirmationModal; 

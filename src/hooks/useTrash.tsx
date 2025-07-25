@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-
 interface DeletedContent {
   id: string;
   original_id: string;
@@ -14,16 +13,13 @@ interface DeletedContent {
   deleted_at: string;
   metadata?: any;
 }
-
 export const useTrash = () => {
   const [trashItems, setTrashItems] = useState<DeletedContent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
-
   const loadTrashItems = async () => {
     if (!user) return;
-
     try {
       setLoading(true);
       const { data, error } = await (supabase as any)
@@ -31,7 +27,6 @@ export const useTrash = () => {
         .select('*')
         .eq('user_id', user.id)
         .order('deleted_at', { ascending: false });
-
       if (error) {
         console.error('Erreur chargement corbeille:', error);
         setError(error.message);
@@ -45,17 +40,14 @@ export const useTrash = () => {
       setLoading(false);
     }
   };
-
   const restoreFromTrash = async (itemId: string) => {
     try {
       const item = trashItems.find(item => item.id === itemId);
       if (!item) {
         return { success: false, error: 'Élément non trouvé' };
       }
-
       // Restaurer le contenu selon son type
       let insertResult;
-      
       if (item.content_type === 'category') {
         const { data, error } = await (supabase as any)
           .from('categories')
@@ -67,9 +59,7 @@ export const useTrash = () => {
           })
           .select()
           .single();
-        
         insertResult = { data, error };
-        
       } else if (item.content_type === 'subcategory') {
         const { data, error } = await (supabase as any)
           .from('subcategories')
@@ -81,9 +71,7 @@ export const useTrash = () => {
           })
           .select()
           .single();
-        
         insertResult = { data, error };
-        
       } else if (item.content_type === 'title') {
         const { data, error } = await (supabase as any)
           .from('content_titles')
@@ -96,9 +84,7 @@ export const useTrash = () => {
           })
           .select()
           .single();
-        
         insertResult = { data, error };
-        
       } else if (item.content_type === 'challenge') {
         const { data, error } = await (supabase as any)
           .from('challenges')
@@ -116,66 +102,53 @@ export const useTrash = () => {
           })
           .select()
           .single();
-        
         insertResult = { data, error };
       }
-
       if (insertResult?.error) {
         return { success: false, error: insertResult.error.message };
       }
-
       // Supprimer de la corbeille
       const { error: deleteError } = await (supabase as any)
         .from('deleted_content')
         .delete()
         .eq('id', itemId);
-
       if (deleteError) {
         return { success: false, error: deleteError.message };
       }
-
       // Recharger la corbeille
       await loadTrashItems();
-
       return { success: true };
     } catch (error) {
       console.error('Erreur restauration:', error);
       return { success: false, error: 'Erreur lors de la restauration' };
     }
   };
-
   const permanentlyDelete = async (itemId: string) => {
     try {
       const { error } = await (supabase as any)
         .from('deleted_content')
         .delete()
         .eq('id', itemId);
-
       if (error) {
         return { success: false, error: error.message };
       }
-
       // Recharger la corbeille
       await loadTrashItems();
-
       return { success: true };
     } catch (error) {
       console.error('Erreur suppression définitive:', error);
       return { success: false, error: 'Erreur lors de la suppression' };
     }
   };
-
   const getDaysLeft = (deletedAt: string) => {
     const deletedDate = new Date(deletedAt);
     const now = new Date();
     const daysDiff = Math.floor((now.getTime() - deletedDate.getTime()) / (1000 * 60 * 60 * 24));
     return Math.max(0, 30 - daysDiff); // 30 jours pour supprimer définitivement
   };
-
   useEffect(() => {
     loadTrashItems();
   }, [user]);
-
   return {
     trashItems,
     loading,

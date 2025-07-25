@@ -1,17 +1,13 @@
-
 import React from "react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { Database } from "@/integrations/supabase/types";
-
 type Subcategory = Database['public']['Tables']['subcategories']['Row'];
-
 interface SubcategoryCardProps {
   subcategory: Subcategory;
   className?: string;
   onClick?: () => void;
 }
-
 const SubcategoryCard = ({ subcategory, className, onClick }: SubcategoryCardProps) => {
   return (
     <motion.div
@@ -29,7 +25,6 @@ const SubcategoryCard = ({ subcategory, className, onClick }: SubcategoryCardPro
       <h3 className="font-semibold text-gray-900 dark:text-white text-sm leading-tight">
         {subcategory.name}
       </h3>
-      
       {subcategory.description && (
         <p className="text-xs text-gray-600 dark:text-gray-300 line-clamp-2">
           {subcategory.description}
@@ -38,5 +33,4 @@ const SubcategoryCard = ({ subcategory, className, onClick }: SubcategoryCardPro
     </motion.div>
   );
 };
-
 export default SubcategoryCard;

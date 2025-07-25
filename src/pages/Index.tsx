@@ -1,15 +1,12 @@
-
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-
 import Hero from "@/components/Hero";
 import CategoryCard from "@/components/CategoryCard";
 import ContentCard from "@/components/ContentCard";
 import Navigation from "@/components/Navigation";
 import FavoriteCard from "@/components/FavoriteCard";
 // import TrendingSection from "@/components/TrendingSection";
-
 import { contentIdeas, getPersonalizedRecommendations } from "@/data/mockData";
 import { ContentIdea } from "@/types";
 import { useCategories } from "@/hooks/useCategories";
@@ -23,13 +20,11 @@ import { Badge } from "@/components/ui/badge";
 import { Target, Trophy, Clock, ArrowRight, Heart, User, Star } from "lucide-react";
 import { usePublicChallenges } from "@/hooks/usePublicChallenges";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-
 type UserMeta = {
   first_name?: string;
   last_name?: string;
   avatar_url?: string;
 };
-
 const Index: React.FC = () => {
   const [favoriteIdeas, setFavoriteIdeas] = useState<ContentIdea[]>([]);
   const [visitedCategories, setVisitedCategories] = useState<string[]>(["education", "business"]);
@@ -40,25 +35,20 @@ const Index: React.FC = () => {
   const { user } = useAuth();
   const { favorites, isLoading } = useFavorites('category');
   const { challenges: publicChallenges, toggleLike, addToPersonalChallenges } = usePublicChallenges();
-  
   // Simuler des idées favorites
   useEffect(() => {
     const withFavorites = contentIdeas.map(idea => ({
       ...idea,
       isFavorite: Math.random() > 0.7
     }));
-    
     setFavoriteIdeas(withFavorites.filter(idea => idea.isFavorite));
     setPersonalizedIdeas(getPersonalizedRecommendations(visitedCategories));
   }, [visitedCategories]);
-  
   // Filtrer les catégories favorites
   const favoriteCategories = categories?.filter(cat => favorites.includes(cat.id)) || [];
-
   const handleToggleFavorite = (id: string) => {
     setFavoriteIdeas(prev => {
       const isCurrentlyFavorite = prev.some(idea => idea.id === id);
-      
       if (isCurrentlyFavorite) {
         return prev.filter(idea => idea.id !== id);
       } else {
@@ -70,7 +60,6 @@ const Index: React.FC = () => {
       }
     });
   };
-
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const getCreatorName = (creator: any) => {
     if (!creator) return 'Utilisateur';
@@ -80,7 +69,6 @@ const Index: React.FC = () => {
     if (firstName) return firstName;
     return 'Utilisateur';
   };
-
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -90,7 +78,6 @@ const Index: React.FC = () => {
       }
     }
   };
-
   const itemVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: {
@@ -99,14 +86,11 @@ const Index: React.FC = () => {
       transition: { duration: 0.5 }
     }
   };
-
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Hero />
-      
       {/* Section Tendances */}
       {/* <TrendingSection /> */}
-      
       {/* Section Défi du jour */}
       {user && (
         <section className="container mx-auto px-4 py-4">
@@ -181,7 +165,6 @@ const Index: React.FC = () => {
           </motion.div>
         </section>
       )}
-
       {/* Section Challenge */}
       <section className="container mx-auto px-4 py-4">
         <motion.div
@@ -203,7 +186,6 @@ const Index: React.FC = () => {
               Voir tous
             </Button>
           </div>
-          
           {publicChallenges.length === 0 ? (
             <Card className="text-center py-6">
               <CardContent>
@@ -260,7 +242,6 @@ const Index: React.FC = () => {
                             <Heart className={`w-3 h-3 ${challenge.is_liked ? 'fill-current' : ''}`} />
                             <span className="text-xs">{challenge.likes_count}</span>
                           </Button>
-                          
                           {user && (
                             <Button
                               size="sm"
@@ -281,7 +262,6 @@ const Index: React.FC = () => {
           )}
         </motion.div>
       </section>
-      
       <div className="container mx-auto px-4 py-4">
         {/* Section: Vidéos les plus recherchées */}
         <section className="mb-6">
@@ -293,7 +273,6 @@ const Index: React.FC = () => {
           >
             Idées les plus populaires
           </motion.h2>
-          
           <motion.div 
             className="grid grid-cols-1 md:grid-cols-3 gap-3"
             variants={containerVariants}
@@ -313,7 +292,6 @@ const Index: React.FC = () => {
             ))}
           </motion.div>
         </section>
-        
         {/* Section: Favoris */}
         <section className="mb-6">
           <div className="flex justify-between items-center mb-3">
@@ -334,7 +312,6 @@ const Index: React.FC = () => {
               </button>
             )}
           </div>
-          
           {!user ? (
             <motion.div 
               className="text-center py-6 bg-white dark:bg-gray-800 rounded-lg"
@@ -401,7 +378,6 @@ const Index: React.FC = () => {
             </motion.div>
           )}
         </section>
-        
         {/* Section: Recommandations personnalisées */}
         <section className="mb-6">
           <motion.h2 
@@ -412,7 +388,6 @@ const Index: React.FC = () => {
           >
             Recommandations pour vous
           </motion.h2>
-          
           <motion.div 
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3"
             variants={containerVariants}
@@ -429,7 +404,6 @@ const Index: React.FC = () => {
             ))}
           </motion.div>
         </section>
-        
         {/* Section: Catégories */}
         <section className="mb-6">
           <motion.h2 
@@ -440,7 +414,6 @@ const Index: React.FC = () => {
           >
             Catégories
           </motion.h2>
-          
           <motion.div 
             className="grid grid-flow-col auto-cols-max gap-3 overflow-x-auto pb-3 scrollbar-hide"
             variants={containerVariants}
@@ -468,10 +441,8 @@ const Index: React.FC = () => {
           </motion.div>
         </section>
       </div>
-      
       <Navigation />
     </div>
   );
 };
-
 export default Index;

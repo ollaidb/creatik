@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { useToast } from './use-toast';
-
 interface Challenge {
   id: string;
   title: string;
@@ -16,7 +15,6 @@ interface Challenge {
   created_at: string;
   updated_at: string;
 }
-
 interface UserChallenge {
   id: string;
   user_id: string;
@@ -28,7 +26,6 @@ interface UserChallenge {
   updated_at: string;
   challenge?: Challenge;
 }
-
 interface UserChallengeStats {
   id: string;
   user_id: string;
@@ -41,7 +38,6 @@ interface UserChallengeStats {
   created_at: string;
   updated_at: string;
 }
-
 interface LeaderboardEntry {
   id: string;
   user_id: string;
@@ -50,7 +46,6 @@ interface LeaderboardEntry {
   last_updated: string;
   created_at: string;
 }
-
 export const useChallenges = () => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -60,7 +55,6 @@ export const useChallenges = () => {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
   // Charger tous les défis disponibles
   const loadChallenges = async () => {
     try {
@@ -69,7 +63,6 @@ export const useChallenges = () => {
         .select('*')
         .eq('is_active', true)
         .order('created_at', { ascending: false });
-
       if (error) throw error;
       setChallenges((data as Challenge[]) || []);
     } catch (err) {
@@ -77,11 +70,9 @@ export const useChallenges = () => {
       setError('Impossible de charger les défis');
     }
   };
-
   // Charger les défis de l'utilisateur
   const loadUserChallenges = async () => {
     if (!user) return;
-
     try {
       const { data, error } = await (supabase as any)
         .from('user_challenges')
@@ -91,7 +82,6 @@ export const useChallenges = () => {
         `)
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
-
       if (error) throw error;
       setUserChallenges((data as UserChallenge[]) || []);
     } catch (err) {
@@ -99,25 +89,21 @@ export const useChallenges = () => {
       setError('Impossible de charger vos défis');
     }
   };
-
   // Charger les statistiques de l'utilisateur
   const loadUserStats = async () => {
     if (!user) return;
-
     try {
       const { data, error } = await (supabase as any)
         .from('user_challenge_stats')
         .select('*')
         .eq('user_id', user.id)
         .single();
-
       if (error && error.code !== 'PGRST116') throw error;
       setStats(data as UserChallengeStats);
     } catch (err) {
       console.error('Erreur lors du chargement des statistiques:', err);
     }
   };
-
   // Charger le classement
   const loadLeaderboard = async () => {
     try {
@@ -126,18 +112,15 @@ export const useChallenges = () => {
         .select('*')
         .order('rank_position', { ascending: true })
         .limit(50);
-
       if (error) throw error;
       setLeaderboard((data as LeaderboardEntry[]) || []);
     } catch (err) {
       console.error('Erreur lors du chargement du classement:', err);
     }
   };
-
   // Assigner un défi à l'utilisateur
   const assignChallenge = async (challengeId: string) => {
     if (!user) return { error: 'Utilisateur non connecté' };
-
     try {
       const { error } = await (supabase as any)
         .from('user_challenges')
@@ -147,14 +130,11 @@ export const useChallenges = () => {
           status: 'active',
           points_earned: 0
         });
-
       if (error) throw error;
-
       toast({
         title: "Défi assigné !",
         description: "Le défi a été ajouté à votre liste",
       });
-
       await loadUserChallenges();
       return { success: true };
     } catch (err) {
@@ -162,23 +142,19 @@ export const useChallenges = () => {
       return { error: 'Impossible d\'assigner le défi' };
     }
   };
-
   // Compléter un défi
   const completeChallenge = async (userChallengeId: string) => {
     if (!user) return { error: 'Utilisateur non connecté' };
-
     try {
       // Récupérer le défi pour obtenir les points
       const userChallenge = userChallenges.find(uc => uc.id === userChallengeId);
       if (!userChallenge) {
         return { error: 'Défi non trouvé' };
       }
-
       const challenge = userChallenge.challenge;
       if (!challenge) {
         return { error: 'Défi non trouvé' };
       }
-
       // Mettre à jour le statut du défi
       const { error } = await (supabase as any)
         .from('user_challenges')
@@ -188,17 +164,13 @@ export const useChallenges = () => {
           points_earned: challenge.points
         })
         .eq('id', userChallengeId);
-
       if (error) throw error;
-
       // Mettre à jour le classement
       await (supabase as any).rpc('update_leaderboard');
-
       toast({
         title: "Défi accompli !",
         description: `Félicitations ! Vous avez gagné ${challenge.points} points.`,
       });
-
       await loadUserChallenges();
       await loadUserStats();
       await loadLeaderboard();
@@ -208,11 +180,9 @@ export const useChallenges = () => {
       return { error: 'Impossible de compléter le défi' };
     }
   };
-
   // Mettre à jour la durée du programme
   const updateProgramDuration = async (duration: string) => {
     if (!user) return { error: 'Utilisateur non connecté' };
-
     try {
       const { error } = await (supabase as any)
         .from('user_challenge_stats')
@@ -221,9 +191,7 @@ export const useChallenges = () => {
           program_duration: duration,
           updated_at: new Date().toISOString()
         });
-
       if (error) throw error;
-
       await loadUserStats();
       return { success: true };
     } catch (err) {
@@ -231,26 +199,21 @@ export const useChallenges = () => {
       return { error: 'Impossible de mettre à jour la durée' };
     }
   };
-
   // Charger toutes les données
   useEffect(() => {
     const loadAllData = async () => {
       setLoading(true);
       setError(null);
-
       await Promise.all([
         loadChallenges(),
         loadUserChallenges(),
         loadUserStats(),
         loadLeaderboard()
       ]);
-
       setLoading(false);
     };
-
     loadAllData();
   }, [user]);
-
   return {
     challenges,
     userChallenges,

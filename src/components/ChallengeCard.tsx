@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,15 +5,12 @@ import { Challenge } from "@/types";
 import { motion } from "framer-motion";
 import { ChevronRight } from "lucide-react";
 import { useTheme } from "@/hooks/use-theme";
-
 interface ChallengeCardProps {
   challenge: Challenge;
   onAccept?: (id: string) => void;
 }
-
 const ChallengeCard: React.FC<ChallengeCardProps> = ({ challenge, onAccept }) => {
   const { theme } = useTheme();
-  
   // Function to get icon based on challenge category
   const getChallengeIcon = () => {
     switch (challenge.category) {
@@ -47,7 +43,6 @@ const ChallengeCard: React.FC<ChallengeCardProps> = ({ challenge, onAccept }) =>
         );
     }
   };
-
   // Get background color based on difficulty
   const getBgColor = () => {
     if (theme === "dark") {
@@ -74,7 +69,6 @@ const ChallengeCard: React.FC<ChallengeCardProps> = ({ challenge, onAccept }) =>
       }
     }
   };
-
   return (
     <motion.div
       whileHover={{ scale: 1.02 }}
@@ -103,5 +97,4 @@ const ChallengeCard: React.FC<ChallengeCardProps> = ({ challenge, onAccept }) =>
     </motion.div>
   );
 };
-
 export default ChallengeCard;

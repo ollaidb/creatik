@@ -1,7 +1,5 @@
-
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-
 export const useContentTitles = (subcategoryId: string) => {
   return useQuery({
     queryKey: ['content-titles', subcategoryId],
@@ -11,14 +9,12 @@ export const useContentTitles = (subcategoryId: string) => {
         .select('*')
         .eq('subcategory_id', subcategoryId)
         .order('created_at', { ascending: false });
-      
       if (error) throw error;
       return data;
     },
     enabled: !!subcategoryId
   });
 };
-
 export const useExemplaryAccounts = (subcategoryId: string) => {
   return useQuery({
     queryKey: ['exemplary-accounts', subcategoryId],
@@ -28,14 +24,12 @@ export const useExemplaryAccounts = (subcategoryId: string) => {
         .select('*')
         .eq('subcategory_id', subcategoryId)
         .order('created_at', { ascending: false });
-      
       if (error) throw error;
       return data;
     },
     enabled: !!subcategoryId
   });
 };
-
 export const useContentExamples = (subcategoryId: string) => {
   return useQuery({
     queryKey: ['content-examples', subcategoryId],
@@ -45,14 +39,12 @@ export const useContentExamples = (subcategoryId: string) => {
         .select('*')
         .eq('subcategory_id', subcategoryId)
         .order('created_at', { ascending: false });
-      
       if (error) throw error;
       return data;
     },
     enabled: !!subcategoryId
   });
 };
-
 export const useInspiringContent = (subcategoryId: string) => {
   return useQuery({
     queryKey: ['inspiring-content', subcategoryId],
@@ -62,7 +54,6 @@ export const useInspiringContent = (subcategoryId: string) => {
         .select('*')
         .eq('subcategory_id', subcategoryId)
         .order('popularity_score', { ascending: false });
-      
       if (error) throw error;
       return data;
     },

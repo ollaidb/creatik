@@ -1,21 +1,13 @@
-
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-
 export const useCategories = () => {
   return useQuery({
     queryKey: ['categories'],
     queryFn: async () => {
-      console.log('🔍 Fetching categories...');
-      
       const { data, error } = await supabase
         .from('categories')
         .select('*')
         .order('name');
-      
-      console.log('📊 Categories data:', data);
-      console.log('❌ Error if any:', error);
-      
       if (error) throw error;
       return data;
     },
@@ -29,7 +21,6 @@ export const useCategories = () => {
     staleTime: 10000
   });
 };
-
 export const useCategory = (categoryId: string) => {
   return useQuery({
     queryKey: ['category', categoryId],
@@ -39,7 +30,6 @@ export const useCategory = (categoryId: string) => {
         .select('*')
         .eq('id', categoryId)
         .single();
-      
       if (error) throw error;
       return data;
     },

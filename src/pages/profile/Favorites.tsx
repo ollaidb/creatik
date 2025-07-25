@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -14,7 +13,6 @@ import Navigation from '@/components/Navigation';
 import StickyHeader from '@/components/StickyHeader';
 import ChallengeButton from '@/components/ChallengeButton';
 import { useToast } from '@/hooks/use-toast';
-
 const FAVORITE_TABS = [
   { key: 'categories', label: 'Catégories' },
   { key: 'subcategories', label: 'Sous-catégories' },
@@ -23,7 +21,6 @@ const FAVORITE_TABS = [
   { key: 'sources', label: 'Sources' },
   { key: 'challenges', label: 'Challenges' },
 ];
-
 const Favorites = () => {
   const navigate = useNavigate();
   const [selectedTab, setSelectedTab] = useState('categories');
@@ -36,11 +33,9 @@ const Favorites = () => {
   const { data: allSubcategories = [] } = useSubcategories();
   const { data: allTitles = [] } = useContentTitles();
   const { toast } = useToast();
-
   const categoriesToShow = allCategories.filter(cat => favoriteCategories.includes(cat.id));
   const subcategoriesToShow = allSubcategories.filter(sub => favoriteSubcategories.includes(sub.id));
   const titlesToShow = allTitles.filter(title => favoriteTitles.includes(title.id));
-
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -50,7 +45,6 @@ const Favorites = () => {
       }
     }
   };
-
   const itemVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: {
@@ -59,11 +53,9 @@ const Favorites = () => {
       transition: { duration: 0.5 }
     }
   };
-
   if (!user) {
     return (
       <div className="min-h-screen pb-20">
-        
         <header className="bg-background border-b p-4 flex items-center justify-between">
           <div className="flex items-center">
             <Button 
@@ -77,7 +69,6 @@ const Favorites = () => {
             <h1 className="text-xl font-semibold">Mes Favoris</h1>
           </div>
         </header>
-
         <main className="max-w-4xl mx-auto p-4 flex flex-col items-center justify-center h-60">
           <Heart className="w-16 h-16 text-gray-300 mb-4" />
           <h3 className="text-lg font-medium mb-2">Connexion requise</h3>
@@ -88,15 +79,12 @@ const Favorites = () => {
             Se connecter
           </Button>
         </main>
-
         <Navigation />
       </div>
     );
   }
-
   return (
     <div className="min-h-screen pb-20">
-      
       <header className="bg-background border-b p-4 flex items-center justify-between">
         <div className="flex items-center">
           <Button 
@@ -118,7 +106,6 @@ const Favorites = () => {
           Publier
         </Button>
       </header>
-
       <main className="max-w-7xl mx-auto p-4">
         {/* Menu d'onglets favoris */}
         <div className="mb-6 flex flex-wrap gap-2 justify-center">
@@ -134,7 +121,6 @@ const Favorites = () => {
           ))}
         </div>
         {/* Supprimer l'ancien menu des thèmes horizontal et le bouton Challenge ici */}
-
         {/* Affichage conditionnel selon l'onglet sélectionné */}
         {selectedTab === 'categories' && (
           // ... ici tu mets l'affichage des catégories favorites (comme avant)
@@ -288,10 +274,8 @@ const Favorites = () => {
           </>
         )}
       </main>
-
       <Navigation />
     </div>
   );
 };
-
 export default Favorites;

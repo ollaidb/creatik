@@ -1,9 +1,7 @@
-
 import React, { useState } from "react";
 import { motion, AnimatePresence, PanInfo } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
-
 interface InspirationCardProps {
   color: string;
   quote: string;
@@ -12,7 +10,6 @@ interface InspirationCardProps {
   currentIndex: number;
   dragConstraints: React.RefObject<HTMLDivElement>;
 }
-
 const inspirationCards = [
   {
     color: "from-violet-500 to-purple-700",
@@ -40,7 +37,6 @@ const inspirationCards = [
     path: "/profile/creations"
   }
 ];
-
 const InspirationCard: React.FC<InspirationCardProps> = ({
   color,
   quote,
@@ -51,13 +47,11 @@ const InspirationCard: React.FC<InspirationCardProps> = ({
 }) => {
   const navigate = useNavigate();
   const isActive = index === currentIndex;
-  
   const handleCardClick = () => {
     if (isActive) {
       navigate(path);
     }
   };
-  
   return (
     <motion.div
       layout
@@ -89,23 +83,19 @@ const InspirationCard: React.FC<InspirationCardProps> = ({
     </motion.div>
   );
 };
-
 const InspirationCarousel: React.FC = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const constraintsRef = React.useRef<HTMLDivElement>(null);
   let dragStartY = 0;
-  
   const handleDragStart = (e: MouseEvent | TouchEvent | PointerEvent) => {
     if ('clientY' in e) {
       dragStartY = e.clientY;
     }
   };
-
   const handleDragEnd = (e: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
     if ('clientY' in e) {
       const dragEndY = e.clientY;
       const dragDistance = dragStartY - dragEndY;
-      
       // If dragged down, go to previous card
       if (dragDistance < -50 && currentIndex > 0) {
         setCurrentIndex(currentIndex - 1);
@@ -116,7 +106,6 @@ const InspirationCarousel: React.FC = () => {
       }
     }
   };
-  
   return (
     <div className="py-6 overflow-hidden">
       <motion.div 
@@ -141,5 +130,4 @@ const InspirationCarousel: React.FC = () => {
     </div>
   );
 };
-
 export default InspirationCarousel;

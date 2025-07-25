@@ -8,7 +8,6 @@ import Navigation from '@/components/Navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-
 interface PendingPublication {
   id: string;
   user_id: string;
@@ -20,7 +19,6 @@ interface PendingPublication {
   created_at: string;
   user_email: string;
 }
-
 const ApprovePublications = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -29,7 +27,6 @@ const ApprovePublications = () => {
   const [loading, setLoading] = useState(true);
   const [approving, setApproving] = useState<string | null>(null);
   const [rejecting, setRejecting] = useState<string | null>(null);
-
   const fetchPendingPublications = async () => {
     try {
       const { data, error } = await supabase
@@ -46,7 +43,6 @@ const ApprovePublications = () => {
         `)
         .eq('status', 'pending')
         .order('created_at', { ascending: false });
-
       if (error) {
         console.error('Erreur lors de la récupération des publications:', error);
         toast({
@@ -67,7 +63,6 @@ const ApprovePublications = () => {
           created_at: item.created_at,
           user_email: 'Utilisateur' // Placeholder
         }));
-        
         setPendingPublications(transformedData);
       }
     } catch (error) {
@@ -81,11 +76,9 @@ const ApprovePublications = () => {
       setLoading(false);
     }
   };
-
   useEffect(() => {
     fetchPendingPublications();
   }, []);
-
   const handleApprove = async (publicationId: string) => {
     setApproving(publicationId);
     try {
@@ -94,7 +87,6 @@ const ApprovePublications = () => {
         .from('user_publications')
         .update({ status: 'approved', updated_at: new Date().toISOString() })
         .eq('id', publicationId);
-
       if (error) {
         console.error('Erreur lors de l\'approbation:', error);
         toast({
@@ -121,7 +113,6 @@ const ApprovePublications = () => {
       setApproving(null);
     }
   };
-
   const handleReject = async (publicationId: string) => {
     setRejecting(publicationId);
     try {
@@ -134,7 +125,6 @@ const ApprovePublications = () => {
           updated_at: new Date().toISOString()
         })
         .eq('id', publicationId);
-
       if (error) {
         console.error('Erreur lors du rejet:', error);
         toast({
@@ -161,7 +151,6 @@ const ApprovePublications = () => {
       setRejecting(null);
     }
   };
-
   const getContentTypeIcon = (contentType: string) => {
     switch (contentType) {
       case 'category':
@@ -174,7 +163,6 @@ const ApprovePublications = () => {
         return <FileText className="h-5 w-5" />;
     }
   };
-
   const getContentTypeLabel = (contentType: string) => {
     switch (contentType) {
       case 'category':
@@ -187,7 +175,6 @@ const ApprovePublications = () => {
         return 'Contenu';
     }
   };
-
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('fr-FR', {
@@ -198,7 +185,6 @@ const ApprovePublications = () => {
       minute: '2-digit'
     });
   };
-
   if (loading) {
     return (
       <div className="min-h-screen pb-20">
@@ -213,7 +199,6 @@ const ApprovePublications = () => {
           </Button>
           <h1 className="text-xl font-semibold">Approuver les Publications</h1>
         </header>
-
         <main className="max-w-4xl mx-auto p-4">
           <div className="animate-pulse space-y-4">
             {[...Array(5)].map((_, i) => (
@@ -221,12 +206,10 @@ const ApprovePublications = () => {
             ))}
           </div>
         </main>
-
         <Navigation />
       </div>
     );
   }
-
   return (
     <div className="min-h-screen pb-20">
       <header className="sticky top-0 z-10 bg-background border-b p-4 flex items-center">
@@ -240,7 +223,6 @@ const ApprovePublications = () => {
         </Button>
         <h1 className="text-xl font-semibold">Approuver les Publications</h1>
       </header>
-
       <main className="max-w-4xl mx-auto p-4">
         <div className="mb-6">
           <h2 className="text-2xl font-bold mb-2">Publications en attente</h2>
@@ -248,7 +230,6 @@ const ApprovePublications = () => {
             Approuvez ou rejetez les publications soumises par les utilisateurs
           </p>
         </div>
-
         {pendingPublications.length === 0 ? (
           <Card>
             <CardContent className="text-center py-12">
@@ -283,11 +264,9 @@ const ApprovePublications = () => {
                             </span>
                           </div>
                         </div>
-                        
                         <h3 className="text-lg font-semibold mb-2">
                           {publication.title}
                         </h3>
-                        
                         <div className="space-y-1 text-sm text-muted-foreground">
                           {publication.category_name && (
                             <div>Catégorie: {publication.category_name}</div>
@@ -305,7 +284,6 @@ const ApprovePublications = () => {
                           </div>
                         </div>
                       </div>
-                      
                       <div className="flex items-center gap-2">
                         <Button
                           variant="outline"
@@ -340,10 +318,8 @@ const ApprovePublications = () => {
           </div>
         )}
       </main>
-
       <Navigation />
     </div>
   );
 };
-
 export default ApprovePublications; 

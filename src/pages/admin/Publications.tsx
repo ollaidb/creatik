@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -11,13 +10,11 @@ import { ArrowLeft, Clock, CheckCircle, XCircle, Check, X, Tag, Folder, FolderOp
 import { useAdminPublications } from '@/hooks/useAdminPublications';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-
 const AdminPublications = () => {
   const navigate = useNavigate();
   const { publications, loading, updatePublicationStatus } = useAdminPublications();
   const [rejectionReason, setRejectionReason] = useState('');
   const [selectedPublicationId, setSelectedPublicationId] = useState<string | null>(null);
-
   const getStatusBadge = (status: string | null) => {
     switch (status) {
       case 'pending':
@@ -30,7 +27,6 @@ const AdminPublications = () => {
         return <Badge variant="outline">{status || 'En attente'}</Badge>;
     }
   };
-
   const getContentTypeIcon = (type: string) => {
     switch (type) {
       case 'category':
@@ -45,7 +41,6 @@ const AdminPublications = () => {
         return <Tag className="w-4 h-4 text-gray-500" />;
     }
   };
-
   const getContentTypeLabel = (type: string) => {
     switch (type) {
       case 'category':
@@ -60,7 +55,6 @@ const AdminPublications = () => {
         return type;
     }
   };
-
   const getContentTypeBadgeColor = (type: string) => {
     switch (type) {
       case 'category':
@@ -75,20 +69,16 @@ const AdminPublications = () => {
         return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
-
   const handleApprove = async (id: string) => {
     await updatePublicationStatus(id, 'approved');
   };
-
   const handleReject = async (id: string, reason: string) => {
     await updatePublicationStatus(id, 'rejected', reason);
     setRejectionReason('');
     setSelectedPublicationId(null);
   };
-
   const pendingPublications = publications.filter(pub => pub.status === 'pending' || !pub.status);
   const reviewedPublications = publications.filter(pub => pub.status === 'approved' || pub.status === 'rejected');
-
   if (loading) {
     return (
       <div className="min-h-screen pb-20">
@@ -112,7 +102,6 @@ const AdminPublications = () => {
       </div>
     );
   }
-
   return (
     <div className="min-h-screen pb-20">
       <header className="bg-background border-b p-4 flex items-center">
@@ -126,7 +115,6 @@ const AdminPublications = () => {
         </Button>
         <h1 className="text-xl font-semibold">Administration - Publications</h1>
       </header>
-
       <main className="max-w-6xl mx-auto p-4">
         {/* Publications en attente */}
         <div className="mb-8">
@@ -134,7 +122,6 @@ const AdminPublications = () => {
             <Clock className="w-5 h-5 text-orange-500" />
             Publications en attente ({pendingPublications.length})
           </h2>
-          
           {pendingPublications.length === 0 ? (
             <Card className="text-center py-8">
               <CardContent>
@@ -155,9 +142,7 @@ const AdminPublications = () => {
                           </Badge>
                           {getStatusBadge(publication.status)}
                         </div>
-                        
                         <CardTitle className="text-lg mb-2">{publication.title}</CardTitle>
-                        
                         <div className="grid grid-cols-2 gap-4 text-sm text-muted-foreground mb-3">
                           <div>
                             <span className="font-medium">Soumis par:</span>
@@ -180,7 +165,6 @@ const AdminPublications = () => {
                             </div>
                           )}
                         </div>
-
                         {publication.description && (
                           <div className="bg-gray-50 rounded-lg p-3 mb-3">
                             <span className="font-medium text-sm text-muted-foreground">Description:</span>
@@ -188,7 +172,6 @@ const AdminPublications = () => {
                           </div>
                         )}
                       </div>
-                      
                       <div className="flex gap-2 ml-4">
                         <Button
                           onClick={() => handleApprove(publication.id)}
@@ -250,14 +233,12 @@ const AdminPublications = () => {
             </div>
           )}
         </div>
-
         {/* Publications traitées */}
         <div>
           <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
             <CheckCircle className="w-5 h-5 text-green-500" />
             Publications traitées ({reviewedPublications.length})
           </h2>
-          
           {reviewedPublications.length === 0 ? (
             <Card className="text-center py-8">
               <CardContent>
@@ -278,9 +259,7 @@ const AdminPublications = () => {
                           </Badge>
                           {getStatusBadge(publication.status)}
                         </div>
-                        
                         <CardTitle className="text-lg mb-2">{publication.title}</CardTitle>
-                        
                         <div className="grid grid-cols-2 gap-4 text-sm text-muted-foreground mb-3">
                           <div>
                             <span className="font-medium">Soumis par:</span>
@@ -303,14 +282,12 @@ const AdminPublications = () => {
                             </div>
                           )}
                         </div>
-
                         {publication.description && (
                           <div className="bg-gray-50 rounded-lg p-3 mb-3">
                             <span className="font-medium text-sm text-muted-foreground">Description:</span>
                             <p className="text-sm mt-1">{publication.description}</p>
                           </div>
                         )}
-
                         {publication.status === 'rejected' && publication.rejection_reason && (
                           <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3">
                             <p className="text-sm text-destructive font-medium mb-1">Raison du rejet :</p>
@@ -329,5 +306,4 @@ const AdminPublications = () => {
     </div>
   );
 };
-
 export default AdminPublications;

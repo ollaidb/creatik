@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -12,11 +11,9 @@ import ChallengeButton from '@/components/ChallengeButton';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useFavorites } from '@/hooks/useFavorites';
-
 const Categories = () => {
   const navigate = useNavigate();
   const { subcategoryId, categoryId } = useParams();
-
   const handleBack = () => {
     if (subcategoryId) {
       navigate(`/category/${categoryId}/subcategories`);
@@ -26,30 +23,21 @@ const Categories = () => {
       navigate('/');
     }
   };
-
   const [selectedTheme, setSelectedTheme] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
-  
   const { data: categories, isLoading, error } = useCategoriesByTheme(selectedTheme);
-  console.log('categories:', categories);
-  console.log('error:', error);
   const { data: themes } = useThemes();
-
   const handleSearch = (query: string) => {
     navigate(`/search?search=${encodeURIComponent(query)}`);
   };
-
   const selectedThemeName = themes?.find(t => t.id === selectedTheme)?.name || 
                            (selectedTheme === 'all' ? 'Tout' : 'Tout');
-
   const filteredCategories = categories?.filter(category => {
     return category.name.toLowerCase().includes(searchTerm.toLowerCase());
   }) || [];
-
   // Onglet Titres / Sources / Comptes
   // Supprimer le code du menu à onglets Titres / Comptes / Sources
   // Supprimer aussi les conditions d'affichage liées à tab (tab === 'titres', tab === 'sources', tab === 'comptes')
-
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -59,12 +47,10 @@ const Categories = () => {
       }
     }
   };
-
   const itemVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0 }
   };
-
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header fixe pour mobile */}
@@ -93,7 +79,6 @@ const Categories = () => {
           </Button>
         </div>
       </div>
-
       <div className="px-4 py-4">
         {/* Barre de recherche intelligente et bouton Challenge */}
         <div className="mb-6">
@@ -112,10 +97,8 @@ const Categories = () => {
             </div>
           </div>
         </div>
-
         {/* Menu des thèmes - Version Desktop (boutons) */}
         {/* Supprimer le menu à onglets Titres / Comptes / Sources */}
-
         {/* Menu des thèmes - Version Mobile (dropdown) */}
         <div className="mb-6 md:hidden">
           <Select 
@@ -139,7 +122,6 @@ const Categories = () => {
             </SelectContent>
           </Select>
         </div>
-
         {isLoading ? (
           <div className="text-center py-8">
             <p>Chargement des catégories...</p>
@@ -170,7 +152,6 @@ const Categories = () => {
                     </motion.div>
                   ))}
                 </motion.div>
-
                 {filteredCategories?.length === 0 && !isLoading && (
                   <div className="flex flex-col items-center justify-center h-60 text-center px-4">
                     <h3 className="text-lg font-medium">Aucune catégorie trouvée</h3>
@@ -193,10 +174,8 @@ const Categories = () => {
           </>
         )}
       </div>
-
       <Navigation />
     </div>
   );
 };
-
 export default Categories;

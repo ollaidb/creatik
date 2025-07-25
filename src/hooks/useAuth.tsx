@@ -1,8 +1,6 @@
-
 import { useState, useEffect, createContext, useContext } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-
 interface AuthContextType {
   user: User | null;
   session: Session | null;
@@ -13,14 +11,11 @@ interface AuthContextType {
   signInWithGoogle: () => Promise<{ error: any }>;
   signInWithApple: () => Promise<{ error: any }>;
 }
-
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-
   useEffect(() => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -30,20 +25,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setLoading(false);
       }
     );
-
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
     });
-
     return () => subscription.unsubscribe();
   }, []);
-
   const signUp = async (email: string, password: string, metadata?: any) => {
     const redirectUrl = `${window.location.origin}/`;
-    
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -54,7 +45,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     });
     return { error };
   };
-
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({
       email,
@@ -62,12 +52,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     });
     return { error };
   };
-
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
     return { error };
   };
-
   const signInWithGoogle = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
@@ -77,7 +65,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     });
     return { error };
   };
-
   const signInWithApple = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'apple',
@@ -87,7 +74,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     });
     return { error };
   };
-
   return (
     <AuthContext.Provider value={{
       user,
@@ -103,7 +89,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     </AuthContext.Provider>
   );
 };
-
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {

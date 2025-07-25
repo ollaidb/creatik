@@ -1,17 +1,13 @@
-
 import React from "react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { ExternalLink, Heart, Eye } from "lucide-react";
 import { Database } from "@/integrations/supabase/types";
-
 type InspiringContent = Database['public']['Tables']['inspiring_content']['Row'];
-
 interface InspiringContentCardProps {
   content: InspiringContent;
   className?: string;
 }
-
 const InspiringContentCard = ({ content, className }: InspiringContentCardProps) => {
   const handleOpenLink = () => {
     if (content.video_url) {
@@ -20,7 +16,6 @@ const InspiringContentCard = ({ content, className }: InspiringContentCardProps)
       window.open(content.account_url, '_blank');
     }
   };
-
   return (
     <motion.div
       whileHover={{ y: -2 }}
@@ -36,7 +31,6 @@ const InspiringContentCard = ({ content, className }: InspiringContentCardProps)
         <h3 className="font-semibold text-gray-900 dark:text-white text-sm leading-tight flex-1">
           {content.title}
         </h3>
-        
         {(content.video_url || content.account_url) && (
           <button
             onClick={handleOpenLink}
@@ -46,13 +40,11 @@ const InspiringContentCard = ({ content, className }: InspiringContentCardProps)
           </button>
         )}
       </div>
-
       {content.hook && (
         <p className="text-xs text-gray-600 dark:text-gray-300 line-clamp-2">
           <span className="font-medium">Hook:</span> {content.hook}
         </p>
       )}
-
       <div className="flex items-center justify-between text-xs text-gray-500">
         <div className="flex items-center gap-3">
           {content.platform && (
@@ -60,14 +52,12 @@ const InspiringContentCard = ({ content, className }: InspiringContentCardProps)
               {content.platform}
             </span>
           )}
-          
           {content.format && (
             <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded-full">
               {content.format}
             </span>
           )}
         </div>
-
         {content.popularity_score && (
           <div className="flex items-center gap-1">
             <Eye size={12} />
@@ -75,7 +65,6 @@ const InspiringContentCard = ({ content, className }: InspiringContentCardProps)
           </div>
         )}
       </div>
-
       {content.hashtags && content.hashtags.length > 0 && (
         <div className="flex flex-wrap gap-1">
           {content.hashtags.slice(0, 3).map((hashtag, index) => (
@@ -93,7 +82,6 @@ const InspiringContentCard = ({ content, className }: InspiringContentCardProps)
           )}
         </div>
       )}
-
       {content.account_example && (
         <p className="text-xs text-gray-600 dark:text-gray-300">
           <span className="font-medium">Exemple:</span> {content.account_example}
@@ -102,5 +90,4 @@ const InspiringContentCard = ({ content, className }: InspiringContentCardProps)
     </motion.div>
   );
 };
-
 export default InspiringContentCard;

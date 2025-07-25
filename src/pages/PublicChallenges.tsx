@@ -9,18 +9,14 @@ import { ArrowLeft, Heart, Target, Plus, User, Clock, Star } from 'lucide-react'
 import { usePublicChallenges } from '@/hooks/usePublicChallenges';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
-
 const PublicChallenges = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const { toast } = useToast();
-  
   // Déterminer si on affiche seulement les challenges likés
   const filterLikedOnly = searchParams.get('filter') === 'liked';
-  
   const { challenges, loading, error, toggleLike, addToPersonalChallenges } = usePublicChallenges(filterLikedOnly);
-
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
       case 'easy': return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400';
@@ -29,7 +25,6 @@ const PublicChallenges = () => {
       default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400';
     }
   };
-
   const getDifficultyText = (difficulty: string) => {
     switch (difficulty) {
       case 'easy': return 'Facile';
@@ -38,7 +33,6 @@ const PublicChallenges = () => {
       default: return 'Moyen';
     }
   };
-
   const getCreatorName = (creator: any) => {
     if (!creator) return 'Utilisateur';
     const firstName = creator.user_metadata?.first_name;
@@ -47,7 +41,6 @@ const PublicChallenges = () => {
     if (firstName) return firstName;
     return 'Utilisateur';
   };
-
   if (loading) {
     return (
       <div className="min-h-screen pb-20">
@@ -72,7 +65,6 @@ const PublicChallenges = () => {
       </div>
     );
   }
-
   if (error) {
     return (
       <div className="min-h-screen pb-20">
@@ -104,7 +96,6 @@ const PublicChallenges = () => {
       </div>
     );
   }
-
   return (
     <div className="min-h-screen pb-20">
       <header className="bg-background border-b p-4 flex items-center justify-between">
@@ -131,7 +122,6 @@ const PublicChallenges = () => {
           </Button>
         )}
       </header>
-
       <main className="max-w-4xl mx-auto p-4">
         {challenges.length === 0 ? (
           <Card className="text-center py-12">
@@ -196,7 +186,6 @@ const PublicChallenges = () => {
                   </CardHeader>
                   <CardContent>
                     <p className="text-muted-foreground mb-4">{challenge.description}</p>
-                    
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4 text-sm text-muted-foreground">
                         <div className="flex items-center gap-1">
@@ -208,7 +197,6 @@ const PublicChallenges = () => {
                           <span>{challenge.category}</span>
                         </div>
                       </div>
-                      
                       <div className="flex items-center gap-2">
                         <Button
                           variant="ghost"
@@ -221,7 +209,6 @@ const PublicChallenges = () => {
                           <Heart className={`w-4 h-4 ${challenge.is_liked ? 'fill-current' : ''}`} />
                           <span>{challenge.likes_count}</span>
                         </Button>
-                        
                         {user && (
                           <Button
                             size="sm"
@@ -244,5 +231,4 @@ const PublicChallenges = () => {
     </div>
   );
 };
-
 export default PublicChallenges; 

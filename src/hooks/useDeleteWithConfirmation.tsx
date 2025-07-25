@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
-
 interface DeleteItem {
   id: string;
   title: string;
@@ -12,12 +11,10 @@ interface DeleteItem {
   subcategory_id?: string;
   metadata?: Record<string, unknown>;
 }
-
 export const useDeleteWithConfirmation = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [isDeleting, setIsDeleting] = useState(false);
-
   const deleteItem = async (item: DeleteItem) => {
     if (!user) {
       toast({
@@ -27,9 +24,7 @@ export const useDeleteWithConfirmation = () => {
       });
       return { success: false };
     }
-
     setIsDeleting(true);
-
     try {
       // 1. Ajouter à la corbeille
       const { error: trashError } = await (supabase as any)
@@ -46,14 +41,11 @@ export const useDeleteWithConfirmation = () => {
           deleted_at: new Date().toISOString(),
           will_be_deleted_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() // 30 jours
         });
-
       if (trashError) {
         throw new Error(`Erreur lors de l'ajout à la corbeille: ${trashError.message}`);
       }
-
       // 2. Supprimer de la table d'origine selon le type
       let deleteError = null;
-
       switch (item.type) {
         case 'category': {
           const { error: catError } = await supabase
@@ -63,7 +55,6 @@ export const useDeleteWithConfirmation = () => {
           deleteError = catError;
           break;
         }
-
         case 'subcategory': {
           const { error: subError } = await supabase
             .from('subcategories')
@@ -72,7 +63,6 @@ export const useDeleteWithConfirmation = () => {
           deleteError = subError;
           break;
         }
-
         case 'title': {
           const { error: titleError } = await supabase
             .from('content_titles')
@@ -81,36 +71,29 @@ export const useDeleteWithConfirmation = () => {
           deleteError = titleError;
           break;
         }
-
         default:
           throw new Error('Type de publication non supporté');
       }
-
       if (deleteError) {
         throw new Error(`Erreur lors de la suppression: ${deleteError.message}`);
       }
-
       toast({
         title: "Élément supprimé",
         description: `${item.title} a été déplacé vers la corbeille`,
       });
-
       return { success: true };
     } catch (error) {
       console.error('Erreur lors de la suppression:', error);
-      
       toast({
         title: "Erreur",
         description: error instanceof Error ? error.message : "Impossible de supprimer l'élément",
         variant: "destructive"
       });
-
       return { success: false };
     } finally {
       setIsDeleting(false);
     }
   };
-
   return {
     deleteItem,
     isDeleting

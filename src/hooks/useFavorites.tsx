@@ -1,12 +1,9 @@
-
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
-
 export function useFavorites(type: string) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-
   const { data: favorites = [], isLoading } = useQuery({
     queryKey: ['favorites', user?.id, type],
     queryFn: async () => {
@@ -23,7 +20,6 @@ export function useFavorites(type: string) {
     },
     enabled: !!user
   });
-
   const toggleFavorite = async (itemId: string) => {
     if (!user) return;
     const isFavorite = favorites.includes(itemId);
@@ -43,7 +39,6 @@ export function useFavorites(type: string) {
     }
     queryClient.invalidateQueries({ queryKey: ['favorites', user?.id, type] });
   };
-
   return {
     favorites,
     isLoading,

@@ -1,7 +1,5 @@
-
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-
 export const useInspiringContent = (subcategoryId?: string) => {
   return useQuery({
     queryKey: ['inspiring-content', subcategoryId],
@@ -10,19 +8,15 @@ export const useInspiringContent = (subcategoryId?: string) => {
         .from('inspiring_content')
         .select('*')
         .order('popularity_score', { ascending: false });
-      
       if (subcategoryId) {
         query = query.eq('subcategory_id', subcategoryId);
       }
-      
       const { data, error } = await query;
-      
       if (error) throw error;
       return data;
     }
   });
 };
-
 export const useInspiringContentById = (contentId: string) => {
   return useQuery({
     queryKey: ['inspiring-content', contentId],
@@ -32,7 +26,6 @@ export const useInspiringContentById = (contentId: string) => {
         .select('*')
         .eq('id', contentId)
         .single();
-      
       if (error) throw error;
       return data;
     },

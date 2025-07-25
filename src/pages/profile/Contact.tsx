@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -11,7 +10,6 @@ import { ArrowLeft, Plus, Mail, MessageCircle, Bug, Lightbulb } from 'lucide-rea
 import { useToast } from '@/hooks/use-toast';
 import Navigation from '@/components/Navigation';
 import StickyHeader from '@/components/StickyHeader';
-
 const Contact = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -22,18 +20,15 @@ const Contact = () => {
     category: '',
     message: ''
   });
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // Ici on traiterait normalement l'envoi du message
-    console.log('Message envoyé:', formData);
     toast({
       title: "Message envoyé",
       description: "Nous vous répondrons dans les plus brefs délais."
     });
     setFormData({ name: '', email: '', subject: '', category: '', message: '' });
   };
-
   const contactOptions = [
     {
       icon: MessageCircle,
@@ -56,11 +51,9 @@ const Contact = () => {
       description: 'Aide technique et assistance'
     }
   ];
-
   return (
     <div className="min-h-screen pb-20">
       <StickyHeader showSearchBar={false} />
-      
       <header className="bg-background border-b p-4 flex items-center justify-between">
         <div className="flex items-center">
           <Button 
@@ -82,7 +75,6 @@ const Contact = () => {
           Publier
         </Button>
       </header>
-
       <main className="max-w-4xl mx-auto p-4 space-y-6">
         {/* Options de contact */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -100,7 +92,6 @@ const Contact = () => {
             </Card>
           ))}
         </div>
-
         {/* Formulaire de contact */}
         <Card>
           <CardHeader>
@@ -129,7 +120,6 @@ const Contact = () => {
                   />
                 </div>
               </div>
-
               <div>
                 <Label htmlFor="category">Catégorie</Label>
                 <Select 
@@ -147,7 +137,6 @@ const Contact = () => {
                   </SelectContent>
                 </Select>
               </div>
-
               <div>
                 <Label htmlFor="subject">Sujet</Label>
                 <Input
@@ -157,7 +146,6 @@ const Contact = () => {
                   required
                 />
               </div>
-
               <div>
                 <Label htmlFor="message">Message</Label>
                 <Textarea
@@ -168,7 +156,6 @@ const Contact = () => {
                   required
                 />
               </div>
-
               <Button type="submit" className="w-full">
                 Envoyer le message
               </Button>
@@ -176,10 +163,8 @@ const Contact = () => {
           </CardContent>
         </Card>
       </main>
-
       <Navigation />
     </div>
   );
 };
-
 export default Contact;

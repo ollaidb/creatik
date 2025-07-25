@@ -2,14 +2,12 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Target } from 'lucide-react';
-
 interface ChallengeButtonProps {
   filterLiked?: boolean;
   className?: string;
   variant?: 'default' | 'outline' | 'secondary' | 'ghost' | 'destructive' | 'link';
   size?: 'default' | 'sm' | 'lg' | 'icon';
 }
-
 const ChallengeButton: React.FC<ChallengeButtonProps> = ({ 
   filterLiked = false, 
   className = "",
@@ -17,12 +15,10 @@ const ChallengeButton: React.FC<ChallengeButtonProps> = ({
   size = "default"
 }) => {
   const navigate = useNavigate();
-
   const handleClick = () => {
     const url = filterLiked ? '/challenges?filter=liked' : '/challenges';
     navigate(url);
   };
-
   return (
     <Button
       onClick={handleClick}
@@ -35,5 +31,4 @@ const ChallengeButton: React.FC<ChallengeButtonProps> = ({
     </Button>
   );
 };
-
 export default ChallengeButton; 

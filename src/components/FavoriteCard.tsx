@@ -1,8 +1,6 @@
-
 import React from 'react';
 import { Heart } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
 interface FavoriteCardProps {
   category: {
     id: string;
@@ -12,7 +10,6 @@ interface FavoriteCardProps {
   onClick: () => void;
   className?: string;
 }
-
 const FavoriteCard: React.FC<FavoriteCardProps> = ({ category, onClick, className }) => {
   const getGradientClass = (color: string) => {
     switch (color) {
@@ -28,7 +25,6 @@ const FavoriteCard: React.FC<FavoriteCardProps> = ({ category, onClick, classNam
         return 'from-blue-500 to-purple-600';
     }
   };
-
   return (
     <div
       className={cn(
@@ -51,5 +47,4 @@ const FavoriteCard: React.FC<FavoriteCardProps> = ({ category, onClick, classNam
     </div>
   );
 };
-
 export default FavoriteCard;

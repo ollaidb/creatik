@@ -9,7 +9,6 @@ import { useSearchHistory } from '@/hooks/useSearchHistory';
 import { useAuth } from '@/hooks/useAuth';
 import Navigation from '@/components/Navigation';
 import IntelligentSearchBar from '@/components/IntelligentSearchBar';
-
 interface SearchResult {
   id: string;
   title: string;
@@ -19,66 +18,54 @@ interface SearchResult {
   subcategory_id?: string;
   relevance: number;
 }
-
 const SearchResults = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const query = searchParams.get('search') || '';
   const [activeFilter, setActiveFilter] = useState('all');
-  
   const { user } = useAuth();
   const { history } = useSearchHistory();
   const { searchContent, searchResults, loading, error } = useContentSearch();
-
   useEffect(() => {
     if (query) {
       searchContent(query);
     }
   }, [query]);
-
   const handleSearch = (newQuery: string) => {
     navigate(`/search?search=${encodeURIComponent(newQuery)}`);
   };
-
   // Organiser les résultats par type
   const categories = searchResults.filter(result => result.content_type === 'category');
   const subcategories = searchResults.filter(result => result.content_type === 'subcategory');
   const titles = searchResults.filter(result => result.content_type === 'title');
-
   const handleCategoryClick = (category: SearchResult) => {
     navigate(`/category/${category.id}/subcategories`);
   };
-
   const handleSubcategoryClick = (subcategory: SearchResult) => {
     // Extraire categoryId depuis subcategory.category_name ou utiliser une logique différente
     navigate(`/category/${subcategory.id}/subcategories`);
   };
-
   const handleTitleClick = (title: SearchResult) => {
     // Naviguer vers la page des titres de cette sous-catégorie
     if (title.subcategory_id) {
       navigate(`/category/${title.subcategory_id}/subcategory/${title.id}`);
     }
   };
-
   const handleViewMoreCategories = () => {
     navigate(`/categories`);
   };
-
   const handleViewMoreSubcategories = () => {
     // Naviguer vers la première catégorie trouvée ou une page générale
     if (categories.length > 0) {
       navigate(`/category/${categories[0].id}/subcategories`);
     }
   };
-
   const handleViewMoreTitles = () => {
     // Naviguer vers la première sous-catégorie trouvée
     if (subcategories.length > 0) {
       navigate(`/category/${subcategories[0].id}/subcategories`);
     }
   };
-
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -88,7 +75,6 @@ const SearchResults = () => {
       }
     }
   };
-
   const itemVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: {
@@ -97,7 +83,6 @@ const SearchResults = () => {
       transition: { duration: 0.5 }
     }
   };
-
   return (
     <div className="min-h-screen pb-20">
       {/* Header avec barre de recherche */}
@@ -118,7 +103,6 @@ const SearchResults = () => {
           </div>
         </div>
       </header>
-
       <main className="max-w-4xl mx-auto p-4">
         {/* Résultats de recherche */}
         {loading ? (
@@ -145,7 +129,6 @@ const SearchResults = () => {
                 {searchResults.length} résultat{searchResults.length !== 1 ? 's' : ''} trouvé{searchResults.length !== 1 ? 's' : ''}
               </p>
             </div>
-
             <motion.div
               className="space-y-8"
               variants={containerVariants}
@@ -195,7 +178,6 @@ const SearchResults = () => {
                   </div>
                 </motion.div>
               )}
-
               {/* Section SOUS-CATÉGORIES */}
               {subcategories.length > 0 && (
                 <motion.div variants={itemVariants}>
@@ -241,7 +223,6 @@ const SearchResults = () => {
                   </div>
                 </motion.div>
               )}
-
               {/* Section TITRES */}
               {titles.length > 0 && (
                 <motion.div variants={itemVariants}>
@@ -287,7 +268,6 @@ const SearchResults = () => {
                   </div>
                 </motion.div>
               )}
-
               {/* Message si aucun résultat */}
               {searchResults.length === 0 && (
                 <div className="text-center py-12">
@@ -312,7 +292,6 @@ const SearchResults = () => {
             </p>
           </div>
         )}
-
         {/* Historique des recherches */}
         {user && history.length > 0 && (
           <div className="mt-8">
@@ -336,10 +315,8 @@ const SearchResults = () => {
           </div>
         )}
       </main>
-
       <Navigation />
     </div>
   );
 };
-
 export default SearchResults; 

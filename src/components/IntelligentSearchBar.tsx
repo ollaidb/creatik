@@ -8,13 +8,11 @@ import { useContentSearch } from '@/hooks/useContentSearch';
 import { useCategories } from '@/hooks/useCategories';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-
 interface IntelligentSearchBarProps {
   onSearch?: (query: string) => void;
   placeholder?: string;
   className?: string;
 }
-
 interface SearchResult {
   id: string;
   title: string;
@@ -25,12 +23,10 @@ interface SearchResult {
   category_id?: string;
   relevance: number;
 }
-
 interface HistoryItem {
   id: string;
   query: string;
 }
-
 interface FixedSuggestion {
   id: string;
   title: string;
@@ -42,7 +38,6 @@ interface FixedSuggestion {
   icon: string;
   color: string;
 }
-
 const IntelligentSearchBar: React.FC<IntelligentSearchBarProps> = ({ 
   onSearch, 
   placeholder = "Rechercher des idées créatives...",
@@ -52,20 +47,16 @@ const IntelligentSearchBar: React.FC<IntelligentSearchBarProps> = ({
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
-  
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
-  
   const { user } = useAuth();
   const { history, addToHistory } = useSearchHistory();
   const { searchContent } = useContentSearch();
   const { data: categories } = useCategories();
-
   // Créer des suggestions basées sur les vraies catégories
   const getFixedSuggestions = (): FixedSuggestion[] => {
     if (!categories || categories.length === 0) return [];
-    
     // Prendre les 6 premières catégories
     return categories.slice(0, 6).map((category, index) => {
       const icons = ['💡', '📚', '🎨', '💻', '🌟', '🍳'];
@@ -77,7 +68,6 @@ const IntelligentSearchBar: React.FC<IntelligentSearchBarProps> = ({
         'bg-pink-100 text-pink-600',
         'bg-red-100 text-red-600'
       ];
-      
       return {
         id: category.id,
         title: category.name,
@@ -88,9 +78,7 @@ const IntelligentSearchBar: React.FC<IntelligentSearchBarProps> = ({
       };
     });
   };
-
   const fixedSuggestions = getFixedSuggestions();
-
   // Gérer le clic en dehors pour fermer les suggestions
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -103,18 +91,15 @@ const IntelligentSearchBar: React.FC<IntelligentSearchBarProps> = ({
         }, 100);
       }
     };
-
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
-
   // Rechercher du contenu
   const searchContentWithDebounce = async (searchQuery: string) => {
     if (searchQuery.length < 2) {
       setSearchResults([]);
       return;
     }
-
     setLoading(true);
     try {
       const results = await searchContent(searchQuery);
@@ -126,7 +111,6 @@ const IntelligentSearchBar: React.FC<IntelligentSearchBarProps> = ({
       setLoading(false);
     }
   };
-
   // Debounce pour la recherche
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -136,20 +120,16 @@ const IntelligentSearchBar: React.FC<IntelligentSearchBarProps> = ({
         setSearchResults([]);
       }
     }, 300);
-
     return () => clearTimeout(timeoutId);
   }, [query]);
-
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setQuery(value);
     setShowSuggestions(true); // Garder les suggestions ouvertes
   };
-
   const handleInputFocus = () => {
     setShowSuggestions(true);
   };
-
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && query.trim()) {
       e.preventDefault();
@@ -159,16 +139,13 @@ const IntelligentSearchBar: React.FC<IntelligentSearchBarProps> = ({
       inputRef.current?.blur();
     }
   };
-
   const handleSubmit = async () => {
     if (query.trim()) {
       addToHistory(query.trim());
-      
       // Faire une recherche directe
       try {
         setLoading(true);
         const results = await searchContent(query.trim());
-        
         if (results.length > 0) {
           // Prendre le premier résultat (le plus pertinent)
           const bestResult = results[0];
@@ -191,11 +168,9 @@ const IntelligentSearchBar: React.FC<IntelligentSearchBarProps> = ({
       }
     }
   };
-
   const handleSearchButtonClick = () => {
     handleSubmit();
   };
-
   const handleSuggestionClick = (suggestion: FixedSuggestion | SearchResult) => {
     // Navigation directe vers la page finale
     if (suggestion.content_type === 'category') {
@@ -210,15 +185,12 @@ const IntelligentSearchBar: React.FC<IntelligentSearchBarProps> = ({
     setShowSuggestions(false);
     setQuery(''); // Vider le champ de recherche après navigation
   };
-
   const handleHistoryClick = async (historyItem: HistoryItem) => {
     setQuery(historyItem.query);
-    
     // Faire une recherche directe avec l'historique
     try {
       setLoading(true);
       const results = await searchContent(historyItem.query);
-      
       if (results.length > 0) {
         // Prendre le premier résultat (le plus pertinent)
         const bestResult = results[0];
@@ -240,17 +212,14 @@ const IntelligentSearchBar: React.FC<IntelligentSearchBarProps> = ({
       setShowSuggestions(false);
     }
   };
-
   const clearQuery = () => {
     setQuery('');
     setSearchResults([]);
     setShowSuggestions(false);
     inputRef.current?.focus();
   };
-
   const hasSuggestions = fixedSuggestions.length > 0 || searchResults.length > 0;
   const hasHistory = user && history.length > 0;
-
   return (
     <div ref={containerRef} className={`relative ${className}`}>
       <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} className="relative">
@@ -278,7 +247,6 @@ const IntelligentSearchBar: React.FC<IntelligentSearchBarProps> = ({
           </div>
         </div>
       </form>
-
       {/* Suggestions et résultats */}
       <AnimatePresence>
         {showSuggestions && (hasSuggestions || hasHistory || loading) && (
@@ -321,7 +289,6 @@ const IntelligentSearchBar: React.FC<IntelligentSearchBarProps> = ({
                     ))}
                   </div>
                 )}
-
                 {/* Historique des recherches */}
                 {hasHistory && (
                   <div className="border-t pt-2">
@@ -354,5 +321,4 @@ const IntelligentSearchBar: React.FC<IntelligentSearchBarProps> = ({
     </div>
   );
 };
-
 export default IntelligentSearchBar; 

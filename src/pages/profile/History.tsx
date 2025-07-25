@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -9,12 +8,10 @@ import Navigation from '@/components/Navigation';
 import StickyHeader from '@/components/StickyHeader';
 import { useAuth } from '@/hooks/useAuth';
 import { useSearchHistory } from '@/hooks/useSearchHistory';
-
 const History = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { history, clearHistory } = useSearchHistory();
-
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -24,7 +21,6 @@ const History = () => {
       }
     }
   };
-
   const itemVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: {
@@ -33,7 +29,6 @@ const History = () => {
       transition: { duration: 0.5 }
     }
   };
-
   const formatTimestamp = (timestamp: string) => {
     const date = new Date(timestamp);
     return date.toLocaleDateString('fr-FR', {
@@ -44,12 +39,10 @@ const History = () => {
       minute: '2-digit'
     });
   };
-
   if (!user) {
     return (
       <div className="min-h-screen pb-20">
         <StickyHeader showSearchBar={false} />
-        
         <header className="bg-background border-b p-4 flex items-center justify-between">
           <div className="flex items-center">
             <Button 
@@ -63,7 +56,6 @@ const History = () => {
             <h1 className="text-xl font-semibold">Historique</h1>
           </div>
         </header>
-
         <main className="max-w-4xl mx-auto p-4 flex flex-col items-center justify-center h-60">
           <Clock className="w-16 h-16 text-gray-300 mb-4" />
           <h3 className="text-lg font-medium mb-2">Connexion requise</h3>
@@ -74,16 +66,13 @@ const History = () => {
             Se connecter
           </Button>
         </main>
-
         <Navigation />
       </div>
     );
   }
-
   return (
     <div className="min-h-screen pb-20">
       <StickyHeader showSearchBar={false} />
-      
       <header className="bg-background border-b p-4 flex items-center justify-between">
         <div className="flex items-center">
           <Button 
@@ -118,7 +107,6 @@ const History = () => {
           </Button>
         </div>
       </header>
-
       <main className="max-w-4xl mx-auto p-4">
         {history.length > 0 ? (
           <motion.div
@@ -166,10 +154,8 @@ const History = () => {
           </div>
         )}
       </main>
-
       <Navigation />
     </div>
   );
 };
-
 export default History;

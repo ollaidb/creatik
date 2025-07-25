@@ -9,7 +9,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import Navigation from '@/components/Navigation';
 import StickyHeader from '@/components/StickyHeader';
-
 interface SearchResult {
   id: string;
   title: string;
@@ -19,56 +18,46 @@ interface SearchResult {
   subcategory_id?: string;
   relevance: number;
 }
-
 const Home = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { history, addToHistory } = useSearchHistory();
   const { searchContent, searchResults, loading, error } = useContentSearch();
   const [hasSearched, setHasSearched] = useState(false);
-
   // Organiser les résultats par type
   const categories = searchResults.filter(result => result.content_type === 'category');
   const subcategories = searchResults.filter(result => result.content_type === 'subcategory');
   const titles = searchResults.filter(result => result.content_type === 'title');
-
   const handleCategoryClick = (category: SearchResult) => {
     navigate(`/category/${category.id}/subcategories`);
   };
-
   const handleSubcategoryClick = (subcategory: SearchResult) => {
     navigate(`/category/${subcategory.id}/subcategories`);
   };
-
   const handleTitleClick = (title: SearchResult) => {
     if (title.subcategory_id) {
       navigate(`/category/${title.subcategory_id}/subcategory/${title.id}`);
     }
   };
-
   const handleViewMoreCategories = () => {
     navigate(`/categories`);
   };
-
   const handleViewMoreSubcategories = () => {
     if (categories.length > 0) {
       navigate(`/category/${categories[0].id}/subcategories`);
     }
   };
-
   const handleViewMoreTitles = () => {
     if (subcategories.length > 0) {
       navigate(`/category/${subcategories[0].id}/subcategories`);
     }
   };
-
   // Callback pour la recherche depuis le header
   const handleSearchFromHeader = (query: string) => {
     addToHistory(query);
     searchContent(query);
     setHasSearched(true);
   };
-
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -78,7 +67,6 @@ const Home = () => {
       }
     }
   };
-
   const itemVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: {
@@ -87,11 +75,9 @@ const Home = () => {
       transition: { duration: 0.5 }
     }
   };
-
   return (
     <div className="min-h-screen pb-20">
       <StickyHeader onSearch={handleSearchFromHeader} />
-      
       <main className="max-w-4xl mx-auto p-4">
         {/* Affichage conditionnel : soit la page d'accueil, soit les résultats */}
         {!hasSearched ? (
@@ -105,7 +91,6 @@ const Home = () => {
                 Découvre des milliers d'idées de contenu pour tes créations
               </p>
             </div>
-
             {/* Historique des recherches */}
             {user && history.length > 0 && (
               <div className="mt-8">
@@ -198,7 +183,6 @@ const Home = () => {
                     </div>
                   </motion.div>
                 )}
-
                 {/* Section SOUS-CATÉGORIES */}
                 {subcategories.length > 0 && (
                   <motion.div variants={itemVariants}>
@@ -244,7 +228,6 @@ const Home = () => {
                     </div>
                   </motion.div>
                 )}
-
                 {/* Section TITRES */}
                 {titles.length > 0 && (
                   <motion.div variants={itemVariants}>
@@ -306,10 +289,8 @@ const Home = () => {
           </motion.div>
         )}
       </main>
-
       <Navigation />
     </div>
   );
 };
-
 export default Home; 

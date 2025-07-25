@@ -1,5 +1,4 @@
 import { useQuery } from '@tanstack/react-query';
-
 export const useGeneratedTitles = (subcategoryId?: string) => {
   return useQuery({
     queryKey: ['generated-titles', subcategoryId],
@@ -15,7 +14,6 @@ export const useGeneratedTitles = (subcategoryId?: string) => {
         { id: '7', title_text: 'Stratégies de croissance Instagram', source_type: 'ai', engagement_potential: 9 },
         { id: '8', title_text: 'Créer du contenu authentique', source_type: 'combinatoire', engagement_potential: 7 },
       ];
-      
       // TODO: Décommenter quand la migration sera appliquée
       /*
       let query = supabase
@@ -25,13 +23,10 @@ export const useGeneratedTitles = (subcategoryId?: string) => {
           template:title_templates(template_text, description)
         `)
         .order('created_at', { ascending: false });
-      
       if (subcategoryId) {
         query = query.eq('subcategory_id', subcategoryId);
       }
-      
       const { data, error } = await query;
-      
       if (error) throw error;
       return data;
       */

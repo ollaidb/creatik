@@ -8,18 +8,15 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import IntelligentSearchBar from '@/components/IntelligentSearchBar';
 import { useFavorites } from '@/hooks/useFavorites';
-
 const Titles = () => {
   const { subcategoryId, categoryId } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { data: subcategory, isLoading: subcategoryLoading } = useSubcategory(subcategoryId);
   const { data: titles, isLoading: titlesLoading, refetch: refreshTitles } = useContentTitles(subcategoryId);
-
   const handleSearch = (query: string) => {
     // Logique de recherche
   };
-
   const handleCopy = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
@@ -35,7 +32,6 @@ const Titles = () => {
       });
     }
   };
-
   const handleLikeTitle = (titleId: string) => {
     // TODO: Implémenter la fonctionnalité de like
     toast({
@@ -43,13 +39,10 @@ const Titles = () => {
       description: "Ce titre a été ajouté à tes favoris",
     });
   };
-
   // Onglet Titres / Comptes / Sources
   const [tab, setTab] = useState<'titres' | 'comptes' | 'sources'>('titres');
-
   // Gestion des favoris pour les titres
   const { favorites, toggleFavorite, isFavorite } = useFavorites('title');
-
   // Correction du bouton retour
   const handleBack = () => {
     if (categoryId) {
@@ -58,7 +51,6 @@ const Titles = () => {
       navigate('/categories');
     }
   };
-
   if (subcategoryLoading || titlesLoading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -80,7 +72,6 @@ const Titles = () => {
             </div>
           </div>
         </div>
-
         <div className="px-4 py-4">
           <div className="animate-pulse">
             <div className="h-8 bg-gray-200 rounded w-1/3 mb-6"></div>
@@ -94,7 +85,6 @@ const Titles = () => {
       </div>
     );
   }
-
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header fixe pour mobile */}
@@ -126,7 +116,6 @@ const Titles = () => {
           </Button>
         </div>
       </div>
-
       {/* Contenu principal */}
       <div className="px-4 py-4">
         {/* Onglets Titres / Comptes / Sources */}
@@ -156,7 +145,6 @@ const Titles = () => {
             Sources
           </Button>
         </div>
-
         {/* Barre de recherche intelligente */}
         <div className="mb-6">
           <div className="max-w-lg mx-auto md:max-w-2xl">
@@ -167,7 +155,6 @@ const Titles = () => {
             />
           </div>
         </div>
-
         {/* Affichage selon l'onglet sélectionné */}
         {tab === 'titres' && (
           // Liste des titres (comptes)
@@ -217,7 +204,6 @@ const Titles = () => {
             <p>Aucune source disponible pour cette sous-catégorie.</p>
           </div>
         )}
-
         {/* Message si pas de titres (comptes) */}
         {tab === 'comptes' && titles?.length === 0 && (
           <div className="text-center py-12">
@@ -230,5 +216,4 @@ const Titles = () => {
     </div>
   );
 };
-
 export default Titles; 

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -8,12 +7,10 @@ import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { Mail, Lock, User, Phone, Apple } from 'lucide-react';
-
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
-
 const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
@@ -23,11 +20,9 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
   const [loading, setLoading] = useState(false);
   const { signUp, signIn, signInWithGoogle, signInWithApple } = useAuth();
   const { toast } = useToast();
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-
     try {
       let result;
       if (isSignUp) {
@@ -38,7 +33,6 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
       } else {
         result = await signIn(email, password);
       }
-
       if (result.error) {
         toast({
           title: "Erreur",
@@ -62,14 +56,12 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
       setLoading(false);
     }
   };
-
   const handleSocialLogin = async (provider: 'google' | 'apple') => {
     setLoading(true);
     try {
       const result = provider === 'google' 
         ? await signInWithGoogle() 
         : await signInWithApple();
-      
       if (result.error) {
         toast({
           title: "Erreur",
@@ -87,7 +79,6 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
       setLoading(false);
     }
   };
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
@@ -96,7 +87,6 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
             {isSignUp ? 'Créer un compte' : 'Se connecter'}
           </DialogTitle>
         </DialogHeader>
-
         <div className="space-y-4">
           {/* Social Login Buttons */}
           <div className="space-y-2">
@@ -115,7 +105,6 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
               </svg>
               Continuer avec Google
             </Button>
-            
             <Button
               type="button"
               variant="outline"
@@ -127,7 +116,6 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
               Continuer avec Apple
             </Button>
           </div>
-
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
               <Separator className="w-full" />
@@ -138,7 +126,6 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
               </span>
             </div>
           </div>
-
           {/* Email/Password Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             {isSignUp && (
@@ -173,7 +160,6 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                 </div>
               </div>
             )}
-
             <div>
               <Label htmlFor="email">Email</Label>
               <div className="relative">
@@ -188,7 +174,6 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                 />
               </div>
             </div>
-
             <div>
               <Label htmlFor="password">Mot de passe</Label>
               <div className="relative">
@@ -203,12 +188,10 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                 />
               </div>
             </div>
-
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? 'Chargement...' : (isSignUp ? 'Créer un compte' : 'Se connecter')}
             </Button>
           </form>
-
           <div className="text-center">
             <button
               type="button"
@@ -226,5 +209,4 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
     </Dialog>
   );
 };
-
 export default AuthModal;

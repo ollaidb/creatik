@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { useToast } from './use-toast';
-
 interface PublishData {
   content_type: 'category' | 'subcategory' | 'title' | 'challenge';
   title: string;
@@ -10,17 +9,14 @@ interface PublishData {
   category_id?: string;
   subcategory_id?: string;
 }
-
 interface DuplicateCheckResult {
   success: boolean;
   error?: string;
 }
-
 export const usePendingPublish = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [isPublishing, setIsPublishing] = useState(false);
-
   const publishContent = async (data: PublishData) => {
     if (!user) {
       toast({
@@ -30,9 +26,7 @@ export const usePendingPublish = () => {
       });
       return { success: false, error: "Utilisateur non connecté" };
     }
-
     setIsPublishing(true);
-
     try {
       // Vérifier les doublons avant publication
       const { data: duplicateCheck, error: checkError } = await (supabase as any)
@@ -41,7 +35,6 @@ export const usePendingPublish = () => {
           p_name: data.title,
           p_title: data.title
         });
-
       if (checkError) {
         console.error('Erreur lors de la vérification des doublons:', checkError);
       } else {
@@ -55,7 +48,6 @@ export const usePendingPublish = () => {
           return { success: false, error: result.error };
         }
       }
-
       // Si pas de doublon, procéder à la publication
       const { data: publication, error } = await (supabase as any)
         .from('pending_publications')
@@ -70,7 +62,6 @@ export const usePendingPublish = () => {
         })
         .select()
         .single();
-
       if (error) {
         console.error('Erreur lors de la publication:', error);
         toast({
@@ -80,12 +71,10 @@ export const usePendingPublish = () => {
         });
         return { success: false, error: error.message };
       }
-
       toast({
         title: "Publication en cours",
         description: "Votre contenu a été soumis et sera publié dans quelques secondes",
       });
-
       // Traitement automatique après 5 secondes
       setTimeout(async () => {
         try {
@@ -94,7 +83,6 @@ export const usePendingPublish = () => {
           console.error('Erreur lors du traitement automatique:', processError);
         }
       }, 5000);
-
       return { success: true, data: publication };
     } catch (err) {
       console.error('Erreur lors de la publication:', err);
@@ -108,7 +96,6 @@ export const usePendingPublish = () => {
       setIsPublishing(false);
     }
   };
-
   return {
     publishContent,
     isPublishing

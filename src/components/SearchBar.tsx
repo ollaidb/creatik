@@ -9,14 +9,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { categories } from "@/data/mockData";
 import { Search } from "lucide-react";
-
 const platformOptions = [
   { id: "all", name: "Tous" },
   { id: "tiktok", name: "TikTok" },
   { id: "instagram", name: "Instagram" },
   { id: "youtube", name: "YouTube Shorts" },
 ];
-
 const contentTypeOptions = [
   { id: "all", name: "Tous types" },
   { id: "storytelling", name: "Storytelling" },
@@ -24,15 +22,12 @@ const contentTypeOptions = [
   { id: "educational", name: "Éducatif" },
   { id: "trending", name: "Tendance" },
 ];
-
 const SearchBar: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedPlatform, setSelectedPlatform] = useState("all");
   const [selectedType, setSelectedType] = useState("all");
   const [selectedCategory, setSelectedCategory] = useState("all");
-
   const handleSearch = () => {
-    console.log({
       searchTerm,
       platform: selectedPlatform,
       type: selectedType,
@@ -40,7 +35,6 @@ const SearchBar: React.FC = () => {
     });
     // Logique de recherche à implémenter
   };
-
   return (
     <motion.div
       initial={{ opacity: 0, y: -10 }}
@@ -50,7 +44,6 @@ const SearchBar: React.FC = () => {
     >
       <div className="relative flex-grow">
         <Search className="absolute left-2.5 top-2.5 h-5 w-5 text-muted-foreground" />
-        
         <Input
           type="text"
           placeholder="Rechercher des idées de contenu..."
@@ -60,7 +53,6 @@ const SearchBar: React.FC = () => {
           onKeyDown={(e) => e.key === "Enter" && handleSearch()}
         />
       </div>
-
       <div className="flex items-center gap-2">
         <Popover>
           <PopoverTrigger asChild>
@@ -84,7 +76,6 @@ const SearchBar: React.FC = () => {
                   ))}
                 </div>
               </div>
-
               <div>
                 <h4 className="font-medium mb-2">Type de contenu</h4>
                 <div className="flex flex-wrap gap-2">
@@ -101,7 +92,6 @@ const SearchBar: React.FC = () => {
                   ))}
                 </div>
               </div>
-
               <div>
                 <h4 className="font-medium mb-2">Catégorie</h4>
                 <div className="flex flex-wrap gap-2 max-h-36 overflow-y-auto">
@@ -126,14 +116,12 @@ const SearchBar: React.FC = () => {
                   ))}
                 </div>
               </div>
-
               <Button className="w-full" onClick={handleSearch}>
                 Rechercher
               </Button>
             </div>
           </PopoverContent>
         </Popover>
-
         <Button onClick={handleSearch} size="icon" className="rounded-full">
           <Search className="w-5 h-5" />
         </Button>
@@ -141,5 +129,4 @@ const SearchBar: React.FC = () => {
     </motion.div>
   );
 };
-
 export default SearchBar;
