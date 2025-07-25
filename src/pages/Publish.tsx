@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Send, Loader2, ArrowLeft, Search, X, Check, AlertTriangle, Eye, FileText } from 'lucide-react';
+import { Send, Loader2, ArrowLeft, Search, X, Check, AlertTriangle, Eye, FileText, Link, User } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useCategories } from '@/hooks/useCategories';
 import { useSubcategories } from '@/hooks/useSubcategories';
@@ -12,49 +12,59 @@ import { usePendingPublish } from '@/hooks/usePendingPublish';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import Navigation from '@/components/Navigation';
+
 interface Category {
   id: string;
   name: string;
   color: string;
 }
+
 interface Subcategory {
   id: string;
   name: string;
   description: string;
   category_id: string;
 }
+
 const Publish = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
-  const { publishContent, isPublishing, publicationStatus } = usePendingPublish();
+  const { publishContent, isPublishing } = usePendingPublish();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
-    content_type: 'title', // 'category', 'subcategory', 'title'
+    content_type: 'title' as 'category' | 'subcategory' | 'title' | 'challenge' | 'source' | 'account',
     category_id: '',
     subcategory_id: '',
-    description: '' // Added for challenges
+    description: '', // Added for challenges
+    url: '' // Added for sources
   });
+
   // États pour les barres de recherche
   const [categorySearch, setCategorySearch] = useState('');
   const [subcategorySearch, setSubcategorySearch] = useState('');
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   const [showSubcategoryDropdown, setShowSubcategoryDropdown] = useState(false);
+
   // Refs pour les dropdowns
   const categoryDropdownRef = useRef<HTMLDivElement>(null);
   const subcategoryDropdownRef = useRef<HTMLDivElement>(null);
+
   // Récupérer les données
   const { data: categories } = useCategories();
   const { data: subcategories } = useSubcategories(formData.category_id);
+
   // Filtrer les catégories selon la recherche
   const filteredCategories = categories?.filter(category =>
     category.name.toLowerCase().includes(categorySearch.toLowerCase())
   ) || [];
+
   // Filtrer les sous-catégories selon la recherche
   const filteredSubcategories = subcategories?.filter(subcategory =>
     subcategory.name.toLowerCase().includes(subcategorySearch.toLowerCase())
   ) || [];
+
   // Fermer les dropdowns quand on clique à l'extérieur
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -70,6 +80,7 @@ const Publish = () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) {
@@ -80,6 +91,7 @@ const Publish = () => {
       });
       return;
     }
+
     if (!formData.title || !formData.content_type) {
       toast({
         title: "Champs requis",
@@ -88,6 +100,7 @@ const Publish = () => {
       });
       return;
     }
+
     // Validation selon le type de contenu
     if (formData.content_type === 'subcategory' && !formData.category_id) {
       toast({
@@ -97,14 +110,26 @@ const Publish = () => {
       });
       return;
     }
-    if (formData.content_type === 'title' && (!formData.category_id || !formData.subcategory_id)) {
+
+    if ((formData.content_type === 'title' || formData.content_type === 'source' || formData.content_type === 'account') && (!formData.category_id || !formData.subcategory_id)) {
       toast({
         title: "Catégorie et sous-catégorie requises",
-        description: "Veuillez sélectionner une catégorie et une sous-catégorie pour un titre",
+        description: "Veuillez sélectionner une catégorie et une sous-catégorie",
         variant: "destructive"
       });
       return;
     }
+
+    // Validation pour les sources
+    if (formData.content_type === 'source' && !formData.url) {
+      toast({
+        title: "URL requise",
+        description: "Veuillez entrer l'URL de la source",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       // Publier avec vérification des doublons
@@ -113,27 +138,28 @@ const Publish = () => {
         title: formData.title,
         category_id: formData.category_id || undefined,
         subcategory_id: formData.subcategory_id || undefined,
-        description: formData.content_type === 'challenge' ? formData.description : undefined
+        description: formData.content_type === 'challenge' ? formData.description : undefined,
+        url: formData.content_type === 'source' ? formData.url : undefined
       });
-      if (result) {
+
+      if (result && result.success) {
         toast({
           title: "Publication soumise !",
           description: "Votre contenu sera validé dans quelques secondes"
         });
-        // Reset form seulement si la publication est réussie
-        if (publicationStatus?.status === 'approved') {
-          setFormData({
-            title: '',
-            content_type: 'title',
-            category_id: '',
-            subcategory_id: '',
-            description: ''
-          });
-          setCategorySearch('');
-          setSubcategorySearch('');
-        }
+        // Reset form
+        setFormData({
+          title: '',
+          content_type: 'title',
+          category_id: '',
+          subcategory_id: '',
+          description: '',
+          url: ''
+        });
+        setCategorySearch('');
+        setSubcategorySearch('');
       } else {
-        throw new Error('Échec de la publication');
+        throw new Error(result?.error || 'Échec de la publication');
       }
     } catch (error) {
       console.error('=== ERREUR PUBLICATION ===');
@@ -148,6 +174,7 @@ const Publish = () => {
       setIsSubmitting(false);
     }
   };
+
   const handleCategorySelect = (category: Category) => {
     setFormData(prev => ({
       ...prev,
@@ -158,6 +185,7 @@ const Publish = () => {
     setShowCategoryDropdown(false);
     setSubcategorySearch(''); // Reset subcategory search
   };
+
   const handleSubcategorySelect = (subcategory: Subcategory) => {
     setFormData(prev => ({
       ...prev,
@@ -166,15 +194,50 @@ const Publish = () => {
     setSubcategorySearch(subcategory.name);
     setShowSubcategoryDropdown(false);
   };
+
+  // Fonction pour obtenir le label du titre selon le type
+  const getTitleLabel = () => {
+    switch (formData.content_type) {
+      case 'category': return 'Nom de la catégorie';
+      case 'subcategory': return 'Nom de la sous-catégorie';
+      case 'challenge': return 'Nom du challenge';
+      case 'source': return 'Nom de la source';
+      case 'account': return 'Nom du compte';
+      default: return 'Titre';
+    }
+  };
+
+  // Fonction pour obtenir le placeholder du titre selon le type
+  const getTitlePlaceholder = () => {
+    switch (formData.content_type) {
+      case 'category': return 'Entrez le nom de la catégorie';
+      case 'subcategory': return 'Entrez le nom de la sous-catégorie';
+      case 'challenge': return 'Entrez le nom de votre challenge';
+      case 'source': return 'Entrez le nom de la source (ex: "TikTok", "Instagram", "YouTube")';
+      case 'account': return 'Entrez le nom du compte (ex: "@username")';
+      default: return 'Entrez le titre de votre contenu';
+    }
+  };
+
+  // Fonction pour déterminer si on doit afficher la sélection de catégorie
+  const shouldShowCategorySelection = () => {
+    return ['subcategory', 'title', 'source', 'account'].includes(formData.content_type);
+  };
+
+  // Fonction pour déterminer si on doit afficher la sélection de sous-catégorie
+  const shouldShowSubcategorySelection = () => {
+    return ['title', 'source', 'account'].includes(formData.content_type) && formData.category_id;
+  };
+
   return (
     <div className="min-h-screen pb-20">
       <header className="bg-background border-b p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={() => navigate('/')} 
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={() => navigate('/')} 
               className="p-2 h-10 w-10 rounded-full"
             >
               <ArrowLeft size={20} />
@@ -189,9 +252,10 @@ const Publish = () => {
           >
             <FileText className="w-4 h-4" />
             Mes publications
-        </Button>
+          </Button>
         </div>
       </header>
+
       <main className="max-w-7xl mx-auto p-4">
         <div className="text-center mb-8">
           <h2 className="text-2xl font-bold mb-2">Contribuez à CréaTik</h2>
@@ -199,6 +263,7 @@ const Publish = () => {
             Partagez vos idées et enrichissez notre bibliothèque de contenu créatif
           </p>
         </div>
+
         <Card className="max-w-2xl mx-auto">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -220,6 +285,7 @@ const Publish = () => {
                 </div>
               </div>
             </div>
+
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Type de contenu */}
               <div className="space-y-2">
@@ -230,10 +296,11 @@ const Publish = () => {
                   onChange={(e) => {
                     setFormData(prev => ({
                       ...prev,
-                      content_type: e.target.value,
+                      content_type: e.target.value as 'category' | 'subcategory' | 'title' | 'challenge' | 'source' | 'account',
                       category_id: '', // Reset category when type changes
                       subcategory_id: '', // Reset subcategory when type changes
-                      description: '' // Reset description when type changes
+                      description: '', // Reset description when type changes
+                      url: '' // Reset URL when type changes
                     }));
                     setCategorySearch(''); // Reset search
                     setSubcategorySearch(''); // Reset search
@@ -245,29 +312,23 @@ const Publish = () => {
                   <option value="subcategory">Sous-catégorie</option>
                   <option value="category">Catégorie</option>
                   <option value="challenge">Challenge</option>
+                  <option value="source">Source</option>
+                  <option value="account">Compte</option>
                 </select>
               </div>
+
               {/* Titre */}
               <div className="space-y-2">
-                <Label htmlFor="title">
-                  {formData.content_type === 'category' ? 'Nom de la catégorie' : 
-                   formData.content_type === 'subcategory' ? 'Nom de la sous-catégorie' : 
-                   formData.content_type === 'challenge' ? 'Nom du challenge' :
-                   'Titre'} *
-                </Label>
+                <Label htmlFor="title">{getTitleLabel()} *</Label>
                 <Input
                   id="title"
                   value={formData.title}
                   onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                  placeholder={
-                    formData.content_type === 'category' ? 'Entrez le nom de la catégorie' :
-                    formData.content_type === 'subcategory' ? 'Entrez le nom de la sous-catégorie' :
-                    formData.content_type === 'challenge' ? 'Entrez le nom de votre challenge' :
-                    'Entrez le titre de votre contenu'
-                  }
+                  placeholder={getTitlePlaceholder()}
                   required
                 />
               </div>
+
               {/* Description pour les challenges */}
               {formData.content_type === 'challenge' && (
                 <div className="space-y-2">
@@ -282,8 +343,28 @@ const Publish = () => {
                   />
                 </div>
               )}
-              {/* Catégorie (pour sous-catégorie et titre) */}
-              {(formData.content_type === 'subcategory' || formData.content_type === 'title') && (
+
+              {/* URL pour les sources */}
+              {formData.content_type === 'source' && (
+                <div className="space-y-2">
+                  <Label htmlFor="url">URL de la source *</Label>
+                  <div className="relative">
+                    <Link className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Input
+                      id="url"
+                      type="url"
+                      value={formData.url || ''}
+                      onChange={(e) => setFormData(prev => ({ ...prev, url: e.target.value }))}
+                      placeholder="https://example.com"
+                      className="pl-10"
+                      required
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Catégorie (pour sous-catégorie, titre, source, compte) */}
+              {shouldShowCategorySelection() && (
                 <div className="space-y-2">
                   <Label htmlFor="category">Catégorie *</Label>
                   <div className="relative" ref={categoryDropdownRef}>
@@ -339,8 +420,9 @@ const Publish = () => {
                   </div>
                 </div>
               )}
-              {/* Sous-catégorie (pour titre seulement) */}
-              {formData.content_type === 'title' && formData.category_id && (
+
+              {/* Sous-catégorie (pour titre, source, compte) */}
+              {shouldShowSubcategorySelection() && (
                 <div className="space-y-2">
                   <Label htmlFor="subcategory">Sous-catégorie *</Label>
                   <div className="relative" ref={subcategoryDropdownRef}>
@@ -396,18 +478,20 @@ const Publish = () => {
                   </div>
                 </div>
               )}
+
               <Button 
                 type="submit" 
                 className="w-full" 
                 disabled={isSubmitting || isPublishing || !formData.title || !formData.content_type || 
                          (formData.content_type === 'subcategory' && !formData.category_id) ||
-                         (formData.content_type === 'title' && (!formData.category_id || !formData.subcategory_id)) ||
-                         (formData.content_type === 'challenge' && !formData.description)}
+                         ((formData.content_type === 'title' || formData.content_type === 'source' || formData.content_type === 'account') && (!formData.category_id || !formData.subcategory_id)) ||
+                         (formData.content_type === 'challenge' && !formData.description) ||
+                         (formData.content_type === 'source' && !formData.url)}
               >
                 {isSubmitting || isPublishing ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {publicationStatus?.status === 'checking' ? 'Vérification en cours...' : 'Publication en cours...'}
+                    Publication en cours...
                   </>
                 ) : (
                   <>
@@ -416,8 +500,9 @@ const Publish = () => {
                   </>
                 )}
               </Button>
+
               {/* Afficher le statut de la publication */}
-              {publicationStatus && (
+              {/* publicationStatus && (
                 <div className={`mt-4 p-3 rounded-md ${
                   publicationStatus.status === 'approved' ? 'bg-green-50 text-green-700' :
                   publicationStatus.status === 'duplicate' ? 'bg-yellow-50 text-yellow-700' :
@@ -442,7 +527,7 @@ const Publish = () => {
                     </Button>
                   </div>
                 </div>
-              )}
+              )*/}
             </form>
           </CardContent>
         </Card>
@@ -451,4 +536,5 @@ const Publish = () => {
     </div>
   );
 };
+
 export default Publish;

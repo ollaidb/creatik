@@ -7,7 +7,7 @@ on:
     branches: [ main ]
 
 jobs:
-  build-and-deploy:
+  build-and-test:
     runs-on: ubuntu-latest
     
     steps:
@@ -29,25 +29,8 @@ jobs:
     - name: Run tests
       run: npm test --if-present
       
-    # Déploiement Vercel (optionnel)
-    # Pour activer: ajoutez VERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_PROJECT_ID dans les secrets GitHub
-    - name: Deploy to Vercel
-      uses: amondnet/vercel-action@v25
-      with:
-        vercel-token: ${{ secrets.VERCEL_TOKEN }}
-        vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-        vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-        vercel-args: '--prod'
-        
-    # Déploiement Netlify (optionnel)
-    # Pour activer: ajoutez NETLIFY_AUTH_TOKEN, NETLIFY_SITE_ID dans les secrets GitHub
-    - name: Deploy to Netlify
-      uses: nwtgck/actions-netlify@v2.0
-      with:
-        publish-dir: './dist'
-        production-branch: main
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        deploy-message: "Deploy from GitHub Actions"
-      env:
-        NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-        NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }} 
+    - name: Lint code
+      run: npm run lint --if-present
+      
+    - name: Type check
+      run: npx tsc --noEmit 
