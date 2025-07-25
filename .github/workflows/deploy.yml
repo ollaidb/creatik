@@ -29,6 +29,8 @@ jobs:
     - name: Run tests
       run: npm test --if-present
       
+    # Déploiement Vercel (optionnel)
+    # Pour activer: ajoutez VERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_PROJECT_ID dans les secrets GitHub
     - name: Deploy to Vercel
       uses: amondnet/vercel-action@v25
       with:
@@ -37,8 +39,9 @@ jobs:
         vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
         vercel-args: '--prod'
         
-    - name: Deploy to Netlify (Alternative)
-      if: false # Désactivé par défaut
+    # Déploiement Netlify (optionnel)
+    # Pour activer: ajoutez NETLIFY_AUTH_TOKEN, NETLIFY_SITE_ID dans les secrets GitHub
+    - name: Deploy to Netlify
       uses: nwtgck/actions-netlify@v2.0
       with:
         publish-dir: './dist'
