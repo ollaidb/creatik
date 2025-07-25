@@ -38,7 +38,8 @@ const Publish = () => {
     category_id: '',
     subcategory_id: '',
     description: '', // Added for challenges
-    url: '' // Added for sources
+    url: '', // Added for sources and accounts
+    platform: '' // Added for accounts
   });
 
   // États pour les barres de recherche
@@ -130,6 +131,16 @@ const Publish = () => {
       return;
     }
 
+    // Validation pour les comptes
+    if (formData.content_type === 'account' && (!formData.platform || !formData.url)) {
+      toast({
+        title: "Champs requis",
+        description: "Veuillez entrer la plateforme et l'URL du compte",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       // Publier avec vérification des doublons
@@ -139,7 +150,8 @@ const Publish = () => {
         category_id: formData.category_id || undefined,
         subcategory_id: formData.subcategory_id || undefined,
         description: formData.content_type === 'challenge' ? formData.description : undefined,
-        url: formData.content_type === 'source' ? formData.url : undefined
+        url: (formData.content_type === 'source' || formData.content_type === 'account') ? formData.url : undefined,
+        platform: formData.content_type === 'account' ? formData.platform : undefined
       });
 
       if (result && result.success) {
@@ -154,7 +166,8 @@ const Publish = () => {
           category_id: '',
           subcategory_id: '',
           description: '',
-          url: ''
+          url: '',
+          platform: ''
         });
         setCategorySearch('');
         setSubcategorySearch('');
@@ -201,8 +214,8 @@ const Publish = () => {
       case 'category': return 'Nom de la catégorie';
       case 'subcategory': return 'Nom de la sous-catégorie';
       case 'challenge': return 'Nom du challenge';
-      case 'source': return 'Nom de la source';
-      case 'account': return 'Nom du compte';
+      case 'source': return 'Titre de la source';
+      case 'account': return 'Pseudo de la personne';
       default: return 'Titre';
     }
   };
@@ -213,8 +226,8 @@ const Publish = () => {
       case 'category': return 'Entrez le nom de la catégorie';
       case 'subcategory': return 'Entrez le nom de la sous-catégorie';
       case 'challenge': return 'Entrez le nom de votre challenge';
-      case 'source': return 'Entrez le nom de la source (ex: "TikTok", "Instagram", "YouTube")';
-      case 'account': return 'Entrez le nom du compte (ex: "@username")';
+      case 'source': return 'Entrez le titre de la source (ex: "TikTok", "Instagram", "YouTube")';
+      case 'account': return 'Entrez le pseudo de la personne (ex: "@username")';
       default: return 'Entrez le titre de votre contenu';
     }
   };
@@ -300,7 +313,8 @@ const Publish = () => {
                       category_id: '', // Reset category when type changes
                       subcategory_id: '', // Reset subcategory when type changes
                       description: '', // Reset description when type changes
-                      url: '' // Reset URL when type changes
+                      url: '', // Reset URL when type changes
+                      platform: '' // Reset platform when type changes
                     }));
                     setCategorySearch(''); // Reset search
                     setSubcategorySearch(''); // Reset search
@@ -317,7 +331,7 @@ const Publish = () => {
                 </select>
               </div>
 
-              {/* Titre */}
+              {/* Titre/Pseudo */}
               <div className="space-y-2">
                 <Label htmlFor="title">{getTitleLabel()} *</Label>
                 <Input
@@ -328,6 +342,34 @@ const Publish = () => {
                   required
                 />
               </div>
+
+              {/* Plateforme pour les comptes */}
+              {formData.content_type === 'account' && (
+                <div className="space-y-2">
+                  <Label htmlFor="platform">Plateforme *</Label>
+                  <select
+                    id="platform"
+                    value={formData.platform}
+                    onChange={(e) => setFormData(prev => ({ ...prev, platform: e.target.value }))}
+                    className="w-full p-3 border border-gray-300 rounded-md bg-white text-gray-900"
+                    required
+                  >
+                    <option value="">Sélectionnez une plateforme</option>
+                    <option value="tiktok">TikTok</option>
+                    <option value="instagram">Instagram</option>
+                    <option value="youtube">YouTube</option>
+                    <option value="twitter">Twitter/X</option>
+                    <option value="facebook">Facebook</option>
+                    <option value="linkedin">LinkedIn</option>
+                    <option value="pinterest">Pinterest</option>
+                    <option value="snapchat">Snapchat</option>
+                    <option value="twitch">Twitch</option>
+                    <option value="discord">Discord</option>
+                    <option value="telegram">Telegram</option>
+                    <option value="other">Autre</option>
+                  </select>
+                </div>
+              )}
 
               {/* Description pour les challenges */}
               {formData.content_type === 'challenge' && (
@@ -344,10 +386,12 @@ const Publish = () => {
                 </div>
               )}
 
-              {/* URL pour les sources */}
-              {formData.content_type === 'source' && (
+              {/* URL pour les sources et comptes */}
+              {(formData.content_type === 'source' || formData.content_type === 'account') && (
                 <div className="space-y-2">
-                  <Label htmlFor="url">URL de la source *</Label>
+                  <Label htmlFor="url">
+                    {formData.content_type === 'source' ? 'URL de la source' : 'URL du compte'} *
+                  </Label>
                   <div className="relative">
                     <Link className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                     <Input
@@ -355,7 +399,7 @@ const Publish = () => {
                       type="url"
                       value={formData.url || ''}
                       onChange={(e) => setFormData(prev => ({ ...prev, url: e.target.value }))}
-                      placeholder="https://example.com"
+                      placeholder={formData.content_type === 'source' ? 'https://example.com' : 'https://tiktok.com/@username'}
                       className="pl-10"
                       required
                     />
@@ -486,7 +530,8 @@ const Publish = () => {
                          (formData.content_type === 'subcategory' && !formData.category_id) ||
                          ((formData.content_type === 'title' || formData.content_type === 'source' || formData.content_type === 'account') && (!formData.category_id || !formData.subcategory_id)) ||
                          (formData.content_type === 'challenge' && !formData.description) ||
-                         (formData.content_type === 'source' && !formData.url)}
+                         (formData.content_type === 'source' && !formData.url) ||
+                         (formData.content_type === 'account' && (!formData.platform || !formData.url))}
               >
                 {isSubmitting || isPublishing ? (
                   <>
@@ -500,34 +545,6 @@ const Publish = () => {
                   </>
                 )}
               </Button>
-
-              {/* Afficher le statut de la publication */}
-              {/* publicationStatus && (
-                <div className={`mt-4 p-3 rounded-md ${
-                  publicationStatus.status === 'approved' ? 'bg-green-50 text-green-700' :
-                  publicationStatus.status === 'duplicate' ? 'bg-yellow-50 text-yellow-700' :
-                  publicationStatus.status === 'rejected' ? 'bg-red-50 text-red-700' :
-                  'bg-blue-50 text-blue-700'
-                }`}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      {publicationStatus.status === 'checking' && <Loader2 className="h-4 w-4 animate-spin" />}
-                      {publicationStatus.status === 'approved' && <Check className="h-4 w-4" />}
-                      {publicationStatus.status === 'duplicate' && <AlertTriangle className="h-4 w-4" />}
-                      {publicationStatus.status === 'rejected' && <X className="h-4 w-4" />}
-                      <span className="text-sm font-medium">{publicationStatus.message}</span>
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => navigate('/profile/publications')}
-                      className="text-xs"
-                    >
-                      Voir mes publications
-                    </Button>
-                  </div>
-                </div>
-              )*/}
             </form>
           </CardContent>
         </Card>

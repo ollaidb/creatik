@@ -10,6 +10,7 @@ interface PublishData {
   category_id?: string;
   subcategory_id?: string;
   url?: string;
+  platform?: string;
 }
 
 interface DuplicateCheckResult {
@@ -69,6 +70,7 @@ export const usePendingPublish = () => {
           category_id: data.category_id,
           subcategory_id: data.subcategory_id,
           url: data.url,
+          platform: data.platform,
           status: 'pending'
         })
         .select()
