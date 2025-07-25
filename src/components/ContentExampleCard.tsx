@@ -23,7 +23,7 @@ const ContentExampleCard = ({ example, className }: ContentExampleCardProps) => 
     <motion.div
       whileHover={{ y: -2 }}
       className={cn(
-        "bg-white dark:bg-creatik-dark/50 rounded-xl p-4",
+        "bg-white dark:bg-gray-800/50 rounded-xl p-4",
         "border border-gray-200 dark:border-gray-700",
         "hover:shadow-lg transition-all duration-200",
         "flex flex-col gap-3",
@@ -37,7 +37,7 @@ const ContentExampleCard = ({ example, className }: ContentExampleCardProps) => 
         
         <button
           onClick={handleOpenLink}
-          className="p-1 text-gray-500 hover:text-creatik-primary transition-colors"
+          className="p-1 text-gray-500 hover:text-primary transition-colors"
         >
           <ExternalLink size={16} />
         </button>

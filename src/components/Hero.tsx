@@ -23,7 +23,7 @@ const Hero: React.FC = () => {
 
   if (isLoading) {
     return (
-      <section className="relative py-4 bg-gradient-to-r from-[#f8f9fa] to-[#e9ecef] dark:from-creatik-dark dark:to-[#2C2C54]/80">
+      <section className="relative py-4 bg-gradient-to-r from-[#f8f9fa] to-[#e9ecef] dark:from-gray-900 dark:to-gray-800/80">
         <div className="container mx-auto px-4">
           <div className="text-center py-8">
             <p>Chargement des catégories...</p>
@@ -34,7 +34,7 @@ const Hero: React.FC = () => {
   }
 
   return (
-    <section className="relative py-4 bg-gradient-to-r from-[#f8f9fa] to-[#e9ecef] dark:from-creatik-dark dark:to-[#2C2C54]/80">
+    <section className="relative py-4 bg-gradient-to-r from-[#f8f9fa] to-[#e9ecef] dark:from-gray-900 dark:to-gray-800/80">
       <div className="container mx-auto px-4">
         {/* Titre et barre de recherche */}
         <div className="mb-8">
@@ -71,7 +71,7 @@ const Hero: React.FC = () => {
 
         {/* Categories Carousel with visible background - Responsive */}
         <div className="relative px-2 mb-4">
-          <div className="bg-white/80 dark:bg-creatik-dark/30 rounded-xl p-2 shadow-sm">
+          <div className="bg-white/80 dark:bg-gray-800/30 rounded-xl p-2 shadow-sm">
             <Carousel
               opts={{
                 align: "start",

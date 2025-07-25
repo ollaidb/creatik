@@ -34,7 +34,7 @@ const ExpandableText: React.FC<ExpandableTextProps> = ({
         variant="ghost"
         size="sm"
         onClick={() => setIsExpanded(!isExpanded)}
-        className="text-creatik-primary hover:text-creatik-primary/80 p-0 h-auto font-medium"
+        className="text-primary hover:text-primary/80 p-0 h-auto font-medium"
       >
         {isExpanded ? 'Voir moins' : 'Voir plus'}
       </Button>

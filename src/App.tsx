@@ -24,6 +24,8 @@ import Titles from "./pages/Titles";
 import PublicChallenges from "./pages/PublicChallenges";
 import AdminPublications from "./pages/admin/Publications";
 import ApprovePublications from "./pages/admin/ApprovePublications";
+import Accounts from "./pages/Accounts";
+import Sources from "./pages/Sources";
 
 const queryClient = new QueryClient();
 
@@ -45,6 +47,10 @@ const App = () => (
               
               {/* Challenges Routes */}
               <Route path="/challenges" element={<PublicChallenges />} />
+              
+              {/* Accounts and Sources Routes */}
+              <Route path="/accounts" element={<Accounts />} />
+              <Route path="/sources" element={<Sources />} />
               
               {/* Profile Routes */}
               <Route path="/profile" element={<ProfilePage />} />

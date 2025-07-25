@@ -7,9 +7,10 @@ import { useContentTitles } from '@/hooks/useContentTitles';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import IntelligentSearchBar from '@/components/IntelligentSearchBar';
+import { useFavorites } from '@/hooks/useFavorites';
 
 const Titles = () => {
-  const { subcategoryId } = useParams<{ subcategoryId: string }>();
+  const { subcategoryId, categoryId } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { data: subcategory, isLoading: subcategoryLoading } = useSubcategory(subcategoryId);
@@ -41,6 +42,21 @@ const Titles = () => {
       title: "Titre liké !",
       description: "Ce titre a été ajouté à tes favoris",
     });
+  };
+
+  // Onglet Titres / Comptes / Sources
+  const [tab, setTab] = useState<'titres' | 'comptes' | 'sources'>('titres');
+
+  // Gestion des favoris pour les titres
+  const { favorites, toggleFavorite, isFavorite } = useFavorites('title');
+
+  // Correction du bouton retour
+  const handleBack = () => {
+    if (categoryId) {
+      navigate(`/category/${categoryId}/subcategories`);
+    } else {
+      navigate('/categories');
+    }
   };
 
   if (subcategoryLoading || titlesLoading) {
@@ -87,7 +103,7 @@ const Titles = () => {
           <Button 
             variant="ghost" 
             size="sm"
-            onClick={() => navigate(`/category/${subcategoryId}/subcategories`)} 
+            onClick={handleBack}
             className="p-2 h-10 w-10 rounded-full"
           >
             <ArrowLeft size={20} />
@@ -113,77 +129,101 @@ const Titles = () => {
 
       {/* Contenu principal */}
       <div className="px-4 py-4">
+        {/* Onglets Titres / Comptes / Sources */}
+        <div className="flex gap-2 mb-6 justify-center">
+          <Button
+            variant={tab === 'titres' ? 'default' : 'outline'}
+            size="sm"
+            className="rounded-full"
+            onClick={() => setTab('titres')}
+          >
+            Titres
+          </Button>
+          <Button
+            variant={tab === 'comptes' ? 'default' : 'outline'}
+            size="sm"
+            className="rounded-full"
+            onClick={() => setTab('comptes')}
+          >
+            Comptes
+          </Button>
+          <Button
+            variant={tab === 'sources' ? 'default' : 'outline'}
+            size="sm"
+            className="rounded-full"
+            onClick={() => setTab('sources')}
+          >
+            Sources
+          </Button>
+        </div>
+
         {/* Barre de recherche intelligente */}
         <div className="mb-6">
           <div className="max-w-lg mx-auto md:max-w-2xl">
             <IntelligentSearchBar 
               onSearch={handleSearch}
-              placeholder="Rechercher un titre..."
+              placeholder={tab === 'comptes' ? 'Rechercher un compte...' : 'Rechercher une source...'}
               className="w-full"
             />
           </div>
         </div>
 
-        {/* Liste des titres */}
-        <div className="space-y-3">
-          {titles?.map((title, index) => (
-            <motion.div 
-              key={title.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.05 }}
-              className="
-                bg-white dark:bg-gray-800 rounded-lg p-4
-                border border-gray-200 dark:border-gray-700
-                hover:shadow-md transition-all duration-200
-              "
-            >
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3 flex-1 min-w-0">
-                  <span className="text-xs text-gray-500 font-mono flex-shrink-0">
-                    {(index + 1).toString().padStart(2, '0')}
-                  </span>
-                  <h3 className="font-medium text-gray-900 dark:text-white text-base leading-relaxed">
-                    {title.title}
-                  </h3>
+        {/* Affichage selon l'onglet sélectionné */}
+        {tab === 'titres' && (
+          // Liste des titres (comptes)
+          <div className="space-y-3">
+            {titles?.map((title, index) => (
+              <motion.div 
+                key={title.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05 }}
+                className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all duration-200"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <span className="text-xs text-gray-500 font-mono flex-shrink-0">
+                      {(index + 1).toString().padStart(2, '0')}
+                    </span>
+                    <h3 className="font-medium text-gray-900 dark:text-white text-base leading-relaxed">
+                      {title.title}
+                    </h3>
+                  </div>
+                  {/* Actions */}
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => toggleFavorite(title.id)}
+                      className="p-2 h-10 w-10 rounded-full"
+                    >
+                      <Heart size={18} className={isFavorite(title.id) ? 'text-red-500 fill-red-500' : ''} />
+                    </Button>
+                  </div>
                 </div>
+              </motion.div>
+            ))}
+          </div>
+        )}
+        {tab === 'comptes' && (
+          // Placeholder pour la liste des comptes
+          <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+            <p>Aucun compte disponible pour cette sous-catégorie.</p>
+          </div>
+        )}
+        {tab === 'sources' && (
+          // Placeholder pour la liste des sources
+          <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+            <p>Aucune source disponible pour cette sous-catégorie.</p>
+          </div>
+        )}
 
-                {/* Actions */}
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleLikeTitle(title.id)}
-                    className="p-2 h-10 w-10 rounded-full"
-                  >
-                    <Heart size={18} />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleCopy(title.title)}
-                    className="p-2 h-10 w-10 rounded-full"
-                  >
-                    <Copy size={18} />
-                  </Button>
-                </div>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-
-        {/* Message si pas de titres */}
-        {titles?.length === 0 && (
+        {/* Message si pas de titres (comptes) */}
+        {tab === 'comptes' && titles?.length === 0 && (
           <div className="text-center py-12">
             <div className="text-gray-500 dark:text-gray-400 mb-4 text-sm">
-              {/* searchTerm ? 'Aucun titre trouvé pour cette recherche' : */}
               Aucun titre disponible pour cette sous-catégorie
             </div>
-            {/* searchTerm && (
-              <Button onClick={() => setSearchTerm('')} className="text-sm">
-                Effacer la recherche
-              </Button>
-            ) */}
           </div>
         )}
       </div>

@@ -260,7 +260,7 @@ const Profile = () => {
               <div className="relative mx-auto mb-4">
                 <Avatar className="w-20 h-20 mx-auto">
                   <AvatarImage src={profileImage || undefined} />
-                  <AvatarFallback className="bg-gradient-to-r from-creatik-primary to-creatik-secondary">
+                  <AvatarFallback className="bg-gradient-to-r from-primary to-secondary">
                     <User className="w-10 h-10 text-white" />
                   </AvatarFallback>
                 </Avatar>

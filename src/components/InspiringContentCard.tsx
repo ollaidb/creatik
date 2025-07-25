@@ -25,7 +25,7 @@ const InspiringContentCard = ({ content, className }: InspiringContentCardProps)
     <motion.div
       whileHover={{ y: -2 }}
       className={cn(
-        "bg-white dark:bg-creatik-dark/50 rounded-xl p-4",
+        "bg-white dark:bg-gray-800/50 rounded-xl p-4",
         "border border-gray-200 dark:border-gray-700",
         "hover:shadow-lg transition-all duration-200",
         "flex flex-col gap-3",
@@ -40,7 +40,7 @@ const InspiringContentCard = ({ content, className }: InspiringContentCardProps)
         {(content.video_url || content.account_url) && (
           <button
             onClick={handleOpenLink}
-            className="p-1 text-gray-500 hover:text-creatik-primary transition-colors"
+            className="p-1 text-gray-500 hover:text-primary transition-colors"
           >
             <ExternalLink size={16} />
           </button>
@@ -81,7 +81,7 @@ const InspiringContentCard = ({ content, className }: InspiringContentCardProps)
           {content.hashtags.slice(0, 3).map((hashtag, index) => (
             <span
               key={index}
-              className="text-xs text-creatik-primary bg-creatik-primary/10 px-2 py-1 rounded-full"
+              className="text-xs text-primary bg-primary/10 px-2 py-1 rounded-full"
             >
               #{hashtag}
             </span>

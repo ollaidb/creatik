@@ -19,7 +19,7 @@ const SubcategoryCard = ({ subcategory, className, onClick }: SubcategoryCardPro
       whileTap={{ scale: 0.98 }}
       onClick={onClick}
       className={cn(
-        "bg-white dark:bg-creatik-dark/50 rounded-xl p-4 cursor-pointer",
+        "bg-white dark:bg-gray-800/50 rounded-xl p-4 cursor-pointer",
         "border border-gray-200 dark:border-gray-700",
         "hover:shadow-lg transition-all duration-200",
         "flex flex-col gap-2",

@@ -45,7 +45,7 @@ const Navigation: React.FC<NavigationProps> = ({ className }) => {
             className={cn(
               "flex flex-col items-center justify-center w-full h-full relative py-1 px-1 min-w-0",
               activeTab === tab.id 
-                ? "text-creatik-primary" 
+                ? "text-primary" 
                 : "text-muted-foreground hover:text-foreground"
             )}
             onClick={() => handleTabClick(tab.path)}
@@ -82,7 +82,7 @@ const Navigation: React.FC<NavigationProps> = ({ className }) => {
             {activeTab === tab.id && (
               <motion.div
                 layoutId="navigation-indicator"
-                className="absolute bottom-0 w-8 sm:w-12 h-1 bg-creatik-primary rounded-t-full"
+                className="absolute bottom-0 w-8 sm:w-12 h-1 bg-primary rounded-t-full"
                 initial={false}
                 transition={{ type: "spring", stiffness: 500, damping: 30 }}
               />

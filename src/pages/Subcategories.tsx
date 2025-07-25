@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Plus } from 'lucide-react';
+import { ArrowLeft, Plus, Heart } from 'lucide-react';
 import { useSubcategories } from '@/hooks/useSubcategories';
 import { useCategories } from '@/hooks/useCategories';
+import { useFavorites } from '@/hooks/useFavorites';
 import SubcategoryCard from '@/components/SubcategoryCard';
 import { Button } from '@/components/ui/button';
 import IntelligentSearchBar from '@/components/IntelligentSearchBar';
@@ -16,6 +17,7 @@ const Subcategories = () => {
   const { data: subcategories, isLoading } = useSubcategories(categoryId);
   const { data: categories } = useCategories();
   const currentCategory = categories?.find(cat => cat.id === categoryId);
+  const { favorites, toggleFavorite, isFavorite } = useFavorites('subcategory');
 
   const handleSearch = (query: string) => {
     navigate(`/search?search=${encodeURIComponent(query)}`);
@@ -138,6 +140,13 @@ const Subcategories = () => {
                 onClick={() => navigate(`/category/${categoryId}/subcategory/${subcategory.id}`)}
                 className="relative overflow-hidden rounded-xl cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-lg group h-20 sm:h-24 md:h-28 bg-white dark:bg-gray-800 border-4 border-blue-500"
               >
+                {/* Icône cœur en haut à droite */}
+                <div
+                  className="absolute top-2 right-2 z-10"
+                  onClick={e => { e.stopPropagation(); toggleFavorite(subcategory.id); }}
+                >
+                  <Heart className={isFavorite(subcategory.id) ? 'w-5 h-5 text-red-500 fill-red-500' : 'w-5 h-5 text-gray-300'} />
+                </div>
                 <div className="p-4 h-full flex flex-col justify-center items-center text-center">
                   <h3 className="text-gray-900 dark:text-white font-semibold text-base md:text-lg leading-tight text-center">
                     {subcategory.name}

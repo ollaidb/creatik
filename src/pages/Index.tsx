@@ -8,7 +8,7 @@ import CategoryCard from "@/components/CategoryCard";
 import ContentCard from "@/components/ContentCard";
 import Navigation from "@/components/Navigation";
 import FavoriteCard from "@/components/FavoriteCard";
-import TrendingSection from "@/components/TrendingSection";
+// import TrendingSection from "@/components/TrendingSection";
 
 import { contentIdeas, getPersonalizedRecommendations } from "@/data/mockData";
 import { ContentIdea } from "@/types";
@@ -24,6 +24,12 @@ import { Target, Trophy, Clock, ArrowRight, Heart, User, Star } from "lucide-rea
 import { usePublicChallenges } from "@/hooks/usePublicChallenges";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
+type UserMeta = {
+  first_name?: string;
+  last_name?: string;
+  avatar_url?: string;
+};
+
 const Index: React.FC = () => {
   const [favoriteIdeas, setFavoriteIdeas] = useState<ContentIdea[]>([]);
   const [visitedCategories, setVisitedCategories] = useState<string[]>(["education", "business"]);
@@ -32,7 +38,7 @@ const Index: React.FC = () => {
   const navigate = useNavigate();
   const { data: categories } = useCategories();
   const { user } = useAuth();
-  const { favorites, loading: favoritesLoading } = useFavorites();
+  const { favorites, isLoading } = useFavorites('category');
   const { challenges: publicChallenges, toggleLike, addToPersonalChallenges } = usePublicChallenges();
   
   // Simuler des idées favorites
@@ -65,6 +71,7 @@ const Index: React.FC = () => {
     });
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const getCreatorName = (creator: any) => {
     if (!creator) return 'Utilisateur';
     const firstName = creator.user_metadata?.first_name;
@@ -227,7 +234,7 @@ const Index: React.FC = () => {
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
                             <Avatar className="w-5 h-5">
-                              <AvatarImage src={challenge.creator?.user_metadata?.avatar_url} />
+                              <AvatarImage src={(challenge.creator?.user_metadata as UserMeta)?.avatar_url || ''} />
                               <AvatarFallback>
                                 <User className="w-2.5 h-2.5" />
                               </AvatarFallback>
@@ -345,7 +352,7 @@ const Index: React.FC = () => {
                 Se connecter
               </button>
             </motion.div>
-          ) : favoritesLoading ? (
+          ) : isLoading ? (
             <motion.p 
               className="text-muted-foreground text-center py-6 text-sm"
               variants={itemVariants}

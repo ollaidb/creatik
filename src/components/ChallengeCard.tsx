@@ -53,24 +53,24 @@ const ChallengeCard: React.FC<ChallengeCardProps> = ({ challenge, onAccept }) =>
     if (theme === "dark") {
       switch (challenge.difficulty) {
         case "easy":
-          return "bg-gradient-to-r from-creatik-green/30 to-creatik-green/20";
+          return "bg-gradient-to-r from-green-500/30 to-green-500/20";
         case "medium":
-          return "bg-gradient-to-r from-creatik-orange/30 to-creatik-orange/20";
+          return "bg-gradient-to-r from-orange-500/30 to-orange-500/20";
         case "hard":
-          return "bg-gradient-to-r from-creatik-pink/30 to-creatik-pink/20";
+          return "bg-gradient-to-r from-red-500/30 to-red-500/20";
         default:
-          return "bg-gradient-to-r from-creatik-primary/30 to-creatik-primary/20";
+          return "bg-gradient-to-r from-primary/30 to-primary/20";
       }
     } else {
       switch (challenge.difficulty) {
         case "easy":
-          return "bg-gradient-to-r from-creatik-green/20 to-creatik-green/10";
+          return "bg-gradient-to-r from-green-500/20 to-green-500/10";
         case "medium":
-          return "bg-gradient-to-r from-creatik-orange/20 to-creatik-orange/10";
+          return "bg-gradient-to-r from-orange-500/20 to-orange-500/10";
         case "hard":
-          return "bg-gradient-to-r from-creatik-pink/20 to-creatik-pink/10";
+          return "bg-gradient-to-r from-red-500/20 to-red-500/10";
         default:
-          return "bg-gradient-to-r from-creatik-primary/20 to-creatik-primary/10";
+          return "bg-gradient-to-r from-primary/20 to-primary/10";
       }
     }
   };

@@ -1,9 +1,9 @@
 
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Plus, ArrowLeft } from 'lucide-react';
-import { useCategories } from '@/hooks/useCategories';
+import { useCategoriesByTheme } from '@/hooks/useCategoriesByTheme';
 import { useThemes } from '@/hooks/useThemes';
 import CategoryCard from '@/components/CategoryCard';
 import Navigation from '@/components/Navigation';
@@ -11,13 +11,28 @@ import IntelligentSearchBar from '@/components/IntelligentSearchBar';
 import ChallengeButton from '@/components/ChallengeButton';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useFavorites } from '@/hooks/useFavorites';
 
 const Categories = () => {
   const navigate = useNavigate();
+  const { subcategoryId, categoryId } = useParams();
+
+  const handleBack = () => {
+    if (subcategoryId) {
+      navigate(`/category/${categoryId}/subcategories`);
+    } else if (categoryId) {
+      navigate('/categories');
+    } else {
+      navigate('/');
+    }
+  };
+
   const [selectedTheme, setSelectedTheme] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   
-  const { data: categories, isLoading } = useCategories();
+  const { data: categories, isLoading, error } = useCategoriesByTheme(selectedTheme);
+  console.log('categories:', categories);
+  console.log('error:', error);
   const { data: themes } = useThemes();
 
   const handleSearch = (query: string) => {
@@ -28,10 +43,12 @@ const Categories = () => {
                            (selectedTheme === 'all' ? 'Tout' : 'Tout');
 
   const filteredCategories = categories?.filter(category => {
-    const matchesSearch = category.name.toLowerCase().includes(searchTerm.toLowerCase());
-    // Pour l'instant, on filtre seulement par recherche
-    return matchesSearch;
+    return category.name.toLowerCase().includes(searchTerm.toLowerCase());
   }) || [];
+
+  // Onglet Titres / Sources / Comptes
+  // Supprimer le code du menu à onglets Titres / Comptes / Sources
+  // Supprimer aussi les conditions d'affichage liées à tab (tab === 'titres', tab === 'sources', tab === 'comptes')
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -57,7 +74,7 @@ const Categories = () => {
             <Button 
               variant="ghost" 
               size="sm"
-              onClick={() => navigate('/')} 
+              onClick={handleBack} 
               className="p-2 h-10 w-10 rounded-full"
             >
               <ArrowLeft size={20} />
@@ -97,20 +114,7 @@ const Categories = () => {
         </div>
 
         {/* Menu des thèmes - Version Desktop (boutons) */}
-        <div className="mb-6 hidden md:block">
-          <div className="flex flex-wrap gap-2 justify-center">
-            {themes?.map((theme) => (
-              <Button
-                key={theme.id}
-                variant={selectedTheme === (theme.name === 'Tout' ? 'all' : theme.id) ? 'default' : 'outline'}
-                onClick={() => setSelectedTheme(theme.name === 'Tout' ? 'all' : theme.id)}
-                className="rounded-full flex-1 min-w-0 max-w-xs"
-              >
-                {theme.name}
-              </Button>
-            ))}
-          </div>
-        </div>
+        {/* Supprimer le menu à onglets Titres / Comptes / Sources */}
 
         {/* Menu des thèmes - Version Mobile (dropdown) */}
         <div className="mb-6 md:hidden">
@@ -142,36 +146,50 @@ const Categories = () => {
           </div>
         ) : (
           <>
-            {/* Grille des catégories - Responsive */}
-            <motion.div 
-              className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4"
-              variants={containerVariants}
-              initial="hidden"
-              animate="visible"
-            >
-              {filteredCategories?.map((category) => (
-                <motion.div key={category.id} variants={itemVariants}>
-                  <CategoryCard 
-                    category={{
-                      id: category.id,
-                      name: category.name,
-                      color: category.color
-                    }}
-                    className="w-full h-20 sm:h-24 md:h-28"
-                    onClick={() => navigate(`/category/${category.id}/subcategories`)}
-                  />
+            {/* Supprimer aussi les conditions d'affichage liées à tab (tab === 'titres', tab === 'sources', tab === 'comptes') */}
+            {/* Liste des titres (comme avant) */}
+            <>
+                {/* Grille des catégories - Responsive */}
+                <motion.div 
+                  className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4"
+                  variants={containerVariants}
+                  initial="hidden"
+                  animate="visible"
+                >
+                  {filteredCategories?.map((category) => (
+                    <motion.div key={category.id} variants={itemVariants}>
+                      <CategoryCard 
+                        category={{
+                          id: category.id,
+                          name: category.name,
+                          color: category.color
+                        }}
+                        className="w-full h-20 sm:h-24 md:h-28"
+                        onClick={() => navigate(`/category/${category.id}/subcategories`)}
+                      />
+                    </motion.div>
+                  ))}
                 </motion.div>
-              ))}
-            </motion.div>
 
-            {filteredCategories?.length === 0 && !isLoading && (
-              <div className="flex flex-col items-center justify-center h-60 text-center px-4">
-                <h3 className="text-lg font-medium">Aucune catégorie trouvée</h3>
-                <p className="text-muted-foreground mt-2">
-                  Aucune catégorie disponible pour ce thème
-                </p>
+                {filteredCategories?.length === 0 && !isLoading && (
+                  <div className="flex flex-col items-center justify-center h-60 text-center px-4">
+                    <h3 className="text-lg font-medium">Aucune catégorie trouvée</h3>
+                    <p className="text-muted-foreground mt-2">
+                      Aucune catégorie disponible pour ce thème
+                    </p>
+                  </div>
+                )}
+              </>
+            {/* Supprimer aussi les conditions d'affichage liées à tab (tab === 'titres', tab === 'sources', tab === 'comptes') */}
+            {/* Placeholder ou vraie liste des sources */}
+            <div className="text-center py-8">
+                <p>Sources</p>
               </div>
-            )}
+            {/* Supprimer aussi les conditions d'affichage liées à tab (tab === 'titres', tab === 'sources', tab === 'comptes') */}
+            {/* Placeholder ou vraie liste des comptes */}
+            <div className="text-center py-8">
+                <p>Comptes</p>
+              </div>
           </>
         )}
       </div>

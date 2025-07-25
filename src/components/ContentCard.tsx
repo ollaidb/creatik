@@ -47,7 +47,7 @@ const ContentCard: React.FC<ContentCardProps> = ({ idea, onFavorite }) => {
     >
       <Card className={`h-full overflow-hidden ${getBgColor()} border shadow-md`}>
         {/* Image/Header section */}
-        <div className="h-36 bg-gradient-to-r from-creatik-primary/30 to-creatik-secondary/30 relative">
+        <div className="h-36 bg-gradient-to-r from-primary/30 to-secondary/30 relative">
           <div className="absolute top-2 right-2">
             <Button
               variant="ghost"
@@ -55,7 +55,7 @@ const ContentCard: React.FC<ContentCardProps> = ({ idea, onFavorite }) => {
               onClick={() => onFavorite && onFavorite(idea.id)}
               className={cn(
                 "h-8 w-8 rounded-full bg-black/10 backdrop-blur-sm",
-                idea.isFavorite ? "text-creatik-pink" : "text-white"
+                idea.isFavorite ? "text-pink-500" : "text-white"
               )}
             >
               <Heart className="h-4 w-4" fill={idea.isFavorite ? "currentColor" : "none"} />

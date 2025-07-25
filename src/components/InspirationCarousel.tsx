@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, PanInfo } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
@@ -95,28 +95,30 @@ const InspirationCarousel: React.FC = () => {
   const constraintsRef = React.useRef<HTMLDivElement>(null);
   let dragStartY = 0;
   
-  const handleDragStart = (e: any) => {
-    if (e.clientY) {
+  const handleDragStart = (e: MouseEvent | TouchEvent | PointerEvent) => {
+    if ('clientY' in e) {
       dragStartY = e.clientY;
     }
   };
 
-  const handleDragEnd = (e: any, info: any) => {
-    const dragEndY = e.clientY;
-    const dragDistance = dragStartY - dragEndY;
-    
-    // If dragged down, go to previous card
-    if (dragDistance < -50 && currentIndex > 0) {
-      setCurrentIndex(currentIndex - 1);
-    }
-    // If dragged up, go to next card
-    else if (dragDistance > 50 && currentIndex < inspirationCards.length - 1) {
-      setCurrentIndex(currentIndex + 1);
+  const handleDragEnd = (e: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+    if ('clientY' in e) {
+      const dragEndY = e.clientY;
+      const dragDistance = dragStartY - dragEndY;
+      
+      // If dragged down, go to previous card
+      if (dragDistance < -50 && currentIndex > 0) {
+        setCurrentIndex(currentIndex - 1);
+      }
+      // If dragged up, go to next card
+      else if (dragDistance > 50 && currentIndex < inspirationCards.length - 1) {
+        setCurrentIndex(currentIndex + 1);
+      }
     }
   };
   
   return (
-    <div className="creatik-section py-6 overflow-hidden">
+    <div className="py-6 overflow-hidden">
       <motion.div 
         ref={constraintsRef}
         className="relative h-[70vh] flex items-center justify-center"

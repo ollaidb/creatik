@@ -1,5 +1,6 @@
 
 import type { Config } from "tailwindcss";
+import tailwindcssAnimate from "tailwindcss-animate";
 
 export default {
 	darkMode: ["class"],
@@ -63,16 +64,6 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
-				// CréaTik custom colors
-				creatik: {
-					primary: '#6C5CE7',
-					secondary: '#45AAF2',
-					orange: '#FFA502',
-					green: '#2ED573',
-					pink: '#FF6B81',
-					dark: '#2C2C54',
-					light: '#F8F9FA',
-				},
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
@@ -115,5 +106,5 @@ export default {
 			}
 		}
 	},
-	plugins: [require("tailwindcss-animate")],
+	plugins: [tailwindcssAnimate],
 } satisfies Config;
