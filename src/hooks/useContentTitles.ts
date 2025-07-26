@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+
 export const useContentTitles = (subcategoryId?: string) => {
   return useQuery({
     queryKey: ['content-titles', subcategoryId],
@@ -15,6 +16,6 @@ export const useContentTitles = (subcategoryId?: string) => {
       if (error) throw error;
       return data;
     },
-    enabled: !!subcategoryId
+    enabled: true // Toujours activé pour charger tous les titres
   });
 };

@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ArrowLeft, Heart, Target, Plus, User, Clock, Star, Calendar, Trophy } from 'lucide-react';
 import { usePublicChallenges } from '@/hooks/usePublicChallenges';
+import { useFavorites } from '@/hooks/useFavorites';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 
@@ -15,10 +16,11 @@ const PublicChallenges = () => {
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const { toast } = useToast();
+  const { favorites: favoriteChallenges, toggleFavorite, isFavorite } = useFavorites('challenge');
   
   // Déterminer si on affiche seulement les challenges likés
   const filterLikedOnly = searchParams.get('filter') === 'liked';
-  const { challenges, loading, error, toggleLike, addToPersonalChallenges } = usePublicChallenges(filterLikedOnly);
+  const { challenges, loading, error, addToPersonalChallenges } = usePublicChallenges(filterLikedOnly);
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
@@ -250,14 +252,14 @@ const PublicChallenges = () => {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => toggleLike(challenge.id)}
+                          onClick={() => toggleFavorite(challenge.id)}
                           className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-200 ${
-                            challenge.is_liked 
+                            isFavorite(challenge.id) 
                               ? 'text-red-500 bg-red-50 dark:bg-red-900/20' 
                               : 'text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20'
                           }`}
                         >
-                          <Heart className={`w-5 h-5 ${challenge.is_liked ? 'fill-current' : ''}`} />
+                          <Heart className={`w-5 h-5 ${isFavorite(challenge.id) ? 'fill-current' : ''}`} />
                           <span className="font-medium">{challenge.likes_count}</span>
                         </Button>
                       </div>

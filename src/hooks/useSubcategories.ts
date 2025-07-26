@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+
 export const useSubcategories = (categoryId?: string) => {
   return useQuery({
     queryKey: ['subcategories', categoryId],
@@ -15,7 +16,7 @@ export const useSubcategories = (categoryId?: string) => {
       if (error) throw error;
       return data;
     },
-    enabled: !!categoryId,
+    enabled: true, // Toujours activé pour charger toutes les sous-catégories
     // Refetch automatique toutes les 5 secondes pour voir les nouvelles publications
     refetchInterval: 5000,
     // Refetch quand la fenêtre redevient active
@@ -26,6 +27,7 @@ export const useSubcategories = (categoryId?: string) => {
     staleTime: 10000
   });
 };
+
 export const useSubcategory = (subcategoryId: string) => {
   return useQuery({
     queryKey: ['subcategory', subcategoryId],

@@ -3,6 +3,7 @@ import { Heart } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useFavorites } from '@/hooks/useFavorites';
 import { useAuth } from '@/hooks/useAuth';
+
 interface CategoryCardProps {
   category: {
     id: string;
@@ -12,10 +13,12 @@ interface CategoryCardProps {
   onClick: () => void;
   className?: string;
 }
+
 const CategoryCard: React.FC<CategoryCardProps> = ({ category, onClick, className }) => {
   const { user } = useAuth();
-  const { favorites, toggleFavorite, loading } = useFavorites();
+  const { favorites, toggleFavorite, isLoading } = useFavorites('category');
   const isFavorite = favorites.includes(category.id);
+
   const getGradientClass = (color: string) => {
     switch (color) {
       case 'primary':
@@ -30,10 +33,12 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ category, onClick, classNam
         return 'from-blue-500 to-purple-600';
     }
   };
+
   const handleFavoriteClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     toggleFavorite(category.id);
   };
+
   return (
     <div
       className={cn(
@@ -47,7 +52,7 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ category, onClick, classNam
           {user && (
             <button
               onClick={handleFavoriteClick}
-              disabled={loading}
+              disabled={isLoading}
               className="p-1 hover:bg-white/20 rounded-full transition-colors"
             >
               <Heart 
@@ -70,4 +75,5 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ category, onClick, classNam
     </div>
   );
 };
+
 export default CategoryCard;

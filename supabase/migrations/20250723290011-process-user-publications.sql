@@ -74,6 +74,40 @@ BEGIN
                         publication_record.user_id
                     );
                     
+                ELSIF publication_record.content_type = 'source' THEN
+                    -- Insérer dans la table sources (si elle existe, sinon créer)
+                    INSERT INTO sources (
+                        title,
+                        url,
+                        description,
+                        category,
+                        subcategory
+                    ) VALUES (
+                        publication_record.title,
+                        COALESCE(publication_record.url, ''),
+                        COALESCE(publication_record.description, 'Source publiée'),
+                        (SELECT name FROM categories WHERE id = publication_record.category_id),
+                        (SELECT name FROM subcategories WHERE id = publication_record.subcategory_id)
+                    );
+                    
+                ELSIF publication_record.content_type = 'account' THEN
+                    -- Insérer dans la table accounts (si elle existe, sinon créer)
+                    INSERT INTO accounts (
+                        name,
+                        description,
+                        platform,
+                        url,
+                        category,
+                        subcategory
+                    ) VALUES (
+                        publication_record.title,
+                        COALESCE(publication_record.description, 'Compte publié'),
+                        COALESCE(publication_record.platform, 'Autre'),
+                        COALESCE(publication_record.url, ''),
+                        (SELECT name FROM categories WHERE id = publication_record.category_id),
+                        (SELECT name FROM subcategories WHERE id = publication_record.subcategory_id)
+                    );
+                    
                 END IF;
                 
                 -- Marquer comme approuvé
