@@ -10,6 +10,8 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useFavorites } from '@/hooks/useFavorites';
 import IntelligentSearchBar from '@/components/IntelligentSearchBar';
+import SubcategoryTabs from '@/components/SubcategoryTabs';
+import HashtagsSection from '@/components/HashtagsSection';
 
 const Titles = () => {
   const { subcategoryId, categoryId } = useParams();
@@ -22,12 +24,12 @@ const Titles = () => {
   
   // Filtrer les comptes selon la catégorie et sous-catégorie
   const filteredAccounts = accounts.filter(account => 
-    account.category === 'Activisme' && account.subcategory === 'Campagnes'
+    account.category === subcategory?.category?.name && account.subcategory === subcategory?.name
   );
 
   // Filtrer les sources selon la catégorie et sous-catégorie
   const filteredSources = sources.filter(source => 
-    source.category === 'Activisme' && source.subcategory === 'Campagnes'
+    source.category === subcategory?.category?.name && source.subcategory === subcategory?.name
   );
 
   // Logs de débogage
@@ -49,12 +51,12 @@ const Titles = () => {
       await navigator.clipboard.writeText(text);
       toast({
         title: "Copié !",
-        description: "Le titre a été copié dans le presse-papiers",
+        description: "Le contenu a été copié dans le presse-papiers",
       });
     } catch (error) {
       toast({
         title: "Erreur",
-        description: "Impossible de copier le titre",
+        description: "Impossible de copier le contenu",
         variant: "destructive",
       });
     }
@@ -138,8 +140,8 @@ const Titles = () => {
     }
   };
 
-  // Onglet Titres / Comptes / Sources
-  const [tab, setTab] = useState<'titres' | 'comptes' | 'sources'>('titres');
+  // Onglet Titres / Comptes / Sources / Hashtags
+  const [tab, setTab] = useState<'titres' | 'comptes' | 'sources' | 'hashtags'>('titres');
   
   // Gestion des favoris pour les titres, comptes et sources
   const { favorites, toggleFavorite, isFavorite } = useFavorites(
@@ -225,33 +227,11 @@ const Titles = () => {
       </div>
       {/* Contenu principal */}
       <div className="px-4 py-4">
-        {/* Onglets Titres / Comptes / Sources */}
-        <div className="flex gap-2 mb-6 justify-center">
-          <Button
-            variant={tab === 'titres' ? 'default' : 'outline'}
-            size="sm"
-            className="rounded-full"
-            onClick={() => setTab('titres')}
-          >
-            Titres
-          </Button>
-          <Button
-            variant={tab === 'comptes' ? 'default' : 'outline'}
-            size="sm"
-            className="rounded-full"
-            onClick={() => setTab('comptes')}
-          >
-            Comptes
-          </Button>
-          <Button
-            variant={tab === 'sources' ? 'default' : 'outline'}
-            size="sm"
-            className="rounded-full"
-            onClick={() => setTab('sources')}
-          >
-            Sources
-          </Button>
-        </div>
+        {/* Onglets Titres / Comptes / Sources / Hashtags */}
+        <SubcategoryTabs 
+          activeTab={tab}
+          onTabChange={setTab}
+        />
         {/* Barre de recherche intelligente */}
         <div className="mb-6">
           <div className="max-w-lg mx-auto md:max-w-2xl">
@@ -439,6 +419,12 @@ const Titles = () => {
               </div>
             )}
           </div>
+        )}
+        {tab === 'hashtags' && (
+          <HashtagsSection 
+            subcategoryId={subcategoryId}
+            subcategoryName={subcategory?.name}
+          />
         )}
         {/* Message si pas de titres */}
         {tab === 'titres' && titles?.length === 0 && (

@@ -26,7 +26,10 @@ import AdminPublications from "./pages/admin/Publications";
 import ApprovePublications from "./pages/admin/ApprovePublications";
 import Accounts from "./pages/Accounts";
 import Sources from "./pages/Sources";
+import Events from "./pages/Events";
+
 const queryClient = new QueryClient();
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
@@ -43,6 +46,8 @@ const App = () => (
               <Route path="/category/:categoryId/subcategory/:subcategoryId" element={<Titles />} />
               {/* Challenges Routes */}
               <Route path="/challenges" element={<PublicChallenges />} />
+              {/* Events Route */}
+              <Route path="/events" element={<Events />} />
               {/* Accounts and Sources Routes */}
               <Route path="/accounts" element={<Accounts />} />
               <Route path="/sources" element={<Sources />} />
@@ -75,4 +80,5 @@ const App = () => (
     </ThemeProvider>
   </QueryClientProvider>
 );
+
 export default App;

@@ -92,7 +92,7 @@ const Categories = () => {
               <ChallengeButton 
                 variant="outline"
                 size="sm"
-                className="rounded-full"
+                className="rounded-full bg-red-600 hover:bg-red-700 text-white"
               />
             </div>
           </div>
