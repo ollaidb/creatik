@@ -3,8 +3,9 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { ThemeProvider } from "@/hooks/use-theme";
-import { AuthProvider } from "@/hooks/useAuth";
+import { ThemeProvider } from "@/components/ThemeProvider";
+import { AuthProvider } from "@/components/AuthProvider";
+import VisitTracker from "@/components/VisitTracker";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import ProfilePage from "./pages/Profile";
@@ -27,55 +28,69 @@ import ApprovePublications from "./pages/admin/ApprovePublications";
 import Accounts from "./pages/Accounts";
 import Sources from "./pages/Sources";
 import Events from "./pages/Events";
+import TrendingIdeas from "./pages/TrendingIdeas";
+import WhatToPostToday from "./pages/WhatToPostToday";
 
 const queryClient = new QueryClient();
+
+const AppContent = () => {
+  return (
+    <TooltipProvider>
+      <Toaster />
+      <Sonner />
+      <BrowserRouter>
+        <VisitTracker>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            {/* Categories Routes */}
+            <Route path="/categories" element={<Categories />} />
+            <Route path="/category/:categoryId/subcategories" element={<Subcategories />} />
+            <Route path="/category/:categoryId/subcategory/:subcategoryId" element={<Titles />} />
+            {/* Challenges Routes */}
+            <Route path="/challenges" element={<PublicChallenges />} />
+            {/* Events Route */}
+            <Route path="/events" element={<Events />} />
+            {/* Trending Ideas Route */}
+            <Route path="/trending" element={<TrendingIdeas />} />
+            {/* What to Post Today Route */}
+            <Route path="/what-to-post" element={<WhatToPostToday />} />
+            {/* Accounts and Sources Routes */}
+            <Route path="/accounts" element={<Accounts />} />
+            <Route path="/sources" element={<Sources />} />
+            {/* Profile Routes */}
+            <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/profile/favorites" element={<Favorites />} />
+            <Route path="/profile/privacy" element={<Privacy />} />
+            <Route path="/profile/history" element={<History />} />
+            <Route path="/profile/preferences" element={<Preferences />} />
+            <Route path="/profile/legal" element={<Legal />} />
+            <Route path="/profile/contact" element={<Contact />} />
+            <Route path="/profile/publications" element={<Publications />} />
+            <Route path="/profile/challenges" element={<Challenges />} />
+            {/* Admin Routes */}
+            <Route path="/admin/publications" element={<AdminPublications />} />
+            <Route path="/admin/approve-publications" element={<ApprovePublications />} />
+            {/* Publish Route */}
+            <Route path="/publish" element={<Publish />} />
+            <Route path="/search" element={<SearchResults />} />
+            {/* Inspiration Card Routes */}
+            <Route path="/ideas/trending" element={<NotFound />} />
+            <Route path="/categories/explore" element={<Categories />} />
+            <Route path="/ideas/create" element={<NotFound />} />
+            {/* 404 Route */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </VisitTracker>
+      </BrowserRouter>
+    </TooltipProvider>
+  );
+};
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
       <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              {/* Categories Routes */}
-              <Route path="/categories" element={<Categories />} />
-              <Route path="/category/:categoryId/subcategories" element={<Subcategories />} />
-              <Route path="/category/:categoryId/subcategory/:subcategoryId" element={<Titles />} />
-              {/* Challenges Routes */}
-              <Route path="/challenges" element={<PublicChallenges />} />
-              {/* Events Route */}
-              <Route path="/events" element={<Events />} />
-              {/* Accounts and Sources Routes */}
-              <Route path="/accounts" element={<Accounts />} />
-              <Route path="/sources" element={<Sources />} />
-              {/* Profile Routes */}
-              <Route path="/profile" element={<ProfilePage />} />
-              <Route path="/profile/favorites" element={<Favorites />} />
-              <Route path="/profile/privacy" element={<Privacy />} />
-              <Route path="/profile/history" element={<History />} />
-              <Route path="/profile/preferences" element={<Preferences />} />
-              <Route path="/profile/legal" element={<Legal />} />
-              <Route path="/profile/contact" element={<Contact />} />
-              <Route path="/profile/publications" element={<Publications />} />
-              <Route path="/profile/challenges" element={<Challenges />} />
-              {/* Admin Routes */}
-              <Route path="/admin/publications" element={<AdminPublications />} />
-              <Route path="/admin/approve-publications" element={<ApprovePublications />} />
-              {/* Publish Route */}
-              <Route path="/publish" element={<Publish />} />
-              <Route path="/search" element={<SearchResults />} />
-              {/* Inspiration Card Routes */}
-              <Route path="/ideas/trending" element={<NotFound />} />
-              <Route path="/categories/explore" element={<Categories />} />
-              <Route path="/ideas/create" element={<NotFound />} />
-              {/* 404 Route */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
+        <AppContent />
       </AuthProvider>
     </ThemeProvider>
   </QueryClientProvider>

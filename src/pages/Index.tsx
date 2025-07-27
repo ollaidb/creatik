@@ -21,6 +21,7 @@ import { Target, Trophy, Clock, ArrowRight, Heart, User, Star } from "lucide-rea
 import { usePublicChallenges } from "@/hooks/usePublicChallenges";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import TodayEventsSection from "@/components/TodayEventsSection";
+import { useSocialTrends } from "@/hooks/useSocialTrends";
 type UserMeta = {
   first_name?: string;
   last_name?: string;
@@ -35,7 +36,8 @@ const Index: React.FC = () => {
   const { data: categories } = useCategories();
   const { user } = useAuth();
   const { favorites, isLoading } = useFavorites('category');
-  const { challenges: publicChallenges, toggleLike, addToPersonalChallenges } = usePublicChallenges();
+  const { challenges: publicChallenges, addToPersonalChallenges } = usePublicChallenges();
+  const { trends, getTopTrends } = useSocialTrends();
   // Simuler des idées favorites
   useEffect(() => {
     const withFavorites = contentIdeas.map(idea => ({
@@ -91,6 +93,73 @@ const Index: React.FC = () => {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Hero />
       {/* Section Tendances */}
+      {trends.length > 0 && (
+        <section className="container mx-auto px-4 py-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6"
+          >
+            <div className="flex items-center space-x-2 mb-4">
+              <Star className="w-6 h-6 text-purple-600" />
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                Tendances du moment
+              </h2>
+            </div>
+            <p className="text-gray-600 dark:text-gray-300">
+              Découvrez ce qui fait le buzz sur les réseaux sociaux
+            </p>
+          </motion.div>
+          
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+          >
+            {getTopTrends(3).map((trend, index) => (
+              <motion.div key={trend.id} variants={itemVariants}>
+                <Card className="bg-white dark:bg-gray-800 hover:shadow-lg transition-shadow">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white line-clamp-2">
+                        {trend.title}
+                      </CardTitle>
+                      <Badge className="bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
+                        {trend.platform}
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <p className="text-gray-600 dark:text-gray-300 text-sm mb-4 line-clamp-3">
+                      {trend.description}
+                    </p>
+                    <div className="flex flex-wrap gap-1 mb-4">
+                      {trend.hashtags.slice(0, 2).map((hashtag, idx) => (
+                        <Badge key={idx} variant="outline" className="text-xs">
+                          {hashtag}
+                        </Badge>
+                      ))}
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-500 dark:text-gray-400">
+                        {trend.engagement.toLocaleString()} engagements
+                      </span>
+                      <Button
+                        size="sm"
+                        className="bg-purple-600 hover:bg-purple-700 text-white"
+                        onClick={() => navigate('/trending')}
+                      >
+                        Voir plus
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+          </motion.div>
+        </section>
+      )}
       {/* <TrendingSection /> */}
       {/* Section Défi du jour */}
       {user && (
@@ -274,121 +343,6 @@ const Index: React.FC = () => {
         </motion.div>
       </section>
       <div className="container mx-auto px-4 py-4">
-        {/* Section: Vidéos les plus recherchées */}
-        <section className="mb-6">
-          <motion.h2 
-            className="text-lg font-semibold text-gray-900 dark:text-white mb-3"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            Idées les plus populaires
-          </motion.h2>
-          <motion.div 
-            className="grid grid-cols-1 md:grid-cols-3 gap-3"
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-          >
-            {contentIdeas
-              .sort((a, b) => b.popularity - a.popularity)
-              .slice(0, 3)
-              .map((idea) => (
-                <motion.div key={idea.id} variants={itemVariants}>
-                  <ContentCard 
-                    idea={idea} 
-                    onFavorite={handleToggleFavorite}
-                  />
-                </motion.div>
-            ))}
-          </motion.div>
-        </section>
-        {/* Section: Favoris */}
-        <section className="mb-6">
-          <div className="flex justify-between items-center mb-3">
-            <motion.h2 
-              className="text-lg font-semibold text-gray-900 dark:text-white"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              Vos favoris
-            </motion.h2>
-            {user && favoriteCategories.length > 0 && (
-              <button 
-                className="text-blue-500 hover:text-blue-600 font-medium text-sm"
-                onClick={() => navigate('/profile/favorites')}
-              >
-                Voir tout
-              </button>
-            )}
-          </div>
-          {!user ? (
-            <motion.div 
-              className="text-center py-6 bg-white dark:bg-gray-800 rounded-lg"
-              variants={itemVariants}
-              initial="hidden"
-              animate="visible"
-            >
-              <p className="text-muted-foreground mb-3 text-sm">
-                Connectez-vous pour voir vos catégories favorites
-              </p>
-              <button 
-                className="text-blue-500 hover:text-blue-600 font-medium"
-                onClick={() => navigate('/profile')}
-              >
-                Se connecter
-              </button>
-            </motion.div>
-          ) : isLoading ? (
-            <motion.p 
-              className="text-muted-foreground text-center py-6 text-sm"
-              variants={itemVariants}
-              initial="hidden"
-              animate="visible"
-            >
-              Chargement de vos favoris...
-            </motion.p>
-          ) : favoriteCategories.length > 0 ? (
-            <motion.div 
-              className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4"
-              variants={containerVariants}
-              initial="hidden"
-              animate="visible"
-            >
-              {favoriteCategories.map((category) => (
-                <motion.div key={category.id} variants={itemVariants}>
-                  <CategoryCard 
-                    category={{
-                      id: category.id,
-                      name: category.name,
-                      color: category.color
-                    }}
-                    className="w-full h-20 sm:h-24 md:h-28"
-                    onClick={() => navigate(`/category/${category.id}/subcategories`)}
-                  />
-                </motion.div>
-              ))}
-            </motion.div>
-          ) : (
-            <motion.div 
-              className="text-center py-6 bg-white dark:bg-gray-800 rounded-lg"
-              variants={itemVariants}
-              initial="hidden"
-              animate="visible"
-            >
-              <p className="text-muted-foreground mb-3 text-sm">
-                Vous n'avez pas encore de favoris.
-              </p>
-              <button 
-                className="text-blue-500 hover:text-blue-600 font-medium"
-                onClick={() => navigate('/categories')}
-              >
-                Explorez les catégories
-              </button>
-            </motion.div>
-          )}
-        </section>
         {/* Section: Recommandations personnalisées */}
         <section className="mb-6">
           <motion.h2 
@@ -405,52 +359,17 @@ const Index: React.FC = () => {
             initial="hidden"
             animate="visible"
           >
-            {personalizedIdeas.map((idea) => (
+              {personalizedIdeas.map((idea) => (
               <motion.div key={idea.id} variants={itemVariants}>
-                <ContentCard 
-                  idea={idea} 
-                  onFavorite={handleToggleFavorite}
-                />
+                  <ContentCard 
+                    idea={idea} 
+                    onFavorite={handleToggleFavorite}
+                  />
               </motion.div>
             ))}
           </motion.div>
         </section>
-        {/* Section: Catégories */}
-        <section className="mb-6">
-          <motion.h2 
-            className="text-lg font-semibold text-gray-900 dark:text-white mb-3"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            Catégories
-          </motion.h2>
-          <motion.div 
-            className="grid grid-flow-col auto-cols-max gap-3 overflow-x-auto pb-3 scrollbar-hide"
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-          >
-            {categories?.map((category) => (
-              <motion.div key={category.id} variants={itemVariants}>
-                <CategoryCard 
-                  category={{
-                    id: category.id,
-                    name: category.name,
-                    color: category.color
-                  }}
-                  className="w-28 h-20"
-                  onClick={() => {
-                    if (!visitedCategories.includes(category.id)) {
-                      setVisitedCategories(prev => [...prev, category.id]);
-                    }
-                    navigate(`/category/${category.id}/subcategories`);
-                  }}
-                />
-              </motion.div>
-            ))}
-          </motion.div>
-        </section>
+
       </div>
       <Navigation />
     </div>

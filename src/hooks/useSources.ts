@@ -27,7 +27,7 @@ export const useSources = () => {
         throw error;
       }
       
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       return (data || []) as Source[];
     },
     enabled: true,

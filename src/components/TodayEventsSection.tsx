@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Calendar, ChevronDown, ChevronUp } from 'lucide-react';
 import { useEvents } from '@/hooks/useEvents';
 import { motion, AnimatePresence } from 'framer-motion';
+import type { Event } from '@/hooks/useEvents';
 
 const TodayEventsSection: React.FC = () => {
   const { getEventsForDate, loading, error } = useEvents();
   const [open, setOpen] = useState(true);
+  const [todayEvents, setTodayEvents] = useState<Event[]>([]);
 
   // Formater la date d'aujourd'hui
   const today = new Date();
@@ -15,7 +17,20 @@ const TodayEventsSection: React.FC = () => {
     year: 'numeric'
   });
 
-  const todayEvents = getEventsForDate(today);
+  // Charger les événements d'aujourd'hui
+  useEffect(() => {
+    const loadTodayEvents = async () => {
+      try {
+        const events = await getEventsForDate(today);
+        setTodayEvents(events || []);
+      } catch (err) {
+        console.error('Erreur lors du chargement des événements:', err);
+        setTodayEvents([]);
+      }
+    };
+
+    loadTodayEvents();
+  }, [getEventsForDate, today]);
 
   const handleEventClick = (eventId: string) => {
     window.location.href = `/events?event=${eventId}`;
@@ -125,7 +140,7 @@ const TodayEventsSection: React.FC = () => {
                     )}
                     
                     <motion.button
-                      className="w-full text-left p-3 sm:p-4 rounded-lg font-bold text-white text-sm sm:text-base md:text-lg border border-transparent hover:text-blue-300 hover:bg-neutral-700 focus:bg-neutral-700 focus:outline-none transition-all duration-200 cursor-pointer shadow-sm leading-tight"
+                      className="w-full text-left p-3 sm:p-4 rounded-lg font-bold text-white text-sm sm:text-base md:text-lg border border-transparent hover:text-blue-300 hover:bg-neutral-700 focus:bg-neutral-700 focus:outline-none transition-all duration-200 cursor-pointer shadow-sm leading-tight active:scale-95 active:bg-neutral-600 event-button-mobile"
                       onClick={(e) => {
                         e.stopPropagation();
                         handleEventClick(event.id);
@@ -136,9 +151,16 @@ const TodayEventsSection: React.FC = () => {
                         boxShadow: "0 4px 12px rgba(0, 0, 0, 0.3)"
                       }}
                       whileTap={{ 
-                        scale: 0.98, 
+                        scale: 0.95, 
                         y: 0,
                         boxShadow: "0 2px 6px rgba(0, 0, 0, 0.2)"
+                      }}
+                      // Animations spécifiques pour mobile
+                      style={{
+                        WebkitTapHighlightColor: 'transparent',
+                        touchAction: 'manipulation',
+                        WebkitTransform: 'translateZ(0)', // Force hardware acceleration
+                        transform: 'translateZ(0)'
                       }}
                     >
                       {event.title}

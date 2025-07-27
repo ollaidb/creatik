@@ -247,10 +247,10 @@ const Publish = () => {
       <header className="bg-background border-b p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={() => navigate('/')} 
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={() => navigate('/')} 
               className="p-2 h-10 w-10 rounded-full"
             >
               <ArrowLeft size={20} />
@@ -265,7 +265,7 @@ const Publish = () => {
           >
             <FileText className="w-4 h-4" />
             Mes publications
-          </Button>
+        </Button>
         </div>
       </header>
 

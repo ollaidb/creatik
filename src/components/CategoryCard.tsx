@@ -45,6 +45,9 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ category, onClick, classNam
         "relative overflow-hidden rounded-xl cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-lg group",
         className
       )}
+      data-title={category.name}
+      data-type="category"
+      data-category={category.id}
     >
       <div className={`absolute inset-0 bg-gradient-to-br ${getGradientClass(category.color)} opacity-90`} />
       <div className="relative p-2 sm:p-4 h-full flex flex-col justify-center items-center text-center" onClick={onClick}>

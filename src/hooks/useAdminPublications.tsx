@@ -136,7 +136,7 @@ export const useAdminPublications = () => {
   };
   const updatePublicationStatus = async (id: string, status: 'approved' | 'rejected', rejectionReason?: string) => {
     try {
-      const updateData: any = { status };
+      const updateData: { status: string; rejection_reason?: string } = { status };
       if (status === 'rejected' && rejectionReason) {
         updateData.rejection_reason = rejectionReason;
       }

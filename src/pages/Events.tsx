@@ -1,20 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ArrowLeft, Search, Calendar as CalendarIcon } from 'lucide-react';
+import { useEvents } from '@/hooks/useEvents';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
-import { Search, Calendar as LucideCalendar, ArrowLeft, Filter } from 'lucide-react';
-import { useEvents, Event } from '@/hooks/useEvents';
 import EventsCalendar from '@/components/EventsCalendar';
-import { motion, AnimatePresence } from 'framer-motion';
+import type { Event } from '@/hooks/useEvents';
 
+// Fonction pour obtenir l'icône selon le type d'événement
 const getEventIcon = (eventType: string) => {
   switch (eventType) {
     case 'birthday':
       return '🎂';
     case 'death':
-      return '⚰️';
+      return '🕯️';
     case 'historical_event':
       return '📜';
     case 'holiday':
@@ -26,6 +28,7 @@ const getEventIcon = (eventType: string) => {
   }
 };
 
+// Fonction pour obtenir le label du type d'événement
 const getEventTypeLabel = (eventType: string) => {
   switch (eventType) {
     case 'birthday':
@@ -33,24 +36,25 @@ const getEventTypeLabel = (eventType: string) => {
     case 'death':
       return 'Décès';
     case 'historical_event':
-      return 'Événement';
+      return 'Événement historique';
     case 'holiday':
       return 'Férié';
     case 'international_day':
-      return 'Journée';
+      return 'Journée internationale';
     default:
       return 'Événement';
   }
 };
 
 const Events: React.FC = () => {
-  const { events, categories, loading, error, getEventsForDate, getEventsByType, getEventsByCategory, searchEvents } = useEvents();
+  const { events, categories, loading, error, getEventsForDate } = useEvents();
   const [activeTab, setActiveTab] = useState<'all' | 'birthday' | 'death' | 'historical_event' | 'holiday' | 'international_day'>('all');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [targetedEventId, setTargetedEventId] = useState<string | null>(null);
+  const [eventsOfDay, setEventsOfDay] = useState<Event[]>([]);
 
   // Formater la date sélectionnée
   const formattedSelectedDate = selectedDate.toLocaleDateString('fr-FR', {
@@ -73,8 +77,20 @@ const Events: React.FC = () => {
     }
   }, [events]);
 
-  // Filtrer les événements du jour sélectionné
-  const eventsOfDay = getEventsForDate(selectedDate);
+  // Charger les événements du jour sélectionné
+  useEffect(() => {
+    const loadEventsOfDay = async () => {
+      try {
+        const events = await getEventsForDate(selectedDate);
+        setEventsOfDay(events || []);
+      } catch (err) {
+        console.error('Erreur lors du chargement des événements du jour:', err);
+        setEventsOfDay([]);
+      }
+    };
+
+    loadEventsOfDay();
+  }, [getEventsForDate, selectedDate]);
 
   // Appliquer les filtres sur les événements du jour
   const filteredEvents = eventsOfDay.filter(event => {
@@ -92,8 +108,7 @@ const Events: React.FC = () => {
       return (
         event.title.toLowerCase().includes(searchLower) ||
         event.description.toLowerCase().includes(searchLower) ||
-        event.person_name?.toLowerCase().includes(searchLower) ||
-        event.tags?.some(tag => tag.toLowerCase().includes(searchLower))
+        event.person_name?.toLowerCase().includes(searchLower)
       );
     }
     return true;
@@ -174,7 +189,7 @@ const Events: React.FC = () => {
               onClick={() => setCalendarOpen(v => !v)}
               className={calendarOpen ? 'bg-blue-900 border-blue-400 text-white' : 'bg-neutral-800 border-neutral-700 text-white'}
             >
-              <LucideCalendar className="h-4 w-4 sm:h-5 sm:w-5" />
+              <CalendarIcon className="h-4 w-4 sm:h-5 sm:w-5" />
             </Button>
             {calendarOpen && (
               <div className="absolute right-0 z-20 mt-2">
@@ -260,7 +275,7 @@ const Events: React.FC = () => {
               <Card className="bg-neutral-800 border-neutral-700">
                 <CardContent className="pt-6">
                   <div className="text-center py-8">
-                    <LucideCalendar className="h-10 w-10 sm:h-12 sm:w-12 text-gray-600 mx-auto mb-4" />
+                    <CalendarIcon className="h-10 w-10 sm:h-12 sm:w-12 text-gray-600 mx-auto mb-4" />
                     <p className="text-gray-300 text-sm sm:text-base">Aucun événement trouvé pour cette date</p>
                   </div>
                 </CardContent>
@@ -296,6 +311,11 @@ const Events: React.FC = () => {
                     y: -1,
                     boxShadow: "0 4px 15px rgba(0, 0, 0, 0.3)"
                   }}
+                  style={{
+                    WebkitTapHighlightColor: 'transparent',
+                    touchAction: 'manipulation'
+                  }}
+                  className="event-card-mobile"
                 >
                   <Card 
                     className={`bg-neutral-800 border-neutral-700 hover:shadow-lg transition-all duration-300 cursor-pointer ${
@@ -330,15 +350,6 @@ const Events: React.FC = () => {
                         <p className="text-xs sm:text-sm text-gray-300 mb-2">
                           <span className="font-medium">Année:</span> {event.year}
                         </p>
-                      )}
-                      {event.tags && event.tags.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-3">
-                          {event.tags.map((tag, index) => (
-                            <span key={index} className="text-xs text-blue-300 bg-blue-950 px-2 py-1 rounded">
-                              {tag}
-                            </span>
-                          ))}
-                        </div>
                       )}
                     </CardContent>
                   </Card>

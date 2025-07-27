@@ -1,0 +1,70 @@
+/* Couleurs personnalisées pour Creatik */
+
+/* Mode Dark */
+.dark {
+  /* Couleurs principales */
+  --creatik-bg-primary: #0F172A;      /* Fond principal */
+  --creatik-bg-secondary: #1E293B;    /* Fond secondaire / cartes */
+  --creatik-text-primary: #F9FAFB;    /* Texte principal */
+  --creatik-text-secondary: #94A3B8;  /* Texte secondaire */
+  --creatik-text-muted: #64748B;      /* Texte inactif */
+  --creatik-icon-active: #8B5CF6;     /* Icônes actives */
+  --creatik-icon-inactive: #475569;   /* Icônes inactives */
+  --creatik-button-primary: linear-gradient(135deg, #8B5CF6 0%, #3B82F6 100%);
+  --creatik-button-secondary: #334155; /* Boutons secondaires */
+  --creatik-success: #10B981;         /* Success */
+  --creatik-error: #EF4444;           /* Erreur */
+  --creatik-menu-active: #A78BFA;     /* Menu actif */
+  --creatik-hover: rgba(99, 102, 241, 0.15); /* Survol */
+  --creatik-border: #334155;          /* Bordures */
+  --creatik-input-bg: #1E293B;        /* Fond input */
+  --creatik-input-text: #F9FAFB;      /* Texte input */
+}
+
+/* Mode Light */
+:root {
+  /* Couleurs principales */
+  --creatik-bg-primary: #FFFFFF;      /* Fond principal */
+  --creatik-bg-secondary: #F9FAFB;    /* Fond secondaire / cartes */
+  --creatik-text-primary: #111827;    /* Texte principal */
+  --creatik-text-secondary: #6B7280;  /* Texte secondaire */
+  --creatik-text-muted: #9CA3AF;      /* Texte inactif */
+  --creatik-icon-active: #6D28D9;     /* Icônes actives */
+  --creatik-icon-inactive: #D1D5DB;   /* Icônes inactives */
+  --creatik-button-primary: #8B5CF6;  /* Boutons principaux */
+  --creatik-button-secondary: #E5E7EB; /* Boutons secondaires */
+  --creatik-success: #10B981;         /* Success */
+  --creatik-error: #EF4444;           /* Erreur */
+  --creatik-menu-active: #EDE9FE;     /* Menu actif */
+  --creatik-hover: rgba(139, 92, 246, 0.1); /* Survol */
+  --creatik-border: #E5E7EB;          /* Bordures */
+  --creatik-input-bg: #F3F4F6;        /* Fond input */
+  --creatik-input-text: #111827;      /* Texte input */
+}
+
+/* Classes utilitaires pour les couleurs personnalisées */
+.bg-creatik-primary { background-color: var(--creatik-bg-primary); }
+.bg-creatik-secondary { background-color: var(--creatik-bg-secondary); }
+.text-creatik-primary { color: var(--creatik-text-primary); }
+.text-creatik-secondary { color: var(--creatik-text-secondary); }
+.text-creatik-muted { color: var(--creatik-text-muted); }
+.border-creatik { border-color: var(--creatik-border); }
+.bg-creatik-button-primary { background: var(--creatik-button-primary); }
+.bg-creatik-button-secondary { background-color: var(--creatik-button-secondary); }
+.text-creatik-success { color: var(--creatik-success); }
+.text-creatik-error { color: var(--creatik-error); }
+.bg-creatik-input { background-color: var(--creatik-input-bg); }
+.text-creatik-input { color: var(--creatik-input-text); }
+
+/* Classes pour les icônes */
+.text-creatik-icon-active { color: var(--creatik-icon-active); }
+.text-creatik-icon-inactive { color: var(--creatik-icon-inactive); }
+
+/* Classes pour les hovers */
+.hover\:bg-creatik-hover:hover { background-color: var(--creatik-hover); }
+.hover\:text-creatik-primary:hover { color: var(--creatik-text-primary); }
+.hover\:text-creatik-secondary:hover { color: var(--creatik-text-secondary); }
+
+/* Classes pour les bordures */
+.border-creatik-primary { border-color: var(--creatik-bg-primary); }
+.border-creatik-secondary { border-color: var(--creatik-bg-secondary); } 
