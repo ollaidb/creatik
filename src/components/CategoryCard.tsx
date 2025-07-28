@@ -70,7 +70,7 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ category, onClick, classNam
           )}
         </div>
         <div className="w-full h-full flex items-center justify-center px-1 sm:px-2">
-          <h3 className="text-white font-semibold text-xs sm:text-sm md:text-base lg:text-lg leading-tight text-center break-words">
+          <h3 className="text-white font-semibold text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl leading-tight text-center break-words">
             {category.name}
           </h3>
         </div>

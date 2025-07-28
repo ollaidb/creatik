@@ -3,13 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Plus } from 'lucide-react';
 import Navigation from '@/components/Navigation';
-import StickyHeader from '@/components/StickyHeader';
 import UserPreferencesForm from '@/components/UserPreferencesForm';
+
 const Preferences = () => {
   const navigate = useNavigate();
+
   return (
     <div className="min-h-screen pb-20">
-      <StickyHeader showSearchBar={false} />
       <header className="bg-background border-b p-4 flex items-center justify-between">
         <div className="flex items-center">
           <Button 
@@ -38,4 +38,5 @@ const Preferences = () => {
     </div>
   );
 };
+
 export default Preferences;

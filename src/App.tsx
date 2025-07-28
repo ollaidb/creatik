@@ -12,6 +12,7 @@ import ProfilePage from "./pages/Profile";
 import Favorites from "./pages/profile/Favorites";
 import Privacy from "./pages/profile/Privacy";
 import Preferences from "./pages/profile/Preferences";
+import Settings from "./pages/profile/Settings";
 import History from "./pages/profile/History";
 import Legal from "./pages/profile/Legal";
 import Contact from "./pages/profile/Contact";
@@ -67,6 +68,7 @@ const AppContent = () => {
             <Route path="/profile/contact" element={<Contact />} />
             <Route path="/profile/publications" element={<Publications />} />
             <Route path="/profile/challenges" element={<Challenges />} />
+            <Route path="/profile/settings" element={<Settings />} />
             {/* Admin Routes */}
             <Route path="/admin/publications" element={<AdminPublications />} />
             <Route path="/admin/approve-publications" element={<ApprovePublications />} />

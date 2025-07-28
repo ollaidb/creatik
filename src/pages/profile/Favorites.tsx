@@ -102,16 +102,16 @@ const Favorites = () => {
 
   const handleProfileClick = (account: {
     id: string;
-    name: string;
-    description: string;
-    platform: string;
-    url: string;
+    account_name: string;
+    description?: string;
+    platform?: string;
+    account_url?: string;
     avatar_url?: string;
     category?: string;
     subcategory?: string;
   }) => {
-    if (account.url) {
-      window.open(account.url, '_blank');
+    if (account.account_url) {
+      window.open(account.account_url, '_blank');
     } else {
       toast({
         title: "Lien non disponible",
@@ -229,32 +229,53 @@ const Favorites = () => {
       <main className="max-w-7xl mx-auto p-4">
         {/* Menu d'onglets favoris adapté pour mobile */}
         <div className="mb-6">
-          {/* Version mobile : onglets en grille 2x3 */}
-          <div className="grid grid-cols-3 gap-2 md:hidden">
-            {FAVORITE_TABS.map(tab => (
-              <Button
-                key={tab.key}
-                variant={selectedTab === tab.key ? 'default' : 'outline'}
-                onClick={() => setSelectedTab(tab.key)}
-                className="rounded-full text-xs py-2 px-2 h-auto min-h-[40px]"
-              >
-                {tab.label}
-              </Button>
-            ))}
-          </div>
-          
-          {/* Version desktop : onglets centrés */}
-          <div className="hidden md:flex flex-wrap gap-2 justify-center">
-            {FAVORITE_TABS.map(tab => (
-              <Button
-                key={tab.key}
-                variant={selectedTab === tab.key ? 'default' : 'outline'}
-                onClick={() => setSelectedTab(tab.key)}
-                className="rounded-full flex-1 min-w-0 max-w-xs"
-              >
-                {tab.label}
-              </Button>
-            ))}
+          <div className="overflow-x-auto">
+            <div className="flex gap-2 pb-2 min-w-max">
+              {FAVORITE_TABS.map(tab => {
+                const isActive = selectedTab === tab.key;
+                const getTabColor = (tabKey: string) => {
+                  switch (tabKey) {
+                    case 'categories':
+                      return 'from-blue-500 to-cyan-500';
+                    case 'subcategories':
+                      return 'from-green-500 to-emerald-500';
+                    case 'titles':
+                      return 'from-purple-500 to-pink-500';
+                    case 'comptes':
+                      return 'from-orange-500 to-red-500';
+                    case 'sources':
+                      return 'from-indigo-500 to-purple-500';
+                    case 'challenges':
+                      return 'from-yellow-500 to-orange-500';
+                    default:
+                      return 'from-gray-500 to-gray-600';
+                  }
+                };
+                
+                return (
+                  <motion.button
+                    key={tab.key}
+                    onClick={() => setSelectedTab(tab.key)}
+                    className={`
+                      px-3 py-2 rounded-lg transition-all duration-300 min-w-[60px] text-center
+                      ${isActive 
+                        ? 'bg-gradient-to-r ' + getTabColor(tab.key) + ' text-white shadow-lg scale-105' 
+                        : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                      }
+                    `}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <span className={`
+                      text-xs font-medium leading-tight
+                      ${isActive ? 'text-white' : 'text-gray-700 dark:text-gray-300'}
+                    `}>
+                      {tab.label}
+                    </span>
+                  </motion.button>
+                );
+              })}
+            </div>
           </div>
         </div>
 
@@ -465,26 +486,26 @@ const Favorites = () => {
                             {account.avatar_url ? (
                               <img 
                                 src={account.avatar_url} 
-                                alt={account.name}
+                                alt={account.account_name}
                                 className="w-full h-full object-cover"
                               />
                             ) : (
-                              <div className={`w-full h-full rounded-full bg-gradient-to-br ${getPlatformColor(account.platform)} flex items-center justify-center text-white text-lg`}>
-                                {getPlatformIcon(account.platform)}
+                              <div className={`w-full h-full rounded-full bg-gradient-to-br ${getPlatformColor(account.platform || '')} flex items-center justify-center text-white text-lg`}>
+                                {getPlatformIcon(account.platform || '')}
                               </div>
                             )}
                           </div>
                           {/* Badge de plateforme */}
                           <div className="absolute -bottom-1 -right-1">
-                            <div className={`w-4 h-4 rounded-full bg-gradient-to-br ${getPlatformColor(account.platform)} flex items-center justify-center text-white text-xs`}>
-                              {getPlatformIcon(account.platform)}
+                            <div className={`w-4 h-4 rounded-full bg-gradient-to-br ${getPlatformColor(account.platform || '')} flex items-center justify-center text-white text-xs`}>
+                              {getPlatformIcon(account.platform || '')}
                             </div>
                           </div>
                         </div>
                         {/* Informations du compte */}
                         <div className="flex-1 min-w-0">
                           <h3 className="font-medium text-gray-900 dark:text-white text-base truncate">
-                            {account.name}
+                            {account.account_name}
                           </h3>
                           <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
                             {account.description}

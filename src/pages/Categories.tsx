@@ -9,8 +9,8 @@ import Navigation from '@/components/Navigation';
 import IntelligentSearchBar from '@/components/IntelligentSearchBar';
 import ChallengeButton from '@/components/ChallengeButton';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useFavorites } from '@/hooks/useFavorites';
+
 const Categories = () => {
   const navigate = useNavigate();
   const { subcategoryId, categoryId } = useParams();
@@ -35,9 +35,26 @@ const Categories = () => {
   const filteredCategories = categories?.filter(category => {
     return category.name.toLowerCase().includes(searchTerm.toLowerCase());
   }) || [];
-  // Onglet Titres / Sources / Comptes
-  // Supprimer le code du menu à onglets Titres / Comptes / Sources
-  // Supprimer aussi les conditions d'affichage liées à tab (tab === 'titres', tab === 'sources', tab === 'comptes')
+
+  const getThemeColor = (themeName: string) => {
+    switch (themeName.toLowerCase()) {
+      case 'tout':
+        return 'from-purple-500 to-pink-500';
+      case 'créativité':
+        return 'from-blue-500 to-cyan-500';
+      case 'lifestyle':
+        return 'from-pink-500 to-rose-500';
+      case 'business':
+        return 'from-green-500 to-emerald-500';
+      case 'technologie':
+        return 'from-orange-500 to-red-500';
+      case 'international':
+        return 'from-indigo-500 to-purple-500';
+      default:
+        return 'from-gray-500 to-gray-600';
+    }
+  };
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -51,6 +68,7 @@ const Categories = () => {
     hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0 }
   };
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header fixe pour mobile */}
@@ -97,80 +115,75 @@ const Categories = () => {
             </div>
           </div>
         </div>
-        {/* Menu des thèmes - Version Desktop (boutons) */}
-        {/* Supprimer le menu à onglets Titres / Comptes / Sources */}
-        {/* Menu des thèmes - Version Mobile (dropdown) */}
-        <div className="mb-6 md:hidden">
-          <Select 
-            value={selectedTheme} 
-            onValueChange={setSelectedTheme}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Sélectionner un thème">
-                {selectedThemeName}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              {themes?.map((theme) => (
-                <SelectItem 
-                  key={theme.id} 
-                  value={theme.name === 'Tout' ? 'all' : theme.id}
-                >
-                  {theme.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+
+        {/* Menu des thèmes - Barre horizontale sans icônes */}
+        <div className="mb-6">
+          <div className="overflow-x-auto">
+            <div className="flex gap-2 pb-2 min-w-max">
+              {themes?.map((theme) => {
+                const isActive = selectedTheme === (theme.name === 'Tout' ? 'all' : theme.id);
+                return (
+                  <motion.button
+                    key={theme.id}
+                    onClick={() => setSelectedTheme(theme.name === 'Tout' ? 'all' : theme.id)}
+                    className={`
+                      px-3 py-2 rounded-lg transition-all duration-300 min-w-[60px] text-center
+                      ${isActive 
+                        ? 'bg-gradient-to-r ' + getThemeColor(theme.name) + ' text-white shadow-lg scale-105' 
+                        : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                      }
+                    `}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <span className={`
+                      text-xs font-medium leading-tight
+                      ${isActive ? 'text-white' : 'text-gray-700 dark:text-gray-300'}
+                    `}>
+                      {theme.name}
+                    </span>
+                  </motion.button>
+                );
+              })}
+            </div>
+          </div>
         </div>
+
         {isLoading ? (
           <div className="text-center py-8">
             <p>Chargement des catégories...</p>
           </div>
         ) : (
           <>
-            {/* Supprimer aussi les conditions d'affichage liées à tab (tab === 'titres', tab === 'sources', tab === 'comptes') */}
-            {/* Liste des titres (comme avant) */}
-            <>
-                {/* Grille des catégories - Responsive */}
-                <motion.div 
-                  className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4"
-                  variants={containerVariants}
-                  initial="hidden"
-                  animate="visible"
-                >
-                  {filteredCategories?.map((category) => (
-                    <motion.div key={category.id} variants={itemVariants}>
-                      <CategoryCard 
-                        category={{
-                          id: category.id,
-                          name: category.name,
-                          color: category.color
-                        }}
-                        className="w-full h-20 sm:h-24 md:h-28"
-                        onClick={() => navigate(`/category/${category.id}/subcategories`)}
-                      />
-                    </motion.div>
-                  ))}
+            {/* Grille des catégories - Responsive */}
+            <motion.div 
+              className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4"
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+            >
+              {filteredCategories?.map((category) => (
+                <motion.div key={category.id} variants={itemVariants}>
+                  <CategoryCard 
+                    category={{
+                      id: category.id,
+                      name: category.name,
+                      color: category.color
+                    }}
+                    className="w-full h-20 sm:h-24 md:h-28"
+                    onClick={() => navigate(`/category/${category.id}/subcategories`)}
+                  />
                 </motion.div>
-                {filteredCategories?.length === 0 && !isLoading && (
-                  <div className="flex flex-col items-center justify-center h-60 text-center px-4">
-                    <h3 className="text-lg font-medium">Aucune catégorie trouvée</h3>
-                    <p className="text-muted-foreground mt-2">
-                      Aucune catégorie disponible pour ce thème
-                    </p>
-                  </div>
-                )}
-              </>
-            {/* Supprimer aussi les conditions d'affichage liées à tab (tab === 'titres', tab === 'sources', tab === 'comptes') */}
-            {/* Placeholder ou vraie liste des sources */}
-            <div className="text-center py-8">
-                <p>Sources</p>
+              ))}
+            </motion.div>
+            {filteredCategories?.length === 0 && !isLoading && (
+              <div className="flex flex-col items-center justify-center h-60 text-center px-4">
+                <h3 className="text-lg font-medium">Aucune catégorie trouvée</h3>
+                <p className="text-muted-foreground mt-2">
+                  Aucune catégorie disponible pour ce thème
+                </p>
               </div>
-            {/* Supprimer aussi les conditions d'affichage liées à tab (tab === 'titres', tab === 'sources', tab === 'comptes') */}
-            {/* Placeholder ou vraie liste des comptes */}
-            <div className="text-center py-8">
-                <p>Comptes</p>
-              </div>
+            )}
           </>
         )}
       </div>
@@ -178,4 +191,5 @@ const Categories = () => {
     </div>
   );
 };
+
 export default Categories;

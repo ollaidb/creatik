@@ -3,9 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Switch } from '@/components/ui/switch';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ArrowLeft, User, Heart, History, Settings, Shield, HelpCircle, Mail, FileText, Plus, Moon, Sun, LogOut, Camera, BookOpen, Target } from 'lucide-react';
+import { ArrowLeft, User, Heart, History, Settings, Shield, HelpCircle, Mail, FileText, Plus, LogOut, Camera, BookOpen, Target } from 'lucide-react';
 import Navigation from '@/components/Navigation';
 import StickyHeader from '@/components/StickyHeader';
 import AuthModal from '@/components/AuthModal';
@@ -156,6 +155,14 @@ const Profile = () => {
       requiresAuth: true
     },
     {
+      title: 'Paramètres',
+      description: 'Gérez vos paramètres et préférences',
+      icon: Settings,
+      path: '/profile/settings',
+      color: 'text-green-500',
+      requiresAuth: true
+    },
+    {
       title: 'Préférences',
       description: 'Personnalisez votre expérience',
       icon: Settings,
@@ -229,23 +236,23 @@ const Profile = () => {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="mb-8"
+          className="mb-6"
         >
           <Card>
-            <CardHeader className="text-center">
-              <div className="relative mx-auto mb-4">
-                <Avatar className="w-20 h-20 mx-auto">
+            <CardHeader className="text-center p-4">
+              <div className="relative mx-auto mb-3">
+                <Avatar className="w-16 h-16 mx-auto">
                   <AvatarImage src={profileImage || undefined} />
                   <AvatarFallback className="bg-gradient-to-r from-primary to-secondary">
-                    <User className="w-10 h-10 text-white" />
+                    <User className="w-8 h-8 text-white" />
                   </AvatarFallback>
                 </Avatar>
                 <label htmlFor="profile-image" className="absolute -bottom-1 -right-1 cursor-pointer">
-                  <div className="bg-white dark:bg-gray-800 rounded-full p-2 shadow-lg border hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                  <div className="bg-white dark:bg-gray-800 rounded-full p-1.5 shadow-lg border hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                     {uploading ? (
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600"></div>
+                      <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-gray-600"></div>
                     ) : (
-                      <Camera className="w-4 h-4 text-gray-600 dark:text-gray-300" />
+                      <Camera className="w-3 h-3 text-gray-600 dark:text-gray-300" />
                     )}
                   </div>
                   <input
@@ -258,12 +265,13 @@ const Profile = () => {
                   />
                 </label>
               </div>
-              <CardTitle className="text-2xl">
+              <CardTitle className="text-xl">
                 {user ? `${user.user_metadata?.first_name || 'Utilisateur'}` : 'Utilisateur'}
               </CardTitle>
               {!user ? (
                 <Button 
                   variant="outline" 
+                  size="sm"
                   onClick={() => setShowAuthModal(true)}
                   className="mt-2 mx-auto"
                 >
@@ -283,43 +291,9 @@ const Profile = () => {
             </CardHeader>
           </Card>
         </motion.div>
-        {/* Theme Toggle Section */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-          className="mb-6"
-        >
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <div className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800">
-                    {theme === 'dark' ? (
-                      <Moon className="w-6 h-6 text-blue-500" />
-                    ) : (
-                      <Sun className="w-6 h-6 text-yellow-500" />
-                    )}
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-lg">Mode d'affichage</h3>
-                    <p className="text-muted-foreground text-sm">
-                      Basculer entre le mode clair et sombre
-                    </p>
-                  </div>
-                </div>
-                <Switch
-                  checked={theme === 'dark'}
-                  onCheckedChange={toggleTheme}
-                  aria-label="Toggle theme"
-                />
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
         {/* Menu Items */}
         <motion.div
-          className="grid gap-4 md:grid-cols-2"
+          className="grid gap-3 md:grid-cols-2"
           variants={containerVariants}
           initial="hidden"
           animate="visible"
@@ -330,14 +304,13 @@ const Profile = () => {
                 className="cursor-pointer hover:shadow-lg transition-shadow duration-300 h-full"
                 onClick={() => handleMenuClick(item)}
               >
-                <CardContent className="p-6 h-full flex items-start">
-                  <div className="flex items-start space-x-4 w-full">
+                <CardContent className="p-4 h-full flex items-center">
+                  <div className="flex items-center space-x-3 w-full">
                     <div className={`p-2 rounded-lg bg-gray-100 dark:bg-gray-800 ${item.color}`}>
-                      <item.icon className="w-6 h-6" />
+                      <item.icon className="w-5 h-5" />
                     </div>
                     <div className="flex-1">
-                      <h3 className="font-semibold text-lg mb-1">{item.title}</h3>
-                      <p className="text-muted-foreground text-sm">{item.description}</p>
+                      <h3 className="font-semibold text-base">{item.title}</h3>
                     </div>
                   </div>
                 </CardContent>

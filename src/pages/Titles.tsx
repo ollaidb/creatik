@@ -12,6 +12,7 @@ import { useFavorites } from '@/hooks/useFavorites';
 import IntelligentSearchBar from '@/components/IntelligentSearchBar';
 import SubcategoryTabs from '@/components/SubcategoryTabs';
 import HashtagsSection from '@/components/HashtagsSection';
+import { RippleCard } from '@/components/RippleCard';
 
 const Titles = () => {
   const { subcategoryId, categoryId } = useParams();
@@ -244,39 +245,25 @@ const Titles = () => {
         </div>
         {/* Affichage selon l'onglet sélectionné */}
         {tab === 'titres' && (
-          // Liste des titres
+          // Liste des titres avec structure inspirée de la photo
           <div className="space-y-3">
             {titles?.map((title, index) => (
-              <motion.div 
+              <RippleCard
                 key={title.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
-                className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all duration-200"
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <span className="text-xs text-gray-500 font-mono flex-shrink-0">
-                      {(index + 1).toString().padStart(2, '0')}
-                    </span>
-                    <h3 className="font-medium text-gray-900 dark:text-white text-base leading-relaxed">
-                      {title.title}
-                    </h3>
-                  </div>
-                  {/* Actions */}
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => toggleFavorite(title.id)}
-                      className="p-2 h-10 w-10 rounded-full"
-                    >
-                      <Heart size={18} className={isFavorite(title.id) ? 'text-red-500 fill-red-500' : ''} />
-                    </Button>
-                  </div>
-                </div>
-              </motion.div>
+                title={title}
+                index={index}
+                isFavorite={isFavorite(title.id)}
+                onFavorite={toggleFavorite}
+              />
             ))}
+            {/* Message si pas de titres */}
+            {titles?.length === 0 && (
+              <div className="text-center py-12">
+                <div className="text-gray-500 dark:text-gray-400 mb-4 text-sm">
+                  Aucun titre disponible pour cette sous-catégorie
+                </div>
+              </div>
+            )}
           </div>
         )}
         {tab === 'comptes' && (
@@ -425,14 +412,6 @@ const Titles = () => {
             subcategoryId={subcategoryId}
             subcategoryName={subcategory?.name}
           />
-        )}
-        {/* Message si pas de titres */}
-        {tab === 'titres' && titles?.length === 0 && (
-          <div className="text-center py-12">
-            <div className="text-gray-500 dark:text-gray-400 mb-4 text-sm">
-              Aucun titre disponible pour cette sous-catégorie
-            </div>
-          </div>
         )}
       </div>
     </div>

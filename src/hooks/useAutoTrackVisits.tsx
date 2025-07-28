@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { useVisitHistory } from '@/hooks/useVisitHistory';
+import { useVisitHistory } from './useVisitHistory';
 
 export const useAutoTrackVisits = () => {
   const location = useLocation();
@@ -19,7 +19,14 @@ export const useAutoTrackVisits = () => {
       
       // Trouver l'élément cliqué le plus proche avec des données
       let clickedElement = target;
-      let visitInfo: any = null;
+      let visitInfo: {
+        type: 'category' | 'subcategory' | 'challenge' | 'content' | 'search';
+        title: string;
+        description: string;
+        url: string;
+        icon?: string;
+        color?: string;
+      } | null = null;
 
       // Chercher dans les parents pour trouver l'élément avec des données
       while (clickedElement && clickedElement !== document.body) {
@@ -32,11 +39,11 @@ export const useAutoTrackVisits = () => {
                     clickedElement.className.includes('category') ? 'category' :
                     clickedElement.className.includes('challenge') ? 'challenge' :
                     clickedElement.className.includes('subcategory') ? 'subcategory' :
-                    clickedElement.className.includes('content') ? 'content' : null;
+                    clickedElement.className.includes('content') ? 'content' : 'search';
 
         if (title && type) {
           visitInfo = {
-            type: type as 'category' | 'subcategory' | 'challenge' | 'content' | 'title',
+            type: type as 'category' | 'subcategory' | 'challenge' | 'content' | 'search',
             title: title,
             description: `Visite de ${title}`,
             url: location.pathname,
