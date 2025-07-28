@@ -202,8 +202,8 @@ const Events: React.FC = () => {
                   
                   return (
                     <motion.button
-                      key={tab.id}
-                      onClick={() => setActiveTab(tab.id as 'all' | 'birthday' | 'death' | 'historical_event' | 'holiday' | 'international_day')}
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as 'all' | 'birthday' | 'death' | 'historical_event' | 'holiday' | 'international_day')}
                       className={`
                         px-3 py-2 rounded-lg transition-all duration-300 min-w-[60px] text-center
                         ${isActive 
@@ -218,7 +218,7 @@ const Events: React.FC = () => {
                         text-xs font-medium leading-tight
                         ${isActive ? 'text-white' : 'text-gray-200'}
                       `}>
-                        {tab.label} ({tab.count})
+                {tab.label} ({tab.count})
                       </span>
                     </motion.button>
                   );
@@ -365,7 +365,7 @@ const Events: React.FC = () => {
                           month: 'long',
                           year: 'numeric'
                         })}
-                      </p>
+                        </p>
                     </CardContent>
                   </Card>
                 </motion.div>

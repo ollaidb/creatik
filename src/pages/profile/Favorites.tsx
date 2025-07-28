@@ -254,8 +254,8 @@ const Favorites = () => {
                 
                 return (
                   <motion.button
-                    key={tab.key}
-                    onClick={() => setSelectedTab(tab.key)}
+                key={tab.key}
+                onClick={() => setSelectedTab(tab.key)}
                     className={`
                       px-3 py-2 rounded-lg transition-all duration-300 min-w-[60px] text-center
                       ${isActive 
@@ -270,12 +270,12 @@ const Favorites = () => {
                       text-xs font-medium leading-tight
                       ${isActive ? 'text-white' : 'text-gray-700 dark:text-gray-300'}
                     `}>
-                      {tab.label}
+                {tab.label}
                     </span>
                   </motion.button>
                 );
               })}
-            </div>
+          </div>
           </div>
         </div>
 

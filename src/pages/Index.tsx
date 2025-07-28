@@ -461,15 +461,15 @@ const Index: React.FC = () => {
                       <div className="flex items-start justify-between mb-2">
                         <div className="flex items-center gap-2">
                           <Avatar className="w-6 h-6">
-                            <AvatarImage src={(challenge.creator?.user_metadata as UserMeta)?.avatar_url || ''} />
-                            <AvatarFallback>
+                              <AvatarImage src={(challenge.creator?.user_metadata as UserMeta)?.avatar_url || ''} />
+                              <AvatarFallback>
                               <User className="w-3 h-3" />
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="text-xs text-muted-foreground">
-                            {getCreatorName(challenge.creator)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="text-xs text-muted-foreground">
+                              {getCreatorName(challenge.creator)}
+                            </div>
                           </div>
-                        </div>
                       </div>
                       
                       <h3 className="font-semibold text-sm mb-2">{challenge.title}</h3>
@@ -479,7 +479,7 @@ const Index: React.FC = () => {
                           ? challenge.description.substring(0, 80) + '...'
                           : challenge.description
                         }
-                      </p>
+                          </p>
                       
                       <div className="flex items-center justify-between pt-2 border-t border-gray-200 dark:border-gray-700">
                         <div className="flex items-center gap-1">
@@ -494,11 +494,11 @@ const Index: React.FC = () => {
                             size="sm"
                             onClick={() => addToPersonalChallenges(challenge.id)}
                             className="flex items-center gap-1 p-1 h-6 text-xs bg-gradient-to-r from-primary to-secondary text-white"
-                          >
+                            >
                             <Plus className="w-3 h-3" />
                             <span className="text-xs">Défi</span>
-                          </Button>
-                        )}
+                            </Button>
+                          )}
                       </div>
                     </CardContent>
                   </Card>
