@@ -10,7 +10,6 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import ProfilePage from "./pages/Profile";
 import Favorites from "./pages/profile/Favorites";
-import Privacy from "./pages/profile/Privacy";
 import Preferences from "./pages/profile/Preferences";
 import Settings from "./pages/profile/Settings";
 import History from "./pages/profile/History";
@@ -61,7 +60,6 @@ const AppContent = () => {
             {/* Profile Routes */}
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/profile/favorites" element={<Favorites />} />
-            <Route path="/profile/privacy" element={<Privacy />} />
             <Route path="/profile/history" element={<History />} />
             <Route path="/profile/preferences" element={<Preferences />} />
             <Route path="/profile/legal" element={<Legal />} />

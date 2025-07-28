@@ -6,16 +6,23 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Trophy, Target, BarChart3, Settings, CheckCircle, Clock, Star, TrendingUp, Users, Calendar, Award } from 'lucide-react';
+import { ArrowLeft, Trophy, Target, BarChart3, CheckCircle, Star, TrendingUp, Users, Award, Calendar } from 'lucide-react';
+import Navigation from '@/components/Navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useChallenges } from '@/hooks/useChallenges';
 import { useToast } from '@/hooks/use-toast';
+
 const Challenges = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('challenges');
   const [selectedDuration, setSelectedDuration] = useState('3months');
+  const [contentsPerDay, setContentsPerDay] = useState(1);
+  const [showDurationConfirm, setShowDurationConfirm] = useState(false);
+  const [showContentsConfirm, setShowContentsConfirm] = useState(false);
+  const [pendingDuration, setPendingDuration] = useState('');
+  const [pendingContents, setPendingContents] = useState(0);
   const {
     challenges,
     userChallenges,
@@ -27,6 +34,7 @@ const Challenges = () => {
     completeChallenge,
     updateProgramDuration
   } = useChallenges();
+
   const getDurationText = (duration: string) => {
     switch (duration) {
       case '1month': return '1 mois';
@@ -37,42 +45,112 @@ const Challenges = () => {
       default: return '3 mois';
     }
   };
-  const getProgressPercentage = () => {
-    if (!stats) return 0;
-    const totalChallenges = challenges.length;
-    if (totalChallenges === 0) return 0;
-    return (stats.completed_challenges / totalChallenges) * 100;
+
+  const getDurationDays = (duration: string) => {
+    switch (duration) {
+      case '1month': return 30;
+      case '2months': return 60;
+      case '3months': return 90;
+      case '6months': return 180;
+      case '1year': return 365;
+      default: return 90;
+    }
   };
+
+  const getTotalContents = () => {
+    const days = getDurationDays(selectedDuration);
+    return days * contentsPerDay;
+  };
+
+  const getRemainingContents = () => {
+    const total = getTotalContents();
+    const completed = stats?.completed_challenges || 0;
+    return Math.max(0, total - completed);
+  };
+
+  const getProgressPercentage = () => {
+    const total = getTotalContents();
+    if (total === 0) return 0;
+    const completed = stats?.completed_challenges || 0;
+    return Math.min(100, (completed / total) * 100);
+  };
+
+  const getRemainingDays = () => {
+    const totalDays = getDurationDays(selectedDuration);
+    const completed = stats?.completed_challenges || 0;
+    const completedDays = Math.floor(completed / contentsPerDay);
+    return Math.max(0, totalDays - completedDays);
+  };
+
   const handleDurationChange = async (duration: string) => {
-    setSelectedDuration(duration);
-    const result = await updateProgramDuration(duration);
+    if (duration === selectedDuration) return;
+    
+    setPendingDuration(duration);
+    setShowDurationConfirm(true);
+  };
+
+  const confirmDurationChange = async () => {
+    const result = await updateProgramDuration(pendingDuration);
     if (result.success) {
+      setSelectedDuration(pendingDuration);
       toast({
         title: "Durée mise à jour",
-        description: `Programme configuré pour ${getDurationText(duration)}`,
+        description: `Programme configuré pour ${getDurationText(pendingDuration)}`,
+      });
+    } else {
+      toast({
+        title: "Erreur",
+        description: "Impossible de mettre à jour la durée",
+        variant: "destructive",
       });
     }
+    setShowDurationConfirm(false);
+    setPendingDuration('');
   };
-  const handleAssignChallenge = async (challengeId: string) => {
-    const result = await assignChallenge(challengeId);
+
+  const cancelDurationChange = () => {
+    setShowDurationConfirm(false);
+    setPendingDuration('');
+  };
+
+  const handleContentsPerDayChange = (newValue: number) => {
+    if (newValue === contentsPerDay) return;
+    
+    setPendingContents(newValue);
+    setShowContentsConfirm(true);
+  };
+
+  const confirmContentsChange = () => {
+    setContentsPerDay(pendingContents);
+    toast({
+      title: "Contenus par jour mis à jour",
+      description: `${pendingContents} contenu(s) par jour configuré(s)`,
+    });
+    setShowContentsConfirm(false);
+    setPendingContents(0);
+  };
+
+  const cancelContentsChange = () => {
+    setShowContentsConfirm(false);
+    setPendingContents(0);
+  };
+
+  const handleCompleteChallenge = async (challengeId: string) => {
+    const result = await completeChallenge(challengeId);
     if (result.error) {
       toast({
         title: "Erreur",
         description: result.error,
         variant: "destructive",
       });
-    }
-  };
-  const handleCompleteChallenge = async (userChallengeId: string) => {
-    const result = await completeChallenge(userChallengeId);
-    if (result.error) {
+    } else {
       toast({
-        title: "Erreur",
-        description: result.error,
-        variant: "destructive",
+        title: "Défi accompli !",
+        description: "Le défi a été marqué comme terminé",
       });
     }
   };
+
   if (!user) {
     return (
       <div className="min-h-screen pb-20">
@@ -90,7 +168,6 @@ const Challenges = () => {
         <main className="max-w-4xl mx-auto p-4">
           <Card className="text-center py-12">
             <CardContent>
-              <Target className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
               <h3 className="text-lg font-medium mb-2">Connexion requise</h3>
               <p className="text-muted-foreground mb-4">
                 Connectez-vous pour accéder à vos défis personnalisés
@@ -104,6 +181,7 @@ const Challenges = () => {
       </div>
     );
   }
+
   if (loading) {
     return (
       <div className="min-h-screen pb-20">
@@ -129,6 +207,7 @@ const Challenges = () => {
       </div>
     );
   }
+
   if (error) {
     return (
       <div className="min-h-screen pb-20">
@@ -146,7 +225,6 @@ const Challenges = () => {
         <main className="max-w-4xl mx-auto p-4">
           <Card className="text-center py-12">
             <CardContent>
-              <Target className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
               <h3 className="text-lg font-medium mb-2">Erreur</h3>
               <p className="text-muted-foreground mb-4">
                 {error}
@@ -160,6 +238,7 @@ const Challenges = () => {
       </div>
     );
   }
+
   return (
     <div className="min-h-screen pb-20">
       <header className="bg-background border-b p-4 flex items-center justify-between">
@@ -180,36 +259,62 @@ const Challenges = () => {
         </Badge>
       </header>
       <main className="max-w-4xl mx-auto p-4">
-        {/* Sélecteur de durée */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="w-5 h-5" />
-              Personnalisation du programme
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium mb-2 block">Durée du programme</label>
-                <select
-                  value={selectedDuration}
-                  onChange={(e) => handleDurationChange(e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-md bg-white text-gray-900"
-                >
-                  <option value="1month">1 mois</option>
-                  <option value="2months">2 mois</option>
-                  <option value="3months">3 mois</option>
-                  <option value="6months">6 mois</option>
-                  <option value="1year">1 an</option>
-                </select>
-              </div>
-              <div className="text-sm text-muted-foreground">
-                Programme actuel : <span className="font-medium">{getDurationText(selectedDuration)}</span>
-              </div>
+        {/* Sélecteur de durée compact */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-medium text-muted-foreground">Durée du programme</h3>
+            <span className="text-xs text-muted-foreground">{getDurationText(selectedDuration)}</span>
+          </div>
+          <div className="flex gap-2 overflow-x-auto pb-2">
+            {[
+              { value: '1month', label: '1 mois' },
+              { value: '2months', label: '2 mois' },
+              { value: '3months', label: '3 mois' },
+              { value: '6months', label: '6 mois' },
+              { value: '1year', label: '1 an' }
+            ].map((option) => (
+              <Button
+                key={option.value}
+                variant={selectedDuration === option.value ? "default" : "outline"}
+                size="sm"
+                onClick={() => handleDurationChange(option.value)}
+                className="whitespace-nowrap text-xs"
+              >
+                {option.label}
+              </Button>
+            ))}
+          </div>
+        </div>
+
+        {/* Sélecteur de contenus par jour */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-medium text-muted-foreground">Contenus par jour</h3>
+            <span className="text-xs text-muted-foreground">{contentsPerDay} contenu(s)</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleContentsPerDayChange(Math.max(1, contentsPerDay - 1))}
+              className="w-10 h-10 p-0"
+            >
+              -
+            </Button>
+            <div className="flex-1 text-center">
+              <span className="text-lg font-semibold">{contentsPerDay}</span>
             </div>
-          </CardContent>
-        </Card>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleContentsPerDayChange(contentsPerDay + 1)}
+              className="w-10 h-10 p-0"
+            >
+              +
+            </Button>
+          </div>
+        </div>
+        
         {/* Menu avec onglets */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-3">
@@ -217,15 +322,10 @@ const Challenges = () => {
             <TabsTrigger value="completed">Accomplis</TabsTrigger>
             <TabsTrigger value="stats">Statistiques</TabsTrigger>
           </TabsList>
+          
           {/* Onglet Défis */}
           <TabsContent value="challenges" className="mt-6">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold">Défis disponibles</h2>
-                <Badge variant="secondary">
-                  {challenges.length} défis
-                </Badge>
-              </div>
+            <div className="space-y-3">
               {challenges.map((challenge) => (
                 <motion.div
                   key={challenge.id}
@@ -233,36 +333,16 @@ const Challenges = () => {
                   animate={{ opacity: 1, y: 0 }}
                 >
                   <Card className="hover:shadow-md transition-shadow">
-                    <CardContent className="p-6">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <Target className="w-5 h-5 text-blue-500" />
-                            <h3 className="font-semibold text-lg">{challenge.title}</h3>
-                            <Badge variant="outline">{challenge.points} pts</Badge>
-                            <Badge variant={challenge.difficulty === 'easy' ? 'default' : challenge.difficulty === 'medium' ? 'secondary' : 'destructive'}>
-                              {challenge.difficulty === 'easy' ? 'Facile' : challenge.difficulty === 'medium' ? 'Moyen' : 'Difficile'}
-                            </Badge>
-                          </div>
-                          <p className="text-muted-foreground mb-3">{challenge.description}</p>
-                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                            <span className="capitalize">{challenge.category}</span>
-                            <span>•</span>
-                            <span>Créé le {new Date(challenge.created_at).toLocaleDateString('fr-FR')}</span>
-                            {challenge.is_daily && (
-                              <>
-                                <span>•</span>
-                                <span className="text-blue-500">Quotidien</span>
-                              </>
-                            )}
-                          </div>
-                        </div>
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <h3 className="font-semibold text-lg flex-1">{challenge.title}</h3>
                         <Button
-                          onClick={() => handleAssignChallenge(challenge.id)}
-                          className="ml-4"
+                          onClick={() => handleCompleteChallenge(challenge.id)}
+                          size="sm"
+                          variant="ghost"
+                          className="ml-4 p-2"
                         >
-                          <CheckCircle className="w-4 h-4 mr-2" />
-                          Participer
+                          <CheckCircle className="w-5 h-5" />
                         </Button>
                       </div>
                     </CardContent>
@@ -271,15 +351,10 @@ const Challenges = () => {
               ))}
             </div>
           </TabsContent>
+          
           {/* Onglet Accomplis */}
           <TabsContent value="completed" className="mt-6">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold">Défis accomplis</h2>
-                <Badge variant="default" className="bg-green-500">
-                  {userChallenges.filter(c => c.status === 'completed').length} accomplis
-                </Badge>
-              </div>
+            <div className="space-y-3">
               {userChallenges.filter(c => c.status === 'completed').map((userChallenge) => (
                 <motion.div
                   key={userChallenge.id}
@@ -287,23 +362,12 @@ const Challenges = () => {
                   animate={{ opacity: 1, y: 0 }}
                 >
                   <Card className="border-green-200 bg-green-50 dark:bg-green-900/20">
-                    <CardContent className="p-6">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <CheckCircle className="w-5 h-5 text-green-500" />
-                            <h3 className="font-semibold text-lg">{userChallenge.challenge?.title}</h3>
-                            <Badge variant="default" className="bg-green-500">
-                              +{userChallenge.points_earned} pts
-                            </Badge>
-                          </div>
-                          <p className="text-muted-foreground mb-3">{userChallenge.challenge?.description}</p>
-                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                            <span className="capitalize">{userChallenge.challenge?.category}</span>
-                            <span>•</span>
-                            <span>Accompli le {userChallenge.completed_at ? new Date(userChallenge.completed_at).toLocaleDateString('fr-FR') : 'N/A'}</span>
-                          </div>
-                        </div>
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <h3 className="font-semibold text-lg flex-1">{userChallenge.challenge?.title}</h3>
+                        <Badge variant="default" className="bg-green-500">
+                          +{userChallenge.points_earned} pts
+                        </Badge>
                       </div>
                     </CardContent>
                   </Card>
@@ -311,6 +375,7 @@ const Challenges = () => {
               ))}
             </div>
           </TabsContent>
+          
           {/* Onglet Statistiques */}
           <TabsContent value="stats" className="mt-6">
             <div className="space-y-6">
@@ -333,25 +398,32 @@ const Challenges = () => {
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       <div className="text-center">
-                        <div className="text-2xl font-bold text-blue-600">{stats?.total_points || 0}</div>
-                        <div className="text-sm text-muted-foreground">Points totaux</div>
+                        <div className="text-2xl font-bold text-blue-600">{getTotalContents()}</div>
+                        <div className="text-sm text-muted-foreground">Contenus totaux</div>
                       </div>
                       <div className="text-center">
                         <div className="text-2xl font-bold text-green-600">{stats?.completed_challenges || 0}</div>
-                        <div className="text-sm text-muted-foreground">Défis accomplis</div>
+                        <div className="text-sm text-muted-foreground">Contenus créés</div>
                       </div>
                       <div className="text-center">
-                        <div className="text-2xl font-bold text-orange-600">{stats?.current_streak || 0}</div>
-                        <div className="text-sm text-muted-foreground">Streak actuel</div>
+                        <div className="text-2xl font-bold text-orange-600">{getRemainingContents()}</div>
+                        <div className="text-sm text-muted-foreground">Contenus restants</div>
                       </div>
                       <div className="text-center">
-                        <div className="text-2xl font-bold text-purple-600">{stats?.best_streak || 0}</div>
-                        <div className="text-sm text-muted-foreground">Meilleur streak</div>
+                        <div className="text-2xl font-bold text-purple-600">{getRemainingDays()}</div>
+                        <div className="text-sm text-muted-foreground">Jours restants</div>
+                      </div>
+                    </div>
+                    <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
+                      <div className="text-sm text-muted-foreground mb-1">Configuration actuelle</div>
+                      <div className="text-xs text-muted-foreground">
+                        {getDurationText(selectedDuration)} • {contentsPerDay} contenu(s) par jour • {getDurationDays(selectedDuration)} jours
                       </div>
                     </div>
                   </div>
                 </CardContent>
               </Card>
+              
               {/* Classement */}
               <Card>
                 <CardHeader>
@@ -391,6 +463,7 @@ const Challenges = () => {
                   )}
                 </CardContent>
               </Card>
+              
               {/* Récompenses */}
               <Card>
                 <CardHeader>
@@ -423,7 +496,54 @@ const Challenges = () => {
           </TabsContent>
         </Tabs>
       </main>
+
+      {/* Modal de confirmation pour la durée */}
+      {showDurationConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={cancelDurationChange}>
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-sm w-full mx-4" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-semibold mb-4">Confirmer le changement</h3>
+            <p className="text-muted-foreground mb-4">
+              Êtes-vous sûr de vouloir changer la durée du programme de {getDurationText(selectedDuration)} à {getDurationText(pendingDuration)} ?
+              <br />
+              <span className="text-sm text-orange-600">Cette action peut affecter votre progression actuelle.</span>
+            </p>
+            <div className="flex gap-3">
+              <Button variant="outline" onClick={cancelDurationChange} className="flex-1">
+                Annuler
+              </Button>
+              <Button onClick={confirmDurationChange} className="flex-1">
+                Confirmer
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de confirmation pour les contenus par jour */}
+      {showContentsConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={cancelContentsChange}>
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-sm w-full mx-4" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-semibold mb-4">Confirmer le changement</h3>
+            <p className="text-muted-foreground mb-4">
+              Êtes-vous sûr de vouloir changer le nombre de contenus par jour de {contentsPerDay} à {pendingContents} ?
+              <br />
+              <span className="text-sm text-orange-600">Cette action peut affecter votre progression actuelle.</span>
+            </p>
+            <div className="flex gap-3">
+              <Button variant="outline" onClick={cancelContentsChange} className="flex-1">
+                Annuler
+              </Button>
+              <Button onClick={confirmContentsChange} className="flex-1">
+                Confirmer
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <Navigation />
     </div>
   );
 };
+
 export default Challenges; 

@@ -3,14 +3,25 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowLeft, Clock, CheckCircle, XCircle, Trash2, Plus, RotateCcw, Trash } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { usePublications } from '@/hooks/usePublications';
 import { useTrash } from '@/hooks/useTrash';
 import { useToast } from '@/hooks/use-toast';
 import DeleteConfirmationModal from '@/components/DeleteConfirmationModal';
+import Navigation from '@/components/Navigation';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+
+const PUBLICATION_TABS = [
+  { key: 'all', label: 'Toutes' },
+  { key: 'category', label: 'Catégories' },
+  { key: 'subcategory', label: 'Sous-catégories' },
+  { key: 'title', label: 'Titres' },
+  { key: 'account', label: 'Comptes' },
+  { key: 'source', label: 'Sources' },
+  { key: 'challenge', label: 'Challenges' },
+];
 const Publications = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -21,7 +32,7 @@ const Publications = () => {
   const [itemToDelete, setItemToDelete] = useState<{
     id: string;
     title: string;
-    type: 'category' | 'subcategory' | 'title';
+    type: 'category' | 'subcategory' | 'title' | 'account' | 'source' | 'challenge';
   } | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [activeTab, setActiveTab] = useState('all');
@@ -55,7 +66,7 @@ const Publications = () => {
     setItemToDelete({
       id: publication.id,
       title: publication.title,
-      type: publication.content_type as 'category' | 'subcategory' | 'title'
+      type: publication.content_type as 'category' | 'subcategory' | 'title' | 'account' | 'source' | 'challenge'
     });
     setShowDeleteModal(true);
   };
@@ -174,13 +185,6 @@ const Publications = () => {
               </Badge>
             )}
           </Button>
-          <Button 
-            onClick={() => navigate('/publish')}
-            className="flex items-center gap-2"
-          >
-            <Plus className="h-4 w-4" />
-            Nouvelle
-          </Button>
         </div>
       </header>
       <main className="max-w-4xl mx-auto p-4">
@@ -202,14 +206,58 @@ const Publications = () => {
               </Button>
             </div>
           ) : (
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-4">
-                <TabsTrigger value="all">Toutes</TabsTrigger>
-                <TabsTrigger value="category">Catégories</TabsTrigger>
-                <TabsTrigger value="subcategory">Sous-catégories</TabsTrigger>
-                <TabsTrigger value="title">Titres</TabsTrigger>
-              </TabsList>
-            </Tabs>
+            <div className="mb-6">
+              <div className="overflow-x-auto">
+                <div className="flex gap-2 pb-2 min-w-max">
+                  {PUBLICATION_TABS.map(tab => {
+                    const isActive = activeTab === tab.key;
+                    const getTabColor = (tabKey: string) => {
+                      switch (tabKey) {
+                        case 'all':
+                          return 'from-gray-500 to-gray-600';
+                        case 'category':
+                          return 'from-blue-500 to-cyan-500';
+                        case 'subcategory':
+                          return 'from-green-500 to-emerald-500';
+                        case 'title':
+                          return 'from-purple-500 to-pink-500';
+                        case 'account':
+                          return 'from-orange-500 to-red-500';
+                        case 'source':
+                          return 'from-indigo-500 to-purple-500';
+                        case 'challenge':
+                          return 'from-yellow-500 to-orange-500';
+                        default:
+                          return 'from-gray-500 to-gray-600';
+                      }
+                    };
+                    
+                    return (
+                      <motion.button
+                        key={tab.key}
+                        onClick={() => setActiveTab(tab.key)}
+                        className={`
+                          px-3 py-2 rounded-lg transition-all duration-300 min-w-[60px] text-center
+                          ${isActive 
+                            ? 'bg-gradient-to-r ' + getTabColor(tab.key) + ' text-white shadow-lg scale-105' 
+                            : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                          }
+                        `}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        <span className={`
+                          text-xs font-medium leading-tight
+                          ${isActive ? 'text-white' : 'text-gray-700 dark:text-gray-300'}
+                        `}>
+                          {tab.label}
+                        </span>
+                      </motion.button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
           )}
         </div>
         {/* Contenu de la corbeille */}
@@ -286,13 +334,18 @@ const Publications = () => {
                   <h3 className="text-lg font-medium mb-2">
                     {activeTab === 'all' ? 'Aucune publication' : 
                      activeTab === 'category' ? 'Aucune catégorie' :
-                     activeTab === 'subcategory' ? 'Aucune sous-catégorie' : 'Aucun titre'}
+                     activeTab === 'subcategory' ? 'Aucune sous-catégorie' :
+                     activeTab === 'title' ? 'Aucun titre' :
+                     activeTab === 'account' ? 'Aucun compte' :
+                     activeTab === 'source' ? 'Aucune source' : 'Aucun challenge'}
                   </h3>
                   <p>
                     {activeTab === 'all' ? 'Vous n\'avez pas encore publié de contenu.' :
                      activeTab === 'category' ? 'Vous n\'avez pas encore publié de catégorie.' :
                      activeTab === 'subcategory' ? 'Vous n\'avez pas encore publié de sous-catégorie.' :
-                     'Vous n\'avez pas encore publié de titre.'}
+                     activeTab === 'title' ? 'Vous n\'avez pas encore publié de titre.' :
+                     activeTab === 'account' ? 'Vous n\'avez pas encore publié de compte.' :
+                     activeTab === 'source' ? 'Vous n\'avez pas encore publié de source.' : 'Vous n\'avez pas encore publié de challenge.'}
                   </p>
                 </div>
                 <Button onClick={() => navigate('/publish')}>
@@ -338,6 +391,7 @@ const Publications = () => {
           )
         )}
       </main>
+      <Navigation />
       <DeleteConfirmationModal
         isOpen={showDeleteModal}
         onClose={handleCancelDelete}

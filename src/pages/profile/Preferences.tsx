@@ -22,14 +22,6 @@ const Preferences = () => {
           </Button>
           <h1 className="text-xl font-semibold">Préférences</h1>
         </div>
-        <Button 
-          size="sm"
-          onClick={() => navigate('/publish')}
-          className="flex items-center gap-2"
-        >
-          <Plus className="h-4 w-4" />
-          Publier
-        </Button>
       </header>
       <main className="max-w-4xl mx-auto p-4">
         <UserPreferencesForm />

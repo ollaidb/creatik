@@ -139,18 +139,10 @@ const Profile = () => {
       requiresAuth: true
     }] : []),
     {
-      title: 'Mes Favoris',
-      description: 'Gérez vos catégories et contenus favoris',
-      icon: Heart,
-      path: '/profile/favorites',
-      color: 'text-pink-500',
-      requiresAuth: true
-    },
-    {
-      title: 'Historique',
-      description: 'Consultez votre historique de navigation',
-      icon: History,
-      path: '/profile/history',
+      title: 'Préférences',
+      description: 'Personnalisez vos préférences',
+      icon: Settings,
+      path: '/profile/preferences',
       color: 'text-blue-500',
       requiresAuth: true
     },
@@ -161,22 +153,6 @@ const Profile = () => {
       path: '/profile/settings',
       color: 'text-green-500',
       requiresAuth: true
-    },
-    {
-      title: 'Préférences',
-      description: 'Personnalisez votre expérience',
-      icon: Settings,
-      path: '/profile/preferences',
-      color: 'text-green-500',
-      requiresAuth: true
-    },
-    {
-      title: 'Confidentialité',
-      description: 'Gérez vos paramètres de confidentialité',
-      icon: Shield,
-      path: '/profile/privacy',
-      color: 'text-purple-500',
-      requiresAuth: false
     },
     {
       title: 'Mentions légales',

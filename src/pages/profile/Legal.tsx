@@ -3,14 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { ArrowLeft, Plus } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import Navigation from '@/components/Navigation';
-import StickyHeader from '@/components/StickyHeader';
+
 const Legal = () => {
   const navigate = useNavigate();
   return (
     <div className="min-h-screen pb-20">
-      <StickyHeader showSearchBar={false} />
       <header className="bg-background border-b p-4 flex items-center justify-between">
         <div className="flex items-center">
           <Button 
@@ -23,14 +22,6 @@ const Legal = () => {
           </Button>
           <h1 className="text-xl font-semibold">Mentions légales</h1>
         </div>
-        <Button 
-          size="sm"
-          onClick={() => navigate('/publish')}
-          className="flex items-center gap-2"
-        >
-          <Plus className="h-4 w-4" />
-          Publier
-        </Button>
       </header>
       <main className="max-w-4xl mx-auto p-4 space-y-6">
         <Card>

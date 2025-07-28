@@ -211,20 +211,55 @@ const Events: React.FC = () => {
         {/* Filtres */}
         <div className="mb-6 space-y-4">
           {/* Onglets */}
-          <div className="flex flex-wrap gap-1 sm:gap-2">
-            {tabs.map((tab) => (
-              <Button
-                key={tab.id}
-                variant={activeTab === tab.id ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setActiveTab(tab.id as 'all' | 'birthday' | 'death' | 'historical_event' | 'holiday' | 'international_day')}
-                className={`text-xs sm:text-sm ${
-                  activeTab === tab.id ? 'bg-blue-800 text-white' : 'bg-neutral-800 text-gray-200 border-neutral-700 hover:bg-neutral-700 hover:text-white'
-                }`}
-              >
-                {tab.label} ({tab.count})
-              </Button>
-            ))}
+          <div className="mb-6">
+            <div className="overflow-x-auto">
+              <div className="flex gap-2 pb-2 min-w-max">
+                {tabs.map((tab) => {
+                  const isActive = activeTab === tab.id;
+                  const getTabColor = (tabId: string) => {
+                    switch (tabId) {
+                      case 'all':
+                        return 'from-gray-500 to-gray-600';
+                      case 'birthday':
+                        return 'from-pink-500 to-rose-500';
+                      case 'death':
+                        return 'from-gray-600 to-gray-700';
+                      case 'historical_event':
+                        return 'from-blue-500 to-cyan-500';
+                      case 'holiday':
+                        return 'from-green-500 to-emerald-500';
+                      case 'international_day':
+                        return 'from-purple-500 to-pink-500';
+                      default:
+                        return 'from-gray-500 to-gray-600';
+                    }
+                  };
+                  
+                  return (
+                    <motion.button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id as 'all' | 'birthday' | 'death' | 'historical_event' | 'holiday' | 'international_day')}
+                      className={`
+                        px-3 py-2 rounded-lg transition-all duration-300 min-w-[60px] text-center
+                        ${isActive 
+                          ? 'bg-gradient-to-r ' + getTabColor(tab.id) + ' text-white shadow-lg scale-105' 
+                          : 'bg-neutral-800 text-gray-200 hover:bg-neutral-700'
+                        }
+                      `}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      <span className={`
+                        text-xs font-medium leading-tight
+                        ${isActive ? 'text-white' : 'text-gray-200'}
+                      `}>
+                        {tab.label} ({tab.count})
+                      </span>
+                    </motion.button>
+                  );
+                })}
+              </div>
+            </div>
           </div>
 
           {/* Barre de recherche et filtres */}

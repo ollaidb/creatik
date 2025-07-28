@@ -6,10 +6,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Plus, Mail, MessageCircle, Bug, Lightbulb } from 'lucide-react';
+import { ArrowLeft, Mail, MessageCircle, Bug, Lightbulb } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Navigation from '@/components/Navigation';
-import StickyHeader from '@/components/StickyHeader';
+
 const Contact = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -53,7 +53,6 @@ const Contact = () => {
   ];
   return (
     <div className="min-h-screen pb-20">
-      <StickyHeader showSearchBar={false} />
       <header className="bg-background border-b p-4 flex items-center justify-between">
         <div className="flex items-center">
           <Button 
@@ -66,14 +65,6 @@ const Contact = () => {
           </Button>
           <h1 className="text-xl font-semibold">Contact</h1>
         </div>
-        <Button 
-          size="sm"
-          onClick={() => navigate('/publish')}
-          className="flex items-center gap-2"
-        >
-          <Plus className="h-4 w-4" />
-          Publier
-        </Button>
       </header>
       <main className="max-w-4xl mx-auto p-4 space-y-6">
         {/* Options de contact */}
