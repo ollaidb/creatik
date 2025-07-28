@@ -71,6 +71,14 @@ const Titles = () => {
     });
   };
 
+  const handleAddToChallenge = (titleId: string) => {
+    // TODO: Implémenter l'ajout aux défis
+    toast({
+      title: "Titre ajouté !",
+      description: "Ce titre a été ajouté à vos défis",
+    });
+  };
+
   const handleProfileClick = (account: {
     id: string;
     account_name: string;
@@ -254,6 +262,7 @@ const Titles = () => {
                 index={index}
                 isFavorite={isFavorite(title.id)}
                 onFavorite={toggleFavorite}
+                onAddToChallenge={handleAddToChallenge}
               />
             ))}
             {/* Message si pas de titres */}

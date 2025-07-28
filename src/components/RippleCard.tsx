@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Heart } from 'lucide-react';
+import { Heart, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface RippleCardProps {
@@ -11,13 +11,15 @@ interface RippleCardProps {
   index: number;
   isFavorite: boolean;
   onFavorite: (id: string) => void;
+  onAddToChallenge?: (id: string) => void;
 }
 
 export const RippleCard: React.FC<RippleCardProps> = ({
   title,
   index,
   isFavorite,
-  onFavorite
+  onFavorite,
+  onAddToChallenge
 }) => {
   const [ripples, setRipples] = useState<Array<{ id: number; x: number; y: number }>>([]);
   const [isPressed, setIsPressed] = useState(false);
@@ -154,6 +156,25 @@ export const RippleCard: React.FC<RippleCardProps> = ({
               <Heart size={18} className={isFavorite ? 'text-red-500 fill-red-500' : ''} />
             </Button>
           </motion.div>
+          {onAddToChallenge && (
+            <motion.div
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+            >
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onAddToChallenge(title.id);
+                }}
+                className="p-2 h-10 w-10 rounded-full text-blue-600 hover:text-blue-700"
+                title="Ajouter aux défis"
+              >
+                <Plus size={18} />
+              </Button>
+            </motion.div>
+          )}
         </div>
       </div>
     </motion.div>

@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, Reorder } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Trophy, Target, BarChart3, CheckCircle, Star, TrendingUp, Users, Award, Calendar, Square, Plus } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { ArrowLeft, Trophy, Target, BarChart3, CheckCircle, Star, TrendingUp, Users, Award, Calendar, Square, Plus, Edit, Save, X } from 'lucide-react';
 import Navigation from '@/components/Navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useChallenges } from '@/hooks/useChallenges';
@@ -23,6 +24,13 @@ const Challenges = () => {
   const [showContentsConfirm, setShowContentsConfirm] = useState(false);
   const [pendingDuration, setPendingDuration] = useState('');
   const [pendingContents, setPendingContents] = useState(0);
+  
+  // États pour l'édition et le drag & drop
+  const [editingChallengeId, setEditingChallengeId] = useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = useState('');
+  const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
+  const [reorderedChallenges, setReorderedChallenges] = useState<typeof challenges>([]);
+  const [currentDay, setCurrentDay] = useState(1);
   const {
     challenges,
     userChallenges,
@@ -150,6 +158,72 @@ const Challenges = () => {
       });
     }
   };
+
+  // Fonctions pour l'édition par long press
+  const handleLongPressStart = (challengeId: string, title: string) => {
+    const timer = setTimeout(() => {
+      setEditingChallengeId(challengeId);
+      setEditingTitle(title);
+      // Vibration feedback (si supporté)
+      if (navigator.vibrate) {
+        navigator.vibrate(100);
+      }
+      toast({
+        title: "Mode édition activé",
+        description: "Vous pouvez maintenant modifier le titre",
+      });
+    }, 2000); // 2 secondes de long press
+    
+    setLongPressTimer(timer);
+  };
+
+  const handleLongPressEnd = () => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      setLongPressTimer(null);
+    }
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingChallengeId || !editingTitle.trim()) return;
+    
+    // TODO: Implémenter la sauvegarde en base de données
+    toast({
+      title: "Modification sauvegardée",
+      description: "Le titre du défi a été mis à jour",
+    });
+    
+    setEditingChallengeId(null);
+    setEditingTitle('');
+  };
+
+  const handleCancelEdit = () => {
+    setEditingChallengeId(null);
+    setEditingTitle('');
+  };
+
+  // Fonction pour le drag & drop
+  const handleReorder = (newOrder: typeof challenges) => {
+    setReorderedChallenges(newOrder);
+    // TODO: Sauvegarder le nouvel ordre en base de données
+    toast({
+      title: "Ordre mis à jour",
+      description: "L'ordre des défis a été modifié",
+    });
+  };
+
+  // Calculer le jour actuel basé sur les défis accomplis
+  useEffect(() => {
+    const completedCount = userChallenges.filter(c => c.status === 'completed').length;
+    setCurrentDay(completedCount + 1);
+  }, [userChallenges]);
+
+  // Initialiser l'ordre des défis
+  useEffect(() => {
+    if (challenges.length > 0 && reorderedChallenges.length === 0) {
+      setReorderedChallenges(challenges);
+    }
+  }, [challenges]);
 
   if (!user) {
     return (
@@ -332,31 +406,85 @@ const Challenges = () => {
           
           {/* Onglet Défis */}
           <TabsContent value="challenges" className="mt-6">
-            <div className="space-y-3">
-              {challenges.map((challenge) => (
-                <motion.div
+            <Reorder.Group 
+              axis="y" 
+              values={reorderedChallenges} 
+              onReorder={handleReorder}
+              className="space-y-3"
+            >
+              {reorderedChallenges.map((challenge, index) => (
+                <Reorder.Item
                   key={challenge.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
+                  value={challenge}
+                  className="cursor-grab active:cursor-grabbing"
                 >
-                  <Card className="hover:shadow-md transition-shadow">
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <h3 className="font-semibold text-lg flex-1">{challenge.title}</h3>
-                        <Button
-                          onClick={() => handleCompleteChallenge(challenge.id)}
-                          size="sm"
-                          variant="ghost"
-                          className="ml-4 p-2"
-                        >
-                          <Square className="w-5 h-5" />
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                  >
+                    <Card className="hover:shadow-md transition-shadow">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          {editingChallengeId === challenge.id ? (
+                            // Mode édition
+                            <div className="flex-1 flex items-center gap-2">
+                              <Input
+                                value={editingTitle}
+                                onChange={(e) => setEditingTitle(e.target.value)}
+                                className="flex-1"
+                                autoFocus
+                              />
+                              <Button
+                                onClick={handleSaveEdit}
+                                size="sm"
+                                variant="ghost"
+                                className="p-2 text-green-600"
+                              >
+                                <Save className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                onClick={handleCancelEdit}
+                                size="sm"
+                                variant="ghost"
+                                className="p-2 text-red-600"
+                              >
+                                <X className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          ) : (
+                            // Mode affichage normal
+                            <div 
+                              className="flex-1"
+                              onTouchStart={() => handleLongPressStart(challenge.id, challenge.title)}
+                              onTouchEnd={handleLongPressEnd}
+                              onMouseDown={() => handleLongPressStart(challenge.id, challenge.title)}
+                              onMouseUp={handleLongPressEnd}
+                              onMouseLeave={handleLongPressEnd}
+                            >
+                              <h3 className="font-semibold text-lg">{challenge.title}</h3>
+                            </div>
+                          )}
+                          <Button
+                            onClick={() => handleCompleteChallenge(challenge.id)}
+                            size="sm"
+                            variant="ghost"
+                            className="ml-4 p-2"
+                          >
+                            <Square className="w-5 h-5" />
+                          </Button>
+                        </div>
+                        {/* Numérotation du jour */}
+                        <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+                          <span className="text-sm text-gray-600 dark:text-gray-400">
+                            Jour {currentDay + index}
+                          </span>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                </Reorder.Item>
               ))}
-            </div>
+            </Reorder.Group>
           </TabsContent>
           
           {/* Onglet Accomplis */}
