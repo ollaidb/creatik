@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Plus, ArrowLeft } from 'lucide-react';
+import { Plus, ArrowLeft, Filter, Globe, Smartphone, Youtube, Instagram, Facebook, Twitter, Twitch, Linkedin } from 'lucide-react';
 import { useCategoriesByTheme } from '@/hooks/useCategoriesByTheme';
 import { useThemes } from '@/hooks/useThemes';
 import CategoryCard from '@/components/CategoryCard';
@@ -24,9 +24,62 @@ const Categories = () => {
     }
   };
   const [selectedTheme, setSelectedTheme] = useState('all');
+  const [selectedNetwork, setSelectedNetwork] = useState('all');
+  const [sortOrder, setSortOrder] = useState<'alphabetical' | 'priority' | 'recent'>('priority');
   const [searchTerm, setSearchTerm] = useState('');
   const { data: categories, isLoading, error } = useCategoriesByTheme(selectedTheme);
   const { data: themes } = useThemes();
+  
+  // Données des réseaux sociaux
+  const socialNetworks = [
+    { id: 'all', name: 'Tout', icon: Globe, color: 'from-purple-500 to-pink-500' },
+    { id: 'tiktok', name: 'TikTok', icon: Smartphone, color: 'from-black to-gray-800' },
+    { id: 'youtube', name: 'YouTube', icon: Youtube, color: 'from-red-500 to-red-600' },
+    { id: 'instagram', name: 'Instagram', icon: Instagram, color: 'from-pink-500 to-purple-500' },
+    { id: 'facebook', name: 'Facebook', icon: Facebook, color: 'from-blue-500 to-blue-600' },
+    { id: 'twitter', name: 'Twitter', icon: Twitter, color: 'from-blue-400 to-blue-500' },
+    { id: 'twitch', name: 'Twitch', icon: Twitch, color: 'from-purple-500 to-purple-600' },
+    { id: 'linkedin', name: 'LinkedIn', icon: Linkedin, color: 'from-blue-600 to-blue-700' }
+  ];
+
+  // Fonction de tri
+  const getSortedCategories = (categories: Array<{id: string, name: string, color?: string, created_at?: string}>) => {
+    if (!categories) return [];
+    
+    switch (sortOrder) {
+      case 'alphabetical':
+        return [...categories].sort((a, b) => a.name.localeCompare(b.name));
+      case 'recent':
+        return [...categories].sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
+      case 'priority':
+      default:
+        // Tri par priorité selon le réseau sélectionné
+        return categories;
+    }
+  };
+
+  // Fonction pour obtenir l'icône de tri
+  const getSortIcon = () => {
+    switch (sortOrder) {
+      case 'alphabetical':
+        return '📝';
+      case 'priority':
+        return '⭐';
+      case 'recent':
+        return '🕒';
+      default:
+        return '⭐';
+    }
+  };
+
+  // Fonction pour changer l'ordre de tri
+  const handleSortChange = () => {
+    const sortOptions: Array<'alphabetical' | 'priority' | 'recent'> = ['priority', 'alphabetical', 'recent'];
+    const currentIndex = sortOptions.indexOf(sortOrder);
+    const nextIndex = (currentIndex + 1) % sortOptions.length;
+    setSortOrder(sortOptions[nextIndex]);
+  };
+
   const handleSearch = (query: string) => {
     navigate(`/search?search=${encodeURIComponent(query)}`);
   };
@@ -87,14 +140,25 @@ const Categories = () => {
               <h1 className="text-lg font-semibold text-gray-900 dark:text-white">Catégories</h1>
             </div>
           </div>
-          <Button 
-            size="sm"
-            onClick={() => navigate('/publish')}
-            className="px-3 py-2 h-auto rounded-full"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Publier
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="ghost"
+              size="sm"
+              onClick={handleSortChange}
+              className="p-2 h-10 w-10 rounded-full"
+              title={`Trié par ${sortOrder === 'alphabetical' ? 'ordre alphabétique' : sortOrder === 'priority' ? 'priorité' : 'récent'}`}
+            >
+              <span className="text-lg">{getSortIcon()}</span>
+            </Button>
+            <Button 
+              size="sm"
+              onClick={() => navigate('/publish')}
+              className="px-3 py-2 h-auto rounded-full"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Publier
+            </Button>
+          </div>
         </div>
       </div>
       <div className="px-4 py-4">
@@ -149,6 +213,41 @@ const Categories = () => {
           </div>
         </div>
 
+        {/* Menu des réseaux sociaux - Barre horizontale avec icônes */}
+        <div className="mb-6">
+          <div className="overflow-x-auto">
+            <div className="flex gap-2 pb-2 min-w-max">
+              {socialNetworks.map((network) => {
+                const isActive = selectedNetwork === network.id;
+                const IconComponent = network.icon;
+                return (
+                  <motion.button
+                    key={network.id}
+                    onClick={() => setSelectedNetwork(network.id)}
+                    className={`
+                      px-3 py-2 rounded-lg transition-all duration-300 min-w-[70px] text-center flex items-center justify-center gap-2
+                      ${isActive 
+                        ? 'bg-gradient-to-r ' + network.color + ' text-white shadow-lg scale-105' 
+                        : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                      }
+                    `}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <IconComponent size={16} />
+                    <span className={`
+                      text-xs font-medium leading-tight
+                      ${isActive ? 'text-white' : 'text-gray-700 dark:text-gray-300'}
+                    `}>
+                      {network.name}
+                    </span>
+                  </motion.button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
         {isLoading ? (
           <div className="text-center py-8">
             <p>Chargement des catégories...</p>
@@ -162,7 +261,7 @@ const Categories = () => {
               initial="hidden"
               animate="visible"
             >
-              {filteredCategories?.map((category) => (
+              {getSortedCategories(filteredCategories)?.map((category) => (
                 <motion.div key={category.id} variants={itemVariants}>
                   <CategoryCard 
                     category={{
@@ -176,11 +275,14 @@ const Categories = () => {
                 </motion.div>
               ))}
             </motion.div>
-            {filteredCategories?.length === 0 && !isLoading && (
+            {getSortedCategories(filteredCategories)?.length === 0 && !isLoading && (
               <div className="flex flex-col items-center justify-center h-60 text-center px-4">
                 <h3 className="text-lg font-medium">Aucune catégorie trouvée</h3>
                 <p className="text-muted-foreground mt-2">
-                  Aucune catégorie disponible pour ce thème
+                  {selectedNetwork !== 'all' 
+                    ? `Aucune catégorie disponible pour ${socialNetworks.find(n => n.id === selectedNetwork)?.name}`
+                    : 'Aucune catégorie disponible pour ce thème'
+                  }
                 </p>
               </div>
             )}
