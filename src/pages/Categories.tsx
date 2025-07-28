@@ -182,7 +182,7 @@ const Categories = () => {
 
         {/* Menu des thèmes - Barre horizontale sans icônes */}
         <div className="mb-6">
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto scrollbar-hide">
             <div className="flex gap-2 pb-2 min-w-max">
               {themes?.map((theme) => {
                 const isActive = selectedTheme === (theme.name === 'Tout' ? 'all' : theme.id);
@@ -215,7 +215,7 @@ const Categories = () => {
 
         {/* Menu des réseaux sociaux - Barre horizontale avec icônes */}
         <div className="mb-6">
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto scrollbar-hide">
             <div className="flex gap-2 pb-2 min-w-max">
               {socialNetworks.map((network) => {
                 const isActive = selectedNetwork === network.id;
