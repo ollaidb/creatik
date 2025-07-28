@@ -33,13 +33,13 @@ const Categories = () => {
   // Données des réseaux sociaux
   const socialNetworks = [
     { id: 'all', name: 'Tout', icon: Globe, color: 'from-purple-500 to-pink-500' },
-    { id: 'tiktok', name: 'TikTok', icon: Smartphone, color: 'from-black to-gray-800' },
+    { id: 'tiktok', name: 'TikTok', icon: Smartphone, color: 'from-black to-gray-900' },
     { id: 'youtube', name: 'YouTube', icon: Youtube, color: 'from-red-500 to-red-600' },
     { id: 'instagram', name: 'Instagram', icon: Instagram, color: 'from-pink-500 to-purple-500' },
-    { id: 'facebook', name: 'Facebook', icon: Facebook, color: 'from-blue-500 to-blue-600' },
+    { id: 'facebook', name: 'Facebook', icon: Facebook, color: 'from-blue-600 to-blue-700' },
     { id: 'twitter', name: 'Twitter', icon: Twitter, color: 'from-blue-400 to-blue-500' },
-    { id: 'twitch', name: 'Twitch', icon: Twitch, color: 'from-purple-500 to-purple-600' },
-    { id: 'linkedin', name: 'LinkedIn', icon: Linkedin, color: 'from-blue-600 to-blue-700' }
+    { id: 'twitch', name: 'Twitch', icon: Twitch, color: 'from-purple-600 to-purple-700' },
+    { id: 'linkedin', name: 'LinkedIn', icon: Linkedin, color: 'from-blue-700 to-blue-800' }
   ];
 
   // Fonction de tri
