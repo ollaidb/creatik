@@ -47,7 +47,7 @@ const Categories = () => {
       case 'business':
         return 'from-green-500 to-emerald-500';
       case 'technologie':
-        return 'from-orange-500 to-red-500';
+        return 'from-red-500 to-red-600';
       case 'international':
         return 'from-indigo-500 to-purple-500';
       default:

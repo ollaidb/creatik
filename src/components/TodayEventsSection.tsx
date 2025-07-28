@@ -140,7 +140,7 @@ const TodayEventsSection: React.FC = () => {
                     )}
                     
                     <motion.button
-                      className="w-full text-left p-3 sm:p-4 rounded-lg font-bold text-white text-sm sm:text-base md:text-lg border border-transparent hover:text-blue-300 hover:bg-neutral-700 focus:bg-neutral-700 focus:outline-none transition-all duration-200 cursor-pointer shadow-sm leading-tight active:scale-95 active:bg-neutral-600 event-button-mobile"
+                      className="w-full text-left p-2 sm:p-3 rounded-lg font-medium text-white text-sm sm:text-base border border-transparent hover:text-blue-300 hover:bg-neutral-700 focus:bg-neutral-700 focus:outline-none transition-all duration-200 cursor-pointer shadow-sm leading-tight active:scale-95 active:bg-neutral-600 event-button-mobile"
                       onClick={(e) => {
                         e.stopPropagation();
                         handleEventClick(event.id);
@@ -163,7 +163,25 @@ const TodayEventsSection: React.FC = () => {
                         transform: 'translateZ(0)'
                       }}
                     >
-                      {event.title}
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <div className="font-semibold text-white">
+                            {event.person_name || event.title}
+                          </div>
+                          <div className="text-xs text-gray-300 mt-1">
+                            {event.event_type === 'birthday' ? 'Anniversaire' : 
+                             event.event_type === 'anniversary' ? 'Événement' : 
+                             event.event_type === 'holiday' ? 'Fête' : 'Événement'}
+                          </div>
+                        </div>
+                        <div className="text-xs text-gray-400 text-right">
+                          {new Date(event.date).toLocaleDateString('fr-FR', {
+                            day: 'numeric',
+                            month: 'long',
+                            year: 'numeric'
+                          })}
+                        </div>
+                      </div>
                     </motion.button>
                   </motion.div>
                 ))}

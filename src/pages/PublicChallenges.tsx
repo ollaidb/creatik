@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ArrowLeft, Heart, Target, Plus, User, Clock, Star, Calendar, Trophy } from 'lucide-react';
+import { ArrowLeft, Heart, Target, Plus, User, Clock, Star, Calendar, Trophy, Eye } from 'lucide-react';
 import { usePublicChallenges } from '@/hooks/usePublicChallenges';
 import { useFavorites } from '@/hooks/useFavorites';
 import { useAuth } from '@/hooks/useAuth';
@@ -17,6 +17,7 @@ const PublicChallenges = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const { favorites: favoriteChallenges, toggleFavorite, isFavorite } = useFavorites('challenge');
+  const [expandedChallenges, setExpandedChallenges] = useState<Set<string>>(new Set());
   
   // Déterminer si on affiche seulement les challenges likés
   const filterLikedOnly = searchParams.get('filter') === 'liked';
@@ -73,6 +74,21 @@ const PublicChallenges = () => {
     });
   };
 
+  const toggleExpanded = (challengeId: string) => {
+    const newExpanded = new Set(expandedChallenges);
+    if (newExpanded.has(challengeId)) {
+      newExpanded.delete(challengeId);
+    } else {
+      newExpanded.add(challengeId);
+    }
+    setExpandedChallenges(newExpanded);
+  };
+
+  const truncateDescription = (description: string, maxLength: number = 100) => {
+    if (description.length <= maxLength) return description;
+    return description.substring(0, maxLength) + '...';
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen pb-20">
@@ -86,7 +102,7 @@ const PublicChallenges = () => {
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <h1 className="text-xl font-semibold">
-            {filterLikedOnly ? 'Mes Challenges Likés' : 'Challenges Publics'}
+            {filterLikedOnly ? 'Mes Challenges Likés' : 'Challenges'}
           </h1>
         </header>
         <main className="max-w-4xl mx-auto p-4">
@@ -111,7 +127,7 @@ const PublicChallenges = () => {
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <h1 className="text-xl font-semibold">
-            {filterLikedOnly ? 'Mes Challenges Likés' : 'Challenges Publics'}
+            {filterLikedOnly ? 'Mes Challenges Likés' : 'Challenges'}
           </h1>
         </header>
         <main className="max-w-4xl mx-auto p-4">
@@ -143,7 +159,7 @@ const PublicChallenges = () => {
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <h1 className="text-xl font-semibold">
-            {filterLikedOnly ? 'Mes Challenges Likés' : 'Challenges Publics'}
+            {filterLikedOnly ? 'Mes Challenges Likés' : 'Challenges'}
           </h1>
         </div>
         {user && (
@@ -152,7 +168,7 @@ const PublicChallenges = () => {
             className="flex items-center gap-2"
           >
             <Plus className="w-4 h-4" />
-            Publier un Challenge
+            Publier
           </Button>
         )}
       </header>
@@ -173,13 +189,13 @@ const PublicChallenges = () => {
               </p>
               {!filterLikedOnly && user && (
                 <Button onClick={() => navigate('/publish')}>
-                  Publier un Challenge
+                  Publier
                 </Button>
               )}
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-4">
             {challenges.map((challenge) => (
               <motion.div
                 key={challenge.id}
@@ -188,93 +204,94 @@ const PublicChallenges = () => {
                 transition={{ duration: 0.3 }}
               >
                 <Card className="hover:shadow-lg transition-all duration-300 border-0 shadow-md bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900">
-                  <CardContent className="p-6">
-                    {/* En-tête avec photo de profil et infos utilisateur */}
-                    <div className="flex items-start justify-between mb-4">
+                  <CardContent className="p-4">
+                    {/* En-tête simplifiée */}
+                    <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-3">
-                        <Avatar className="w-12 h-12 ring-2 ring-primary/20">
+                        <Avatar className="w-10 h-10 ring-2 ring-primary/20">
                           {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                           <AvatarImage src={(challenge.creator?.user_metadata as any)?.avatar_url} />
                           <AvatarFallback className="bg-gradient-to-r from-primary to-secondary text-white">
-                            <User className="w-6 h-6" />
+                            <User className="w-5 h-5" />
                           </AvatarFallback>
                         </Avatar>
                         <div>
-                          <div className="font-semibold text-base">
+                          <div className="font-medium text-sm">
                             {getCreatorName(challenge.creator)}
                           </div>
-                          <div className="text-sm text-muted-foreground flex items-center gap-1">
-                            <Calendar className="w-3 h-3" />
+                          <div className="text-xs text-muted-foreground">
                             {formatDate(challenge.created_at)}
                           </div>
                         </div>
                       </div>
-                      
-                      {/* Badges de difficulté et points */}
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline" className={getDifficultyColor(challenge.difficulty)}>
-                          {getDifficultyText(challenge.difficulty)}
-                        </Badge>
-                        <Badge className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white">
-                          <Trophy className="w-3 h-3 mr-1" />
-                          {challenge.points} pts
-                        </Badge>
-                      </div>
                     </div>
 
                     {/* Titre du challenge */}
-                    <CardTitle className="text-xl mb-3 text-gray-900 dark:text-gray-100">
+                    <CardTitle className="text-lg mb-2 text-gray-900 dark:text-gray-100">
                       {challenge.title}
                     </CardTitle>
 
-                    {/* Description du challenge */}
-                    <p className="text-gray-700 dark:text-gray-300 mb-4 leading-relaxed">
-                      {challenge.description}
-                    </p>
-
-                    {/* Informations supplémentaires */}
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <div className="flex items-center gap-1">
-                          <Clock className="w-4 h-4" />
-                          <span>{challenge.duration_days} jour{challenge.duration_days > 1 ? 's' : ''}</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Star className="w-4 h-4" />
-                          <span>{challenge.category}</span>
-                        </div>
-                      </div>
+                    {/* Description avec système "Lire plus" */}
+                    <div className="mb-3">
+                      <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed">
+                        {expandedChallenges.has(challenge.id) 
+                          ? challenge.description 
+                          : truncateDescription(challenge.description, 80)
+                        }
+                      </p>
+                      {challenge.description.length > 80 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => toggleExpanded(challenge.id)}
+                          className="text-xs text-blue-600 hover:text-blue-700 p-0 h-auto mt-1"
+                        >
+                          {expandedChallenges.has(challenge.id) ? 'Voir moins' : 'Lire plus'}
+                        </Button>
+                      )}
                     </div>
 
-                    {/* Actions */}
-                    <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
+                    {/* Actions simplifiées */}
+                    <div className="flex items-center justify-between pt-3 border-t border-gray-200 dark:border-gray-700">
+                      {user && (
+                        <Button
+                          size="sm"
+                          onClick={() => addToPersonalChallenges(challenge.id)}
+                          className="flex items-center gap-1 bg-gradient-to-r from-primary to-secondary text-white hover:from-primary/90 hover:to-secondary/90 text-xs px-3 py-1"
+                        >
+                          <Plus className="w-3 h-3" />
+                          Défi
+                        </Button>
+                      )}
+                      
                       <div className="flex items-center gap-2">
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => toggleFavorite(challenge.id)}
-                          className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-200 ${
+                          className={`flex items-center gap-1 px-3 py-1 rounded-full transition-all duration-200 text-xs ${
                             isFavorite(challenge.id) 
                               ? 'text-red-500 bg-red-50 dark:bg-red-900/20' 
                               : 'text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20'
                           }`}
                         >
-                          <Heart className={`w-5 h-5 ${isFavorite(challenge.id) ? 'fill-current' : ''}`} />
-                          <span className="font-medium">{challenge.likes_count}</span>
+                          <Heart className={`w-4 h-4 ${isFavorite(challenge.id) ? 'fill-current' : ''}`} />
+                          <span>{challenge.likes_count}</span>
                         </Button>
                       </div>
-                      
-                      {user && (
-                        <Button
-                          size="sm"
-                          onClick={() => addToPersonalChallenges(challenge.id)}
-                          className="flex items-center gap-2 bg-gradient-to-r from-primary to-secondary text-white hover:from-primary/90 hover:to-secondary/90"
-                        >
-                          <Target className="w-4 h-4" />
-                          Ajouter à mes défis
-                        </Button>
-                      )}
                     </div>
+
+                    {/* Détails supplémentaires (affichés seulement si développé) */}
+                    {expandedChallenges.has(challenge.id) && (
+                      <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                          <div className="flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            <span>{challenge.duration_days} jour{challenge.duration_days > 1 ? 's' : ''}</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </motion.div>

@@ -50,7 +50,6 @@ const Events: React.FC = () => {
   const { events, categories, loading, error, getEventsForDate } = useEvents();
   const [activeTab, setActiveTab] = useState<'all' | 'birthday' | 'death' | 'historical_event' | 'holiday' | 'international_day'>('all');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [searchTerm, setSearchTerm] = useState('');
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [targetedEventId, setTargetedEventId] = useState<string | null>(null);
@@ -102,14 +101,6 @@ const Events: React.FC = () => {
       if (category && event.category !== category.name) {
         return false;
       }
-    }
-    if (searchTerm) {
-      const searchLower = searchTerm.toLowerCase();
-      return (
-        event.title.toLowerCase().includes(searchLower) ||
-        event.description.toLowerCase().includes(searchLower) ||
-        event.person_name?.toLowerCase().includes(searchLower)
-      );
     }
     return true;
   });
@@ -174,37 +165,11 @@ const Events: React.FC = () => {
               <ArrowLeft className="h-5 w-5 sm:h-6 sm:w-6" />
             </Button>
             <div className="min-w-0 flex-1">
-              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-1 sm:mb-2 text-white leading-tight">
-                Événements du jour - {formattedSelectedDate}
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-1 sm:mb-2 text-white leading-tight flex items-center justify-between">
+                <span>Événements du jour - {formattedSelectedDate}</span>
+                <CalendarIcon className="h-6 w-6 sm:h-8 sm:w-8 text-blue-400" />
               </h1>
             </div>
-          </div>
-          
-          {/* Bouton calendrier */}
-          <div className="relative">
-            <Button
-              variant="outline"
-              size="icon"
-              aria-label="Choisir une date"
-              onClick={() => setCalendarOpen(v => !v)}
-              className={calendarOpen ? 'bg-blue-900 border-blue-400 text-white' : 'bg-neutral-800 border-neutral-700 text-white'}
-            >
-              <CalendarIcon className="h-4 w-4 sm:h-5 sm:w-5" />
-            </Button>
-            {calendarOpen && (
-              <div className="absolute right-0 z-20 mt-2">
-                <EventsCalendar
-                  selectedDate={selectedDate}
-                  onSelect={date => {
-                    setSelectedDate(date);
-                    setCalendarOpen(false);
-                    window.history.replaceState({}, '', '/events');
-                    setTargetedEventId(null);
-                  }}
-                  events={events}
-                />
-              </div>
-            )}
           </div>
         </div>
 
@@ -262,30 +227,56 @@ const Events: React.FC = () => {
             </div>
           </div>
 
-          {/* Barre de recherche et filtres */}
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <Input
-                placeholder="Rechercher un événement..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 bg-neutral-800 text-white border-neutral-700 placeholder:text-gray-400 text-sm sm:text-base"
-              />
+          {/* Menu des catégories */}
+          <div className="mb-6">
+            <div className="overflow-x-auto">
+              <div className="flex gap-2 pb-2 min-w-max">
+                <motion.button
+                  onClick={() => setSelectedCategory('all')}
+                  className={`
+                    px-3 py-2 rounded-lg transition-all duration-300 min-w-[60px] text-center
+                    ${selectedCategory === 'all' 
+                      ? 'bg-gradient-to-r from-gray-500 to-gray-600 text-white shadow-lg scale-105' 
+                      : 'bg-neutral-800 text-gray-200 hover:bg-neutral-700'
+                    }
+                  `}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <span className={`
+                    text-xs font-medium leading-tight
+                    ${selectedCategory === 'all' ? 'text-white' : 'text-gray-200'}
+                  `}>
+                    Toutes les catégories
+                  </span>
+                </motion.button>
+                {categories.map((category) => {
+                  const isActive = selectedCategory === category.id;
+                  return (
+                    <motion.button
+                      key={category.id}
+                      onClick={() => setSelectedCategory(category.id)}
+                      className={`
+                        px-3 py-2 rounded-lg transition-all duration-300 min-w-[60px] text-center
+                        ${isActive 
+                          ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-lg scale-105' 
+                          : 'bg-neutral-800 text-gray-200 hover:bg-neutral-700'
+                        }
+                      `}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      <span className={`
+                        text-xs font-medium leading-tight
+                        ${isActive ? 'text-white' : 'text-gray-200'}
+                      `}>
+                        {category.icon} {category.name}
+                      </span>
+                    </motion.button>
+                  );
+                })}
+              </div>
             </div>
-            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-              <SelectTrigger className="w-full sm:w-48 bg-neutral-800 text-white border-neutral-700 text-sm sm:text-base">
-                <SelectValue placeholder="Toutes les catégories" />
-              </SelectTrigger>
-              <SelectContent className="bg-neutral-800 text-white border-neutral-700">
-                <SelectItem value="all">Toutes les catégories</SelectItem>
-                {categories.map((category) => (
-                  <SelectItem key={category.id} value={category.id}>
-                    {category.icon} {category.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
           </div>
         </div>
 
@@ -357,35 +348,24 @@ const Events: React.FC = () => {
                       targetedEventId === event.id ? 'ring-2 ring-blue-400 bg-blue-950' : ''
                     }`}
                   >
-                    <CardHeader className="pb-3">
-                      <div className="flex items-center justify-between">
-                        <div className="text-xl sm:text-2xl">{getEventIcon(event.event_type)}</div>
-                        <Badge variant="secondary" className="text-xs bg-blue-900 text-white border-none">
-                          {getEventTypeLabel(event.event_type)}
-                        </Badge>
+                    <CardContent className="p-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="font-medium text-sm text-white leading-tight flex-1">
+                          {event.person_name || event.title}
+                        </h3>
+                        <span className="text-xs text-gray-300 ml-2">
+                          {event.event_type === 'birthday' ? 'Anniversaire' : 
+                           event.event_type === 'historical_event' ? 'Événement' : 
+                           getEventTypeLabel(event.event_type)}
+                        </span>
                       </div>
-                      {event.category && (
-                        <Badge 
-                          variant="outline" 
-                          className="text-xs bg-neutral-700 text-gray-200 border-neutral-600"
-                        >
-                          {event.category}
-                        </Badge>
-                      )}
-                    </CardHeader>
-                    <CardContent className="pt-0">
-                      <h3 className="font-bold text-base sm:text-lg mb-2 text-white leading-tight">{event.title}</h3>
-                      {event.person_name && (
-                        <p className="text-xs sm:text-sm text-gray-300 mb-2">
-                          <span className="font-medium">Personne:</span> {event.person_name}
-                          {event.profession && ` (${event.profession})`}
-                        </p>
-                      )}
-                      {event.year && (
-                        <p className="text-xs sm:text-sm text-gray-300 mb-2">
-                          <span className="font-medium">Année:</span> {event.year}
-                        </p>
-                      )}
+                      <p className="text-xs text-gray-400">
+                        {new Date(event.date).toLocaleDateString('fr-FR', {
+                          day: 'numeric',
+                          month: 'long',
+                          year: 'numeric'
+                        })}
+                      </p>
                     </CardContent>
                   </Card>
                 </motion.div>

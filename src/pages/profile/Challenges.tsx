@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Trophy, Target, BarChart3, CheckCircle, Star, TrendingUp, Users, Award, Calendar } from 'lucide-react';
+import { ArrowLeft, Trophy, Target, BarChart3, CheckCircle, Star, TrendingUp, Users, Award, Calendar, Square, Plus } from 'lucide-react';
 import Navigation from '@/components/Navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useChallenges } from '@/hooks/useChallenges';
@@ -253,10 +253,17 @@ const Challenges = () => {
           </Button>
           <h1 className="text-xl font-semibold">Mes Défis</h1>
         </div>
-        <Badge variant="outline" className="flex items-center gap-1">
-          <Trophy className="w-4 h-4" />
-          {stats?.total_points || 0} pts
-        </Badge>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate('/challenges')}
+            className="flex items-center gap-1"
+            title="Ajouter un défi"
+          >
+            <Plus className="w-4 h-4" />
+          </Button>
+        </div>
       </header>
       <main className="max-w-4xl mx-auto p-4">
         {/* Sélecteur de durée compact */}
@@ -342,7 +349,7 @@ const Challenges = () => {
                           variant="ghost"
                           className="ml-4 p-2"
                         >
-                          <CheckCircle className="w-5 h-5" />
+                          <Square className="w-5 h-5" />
                         </Button>
                       </div>
                     </CardContent>
