@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Plus, Filter, Globe, Smartphone, Youtube, Instagram, Facebook, Twitter, Twitch, Linkedin } from 'lucide-react';
+import { Plus, Filter, Globe, Smartphone, Youtube, Instagram, Facebook, Twitter, Twitch, Linkedin, ArrowLeft } from 'lucide-react';
 import { useCategories } from '@/hooks/useCategories';
 import { useThemes } from '@/hooks/useThemes';
 import { useSocialNetworks, useFilterCategoriesByNetwork } from '@/hooks/useSocialNetworks';
@@ -56,6 +56,10 @@ const Categories = () => {
     navigate(`/search?search=${encodeURIComponent(query)}`);
   };
 
+  const handleBackClick = () => {
+    navigate('/');
+  };
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -77,6 +81,14 @@ const Categories = () => {
       {/* Header fixe pour mobile */}
       <div className="sticky top-0 z-50 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-4 py-3">
           <div className="flex items-center gap-3">
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={handleBackClick} 
+              className="p-2 h-10 w-10 rounded-full"
+            >
+              <ArrowLeft size={20} />
+            </Button>
             <div className="flex-1 min-w-0">
               <h1 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
                 Chargement...
@@ -111,13 +123,21 @@ const Categories = () => {
       {/* Header fixe pour mobile */}
       <div className="sticky top-0 z-50 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-4 py-3">
         <div className="flex items-center gap-3">
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={handleBackClick} 
+            className="p-2 h-10 w-10 rounded-full"
+          >
+            <ArrowLeft size={20} />
+          </Button>
           <div className="flex-1 min-w-0">
             <h1 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
               Catégories
             </h1>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
+            {/* <p className="text-sm text-gray-600 dark:text-gray-400">
               {getSortedCategories(filteredCategories).length} catégories disponibles
-            </p>
+            </p> */}
           </div>
           <Button 
             size="sm"

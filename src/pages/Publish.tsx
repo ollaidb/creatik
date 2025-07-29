@@ -12,6 +12,7 @@ import { usePendingPublish } from '@/hooks/usePendingPublish';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import Navigation from '@/components/Navigation';
+import { useSocialNetworks } from '@/hooks/useSocialNetworks';
 
 interface Category {
   id: string;
@@ -47,6 +48,8 @@ const Publish = () => {
   const [subcategorySearch, setSubcategorySearch] = useState('');
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   const [showSubcategoryDropdown, setShowSubcategoryDropdown] = useState(false);
+  const [selectedNetwork, setSelectedNetwork] = useState('all');
+  const { data: socialNetworks } = useSocialNetworks();
 
   // Refs pour les dropdowns
   const categoryDropdownRef = useRef<HTMLDivElement>(null);
@@ -208,7 +211,7 @@ const Publish = () => {
     setShowSubcategoryDropdown(false);
   };
 
-  // Fonction pour obtenir le label du titre selon le type
+  // Fonction pour obtenir le label du titre selon le type ET le réseau
   const getTitleLabel = () => {
     switch (formData.content_type) {
       case 'category': return 'Nom de la catégorie';
@@ -216,11 +219,13 @@ const Publish = () => {
       case 'challenge': return 'Nom du challenge';
       case 'source': return 'Titre de la source';
       case 'account': return 'Pseudo de la personne';
+      case 'inspiration': return 'Idée d\'inspiration';
+      case 'hooks': return 'Hook vidéo';
       default: return 'Titre';
     }
   };
 
-  // Fonction pour obtenir le placeholder du titre selon le type
+  // Fonction pour obtenir le placeholder du titre selon le type ET le réseau
   const getTitlePlaceholder = () => {
     switch (formData.content_type) {
       case 'category': return 'Entrez le nom de la catégorie';
@@ -228,6 +233,8 @@ const Publish = () => {
       case 'challenge': return 'Entrez le nom de votre challenge';
       case 'source': return 'Entrez le titre de la source (ex: "TikTok", "Instagram", "YouTube")';
       case 'account': return 'Entrez le pseudo de la personne (ex: "@username")';
+      case 'inspiration': return 'Entrez votre idée d\'inspiration textuelle';
+      case 'hooks': return 'Entrez votre hook pour captiver l\'audience';
       default: return 'Entrez le titre de votre contenu';
     }
   };
@@ -257,49 +264,40 @@ const Publish = () => {
             </Button>
             <h1 className="text-xl font-semibold">Publier du contenu</h1>
           </div>
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={() => navigate('/profile/publications')}
-            className="flex items-center gap-2"
-          >
-            <FileText className="w-4 h-4" />
-            Mes publications
-        </Button>
         </div>
       </header>
 
       <main className="max-w-7xl mx-auto p-4">
-        <div className="text-center mb-8">
-          <h2 className="text-2xl font-bold mb-2">Contribuez à CréaTik</h2>
-          <p className="text-muted-foreground">
-            Partagez vos idées et enrichissez notre bibliothèque de contenu créatif
-          </p>
-        </div>
-
-        <Card className="max-w-2xl mx-auto">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Send className="w-5 h-5" />
-              Publier du contenu
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
-              <div className="flex items-start gap-3">
-                <FileText className="w-5 h-5 text-blue-600 mt-0.5" />
-                <div>
-                  <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-1">
-                    Suivi de vos publications
-                  </h4>
-                  <p className="text-sm text-blue-700 dark:text-blue-300">
-                    Toutes vos publications apparaîtront dans "Mes publications" où vous pourrez suivre leur statut et les gérer.
-                  </p>
-                </div>
-              </div>
+        {/* NOUVELLE STRUCTURE : Formulaire en étapes */}
+        <div className="max-w-4xl mx-auto">
+          
+          {/* Section 1 : Informations de base */}
+          <div className="mb-8">
+            <h2 className="text-lg font-semibold mb-4">
+              Informations de base
+            </h2>
+            
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Réseau social */}
+                <div className="space-y-2">
+                  <Label htmlFor="network">Réseau social *</Label>
+                  <select
+                    id="network"
+                    value={selectedNetwork}
+                    onChange={(e) => setSelectedNetwork(e.target.value)}
+                    className="w-full p-3 border border-gray-300 rounded-md bg-white text-gray-900"
+                    required
+                  >
+                    <option value="all">Tous les réseaux</option>
+                    {socialNetworks?.map((network) => (
+                      <option key={network.id} value={network.id}>
+                        {network.display_name}
+                      </option>
+                    ))}
+                  </select>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
               {/* Type de contenu */}
               <div className="space-y-2">
                 <Label htmlFor="content_type">Type de contenu *</Label>
@@ -309,15 +307,15 @@ const Publish = () => {
                   onChange={(e) => {
                     setFormData(prev => ({
                       ...prev,
-                      content_type: e.target.value as 'category' | 'subcategory' | 'title' | 'challenge' | 'source' | 'account',
-                      category_id: '', // Reset category when type changes
-                      subcategory_id: '', // Reset subcategory when type changes
-                      description: '', // Reset description when type changes
-                      url: '', // Reset URL when type changes
-                      platform: '' // Reset platform when type changes
-                    }));
-                    setCategorySearch(''); // Reset search
-                    setSubcategorySearch(''); // Reset search
+                        content_type: e.target.value as any,
+                        category_id: '',
+                        subcategory_id: '',
+                        description: '',
+                        url: '',
+                        platform: ''
+                      }));
+                      setCategorySearch('');
+                      setSubcategorySearch('');
                   }}
                   className="w-full p-3 border border-gray-300 rounded-md bg-white text-gray-900"
                   required
@@ -328,10 +326,24 @@ const Publish = () => {
                   <option value="challenge">Challenge</option>
                   <option value="source">Source</option>
                   <option value="account">Compte</option>
+                    {selectedNetwork === 'youtube' && <option value="hooks">Hooks</option>}
+                    {(selectedNetwork === 'instagram' || selectedNetwork === 'tiktok' || selectedNetwork === 'youtube') && (
+                      <option value="inspiration">Inspiration</option>
+                    )}
                 </select>
+                </div>
               </div>
+            </div>
+          </div>
 
-              {/* Titre/Pseudo */}
+          {/* Section 2 : Contenu principal */}
+          <div className="mb-8">
+            <h2 className="text-lg font-semibold mb-4">
+              Contenu principal
+            </h2>
+            
+            <div className="space-y-6">
+              {/* Titre */}
               <div className="space-y-2">
                 <Label htmlFor="title">{getTitleLabel()} *</Label>
                 <Input
@@ -343,71 +355,7 @@ const Publish = () => {
                 />
               </div>
 
-              {/* Plateforme pour les comptes */}
-              {formData.content_type === 'account' && (
-                <div className="space-y-2">
-                  <Label htmlFor="platform">Plateforme *</Label>
-                  <select
-                    id="platform"
-                    value={formData.platform}
-                    onChange={(e) => setFormData(prev => ({ ...prev, platform: e.target.value }))}
-                    className="w-full p-3 border border-gray-300 rounded-md bg-white text-gray-900"
-                    required
-                  >
-                    <option value="">Sélectionnez une plateforme</option>
-                    <option value="tiktok">TikTok</option>
-                    <option value="instagram">Instagram</option>
-                    <option value="youtube">YouTube</option>
-                    <option value="twitter">Twitter/X</option>
-                    <option value="facebook">Facebook</option>
-                    <option value="linkedin">LinkedIn</option>
-                    <option value="pinterest">Pinterest</option>
-                    <option value="snapchat">Snapchat</option>
-                    <option value="twitch">Twitch</option>
-                    <option value="discord">Discord</option>
-                    <option value="telegram">Telegram</option>
-                    <option value="other">Autre</option>
-                  </select>
-                </div>
-              )}
-
-              {/* Description pour les challenges */}
-              {formData.content_type === 'challenge' && (
-                <div className="space-y-2">
-                  <Label htmlFor="description">Description du challenge *</Label>
-                  <textarea
-                    id="description"
-                    value={formData.description || ''}
-                    onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                    placeholder="Décrivez votre challenge en détail..."
-                    className="w-full p-3 border border-gray-300 rounded-md bg-white text-gray-900 min-h-[100px] resize-vertical"
-                    required
-                  />
-                </div>
-              )}
-
-              {/* URL pour les sources et comptes */}
-              {(formData.content_type === 'source' || formData.content_type === 'account') && (
-                <div className="space-y-2">
-                  <Label htmlFor="url">
-                    {formData.content_type === 'source' ? 'URL de la source' : 'URL du compte'} *
-                  </Label>
-                  <div className="relative">
-                    <Link className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                    <Input
-                      id="url"
-                      type="url"
-                      value={formData.url || ''}
-                      onChange={(e) => setFormData(prev => ({ ...prev, url: e.target.value }))}
-                      placeholder={formData.content_type === 'source' ? 'https://example.com' : 'https://tiktok.com/@username'}
-                      className="pl-10"
-                      required
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* Catégorie (pour sous-catégorie, titre, source, compte) */}
+              {/* Catégorie (si nécessaire) */}
               {shouldShowCategorySelection() && (
                 <div className="space-y-2">
                   <Label htmlFor="category">Catégorie *</Label>
@@ -465,7 +413,7 @@ const Publish = () => {
                 </div>
               )}
 
-              {/* Sous-catégorie (pour titre, source, compte) */}
+              {/* Sous-catégorie (si nécessaire) */}
               {shouldShowSubcategorySelection() && (
                 <div className="space-y-2">
                   <Label htmlFor="subcategory">Sous-catégorie *</Label>
@@ -522,7 +470,81 @@ const Publish = () => {
                   </div>
                 </div>
               )}
+            </div>
+          </div>
 
+          {/* Section 3 : Informations supplémentaires */}
+          {/* 
+<div className="mb-8">
+  <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+    <div className="space-y-6">
+      {formData.content_type === 'account' && (
+        <div className="space-y-2">
+          <Label htmlFor="platform">Plateforme *</Label>
+          <select
+            id="platform"
+            value={formData.platform}
+            onChange={(e) => setFormData(prev => ({ ...prev, platform: e.target.value }))}
+            className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            required
+          >
+            <option value="">Sélectionnez une plateforme</option>
+            <option value="tiktok">TikTok</option>
+            <option value="instagram">Instagram</option>
+            <option value="youtube">YouTube</option>
+            <option value="twitter">Twitter/X</option>
+            <option value="facebook">Facebook</option>
+            <option value="linkedin">LinkedIn</option>
+            <option value="pinterest">Pinterest</option>
+            <option value="snapchat">Snapchat</option>
+            <option value="twitch">Twitch</option>
+            <option value="discord">Discord</option>
+            <option value="telegram">Telegram</option>
+            <option value="other">Autre</option>
+          </select>
+        </div>
+      )}
+
+      {formData.content_type === 'challenge' && (
+        <div className="space-y-2">
+          <Label htmlFor="description">Description du challenge *</Label>
+          <textarea
+            id="description"
+            value={formData.description || ''}
+            onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+            placeholder="Décrivez votre challenge en détail..."
+            className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white min-h-[100px] resize-vertical"
+            required
+          />
+        </div>
+      )}
+
+      {(formData.content_type === 'source' || formData.content_type === 'account') && (
+        <div className="space-y-2">
+          <Label htmlFor="url">
+            {formData.content_type === 'source' ? 'URL de la source' : 'URL du compte'} *
+          </Label>
+          <div className="relative">
+            <Link className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Input
+              id="url"
+              type="url"
+              value={formData.url || ''}
+              onChange={(e) => setFormData(prev => ({ ...prev, url: e.target.value }))}
+              placeholder={formData.content_type === 'source' ? 'https://example.com' : 'https://tiktok.com/@username'}
+              className="pl-10"
+              required
+            />
+          </div>
+        </div>
+      )}
+    </div>
+  </div>
+</div>
+*/}
+
+          {/* Section 4 : Soumission */}
+          <div className="border-t pt-6">
               <Button 
                 type="submit" 
                 className="w-full" 
@@ -545,9 +567,8 @@ const Publish = () => {
                   </>
                 )}
               </Button>
-            </form>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </main>
       <Navigation />
     </div>
