@@ -13,6 +13,7 @@ import IntelligentSearchBar from '@/components/IntelligentSearchBar';
 import SubcategoryTabs from '@/components/SubcategoryTabs';
 import HashtagsSection from '@/components/HashtagsSection';
 import { RippleCard } from '@/components/RippleCard';
+import Navigation from '@/components/Navigation';
 
 const Titles = () => {
   const { subcategoryId, categoryId } = useParams();
@@ -423,6 +424,7 @@ const Titles = () => {
           />
         )}
       </div>
+      <Navigation />
     </div>
   );
 };

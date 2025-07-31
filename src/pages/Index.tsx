@@ -171,7 +171,7 @@ const Index: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-background">
       <Hero />
       
       {/* Section Défi du jour */}
@@ -182,15 +182,15 @@ const Index: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <Card className="bg-gradient-to-r from-orange-50 to-yellow-50 dark:from-orange-900/20 dark:to-yellow-900/20 border-orange-200 dark:border-orange-800">
+            <Card className="bg-card border-border">
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <div className="p-1.5 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
-                      <Target className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+                    <div className="p-1.5 bg-secondary rounded-lg">
+                      <Target className="w-5 h-5 text-primary" />
                     </div>
                     <div>
-                      <CardTitle className="text-lg text-orange-900 dark:text-orange-100">
+                      <CardTitle className="text-lg text-foreground">
                         Défi du jour
                       </CardTitle>
                     </div>
@@ -202,10 +202,10 @@ const Index: React.FC = () => {
                   {activeChallenge && challenge ? (
                     <>
                       <div>
-                        <h3 className="font-semibold text-base text-orange-900 dark:text-orange-100 mb-1">
+                        <h3 className="font-semibold text-base text-foreground mb-1">
                           {challenge.title}
                         </h3>
-                        <div className="flex items-center gap-3 text-xs text-orange-600 dark:text-orange-400">
+                        <div className="flex items-center gap-3 text-xs text-primary">
                           <div className="flex items-center gap-1">
                             <Clock className="w-3 h-3" />
                             <span>
@@ -224,7 +224,7 @@ const Index: React.FC = () => {
                       <div className="flex gap-2">
                         <Button 
                           onClick={handleCompleteChallenge}
-                          className="bg-orange-600 hover:bg-orange-700 text-white text-sm px-3 py-1.5"
+                          className="bg-primary hover:bg-primary/90 text-primary-foreground text-sm px-3 py-1.5"
                           size="sm"
                         >
                           Accomplir le défi
@@ -233,7 +233,7 @@ const Index: React.FC = () => {
                         <Button 
                           variant="outline"
                           onClick={() => navigate('/profile/challenges')}
-                          className="border-orange-300 text-orange-700 hover:bg-orange-50 dark:text-orange-300 dark:border-orange-700 dark:hover:bg-orange-900/20 text-sm px-3 py-1.5"
+                          className="border-border text-foreground hover:bg-accent text-sm px-3 py-1.5"
                           size="sm"
                         >
                           Voir tous mes défis
@@ -243,17 +243,17 @@ const Index: React.FC = () => {
                   ) : (
                     <>
                       <div>
-                        <h3 className="font-semibold text-base text-orange-900 dark:text-orange-100 mb-1">
+                        <h3 className="font-semibold text-base text-foreground mb-1">
                           Aucun défi actif
                         </h3>
-                        <p className="text-sm text-orange-700 dark:text-orange-300 mb-2">
+                        <p className="text-sm text-muted-foreground mb-2">
                           Commencez un nouveau défi pour gagner des points et progresser !
                         </p>
                       </div>
                       <div className="flex gap-2">
                         <Button 
                           onClick={() => navigate('/challenges')}
-                          className="bg-orange-600 hover:bg-orange-700 text-white text-sm px-3 py-1.5"
+                          className="bg-primary hover:bg-primary/90 text-primary-foreground text-sm px-3 py-1.5"
                           size="sm"
                         >
                           Choisir un défi
@@ -262,7 +262,7 @@ const Index: React.FC = () => {
                         <Button 
                           variant="outline"
                           onClick={() => navigate('/profile/challenges')}
-                          className="border-orange-300 text-orange-700 hover:bg-orange-50 dark:text-orange-300 dark:border-orange-700 dark:hover:bg-orange-900/20 text-sm px-3 py-1.5"
+                          className="border-border text-foreground hover:bg-accent text-sm px-3 py-1.5"
                           size="sm"
                         >
                           Voir tous mes défis
@@ -286,7 +286,7 @@ const Index: React.FC = () => {
         >
           <div className="flex justify-between items-center mb-3">
             <h2 
-              className="text-lg font-semibold text-gray-900 dark:text-white cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+              className="text-lg font-semibold text-foreground cursor-pointer hover:text-primary transition-colors"
               onClick={() => navigate('/events')}
             >
               Quoi poster aujourd'hui
@@ -296,11 +296,11 @@ const Index: React.FC = () => {
             <Card className="text-center py-6">
               <CardContent>
                 <Calendar className="h-8 w-8 mx-auto mb-3 text-muted-foreground" />
-                <h3 className="text-base font-medium mb-2">Aucun événement aujourd'hui</h3>
+                <h3 className="text-base font-medium mb-2 text-foreground">Aucun événement aujourd'hui</h3>
                 <p className="text-sm text-muted-foreground mb-3">
                   Aucun événement à afficher pour aujourd'hui
                 </p>
-                <Button onClick={() => navigate('/events')} size="sm">
+                <Button onClick={() => navigate('/events')} size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground">
                   Voir tous les événements
                 </Button>
               </CardContent>
@@ -315,10 +315,10 @@ const Index: React.FC = () => {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.3 }}
                 >
-                  <Card className="w-64 hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate('/events')}>
+                  <Card className="w-64 hover:shadow-md transition-shadow cursor-pointer bg-card" onClick={() => navigate('/events')}>
                     <CardContent className="p-3">
                       <div className="flex items-center justify-between mb-2">
-                        <h3 className="font-semibold text-sm line-clamp-2 flex-1">
+                        <h3 className="font-semibold text-sm line-clamp-2 flex-1 text-foreground">
                           {event.person_name || event.title}
                         </h3>
                         <div className="text-xs text-muted-foreground ml-2 flex-shrink-0">
@@ -351,12 +351,12 @@ const Index: React.FC = () => {
             className="mb-6"
           >
             <div className="flex items-center space-x-2 mb-4">
-              <Star className="w-6 h-6 text-purple-600" />
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+              <Star className="w-6 h-6 text-primary" />
+              <h2 className="text-2xl font-bold text-foreground">
                 Tendances du moment
               </h2>
             </div>
-            <p className="text-gray-600 dark:text-gray-300">
+            <p className="text-muted-foreground">
               Découvrez ce qui fait le buzz sur les réseaux sociaux
             </p>
           </motion.div>
@@ -369,35 +369,35 @@ const Index: React.FC = () => {
           >
             {getTopTrends(3).map((trend, index) => (
               <motion.div key={trend.id} variants={itemVariants}>
-                <Card className="bg-white dark:bg-gray-800 hover:shadow-lg transition-shadow">
+                <Card className="bg-card hover:shadow-lg transition-shadow">
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white line-clamp-2">
+                      <CardTitle className="text-lg font-semibold text-foreground line-clamp-2">
                         {trend.title}
                       </CardTitle>
-                      <Badge className="bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
+                      <Badge className="bg-secondary text-foreground">
                         {trend.platform}
                       </Badge>
                     </div>
                   </CardHeader>
                   <CardContent className="pt-0">
-                    <p className="text-gray-600 dark:text-gray-300 text-sm mb-4 line-clamp-3">
+                    <p className="text-muted-foreground text-sm mb-4 line-clamp-3">
                       {trend.description}
                     </p>
                     <div className="flex flex-wrap gap-1 mb-4">
                       {trend.hashtags.slice(0, 2).map((hashtag, idx) => (
-                        <Badge key={idx} variant="outline" className="text-xs">
+                        <Badge key={idx} variant="outline" className="text-xs border-border text-foreground">
                           {hashtag}
                         </Badge>
                       ))}
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-500 dark:text-gray-400">
+                      <span className="text-sm text-muted-foreground">
                         {trend.engagement.toLocaleString()} engagements
                       </span>
                       <Button
                         size="sm"
-                        className="bg-purple-600 hover:bg-purple-700 text-white"
+                        className="bg-primary hover:bg-primary/90 text-primary-foreground"
                         onClick={() => navigate('/trending')}
                       >
                         Voir plus
@@ -419,14 +419,14 @@ const Index: React.FC = () => {
           transition={{ duration: 0.5 }}
         >
           <div className="flex justify-between items-center mb-3">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+            <h2 className="text-lg font-semibold text-foreground">
               Challenge
             </h2>
             <Button 
               variant="outline" 
               size="sm"
               onClick={() => navigate('/challenges')}
-              className="flex items-center gap-1 text-xs px-2 py-1"
+              className="flex items-center gap-1 text-xs px-2 py-1 border-border text-foreground hover:bg-accent"
             >
               <Target className="w-3 h-3" />
               Voir tous
@@ -436,12 +436,12 @@ const Index: React.FC = () => {
             <Card className="text-center py-6">
               <CardContent>
                 <Target className="h-8 w-8 mx-auto mb-3 text-muted-foreground" />
-                <h3 className="text-base font-medium mb-2">Aucun challenge public</h3>
+                <h3 className="text-base font-medium mb-2 text-foreground">Aucun challenge public</h3>
                 <p className="text-sm text-muted-foreground mb-3">
                   Soyez le premier à publier un challenge !
                 </p>
                 {user && (
-                  <Button onClick={() => navigate('/publish')} size="sm">
+                  <Button onClick={() => navigate('/publish')} size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground">
                     Publier
                   </Button>
                 )}
@@ -456,13 +456,13 @@ const Index: React.FC = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3 }}
                 >
-                  <Card className="hover:shadow-md transition-shadow">
+                  <Card className="hover:shadow-md transition-shadow bg-card">
                     <CardContent className="p-3">
                       <div className="flex items-start justify-between mb-2">
                         <div className="flex items-center gap-2">
                           <Avatar className="w-6 h-6">
                               <AvatarImage src={(challenge.creator?.user_metadata as UserMeta)?.avatar_url || ''} />
-                              <AvatarFallback>
+                              <AvatarFallback className="bg-secondary text-foreground">
                               <User className="w-3 h-3" />
                               </AvatarFallback>
                             </Avatar>
@@ -472,7 +472,7 @@ const Index: React.FC = () => {
                           </div>
                       </div>
                       
-                      <h3 className="font-semibold text-sm mb-2">{challenge.title}</h3>
+                      <h3 className="font-semibold text-sm mb-2 text-foreground">{challenge.title}</h3>
                       
                       <p className="text-xs text-muted-foreground mb-3 line-clamp-2">
                         {challenge.description.length > 80 
@@ -481,7 +481,7 @@ const Index: React.FC = () => {
                         }
                           </p>
                       
-                      <div className="flex items-center justify-between pt-2 border-t border-gray-200 dark:border-gray-700">
+                      <div className="flex items-center justify-between pt-2 border-t border-border">
                         <div className="flex items-center gap-1">
                           <div className="flex items-center gap-1 text-xs text-muted-foreground">
                             <Heart className="w-3 h-3" />
@@ -493,7 +493,7 @@ const Index: React.FC = () => {
                           <Button
                             size="sm"
                             onClick={() => addToPersonalChallenges(challenge.id)}
-                            className="flex items-center gap-1 p-1 h-6 text-xs bg-gradient-to-r from-primary to-secondary text-white"
+                            className="flex items-center gap-1 p-1 h-6 text-xs bg-primary text-primary-foreground"
                             >
                             <Plus className="w-3 h-3" />
                             <span className="text-xs">Défi</span>
@@ -512,7 +512,7 @@ const Index: React.FC = () => {
         {/* Section: Recommandations personnalisées */}
         <section className="mb-6">
           <motion.h2 
-            className="text-lg font-semibold text-gray-900 dark:text-white mb-3"
+            className="text-lg font-semibold text-foreground mb-3"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5 }}

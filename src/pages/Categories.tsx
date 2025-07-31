@@ -9,6 +9,7 @@ import CategoryCard from '@/components/CategoryCard';
 import { Button } from '@/components/ui/button';
 import IntelligentSearchBar from '@/components/IntelligentSearchBar';
 import ChallengeButton from '@/components/ChallengeButton';
+import Navigation from '@/components/Navigation';
 
 const Categories = () => {
   const navigate = useNavigate();
@@ -119,7 +120,7 @@ const Categories = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-20"> {/* Ajouter pb-20 pour l'espace */}
       {/* Header fixe pour mobile */}
       <div className="sticky top-0 z-50 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-4 py-3">
         <div className="flex items-center gap-3">
@@ -311,6 +312,7 @@ const Categories = () => {
               </div>
         )}
       </div>
+      <Navigation />
     </div>
   );
 };

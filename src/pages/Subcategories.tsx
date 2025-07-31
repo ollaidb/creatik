@@ -8,6 +8,7 @@ import { useFavorites } from '@/hooks/useFavorites';
 import SubcategoryCard from '@/components/SubcategoryCard';
 import { Button } from '@/components/ui/button';
 import IntelligentSearchBar from '@/components/IntelligentSearchBar';
+import Navigation from '@/components/Navigation';
 const Subcategories = () => {
   const { categoryId } = useParams();
   const navigate = useNavigate();
@@ -193,6 +194,7 @@ const Subcategories = () => {
           </div>
         )}
       </div>
+      <Navigation />
     </div>
   );
 };

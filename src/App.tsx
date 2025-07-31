@@ -24,11 +24,8 @@ import Categories from "./pages/Categories";
 import Subcategories from "./pages/Subcategories";
 import Titles from "./pages/Titles";
 import PublicChallenges from "./pages/PublicChallenges";
-import AdminPublications from "./pages/admin/Publications";
-import ApprovePublications from "./pages/admin/ApprovePublications";
 import Accounts from "./pages/Accounts";
 import Sources from "./pages/Sources";
-import Events from "./pages/Events";
 import TrendingIdeas from "./pages/TrendingIdeas";
 import WhatToPostToday from "./pages/WhatToPostToday";
 
@@ -61,8 +58,6 @@ const AppContent = () => {
             <Route path="/category/:categoryId/subcategory/:subcategoryId" element={<Titles />} />
             {/* Challenges Routes */}
             <Route path="/challenges" element={<PublicChallenges />} />
-            {/* Events Route */}
-            <Route path="/events" element={<Events />} />
             {/* Trending Ideas Route */}
             <Route path="/trending" element={<TrendingIdeas />} />
             {/* What to Post Today Route */}
@@ -80,9 +75,6 @@ const AppContent = () => {
             <Route path="/profile/publications" element={<Publications />} />
             <Route path="/profile/challenges" element={<Challenges />} />
               <Route path="/profile/settings" element={<Settings />} />
-            {/* Admin Routes */}
-            <Route path="/admin/publications" element={<AdminPublications />} />
-            <Route path="/admin/approve-publications" element={<ApprovePublications />} />
             {/* Publish Route */}
             <Route path="/publish" element={<Publish />} />
             <Route path="/search" element={<SearchResults />} />

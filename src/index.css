@@ -7,67 +7,67 @@
 
 @layer base {
   :root {
-    /* Mode Light - Nouvelles couleurs */
-    --background: 0 0% 100%;
-    --foreground: 220 9% 46%;
+    /* Mode Light - Couleurs Creatik uniquement */
+    --background: 0 0% 100%; /* #FFFFFF */
+    --foreground: 220 9% 46%; /* #6B7280 */
 
-    --card: 0 0% 98%;
-    --card-foreground: 220 9% 46%;
+    --card: 0 0% 98%; /* #F9FAFB */
+    --card-foreground: 220 9% 46%; /* #6B7280 */
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 220 9% 46%;
+    --popover: 0 0% 100%; /* #FFFFFF */
+    --popover-foreground: 220 9% 46%; /* #6B7280 */
 
-    --primary: 262 83% 58%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 262 83% 58%; /* #8B5CF6 */
+    --primary-foreground: 0 0% 100%; /* #FFFFFF */
 
-    --secondary: 220 14% 96%;
-    --secondary-foreground: 220 9% 46%;
+    --secondary: 220 14% 96%; /* #F3F4F6 */
+    --secondary-foreground: 220 9% 46%; /* #6B7280 */
 
-    --muted: 220 14% 96%;
-    --muted-foreground: 156 4% 47%;
+    --muted: 220 14% 96%; /* #F3F4F6 */
+    --muted-foreground: 156 4% 47%; /* #9CA3AF */
 
-    --accent: 262 83% 58%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 262 83% 58%; /* #8B5CF6 */
+    --accent-foreground: 0 0% 100%; /* #FFFFFF */
 
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive: 0 84% 60%; /* #EF4444 */
+    --destructive-foreground: 0 0% 98%; /* #FAFAFA */
 
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 262 83% 58%;
+    --border: 220 13% 91%; /* #E5E7EB */
+    --input: 220 13% 91%; /* #E5E7EB */
+    --ring: 262 83% 58%; /* #8B5CF6 */
 
     --radius: 0.75rem;
   }
 
   .dark {
-    /* Mode Dark - Nouvelles couleurs */
-    --background: 222 84% 5%;
-    --foreground: 248 250% 98%;
+    /* Mode Dark - Couleurs Creatik uniquement */
+    --background: 222 84% 5%; /* #0F172A */
+    --foreground: 248 250% 98%; /* #F9FAFB */
 
-    --card: 222 47% 11%;
-    --card-foreground: 248 250% 98%;
+    --card: 222 47% 11%; /* #1E293B */
+    --card-foreground: 248 250% 98%; /* #F9FAFB */
 
-    --popover: 222 84% 5%;
-    --popover-foreground: 248 250% 98%;
+    --popover: 222 84% 5%; /* #0F172A */
+    --popover-foreground: 248 250% 98%; /* #F9FAFB */
 
-    --primary: 262 83% 58%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 262 83% 58%; /* #8B5CF6 */
+    --primary-foreground: 0 0% 100%; /* #FFFFFF */
 
-    --secondary: 217 33% 17%;
-    --secondary-foreground: 248 250% 98%;
+    --secondary: 217 33% 17%; /* #334155 */
+    --secondary-foreground: 248 250% 98%; /* #F9FAFB */
 
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
+    --muted: 217 33% 17%; /* #334155 */
+    --muted-foreground: 215 20% 65%; /* #94A3B8 */
 
-    --accent: 262 83% 58%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 262 83% 58%; /* #8B5CF6 */
+    --accent-foreground: 0 0% 100%; /* #FFFFFF */
 
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive: 0 84% 60%; /* #EF4444 */
+    --destructive-foreground: 0 0% 98%; /* #FAFAFA */
 
-    --border: 217 33% 17%;
-    --input: 217 33% 17%;
-    --ring: 262 83% 58%;
+    --border: 217 33% 17%; /* #334155 */
+    --input: 217 33% 17%; /* #334155 */
+    --ring: 262 83% 58%; /* #8B5CF6 */
   }
 }
 
@@ -80,6 +80,30 @@
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
+}
+
+/* Désactiver le zoom sur clic */
+* {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Permettre la sélection de texte dans les champs de saisie */
+input, textarea, [contenteditable] {
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+  user-select: text;
+}
+
+/* Désactiver le zoom sur double-tap */
+html {
+  touch-action: manipulation;
 }
 
 /* Animations mobiles pour les événements */

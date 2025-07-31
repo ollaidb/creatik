@@ -19,23 +19,23 @@ const Hero: React.FC = () => {
   };
   if (isLoading) {
     return (
-      <section className="relative py-4 bg-gradient-to-r from-[#f8f9fa] to-[#e9ecef] dark:from-gray-900 dark:to-gray-800/80">
+      <section className="relative py-4 bg-card">
         <div className="container mx-auto px-4">
           <div className="text-center py-8">
-            <p>Chargement des catégories...</p>
+            <p className="text-muted-foreground">Chargement des catégories...</p>
           </div>
         </div>
       </section>
     );
   }
   return (
-    <section className="relative py-4 bg-gradient-to-r from-[#f8f9fa] to-[#e9ecef] dark:from-gray-900 dark:to-gray-800/80">
+    <section className="relative py-4 bg-card">
       <div className="container mx-auto px-4">
         {/* Titre et barre de recherche */}
         <div className="mb-8">
           {/* Version Desktop - Titre et barre sur même ligne */}
           <div className="hidden md:flex items-center justify-between px-8">
-            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
+            <h1 className="text-2xl md:text-3xl font-bold text-foreground">
               Creatik
             </h1>
             <div className="w-[600px]">
@@ -48,7 +48,7 @@ const Hero: React.FC = () => {
           </div>
           {/* Version Mobile - Titre en haut, barre en bas */}
           <div className="md:hidden">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white text-center mb-6">
+            <h1 className="text-2xl font-bold text-foreground text-center mb-6">
               Creatik
             </h1>
             <div className="w-full">
@@ -62,7 +62,7 @@ const Hero: React.FC = () => {
         </div>
         {/* Categories Carousel with visible background - Responsive */}
         <div className="relative px-2 mb-4">
-          <div className="bg-white/80 dark:bg-gray-800/30 rounded-xl p-2 shadow-sm">
+          <div className="bg-background/80 rounded-xl p-2 shadow-sm">
             <Carousel
               opts={{
                 align: "start",

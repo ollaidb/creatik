@@ -129,6 +129,14 @@ const Profile = () => {
       color: 'text-orange-500',
       requiresAuth: true
     },
+    {
+      title: 'Historique',
+      description: 'Consultez votre historique de navigation',
+      icon: History,
+      path: '/profile/history',
+      color: 'text-purple-500',
+      requiresAuth: true
+    },
     // Ajout conditionnel du menu admin
     ...(isAdmin ? [{
       title: 'Administration',
