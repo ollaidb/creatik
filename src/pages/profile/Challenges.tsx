@@ -153,18 +153,45 @@ const Challenges = () => {
     setPendingContents(0);
   };
 
-  const handleCompleteChallenge = async (challengeId: string) => {
-    const result = await completeChallenge(challengeId);
-    if (result?.error) {
-      toast({
-        title: "Erreur",
-        description: result.error,
-        variant: "destructive",
-      });
-    } else {
+  // Fonction améliorée pour valider un défi
+  const handleCompleteChallenge = async (id) => {
+    const now = new Date().toISOString();
+
+    // Étape 1 – Mise à jour localement
+    const updated = userChallenges.map((c) =>
+      c.id === id ? { ...c, status: "completed", completed_at: now } : c
+    );
+    // setUserChallenges(updated); // This line was removed as per the new_code
+
+    // Étape 2 – Mise à jour en base (pour l'instant localStorage, puis Supabase)
+    try {
+      // Sauvegarder dans localStorage
+      localStorage.setItem(`user_challenges_${user.id}`, JSON.stringify(updated));
+      
+      // TODO: Quand Supabase sera configuré, remplacer par :
+      // await supabase
+      //   .from("user_challenges")
+      //   .update({ status: "completed", completed_at: now })
+      //   .eq("id", id);
+
+      // Étape 3 – Mettre à jour les statistiques (optionnel)
+      // TODO: Quand Supabase sera configuré, remplacer par :
+      // await supabase.rpc("increment_user_statistic", {
+      //   user_id: user.id,
+      //   field_name: "challenges_completed",
+      //   increment_by: 1,
+      // });
+
       toast({
         title: "Défi accompli !",
         description: "Le défi a été marqué comme terminé",
+      });
+    } catch (error) {
+      console.error('Erreur lors de la validation:', error);
+      toast({
+        title: "Erreur",
+        description: "Erreur lors de la validation du défi",
+        variant: "destructive",
       });
     }
   };
@@ -310,6 +337,10 @@ const Challenges = () => {
     const completedCount = userChallenges.filter(c => c.status === 'completed').length;
     setCurrentDay(completedCount + 1);
   }, [userChallenges]);
+
+  // Filtrer les défis par statut
+  const defis = userChallenges.filter((c) => c.status === "pending");
+  const accomplis = userChallenges.filter((c) => c.status === "completed");
 
   if (!user) {
     return (
@@ -553,184 +584,52 @@ const Challenges = () => {
           
           {/* Onglet Défis */}
           <TabsContent value="challenges" className="mt-6">
-            {isEditMode ? (
-              // Mode édition avec drag & drop
-              <Reorder.Group 
-                axis="y" 
-                values={challenges} 
-                onReorder={handleReorder}
-                className="space-y-3"
-              >
-                {challenges.map((challenge, index) => (
-                  <Reorder.Item
-                    key={challenge.id}
-                    value={challenge}
-                    className="cursor-grab active:cursor-grabbing"
-                  >
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                    >
-                      <Card className={`hover:shadow-md transition-shadow ${
-                        challengesToDelete.has(challenge.id) ? 'border-red-500 bg-red-50 dark:bg-red-900/20' : ''
-                      }`}>
-                        <CardContent className="p-4">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3 flex-1">
-                              <GripVertical className="w-5 h-5 text-gray-400 cursor-grab" />
-                              <div className="flex-1">
-                                {isEditMode && editingChallengeId === challenge.id ? (
-                                  <input
-                                    value={editingTitle}
-                                    onChange={(e) => setEditingTitle(e.target.value)}
-                                    onBlur={handleSaveEdit}
-                                    onKeyDown={(e) => {
-                                      if (e.key === 'Enter') {
-                                        handleSaveEdit();
-                                      } else if (e.key === 'Escape') {
-                                        handleCancelEdit();
-                                      }
-                                    }}
-                                    className="font-semibold text-lg bg-transparent border-none p-0 focus:outline-none w-full"
-                                    autoFocus
-                                  />
-                                ) : (
-                                  <h3 
-                                    className={`font-semibold text-lg ${
-                                      isEditMode ? 'cursor-text hover:bg-gray-100 dark:hover:bg-gray-800 px-2 py-1 rounded transition-colors' : ''
-                                    }`}
-                                    onClick={isEditMode ? () => {
-                                      setEditingChallengeId(challenge.id);
-                                      setEditingTitle(challenge.title);
-                                    } : undefined}
-                                    title={isEditMode ? "Cliquez pour modifier" : ""}
-                                  >
-                                    {challenge.title}
-                                  </h3>
-                                )}
-                                <span className="text-sm text-gray-600 dark:text-gray-400">
-                                  Jour {currentDay + index}
-                                </span>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <Button
-                                onClick={() => handleDeleteChallenge(challenge.id)}
-                                size="sm"
-                                variant="ghost"
-                                className={`p-2 ${
-                                  challengesToDelete.has(challenge.id) ? 'text-red-600' : 'text-gray-400'
-                                }`}
-                                title="Supprimer le défi"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </motion.div>
-                  </Reorder.Item>
-                ))}
-              </Reorder.Group>
-            ) : (
-              // Mode normal (sans drag & drop)
-              <div className="space-y-3">
-                <AnimatePresence mode="wait">
-                  {challenges.map((challenge, index) => (
-                    <motion.div
-                      key={challenge.id}
-                      data-challenge-id={challenge.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20, scale: 0.95 }}
-                      transition={{ duration: 0.5, ease: "easeInOut" }}
-                    >
-                      <Card className="hover:shadow-md transition-shadow">
-                        <CardContent className="p-4">
-                          <div className="flex items-center justify-between">
-                            <div className="flex-1">
-                              {isEditMode && editingChallengeId === challenge.id ? (
-                                <input
-                                  value={editingTitle}
-                                  onChange={(e) => setEditingTitle(e.target.value)}
-                                  onBlur={handleSaveEdit}
-                                  onKeyDown={(e) => {
-                                    if (e.key === 'Enter') {
-                                      handleSaveEdit();
-                                    } else if (e.key === 'Escape') {
-                                      handleCancelEdit();
-                                    }
-                                  }}
-                                  className="font-semibold text-lg bg-transparent border-none p-0 focus:outline-none w-full"
-                                  autoFocus
-                                />
-                              ) : (
-                                <h3 
-                                  className={`font-semibold text-lg ${
-                                    isEditMode ? 'cursor-text hover:bg-gray-100 dark:hover:bg-gray-800 px-2 py-1 rounded transition-colors' : ''
-                                  }`}
-                                  onClick={isEditMode ? () => {
-                                    setEditingChallengeId(challenge.id);
-                                    setEditingTitle(challenge.title);
-                                  } : undefined}
-                                  title={isEditMode ? "Cliquez pour modifier" : ""}
-                                >
-                                  {challenge.title}
-                                </h3>
-                              )}
-                              <span className="text-sm text-gray-600 dark:text-gray-400">
-                                Jour {currentDay + index}
-                              </span>
-                            </div>
-                            <Button
-                              onClick={() => handleCompleteChallenge(challenge.id)}
-                              size="sm"
-                              variant="ghost"
-                              className="ml-4 p-2 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 transition-all duration-300"
-                              title="Marquer comme accompli"
-                            >
-                              {userChallenges.some(uc => uc.id === challenge.id && uc.status === 'completed') ? (
-                                <CheckCircle className="w-6 h-6 text-green-600 transition-transform duration-300 scale-110" />
-                              ) : (
-                                <Circle className="w-6 h-6 text-gray-400 transition-transform duration-300 hover:scale-110" />
-                              )}
-                            </Button>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
-              </div>
-            )}
+            <div className="space-y-3">
+              {defis.map((challenge) => (
+                <Card key={challenge.id} className="hover:shadow-md transition-shadow">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-lg">{challenge.title}</h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          Jour {currentDay}
+                        </p>
+                      </div>
+                      <Button 
+                        onClick={() => handleCompleteChallenge(challenge.id)}
+                        size="sm"
+                        variant="ghost"
+                        className="ml-4 p-2 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 transition-all duration-300"
+                        title="Marquer comme accompli"
+                      >
+                        <Circle className="w-6 h-6 text-gray-400 transition-transform duration-300 hover:scale-110" />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           </TabsContent>
           
           {/* Onglet Accomplis */}
           <TabsContent value="completed" className="mt-6">
             <div className="space-y-3">
-              {userChallenges.filter(challenge => challenge.status === 'completed').map((challenge) => (
-                <motion.div
-                  key={challenge.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                >
-                  <Card className="border-green-200 bg-green-50 dark:bg-green-900/20">
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <h3 className="font-semibold text-lg flex-1">{challenge.title}</h3>
-                        <Badge variant="default" className="bg-green-500">
-                          Accompli
-                        </Badge>
-                      </div>
-                      {challenge.completed_at && (
-                        <p className="text-sm text-muted-foreground mt-2">
+              {accomplis.map((challenge) => (
+                <Card key={challenge.id} className="hover:shadow-md transition-shadow">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-lg">{challenge.title}</h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
                           Accompli le {new Date(challenge.completed_at).toLocaleDateString()}
                         </p>
-                      )}
-                    </CardContent>
-                  </Card>
-                </motion.div>
+                      </div>
+                      <div className="ml-4 p-2">
+                        <CheckCircle className="w-6 h-6 text-green-600" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               ))}
             </div>
           </TabsContent>
