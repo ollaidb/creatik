@@ -33,7 +33,9 @@ const Challenges = () => {
   const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
   const [reorderedChallenges, setReorderedChallenges] = useState<typeof challenges>([]);
   const [currentDay, setCurrentDay] = useState(1);
-  const [isEditMode, setIsEditMode] = useState(false);
+  const [isEditModeChallenges, setIsEditModeChallenges] = useState(false);
+  const [isEditModeCompleted, setIsEditModeCompleted] = useState(false);
+  const [isEditModeTrash, setIsEditModeTrash] = useState(false);
   const [challengesToDelete, setChallengesToDelete] = useState<Set<string>>(new Set());
   const {
     challenges,
@@ -58,6 +60,11 @@ const Challenges = () => {
   const [newChallengeTitle, setNewChallengeTitle] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [challengeToDelete, setChallengeToDelete] = useState<string | null>(null);
+  const [showRestoreConfirm, setShowRestoreConfirm] = useState(false);
+  const [challengeToRestore, setChallengeToRestore] = useState<string | null>(null);
+  const [restoreType, setRestoreType] = useState<'completed' | 'pending'>('pending');
+  const [showRestoreOptions, setShowRestoreOptions] = useState(false);
+  const [challengeToRestoreOptions, setChallengeToRestoreOptions] = useState<string | null>(null);
 
   // État pour les défis en cours de validation
   const [validatingChallenges, setValidatingChallenges] = useState<Set<string>>(new Set());
@@ -266,7 +273,7 @@ const Challenges = () => {
         description: "Le titre du défi a été mis à jour",
       });
       // Revenir en mode normal après modification
-      setIsEditMode(false);
+      setIsEditModeChallenges(false);
       setChallengesToDelete(new Set());
     }
     
@@ -278,7 +285,7 @@ const Challenges = () => {
     setEditingChallengeId(null);
     setEditingTitle('');
     // Revenir en mode normal après annulation
-    setIsEditMode(false);
+    setIsEditModeChallenges(false);
     setChallengesToDelete(new Set());
   };
 
@@ -291,7 +298,7 @@ const Challenges = () => {
       description: "L'ordre des défis a été modifié",
     });
     // Revenir en mode normal après réorganisation
-    setIsEditMode(false);
+    setIsEditModeChallenges(false);
     setChallengesToDelete(new Set());
     setEditingChallengeId(null);
     setEditingTitle('');
@@ -299,8 +306,28 @@ const Challenges = () => {
 
   // Fonction pour activer/désactiver le mode édition
   const toggleEditMode = () => {
-    setIsEditMode(!isEditMode);
-    if (!isEditMode) {
+    setIsEditModeChallenges(!isEditModeChallenges);
+    if (!isEditModeChallenges) {
+      setChallengesToDelete(new Set());
+      setEditingChallengeId(null);
+      setEditingTitle('');
+    }
+  };
+
+  // Fonction pour activer/désactiver le mode édition des accomplis
+  const toggleEditModeCompleted = () => {
+    setIsEditModeCompleted(!isEditModeCompleted);
+    if (!isEditModeCompleted) {
+      setChallengesToDelete(new Set());
+      setEditingChallengeId(null);
+      setEditingTitle('');
+    }
+  };
+
+  // Fonction pour activer/désactiver le mode édition de la corbeille
+  const toggleEditModeTrash = () => {
+    setIsEditModeTrash(!isEditModeTrash);
+    if (!isEditModeTrash) {
       setChallengesToDelete(new Set());
       setEditingChallengeId(null);
       setEditingTitle('');
@@ -349,7 +376,55 @@ const Challenges = () => {
     setShowDeleteConfirm(false);
     setChallengeToDelete(null);
     // Revenir en mode normal après suppression
-    setIsEditMode(false);
+    setIsEditModeChallenges(false);
+    setIsEditModeCompleted(false);
+    setIsEditModeTrash(false);
+    setChallengesToDelete(new Set());
+    setEditingChallengeId(null);
+    setEditingTitle('');
+  };
+
+  // Fonction pour confirmer la restauration
+  const confirmRestoreChallenge = async () => {
+    if (!challengeToRestore) return;
+
+    try {
+      let result;
+      if (restoreType === 'completed') {
+        result = await restoreChallenge(challengeToRestore);
+      } else {
+        result = await restoreDeletedChallenge(challengeToRestore);
+      }
+
+      if (result?.success) {
+        toast({
+          title: "Défi restauré",
+          description: restoreType === 'completed' 
+            ? "Le défi a été remis dans vos défis"
+            : "Le défi a été remis dans vos défis",
+        });
+      } else {
+        toast({
+          title: "Erreur",
+          description: result?.error || "Erreur lors de la restauration",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Erreur lors de la restauration",
+        variant: "destructive",
+      });
+    }
+
+    setShowRestoreConfirm(false);
+    setChallengeToRestore(null);
+    setRestoreType('pending');
+    // Revenir en mode normal après restauration
+    setIsEditModeChallenges(false);
+    setIsEditModeCompleted(false);
+    setIsEditModeTrash(false);
     setChallengesToDelete(new Set());
     setEditingChallengeId(null);
     setEditingTitle('');
@@ -399,6 +474,17 @@ const Challenges = () => {
     // Cette ligne force la re-render quand userChallenges change
     setReorderedChallenges(userChallenges.filter(c => c.status === 'pending'));
   }, [userChallenges]);
+
+  // Réinitialiser les modes édition quand on change d'onglet
+  useEffect(() => {
+    // Réinitialiser tous les modes édition quand on change d'onglet
+    setIsEditModeChallenges(false);
+    setIsEditModeCompleted(false);
+    setIsEditModeTrash(false);
+    setChallengesToDelete(new Set());
+    setEditingChallengeId(null);
+    setEditingTitle('');
+  }, [activeTab]);
 
   if (!user) {
     return (
@@ -503,7 +589,7 @@ const Challenges = () => {
           <h1 className="text-xl font-semibold">Mes Défis</h1>
         </div>
         <div className="flex items-center gap-2">
-          {isEditMode && (
+          {(isEditModeChallenges || isEditModeCompleted || isEditModeTrash) && (
             <Button
               variant="outline"
               size="icon"
@@ -514,15 +600,39 @@ const Challenges = () => {
               <Trash2 className="w-4 h-4" />
             </Button>
           )}
-          <Button
-            variant={isEditMode ? "default" : "outline"}
-            size="icon"
-            onClick={toggleEditMode}
-            className="w-10 h-10"
-            title={isEditMode ? "Terminer l'édition" : "Éditer les défis"}
-          >
-            <Edit className="w-4 h-4" />
-          </Button>
+          {activeTab === 'challenges' && (
+            <Button
+              variant={isEditModeChallenges ? "default" : "outline"}
+              size="icon"
+              onClick={toggleEditMode}
+              className="w-10 h-10"
+              title={isEditModeChallenges ? "Terminer l'édition" : "Éditer les défis"}
+            >
+              <Edit className="w-4 h-4" />
+            </Button>
+          )}
+          {activeTab === 'completed' && (
+            <Button
+              variant={isEditModeCompleted ? "default" : "outline"}
+              size="icon"
+              onClick={toggleEditModeCompleted}
+              className="w-10 h-10"
+              title={isEditModeCompleted ? "Terminer l'édition" : "Éditer les accomplis"}
+            >
+              <Edit className="w-4 h-4" />
+            </Button>
+          )}
+          {activeTab === 'trash' && (
+            <Button
+              variant={isEditModeTrash ? "default" : "outline"}
+              size="icon"
+              onClick={toggleEditModeTrash}
+              className="w-10 h-10"
+              title={isEditModeTrash ? "Terminer l'édition" : "Éditer la corbeille"}
+            >
+              <Edit className="w-4 h-4" />
+            </Button>
+          )}
           <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
             <DialogTrigger asChild>
               <Button
@@ -645,7 +755,7 @@ const Challenges = () => {
           
           {/* Onglet Défis */}
           <TabsContent value="challenges" className="mt-6">
-            {isEditMode ? (
+            {isEditModeChallenges ? (
               // Mode édition avec drag & drop
               <Reorder.Group 
                 axis="y" 
@@ -786,51 +896,41 @@ const Challenges = () => {
                         </p>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={async () => {
-                            // Remettre en défis
-                            const result = await restoreChallenge(challenge.id);
-                            if (result?.success) {
-                              toast({
-                                title: "Défi remis en cours",
-                                description: "Le défi a été remis dans vos défis",
-                              });
-                              // Revenir en mode normal après modification
-                              setIsEditMode(false);
-                              setChallengesToDelete(new Set());
-                              setEditingChallengeId(null);
-                              setEditingTitle('');
-                            } else {
-                              toast({
-                                title: "Erreur",
-                                description: result?.error || "Erreur lors de la restauration",
-                                variant: "destructive",
-                              });
-                            }
-                          }}
-                          className="text-blue-600"
-                          title="Remettre en défis"
-                        >
-                          <ArrowLeft className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={async () => {
-                            // Supprimer définitivement
-                            setChallengeToDelete(challenge.id);
-                            setShowDeleteConfirm(true);
-                          }}
-                          className="text-red-600"
-                          title="Supprimer définitivement"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                        <div className="ml-2">
-                          <CheckCircle className="w-6 h-6 text-green-600" />
-                        </div>
+                        {isEditModeCompleted ? (
+                          <>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={async () => {
+                                // Remettre en défis
+                                setChallengeToRestore(challenge.id);
+                                setRestoreType('completed');
+                                setShowRestoreConfirm(true);
+                              }}
+                              className="text-blue-600"
+                              title="Remettre en défis"
+                            >
+                              <ArrowLeft className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={async () => {
+                                // Supprimer définitivement
+                                setChallengeToDelete(challenge.id);
+                                setShowDeleteConfirm(true);
+                              }}
+                              className="text-red-600"
+                              title="Supprimer définitivement"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </>
+                        ) : (
+                          <div className="ml-2">
+                            <CheckCircle className="w-6 h-6 text-green-600" />
+                          </div>
+                        )}
                       </div>
                     </div>
                   </CardContent>
@@ -879,20 +979,9 @@ const Challenges = () => {
                           <Button
                             size="sm"
                             variant="ghost"
-                            onClick={async () => {
-                              const result = await restoreDeletedChallenge(challenge.id);
-                              if (result?.success) {
-                                toast({
-                                  title: "Défi restauré",
-                                  description: "Le défi a été remis dans vos défis",
-                                });
-                              } else {
-                                toast({
-                                  title: "Erreur",
-                                  description: result?.error || "Erreur lors de la restauration",
-                                  variant: "destructive",
-                                });
-                              }
+                            onClick={() => {
+                              setChallengeToRestoreOptions(challenge.id);
+                              setShowRestoreOptions(true);
                             }}
                             className="text-blue-600"
                             title="Restaurer le défi"
@@ -902,7 +991,7 @@ const Challenges = () => {
                           <Button
                             size="sm"
                             variant="ghost"
-                            onClick={async () => {
+                            onClick={() => {
                               setChallengeToDelete(challenge.id);
                               setShowDeleteConfirm(true);
                             }}
@@ -1040,6 +1129,75 @@ const Challenges = () => {
               </Button>
               <Button variant="destructive" onClick={confirmDeleteChallenge} className="flex-1">
                 {deletedChallenges.some(c => c.id === challengeToDelete) ? "Supprimer définitivement" : "Supprimer"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de confirmation pour la restauration */}
+      {showRestoreConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowRestoreConfirm(false)}>
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-sm w-full mx-4" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-semibold mb-4">Confirmer la restauration</h3>
+            <p className="text-muted-foreground mb-4">
+              Êtes-vous sûr de vouloir restaurer ce défi ?
+              <br />
+              <span className="text-sm text-blue-600">
+                {restoreType === 'completed' ? 'Cela remettra le défi en cours.' : 'Cela remettra le défi de la corbeille.'}
+              </span>
+            </p>
+            <div className="flex gap-3">
+              <Button variant="outline" onClick={() => setShowRestoreConfirm(false)} className="flex-1">
+                Annuler
+              </Button>
+              <Button onClick={confirmRestoreChallenge} className="flex-1">
+                Confirmer
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal pour choisir où restaurer */}
+      {showRestoreOptions && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowRestoreOptions(false)}>
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-sm w-full mx-4" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-semibold mb-4">Où restaurer le défi ?</h3>
+            <p className="text-muted-foreground mb-4">
+              Choisissez où vous voulez restaurer ce défi :
+            </p>
+            <div className="space-y-3">
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                onClick={() => {
+                  setChallengeToRestore(challengeToRestoreOptions);
+                  setRestoreType('pending');
+                  setShowRestoreOptions(false);
+                  setShowRestoreConfirm(true);
+                }}
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Restaurer dans les Défis (en cours)
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                onClick={() => {
+                  setChallengeToRestore(challengeToRestoreOptions);
+                  setRestoreType('completed');
+                  setShowRestoreOptions(false);
+                  setShowRestoreConfirm(true);
+                }}
+              >
+                <CheckCircle className="w-4 h-4 mr-2" />
+                Restaurer dans les Accomplis (terminé)
+              </Button>
+            </div>
+            <div className="mt-4">
+              <Button variant="outline" onClick={() => setShowRestoreOptions(false)} className="w-full">
+                Annuler
               </Button>
             </div>
           </div>
