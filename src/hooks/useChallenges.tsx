@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from './useAuth';
 import { useToast } from './use-toast';
-import { supabase } from '@/integrations/supabase/client';
 
 // Types pour les défis personnels
 interface UserChallenge {
@@ -30,37 +29,23 @@ export const useChallenges = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Charger les défis depuis Supabase
+  // Charger les défis depuis localStorage
   const loadChallenges = async () => {
-    if (!user || !supabase) return;
+    if (!user) return;
 
     try {
       setLoading(true);
       setError(null);
 
-      // Charger les défis personnels
-      const { data: challengesData, error: challengesError } = await supabase
-        .from('user_challenges')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: true });
+      // Charger les défis personnels depuis localStorage (tous les défis, y compris supprimés)
+      const storedChallenges = localStorage.getItem(`user_challenges_${user.id}`);
+      const challengesData = storedChallenges ? JSON.parse(storedChallenges) : [];
+      setUserChallenges(challengesData); // Charger tous les défis, pas de filtre ici
 
-      if (challengesError) throw challengesError;
-      setUserChallenges(challengesData || []);
-
-      // Charger les statistiques
-      const { data: statsData, error: statsError } = await supabase
-        .from('challenge_stats')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
-
-      if (statsError && statsError.code !== 'PGRST116') {
-        throw statsError;
-      }
-
-      if (statsData) {
-        setStats(statsData);
+      // Charger les statistiques depuis localStorage
+      const storedStats = localStorage.getItem(`challenge_stats_${user.id}`);
+      if (storedStats) {
+        setStats(JSON.parse(storedStats));
       } else {
         // Créer des statistiques par défaut
         const defaultStats: ChallengeStats = {
@@ -80,27 +65,30 @@ export const useChallenges = () => {
     }
   };
 
+  // Sauvegarder les changements
+  const saveChanges = () => {
+    if (!user) return;
+    localStorage.setItem(`user_challenges_${user.id}`, JSON.stringify(userChallenges));
+    if (stats) {
+      localStorage.setItem(`challenge_stats_${user.id}`, JSON.stringify(stats));
+    }
+  };
+
   // Ajouter un défi
   const addChallenge = async (title: string) => {
-    if (!user || !supabase) return { error: 'Utilisateur non connecté' };
+    if (!user) return { error: 'Utilisateur non connecté' };
 
     try {
-      const newChallenge = {
+      const newChallenge: UserChallenge = {
+        id: Date.now().toString(),
         user_id: user.id,
         title,
-        status: 'pending' as const
+        status: 'pending',
+        created_at: new Date().toISOString()
       };
 
-      const { data, error } = await supabase
-        .from('user_challenges')
-        .insert([newChallenge])
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      setUserChallenges(prev => [...prev, data]);
-      await updateStats();
+      setUserChallenges(prev => [...prev, newChallenge]);
+      saveChanges();
       
       return { success: true };
     } catch (err) {
@@ -111,24 +99,11 @@ export const useChallenges = () => {
 
   // Valider un défi
   const completeChallenge = async (id: string) => {
-    if (!user || !supabase) return { error: 'Utilisateur non connecté' };
+    if (!user) return { error: 'Utilisateur non connecté' };
 
     try {
       const now = new Date().toISOString();
       
-      const { error } = await supabase
-        .from('user_challenges')
-        .update({ 
-          status: 'completed', 
-          completed_at: now,
-          updated_at: now
-        })
-        .eq('id', id)
-        .eq('user_id', user.id);
-
-      if (error) throw error;
-
-      // Mettre à jour l'état local
       setUserChallenges(prev => 
         prev.map(c => 
           c.id === id 
@@ -137,7 +112,7 @@ export const useChallenges = () => {
         )
       );
 
-      await updateStats();
+      saveChanges();
       
       return { success: true };
     } catch (err) {
@@ -148,21 +123,9 @@ export const useChallenges = () => {
 
   // Supprimer un défi
   const deleteChallenge = async (id: string) => {
-    if (!user || !supabase) return { error: 'Utilisateur non connecté' };
+    if (!user) return { error: 'Utilisateur non connecté' };
 
     try {
-      const { error } = await supabase
-        .from('user_challenges')
-        .update({ 
-          status: 'deleted',
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', id)
-        .eq('user_id', user.id);
-
-      if (error) throw error;
-
-      // Mettre à jour l'état local
       setUserChallenges(prev => 
         prev.map(c => 
           c.id === id 
@@ -171,7 +134,7 @@ export const useChallenges = () => {
         )
       );
 
-      await updateStats();
+      saveChanges();
       
       return { success: true };
     } catch (err) {
@@ -182,21 +145,9 @@ export const useChallenges = () => {
 
   // Mettre à jour le titre d'un défi
   const updateChallengeTitle = async (id: string, title: string) => {
-    if (!user || !supabase) return { error: 'Utilisateur non connecté' };
+    if (!user) return { error: 'Utilisateur non connecté' };
 
     try {
-      const { error } = await supabase
-        .from('user_challenges')
-        .update({ 
-          title,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', id)
-        .eq('user_id', user.id);
-
-      if (error) throw error;
-
-      // Mettre à jour l'état local
       setUserChallenges(prev => 
         prev.map(c => 
           c.id === id 
@@ -205,6 +156,7 @@ export const useChallenges = () => {
         )
       );
       
+      saveChanges();
       return { success: true };
     } catch (err) {
       console.error('Erreur lors de la mise à jour:', err);
@@ -214,22 +166,11 @@ export const useChallenges = () => {
 
   // Réorganiser les défis
   const reorderChallenges = async (newOrder: UserChallenge[]) => {
-    if (!user || !supabase) return { error: 'Utilisateur non connecté' };
+    if (!user) return { error: 'Utilisateur non connecté' };
 
     try {
-      // Mettre à jour l'ordre dans la base de données
-      const updates = newOrder.map((challenge, index) => ({
-        id: challenge.id,
-        updated_at: new Date().toISOString()
-      }));
-
-      const { error } = await supabase
-        .from('user_challenges')
-        .upsert(updates);
-
-      if (error) throw error;
-
       setUserChallenges(newOrder);
+      saveChanges();
       
       return { success: true };
     } catch (err) {
@@ -240,20 +181,11 @@ export const useChallenges = () => {
 
   // Mettre à jour la durée du programme
   const updateProgramDuration = async (duration: string) => {
-    if (!user || !supabase) return { error: 'Utilisateur non connecté' };
+    if (!user) return { error: 'Utilisateur non connecté' };
 
     try {
-      const { error } = await supabase
-        .from('challenge_stats')
-        .upsert({
-          user_id: user.id,
-          program_duration: duration,
-          updated_at: new Date().toISOString()
-        });
-
-      if (error) throw error;
-
       setStats(prev => prev ? { ...prev, program_duration: duration } : null);
+      saveChanges();
       
       return { success: true };
     } catch (err) {
@@ -264,30 +196,79 @@ export const useChallenges = () => {
 
   // Mettre à jour les statistiques
   const updateStats = async () => {
-    if (!user || !supabase) return;
+    if (!user) return;
 
     try {
       const pendingCount = userChallenges.filter(c => c.status === 'pending').length;
       const completedCount = userChallenges.filter(c => c.status === 'completed').length;
       const totalCount = userChallenges.filter(c => c.status !== 'deleted').length;
 
-      const statsData = {
-        user_id: user.id,
+      const statsData: ChallengeStats = {
         total_challenges: totalCount,
         completed_challenges: completedCount,
         pending_challenges: pendingCount,
-        updated_at: new Date().toISOString()
+        program_duration: stats?.program_duration || '3months',
+        contents_per_day: stats?.contents_per_day || 1
       };
 
-      const { error } = await supabase
-        .from('challenge_stats')
-        .upsert(statsData);
-
-      if (error) throw error;
-
-      setStats(prev => prev ? { ...prev, ...statsData } : statsData);
+      setStats(statsData);
+      saveChanges();
     } catch (err) {
       console.error('Erreur lors de la mise à jour des stats:', err);
+    }
+  };
+
+  // Remettre un défi accompli en défis
+  const restoreChallenge = async (id: string) => {
+    if (!user) return { error: 'Utilisateur non connecté' };
+
+    try {
+      setUserChallenges(prev => 
+        prev.map(c => 
+          c.id === id 
+            ? { ...c, status: 'pending', completed_at: undefined }
+            : c
+        )
+      );
+      saveChanges();
+      return { success: true };
+    } catch (err) {
+      console.error('Erreur lors de la restauration:', err);
+      return { error: err instanceof Error ? err.message : 'Erreur lors de la restauration' };
+    }
+  };
+
+  // Restaurer un défi supprimé
+  const restoreDeletedChallenge = async (id: string) => {
+    if (!user) return { error: 'Utilisateur non connecté' };
+
+    try {
+      setUserChallenges(prev => 
+        prev.map(c => 
+          c.id === id 
+            ? { ...c, status: 'pending' }
+            : c
+        )
+      );
+      saveChanges();
+      return { success: true };
+    } catch (err) {
+      console.error('Erreur lors de la restauration:', err);
+      return { error: err instanceof Error ? err.message : 'Erreur lors de la restauration' };
+    }
+  };
+
+  // Supprimer définitivement un défi
+  const permanentlyDeleteChallenge = async (id: string) => {
+    if (!user) return { error: 'Utilisateur non connecté' };
+
+    try {
+      setUserChallenges(prev => prev.filter(c => c.id !== id));
+      saveChanges();
+      return { success: true };
+    } catch (err) {
+      console.error('Erreur lors de la suppression définitive:', err);
+      return { error: err instanceof Error ? err.message : 'Erreur lors de la suppression définitive' };
     }
   };
 
@@ -296,12 +277,21 @@ export const useChallenges = () => {
     loadChallenges();
   }, [user]);
 
+  // Mettre à jour les statistiques automatiquement quand userChallenges change
+  useEffect(() => {
+    if (userChallenges.length > 0) {
+      updateStats();
+    }
+  }, [userChallenges]);
+
   // Filtrer les défis par statut
   const challenges = userChallenges.filter(c => c.status === 'pending');
+  const deletedChallenges = userChallenges.filter(c => c.status === 'deleted');
 
   return {
     challenges,
     userChallenges: userChallenges.filter(c => c.status !== 'deleted'),
+    deletedChallenges, // Ajouter les défis supprimés
     stats,
     leaderboard: [], // Vide pour l'instant
     loading,
@@ -310,7 +300,10 @@ export const useChallenges = () => {
     completeChallenge,
     deleteChallenge,
     updateChallengeTitle,
+    restoreChallenge,
     reorderChallenges,
-    updateProgramDuration
+    updateProgramDuration,
+    restoreDeletedChallenge,
+    permanentlyDeleteChallenge
   };
 }; 

@@ -38,6 +38,7 @@ const Challenges = () => {
   const {
     challenges,
     userChallenges,
+    deletedChallenges,
     stats,
     leaderboard,
     loading,
@@ -46,12 +47,20 @@ const Challenges = () => {
     completeChallenge,
     deleteChallenge,
     updateChallengeTitle,
+    restoreChallenge,
     reorderChallenges,
-    updateProgramDuration
+    updateProgramDuration,
+    restoreDeletedChallenge,
+    permanentlyDeleteChallenge
   } = useChallenges();
 
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [newChallengeTitle, setNewChallengeTitle] = useState('');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [challengeToDelete, setChallengeToDelete] = useState<string | null>(null);
+
+  // État pour les défis en cours de validation
+  const [validatingChallenges, setValidatingChallenges] = useState<Set<string>>(new Set());
 
   const getDurationText = (duration: string) => {
     switch (duration) {
@@ -155,6 +164,9 @@ const Challenges = () => {
 
   // Fonction améliorée pour valider un défi
   const handleCompleteChallenge = async (id) => {
+    // Marquer comme en cours de validation
+    setValidatingChallenges(prev => new Set([...prev, id]));
+
     const now = new Date().toISOString();
 
     // Étape 1 – Mise à jour localement IMMÉDIATEMENT
@@ -176,7 +188,22 @@ const Challenges = () => {
           description: result.error,
           variant: "destructive",
         });
+        // Retirer de la validation en cours en cas d'erreur
+        setValidatingChallenges(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(id);
+          return newSet;
+        });
       } else {
+        // Attendre 1 seconde avant de retirer de la validation pour voir le feedback
+        setTimeout(() => {
+          setValidatingChallenges(prev => {
+            const newSet = new Set(prev);
+            newSet.delete(id);
+            return newSet;
+          });
+        }, 1000);
+
         toast({
           title: "Défi accompli !",
           description: "Le défi a été marqué comme terminé",
@@ -188,6 +215,12 @@ const Challenges = () => {
         title: "Erreur",
         description: "Erreur lors de la validation du défi",
         variant: "destructive",
+      });
+      // Retirer de la validation en cours en cas d'erreur
+      setValidatingChallenges(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(id);
+        return newSet;
       });
     }
   };
@@ -232,6 +265,9 @@ const Challenges = () => {
         title: "Modification sauvegardée",
         description: "Le titre du défi a été mis à jour",
       });
+      // Revenir en mode normal après modification
+      setIsEditMode(false);
+      setChallengesToDelete(new Set());
     }
     
     setEditingChallengeId(null);
@@ -241,6 +277,9 @@ const Challenges = () => {
   const handleCancelEdit = () => {
     setEditingChallengeId(null);
     setEditingTitle('');
+    // Revenir en mode normal après annulation
+    setIsEditMode(false);
+    setChallengesToDelete(new Set());
   };
 
   // Fonction pour le drag & drop
@@ -251,6 +290,11 @@ const Challenges = () => {
       title: "Ordre mis à jour",
       description: "L'ordre des défis a été modifié",
     });
+    // Revenir en mode normal après réorganisation
+    setIsEditMode(false);
+    setChallengesToDelete(new Set());
+    setEditingChallengeId(null);
+    setEditingTitle('');
   };
 
   // Fonction pour activer/désactiver le mode édition
@@ -265,31 +309,35 @@ const Challenges = () => {
 
   // Fonction pour supprimer un défi
   const handleDeleteChallenge = (challengeId: string) => {
-    setChallengesToDelete(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(challengeId)) {
-        newSet.delete(challengeId);
-      } else {
-        newSet.add(challengeId);
-      }
-      return newSet;
-    });
+    setChallengeToDelete(challengeId);
+    setShowDeleteConfirm(true);
   };
 
   // Fonction pour confirmer la suppression
-  const confirmDeleteChallenges = async () => {
-    const deletePromises = Array.from(challengesToDelete).map(challengeId =>
-      deleteChallenge(challengeId)
-    );
+  const confirmDeleteChallenge = async () => {
+    if (!challengeToDelete) return;
 
     try {
-      await Promise.all(deletePromises);
-      toast({
-        title: "Défis supprimés",
-        description: `${challengesToDelete.size} défi(s) déplacé(s) dans la corbeille`,
-      });
-      setChallengesToDelete(new Set());
-      setIsEditMode(false);
+      // Si on est dans l'onglet corbeille, supprimer définitivement
+      const isInTrash = deletedChallenges.some(c => c.id === challengeToDelete);
+      const result = isInTrash 
+        ? await permanentlyDeleteChallenge(challengeToDelete)
+        : await deleteChallenge(challengeToDelete);
+
+      if (result?.success) {
+        toast({
+          title: isInTrash ? "Défi supprimé définitivement" : "Défi supprimé",
+          description: isInTrash 
+            ? "Le défi a été supprimé définitivement"
+            : "Le défi a été déplacé dans la corbeille",
+        });
+      } else {
+        toast({
+          title: "Erreur",
+          description: result?.error || "Erreur lors de la suppression",
+          variant: "destructive",
+        });
+      }
     } catch (error) {
       toast({
         title: "Erreur",
@@ -297,6 +345,14 @@ const Challenges = () => {
         variant: "destructive",
       });
     }
+
+    setShowDeleteConfirm(false);
+    setChallengeToDelete(null);
+    // Revenir en mode normal après suppression
+    setIsEditMode(false);
+    setChallengesToDelete(new Set());
+    setEditingChallengeId(null);
+    setEditingTitle('');
   };
 
   // Fonction pour ajouter un nouveau défi
@@ -337,6 +393,12 @@ const Challenges = () => {
   // Filtrer les défis par statut
   const defis = userChallenges.filter((c) => c.status === "pending");
   const accomplis = userChallenges.filter((c) => c.status === "completed");
+
+  // Forcer la mise à jour des filtres quand userChallenges change
+  useEffect(() => {
+    // Cette ligne force la re-render quand userChallenges change
+    setReorderedChallenges(userChallenges.filter(c => c.status === 'pending'));
+  }, [userChallenges]);
 
   if (!user) {
     return (
@@ -441,15 +503,15 @@ const Challenges = () => {
           <h1 className="text-xl font-semibold">Mes Défis</h1>
         </div>
         <div className="flex items-center gap-2">
-          {isEditMode && challengesToDelete.size > 0 && (
+          {isEditMode && (
             <Button
-              variant="destructive"
-              size="sm"
-              onClick={confirmDeleteChallenges}
-              className="flex items-center gap-1"
+              variant="outline"
+              size="icon"
+              onClick={() => setActiveTab('trash')}
+              className="w-10 h-10"
+              title="Voir la corbeille"
             >
               <Trash2 className="w-4 h-4" />
-              Supprimer ({challengesToDelete.size})
             </Button>
           )}
           <Button
@@ -583,35 +645,131 @@ const Challenges = () => {
           
           {/* Onglet Défis */}
           <TabsContent value="challenges" className="mt-6">
-            <div className="space-y-3">
-              {defis.map((challenge) => (
-                <Card key={challenge.id} className="hover:shadow-md transition-shadow">
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-lg">{challenge.title}</h3>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          Jour {currentDay}
-                        </p>
+            {isEditMode ? (
+              // Mode édition avec drag & drop
+              <Reorder.Group 
+                axis="y" 
+                values={defis} 
+                onReorder={handleReorder}
+                className="space-y-3"
+              >
+                {defis.map((challenge) => (
+                  <Reorder.Item
+                    key={challenge.id}
+                    value={challenge}
+                    className="cursor-grab active:cursor-grabbing"
+                  >
+                    <Card className="hover:shadow-md transition-shadow">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1 flex items-center gap-3">
+                            <GripVertical className="w-5 h-5 text-gray-400" />
+                            {editingChallengeId === challenge.id ? (
+                              <Input
+                                value={editingTitle}
+                                onChange={(e) => setEditingTitle(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    handleSaveEdit();
+                                  } else if (e.key === 'Escape') {
+                                    handleCancelEdit();
+                                  }
+                                }}
+                                className="flex-1"
+                                autoFocus
+                              />
+                            ) : (
+                              <div className="flex-1">
+                                <h3 className="font-semibold text-lg">{challenge.title}</h3>
+                                <p className="text-sm text-gray-600 dark:text-gray-400">
+                                  Jour {currentDay}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {editingChallengeId === challenge.id ? (
+                              <>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={handleSaveEdit}
+                                  className="text-green-600"
+                                >
+                                  <Save className="w-4 h-4" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={handleCancelEdit}
+                                  className="text-gray-600"
+                                >
+                                  <X className="w-4 h-4" />
+                                </Button>
+                              </>
+                            ) : (
+                              <>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => {
+                                    setEditingChallengeId(challenge.id);
+                                    setEditingTitle(challenge.title);
+                                  }}
+                                  className="text-blue-600"
+                                >
+                                  <Edit className="w-4 h-4" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => handleDeleteChallenge(challenge.id)}
+                                  className={challengesToDelete.has(challenge.id) ? "text-red-600" : "text-gray-600"}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </Reorder.Item>
+                ))}
+              </Reorder.Group>
+            ) : (
+              // Mode normal
+              <div className="space-y-3">
+                {defis.map((challenge) => (
+                  <Card key={challenge.id} className="hover:shadow-md transition-shadow">
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-lg">{challenge.title}</h3>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                            Jour {currentDay}
+                          </p>
+                        </div>
+                        <Button 
+                          onClick={() => handleCompleteChallenge(challenge.id)}
+                          size="sm"
+                          variant="ghost"
+                          className="ml-4 p-2 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 transition-all duration-300"
+                          title="Marquer comme accompli"
+                          disabled={validatingChallenges.has(challenge.id)}
+                        >
+                          {userChallenges.some(uc => uc.id === challenge.id && uc.status === 'completed') || validatingChallenges.has(challenge.id) ? (
+                            <CheckSquare className="w-6 h-6 text-green-600 transition-transform duration-300 scale-110" />
+                          ) : (
+                            <Square className="w-6 h-6 text-gray-400 transition-transform duration-300 hover:scale-110" />
+                          )}
+                        </Button>
                       </div>
-                      <Button 
-                        onClick={() => handleCompleteChallenge(challenge.id)}
-                        size="sm"
-                        variant="ghost"
-                        className="ml-4 p-2 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 transition-all duration-300"
-                        title="Marquer comme accompli"
-                      >
-                        {userChallenges.some(uc => uc.id === challenge.id && uc.status === 'completed') ? (
-                          <CheckCircle className="w-6 h-6 text-green-600 transition-transform duration-300 scale-110" />
-                        ) : (
-                          <Circle className="w-6 h-6 text-gray-400 transition-transform duration-300 hover:scale-110" />
-                        )}
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
           </TabsContent>
           
           {/* Onglet Accomplis */}
@@ -627,13 +785,138 @@ const Challenges = () => {
                           Accompli le {new Date(challenge.completed_at).toLocaleDateString()}
                         </p>
                       </div>
-                      <div className="ml-4 p-2">
-                        <CheckCircle className="w-6 h-6 text-green-600" />
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={async () => {
+                            // Remettre en défis
+                            const result = await restoreChallenge(challenge.id);
+                            if (result?.success) {
+                              toast({
+                                title: "Défi remis en cours",
+                                description: "Le défi a été remis dans vos défis",
+                              });
+                              // Revenir en mode normal après modification
+                              setIsEditMode(false);
+                              setChallengesToDelete(new Set());
+                              setEditingChallengeId(null);
+                              setEditingTitle('');
+                            } else {
+                              toast({
+                                title: "Erreur",
+                                description: result?.error || "Erreur lors de la restauration",
+                                variant: "destructive",
+                              });
+                            }
+                          }}
+                          className="text-blue-600"
+                          title="Remettre en défis"
+                        >
+                          <ArrowLeft className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={async () => {
+                            // Supprimer définitivement
+                            setChallengeToDelete(challenge.id);
+                            setShowDeleteConfirm(true);
+                          }}
+                          className="text-red-600"
+                          title="Supprimer définitivement"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                        <div className="ml-2">
+                          <CheckCircle className="w-6 h-6 text-green-600" />
+                        </div>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
               ))}
+            </div>
+          </TabsContent>
+          
+          {/* Onglet Corbeille */}
+          <TabsContent value="trash" className="mt-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold">Corbeille</h3>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setActiveTab('challenges')}
+                className="flex items-center gap-2"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Retour aux défis
+              </Button>
+            </div>
+            <div className="space-y-3">
+              {deletedChallenges.length === 0 ? (
+                <Card className="text-center py-12">
+                  <CardContent>
+                    <Trash2 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium mb-2">Corbeille vide</h3>
+                    <p className="text-muted-foreground">
+                      Aucun défi supprimé pour le moment
+                    </p>
+                  </CardContent>
+                </Card>
+              ) : (
+                deletedChallenges.map((challenge) => (
+                  <Card key={challenge.id} className="hover:shadow-md transition-shadow border-red-200 dark:border-red-800">
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-lg text-gray-600 dark:text-gray-400">{challenge.title}</h3>
+                          <p className="text-sm text-gray-500 dark:text-gray-500">
+                            Supprimé le {new Date(challenge.updated_at || challenge.created_at || Date.now()).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={async () => {
+                              const result = await restoreDeletedChallenge(challenge.id);
+                              if (result?.success) {
+                                toast({
+                                  title: "Défi restauré",
+                                  description: "Le défi a été remis dans vos défis",
+                                });
+                              } else {
+                                toast({
+                                  title: "Erreur",
+                                  description: result?.error || "Erreur lors de la restauration",
+                                  variant: "destructive",
+                                });
+                              }
+                            }}
+                            className="text-blue-600"
+                            title="Restaurer le défi"
+                          >
+                            <ArrowLeft className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={async () => {
+                              setChallengeToDelete(challenge.id);
+                              setShowDeleteConfirm(true);
+                            }}
+                            className="text-red-600"
+                            title="Supprimer définitivement"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
             </div>
           </TabsContent>
           
@@ -727,6 +1010,36 @@ const Challenges = () => {
               </Button>
               <Button onClick={confirmContentsChange} className="flex-1">
                 Confirmer
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de confirmation pour la suppression */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowDeleteConfirm(false)}>
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-sm w-full mx-4" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-semibold mb-4">Confirmer la suppression</h3>
+            <p className="text-muted-foreground mb-4">
+              {deletedChallenges.some(c => c.id === challengeToDelete) 
+                ? "Êtes-vous sûr de vouloir supprimer définitivement ce défi ?"
+                : "Êtes-vous sûr de vouloir supprimer ce défi ?"
+              }
+              <br />
+              <span className="text-sm text-red-600">
+                {deletedChallenges.some(c => c.id === challengeToDelete) 
+                  ? "Cette action est irréversible."
+                  : "Le défi sera déplacé dans la corbeille."
+                }
+              </span>
+            </p>
+            <div className="flex gap-3">
+              <Button variant="outline" onClick={() => setShowDeleteConfirm(false)} className="flex-1">
+                Annuler
+              </Button>
+              <Button variant="destructive" onClick={confirmDeleteChallenge} className="flex-1">
+                {deletedChallenges.some(c => c.id === challengeToDelete) ? "Supprimer définitivement" : "Supprimer"}
               </Button>
             </div>
           </div>
