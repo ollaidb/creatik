@@ -1,17 +1,19 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, Reorder } from 'framer-motion';
+import { motion, Reorder, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Trophy, Target, BarChart3, CheckCircle, Star, TrendingUp, Users, Award, Calendar, Square, Plus, Edit, Save, X } from 'lucide-react';
+import { ArrowLeft, Trophy, Target, BarChart3, CheckCircle, Star, TrendingUp, Users, Award, Calendar, Square, Plus, Edit, Save, X, Trash2, GripVertical, CheckSquare, Circle } from 'lucide-react';
 import Navigation from '@/components/Navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useChallenges } from '@/hooks/useChallenges';
 import { useToast } from '@/hooks/use-toast';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 
 const Challenges = () => {
   const navigate = useNavigate();
@@ -31,6 +33,8 @@ const Challenges = () => {
   const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
   const [reorderedChallenges, setReorderedChallenges] = useState<typeof challenges>([]);
   const [currentDay, setCurrentDay] = useState(1);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [challengesToDelete, setChallengesToDelete] = useState<Set<string>>(new Set());
   const {
     challenges,
     userChallenges,
@@ -38,10 +42,16 @@ const Challenges = () => {
     leaderboard,
     loading,
     error,
-    assignChallenge,
+    addChallenge,
     completeChallenge,
+    deleteChallenge,
+    updateChallengeTitle,
+    reorderChallenges,
     updateProgramDuration
   } = useChallenges();
+
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [newChallengeTitle, setNewChallengeTitle] = useState('');
 
   const getDurationText = (duration: string) => {
     switch (duration) {
@@ -145,7 +155,7 @@ const Challenges = () => {
 
   const handleCompleteChallenge = async (challengeId: string) => {
     const result = await completeChallenge(challengeId);
-    if (result.error) {
+    if (result?.error) {
       toast({
         title: "Erreur",
         description: result.error,
@@ -187,11 +197,19 @@ const Challenges = () => {
   const handleSaveEdit = async () => {
     if (!editingChallengeId || !editingTitle.trim()) return;
     
-    // TODO: Implémenter la sauvegarde en base de données
-    toast({
-      title: "Modification sauvegardée",
-      description: "Le titre du défi a été mis à jour",
-    });
+    const result = await updateChallengeTitle(editingChallengeId, editingTitle.trim());
+    if (result?.error) {
+      toast({
+        title: "Erreur",
+        description: result.error,
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Modification sauvegardée",
+        description: "Le titre du défi a été mis à jour",
+      });
+    }
     
     setEditingChallengeId(null);
     setEditingTitle('');
@@ -204,12 +222,87 @@ const Challenges = () => {
 
   // Fonction pour le drag & drop
   const handleReorder = (newOrder: typeof challenges) => {
+    reorderChallenges(newOrder);
     setReorderedChallenges(newOrder);
-    // TODO: Sauvegarder le nouvel ordre en base de données
     toast({
       title: "Ordre mis à jour",
       description: "L'ordre des défis a été modifié",
     });
+  };
+
+  // Fonction pour activer/désactiver le mode édition
+  const toggleEditMode = () => {
+    setIsEditMode(!isEditMode);
+    if (!isEditMode) {
+      setChallengesToDelete(new Set());
+      setEditingChallengeId(null);
+      setEditingTitle('');
+    }
+  };
+
+  // Fonction pour supprimer un défi
+  const handleDeleteChallenge = (challengeId: string) => {
+    setChallengesToDelete(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(challengeId)) {
+        newSet.delete(challengeId);
+      } else {
+        newSet.add(challengeId);
+      }
+      return newSet;
+    });
+  };
+
+  // Fonction pour confirmer la suppression
+  const confirmDeleteChallenges = async () => {
+    const deletePromises = Array.from(challengesToDelete).map(challengeId =>
+      deleteChallenge(challengeId)
+    );
+
+    try {
+      await Promise.all(deletePromises);
+      toast({
+        title: "Défis supprimés",
+        description: `${challengesToDelete.size} défi(s) déplacé(s) dans la corbeille`,
+      });
+      setChallengesToDelete(new Set());
+      setIsEditMode(false);
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Erreur lors de la suppression",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Fonction pour ajouter un nouveau défi
+  const handleAddChallenge = async () => {
+    if (!newChallengeTitle.trim()) return;
+    
+    try {
+      const result = await addChallenge(newChallengeTitle.trim());
+      if (result?.error) {
+        toast({
+          title: "Erreur",
+          description: result.error,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Défi ajouté",
+          description: "Le nouveau défi a été ajouté à votre liste",
+        });
+        setNewChallengeTitle('');
+        setShowAddDialog(false);
+      }
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Erreur lors de l'ajout du défi",
+        variant: "destructive",
+      });
+    }
   };
 
   // Calculer le jour actuel basé sur les défis accomplis
@@ -217,13 +310,6 @@ const Challenges = () => {
     const completedCount = userChallenges.filter(c => c.status === 'completed').length;
     setCurrentDay(completedCount + 1);
   }, [userChallenges]);
-
-  // Initialiser l'ordre des défis
-  useEffect(() => {
-    if (challenges.length > 0 && reorderedChallenges.length === 0) {
-      setReorderedChallenges(challenges);
-    }
-  }, [challenges]);
 
   if (!user) {
     return (
@@ -328,15 +414,76 @@ const Challenges = () => {
           <h1 className="text-xl font-semibold">Mes Défis</h1>
         </div>
         <div className="flex items-center gap-2">
+          {isEditMode && challengesToDelete.size > 0 && (
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={confirmDeleteChallenges}
+              className="flex items-center gap-1"
+            >
+              <Trash2 className="w-4 h-4" />
+              Supprimer ({challengesToDelete.size})
+            </Button>
+          )}
           <Button
-            variant="outline"
-            size="sm"
-            onClick={() => navigate('/challenges')}
-            className="flex items-center gap-1"
-            title="Ajouter un défi"
+            variant={isEditMode ? "default" : "outline"}
+            size="icon"
+            onClick={toggleEditMode}
+            className="w-10 h-10"
+            title={isEditMode ? "Terminer l'édition" : "Éditer les défis"}
           >
-            <Plus className="w-4 h-4" />
+            <Edit className="w-4 h-4" />
           </Button>
+          <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+            <DialogTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                className="w-10 h-10"
+                title="Ajouter un défi"
+              >
+                <Plus className="w-4 h-4" />
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Ajouter un nouveau défi</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="challenge-title">Titre du défi</Label>
+                  <Input
+                    id="challenge-title"
+                    value={newChallengeTitle}
+                    onChange={(e) => setNewChallengeTitle(e.target.value)}
+                    placeholder="Ex: Créer un post sur l'environnement"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        handleAddChallenge();
+                      }
+                    }}
+                  />
+                </div>
+                <div className="flex gap-2 justify-end">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setShowAddDialog(false);
+                      setNewChallengeTitle('');
+                    }}
+                  >
+                    Annuler
+                  </Button>
+                  <Button
+                    onClick={handleAddChallenge}
+                    disabled={!newChallengeTitle.trim()}
+                  >
+                    Ajouter
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </header>
       <main className="max-w-4xl mx-auto p-4">
@@ -406,104 +553,181 @@ const Challenges = () => {
           
           {/* Onglet Défis */}
           <TabsContent value="challenges" className="mt-6">
-            <Reorder.Group 
-              axis="y" 
-              values={reorderedChallenges} 
-              onReorder={handleReorder}
-              className="space-y-3"
-            >
-              {reorderedChallenges.map((challenge, index) => (
-                <Reorder.Item
-                  key={challenge.id}
-                  value={challenge}
-                  className="cursor-grab active:cursor-grabbing"
-                >
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
+            {isEditMode ? (
+              // Mode édition avec drag & drop
+              <Reorder.Group 
+                axis="y" 
+                values={challenges} 
+                onReorder={handleReorder}
+                className="space-y-3"
+              >
+                {challenges.map((challenge, index) => (
+                  <Reorder.Item
+                    key={challenge.id}
+                    value={challenge}
+                    className="cursor-grab active:cursor-grabbing"
                   >
-                    <Card className="hover:shadow-md transition-shadow">
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between">
-                          {editingChallengeId === challenge.id ? (
-                            // Mode édition
-                            <div className="flex-1 flex items-center gap-2">
-                              <Input
-                                value={editingTitle}
-                                onChange={(e) => setEditingTitle(e.target.value)}
-                                className="flex-1"
-                                autoFocus
-                              />
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                    >
+                      <Card className={`hover:shadow-md transition-shadow ${
+                        challengesToDelete.has(challenge.id) ? 'border-red-500 bg-red-50 dark:bg-red-900/20' : ''
+                      }`}>
+                        <CardContent className="p-4">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3 flex-1">
+                              <GripVertical className="w-5 h-5 text-gray-400 cursor-grab" />
+                              <div className="flex-1">
+                                {isEditMode && editingChallengeId === challenge.id ? (
+                                  <input
+                                    value={editingTitle}
+                                    onChange={(e) => setEditingTitle(e.target.value)}
+                                    onBlur={handleSaveEdit}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') {
+                                        handleSaveEdit();
+                                      } else if (e.key === 'Escape') {
+                                        handleCancelEdit();
+                                      }
+                                    }}
+                                    className="font-semibold text-lg bg-transparent border-none p-0 focus:outline-none w-full"
+                                    autoFocus
+                                  />
+                                ) : (
+                                  <h3 
+                                    className={`font-semibold text-lg ${
+                                      isEditMode ? 'cursor-text hover:bg-gray-100 dark:hover:bg-gray-800 px-2 py-1 rounded transition-colors' : ''
+                                    }`}
+                                    onClick={isEditMode ? () => {
+                                      setEditingChallengeId(challenge.id);
+                                      setEditingTitle(challenge.title);
+                                    } : undefined}
+                                    title={isEditMode ? "Cliquez pour modifier" : ""}
+                                  >
+                                    {challenge.title}
+                                  </h3>
+                                )}
+                                <span className="text-sm text-gray-600 dark:text-gray-400">
+                                  Jour {currentDay + index}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
                               <Button
-                                onClick={handleSaveEdit}
+                                onClick={() => handleDeleteChallenge(challenge.id)}
                                 size="sm"
                                 variant="ghost"
-                                className="p-2 text-green-600"
+                                className={`p-2 ${
+                                  challengesToDelete.has(challenge.id) ? 'text-red-600' : 'text-gray-400'
+                                }`}
+                                title="Supprimer le défi"
                               >
-                                <Save className="w-4 h-4" />
-                              </Button>
-                              <Button
-                                onClick={handleCancelEdit}
-                                size="sm"
-                                variant="ghost"
-                                className="p-2 text-red-600"
-                              >
-                                <X className="w-4 h-4" />
+                                <Trash2 className="w-4 h-4" />
                               </Button>
                             </div>
-                          ) : (
-                            // Mode affichage normal
-                            <div 
-                              className="flex-1"
-                              onTouchStart={() => handleLongPressStart(challenge.id, challenge.title)}
-                              onTouchEnd={handleLongPressEnd}
-                              onMouseDown={() => handleLongPressStart(challenge.id, challenge.title)}
-                              onMouseUp={handleLongPressEnd}
-                              onMouseLeave={handleLongPressEnd}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </motion.div>
+                  </Reorder.Item>
+                ))}
+              </Reorder.Group>
+            ) : (
+              // Mode normal (sans drag & drop)
+              <div className="space-y-3">
+                <AnimatePresence mode="wait">
+                  {challenges.map((challenge, index) => (
+                    <motion.div
+                      key={challenge.id}
+                      data-challenge-id={challenge.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20, scale: 0.95 }}
+                      transition={{ duration: 0.5, ease: "easeInOut" }}
+                    >
+                      <Card className="hover:shadow-md transition-shadow">
+                        <CardContent className="p-4">
+                          <div className="flex items-center justify-between">
+                            <div className="flex-1">
+                              {isEditMode && editingChallengeId === challenge.id ? (
+                                <input
+                                  value={editingTitle}
+                                  onChange={(e) => setEditingTitle(e.target.value)}
+                                  onBlur={handleSaveEdit}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                      handleSaveEdit();
+                                    } else if (e.key === 'Escape') {
+                                      handleCancelEdit();
+                                    }
+                                  }}
+                                  className="font-semibold text-lg bg-transparent border-none p-0 focus:outline-none w-full"
+                                  autoFocus
+                                />
+                              ) : (
+                                <h3 
+                                  className={`font-semibold text-lg ${
+                                    isEditMode ? 'cursor-text hover:bg-gray-100 dark:hover:bg-gray-800 px-2 py-1 rounded transition-colors' : ''
+                                  }`}
+                                  onClick={isEditMode ? () => {
+                                    setEditingChallengeId(challenge.id);
+                                    setEditingTitle(challenge.title);
+                                  } : undefined}
+                                  title={isEditMode ? "Cliquez pour modifier" : ""}
+                                >
+                                  {challenge.title}
+                                </h3>
+                              )}
+                              <span className="text-sm text-gray-600 dark:text-gray-400">
+                                Jour {currentDay + index}
+                              </span>
+                            </div>
+                            <Button
+                              onClick={() => handleCompleteChallenge(challenge.id)}
+                              size="sm"
+                              variant="ghost"
+                              className="ml-4 p-2 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 transition-all duration-300"
+                              title="Marquer comme accompli"
                             >
-                              <h3 className="font-semibold text-lg">{challenge.title}</h3>
-                            </div>
-                          )}
-                          <Button
-                            onClick={() => handleCompleteChallenge(challenge.id)}
-                            size="sm"
-                            variant="ghost"
-                            className="ml-4 p-2"
-                          >
-                            <Square className="w-5 h-5" />
-                          </Button>
-                        </div>
-                        {/* Numérotation du jour */}
-                        <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
-                          <span className="text-sm text-gray-600 dark:text-gray-400">
-                            Jour {currentDay + index}
-                          </span>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </motion.div>
-                </Reorder.Item>
-              ))}
-            </Reorder.Group>
+                              {userChallenges.some(uc => uc.id === challenge.id && uc.status === 'completed') ? (
+                                <CheckCircle className="w-6 h-6 text-green-600 transition-transform duration-300 scale-110" />
+                              ) : (
+                                <Circle className="w-6 h-6 text-gray-400 transition-transform duration-300 hover:scale-110" />
+                              )}
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </div>
+            )}
           </TabsContent>
           
           {/* Onglet Accomplis */}
           <TabsContent value="completed" className="mt-6">
             <div className="space-y-3">
-              {userChallenges.filter(c => c.status === 'completed').map((userChallenge) => (
+              {userChallenges.filter(challenge => challenge.status === 'completed').map((challenge) => (
                 <motion.div
-                  key={userChallenge.id}
+                  key={challenge.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                 >
                   <Card className="border-green-200 bg-green-50 dark:bg-green-900/20">
                     <CardContent className="p-4">
                       <div className="flex items-center justify-between">
-                        <h3 className="font-semibold text-lg flex-1">{userChallenge.challenge?.title}</h3>
+                        <h3 className="font-semibold text-lg flex-1">{challenge.title}</h3>
                         <Badge variant="default" className="bg-green-500">
-                          +{userChallenge.points_earned} pts
+                          Accompli
                         </Badge>
                       </div>
+                      {challenge.completed_at && (
+                        <p className="text-sm text-muted-foreground mt-2">
+                          Accompli le {new Date(challenge.completed_at).toLocaleDateString()}
+                        </p>
+                      )}
                     </CardContent>
                   </Card>
                 </motion.div>
@@ -554,75 +778,6 @@ const Challenges = () => {
                       <div className="text-xs text-muted-foreground">
                         {getDurationText(selectedDuration)} • {contentsPerDay} contenu(s) par jour • {getDurationDays(selectedDuration)} jours
                       </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-              
-              {/* Classement */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <TrendingUp className="w-5 h-5" />
-                    Classement
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {leaderboard.length > 0 ? (
-                    <div className="space-y-2">
-                      {leaderboard.slice(0, 10).map((entry, index) => (
-                        <div key={entry.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                          <div className="flex items-center gap-3">
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold ${
-                              index === 0 ? 'bg-yellow-500' : 
-                              index === 1 ? 'bg-gray-400' : 
-                              index === 2 ? 'bg-orange-500' : 'bg-blue-500'
-                            }`}>
-                              {index + 1}
-                            </div>
-                            <div>
-                              <div className="font-semibold">Utilisateur #{entry.user_id.slice(0, 8)}</div>
-                              <div className="text-sm text-muted-foreground">
-                                {entry.total_points} points
-                              </div>
-                            </div>
-                          </div>
-                          <Award className="w-5 h-5 text-gray-400" />
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-8 text-gray-400">
-                      Aucun classement disponible
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-              
-              {/* Récompenses */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Trophy className="w-5 h-5" />
-                    Récompenses
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="text-center p-4 border rounded-lg">
-                      <Star className="w-8 h-8 text-yellow-500 mx-auto mb-2" />
-                      <div className="font-semibold">Créateur Débutant</div>
-                      <div className="text-sm text-muted-foreground">5 défis accomplis</div>
-                    </div>
-                    <div className="text-center p-4 border rounded-lg">
-                      <Users className="w-8 h-8 text-blue-500 mx-auto mb-2" />
-                      <div className="font-semibold">Créateur Régulier</div>
-                      <div className="text-sm text-muted-foreground">7 jours consécutifs</div>
-                    </div>
-                    <div className="text-center p-4 border rounded-lg">
-                      <Trophy className="w-8 h-8 text-purple-500 mx-auto mb-2" />
-                      <div className="font-semibold">Créateur Expert</div>
-                      <div className="text-sm text-muted-foreground">30 défis accomplis</div>
                     </div>
                   </div>
                 </CardContent>
@@ -681,4 +836,4 @@ const Challenges = () => {
   );
 };
 
-export default Challenges; 
+export default Challenges;

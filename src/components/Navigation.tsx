@@ -86,14 +86,6 @@ const Navigation: React.FC<NavigationProps> = ({ className }) => {
               </div>
             )}
             <span className="text-xs mt-0.5 sm:mt-1 truncate leading-tight font-semibold drop-shadow-sm">{tab.label}</span>
-            {activeTab === tab.id && (
-              <motion.div
-                layoutId="navigation-indicator"
-                className="absolute bottom-0 w-8 sm:w-12 h-1 bg-gradient-to-r from-primary to-primary/80 rounded-t-full"
-                initial={false}
-                transition={{ type: "spring", stiffness: 500, damping: 30 }}
-              />
-            )}
           </button>
         ))}
       </div>
