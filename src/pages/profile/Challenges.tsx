@@ -161,31 +161,25 @@ const Challenges = () => {
     const updated = userChallenges.map((c) =>
       c.id === id ? { ...c, status: "completed", completed_at: now } : c
     );
-    // setUserChallenges(updated); // This line was removed as per the new_code
+    // setUserChallenges(updated); // Supprimer cette ligne
 
     // Étape 2 – Mise à jour en base (pour l'instant localStorage, puis Supabase)
     try {
-      // Sauvegarder dans localStorage
-      localStorage.setItem(`user_challenges_${user.id}`, JSON.stringify(updated));
+      // Utiliser la fonction du hook
+      const result = await completeChallenge(id);
       
-      // TODO: Quand Supabase sera configuré, remplacer par :
-      // await supabase
-      //   .from("user_challenges")
-      //   .update({ status: "completed", completed_at: now })
-      //   .eq("id", id);
-
-      // Étape 3 – Mettre à jour les statistiques (optionnel)
-      // TODO: Quand Supabase sera configuré, remplacer par :
-      // await supabase.rpc("increment_user_statistic", {
-      //   user_id: user.id,
-      //   field_name: "challenges_completed",
-      //   increment_by: 1,
-      // });
-
-      toast({
-        title: "Défi accompli !",
-        description: "Le défi a été marqué comme terminé",
-      });
+      if (result?.error) {
+        toast({
+          title: "Erreur",
+          description: result.error,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Défi accompli !",
+          description: "Le défi a été marqué comme terminé",
+        });
+      }
     } catch (error) {
       console.error('Erreur lors de la validation:', error);
       toast({
