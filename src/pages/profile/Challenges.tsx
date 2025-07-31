@@ -12,7 +12,7 @@ import Navigation from '@/components/Navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useChallenges } from '@/hooks/useChallenges';
 import { useToast } from '@/hooks/use-toast';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 
 const Challenges = () => {
@@ -157,15 +157,17 @@ const Challenges = () => {
   const handleCompleteChallenge = async (id) => {
     const now = new Date().toISOString();
 
-    // Étape 1 – Mise à jour localement
+    // Étape 1 – Mise à jour localement IMMÉDIATEMENT
     const updated = userChallenges.map((c) =>
       c.id === id ? { ...c, status: "completed", completed_at: now } : c
     );
-    // setUserChallenges(updated); // Supprimer cette ligne
+    
+    // Sauvegarder dans localStorage immédiatement pour persistance
+    localStorage.setItem(`user_challenges_${user.id}`, JSON.stringify(updated));
 
-    // Étape 2 – Mise à jour en base (pour l'instant localStorage, puis Supabase)
+    // Étape 2 – Mise à jour en base via le hook
     try {
-      // Utiliser la fonction du hook
+      // Utiliser la fonction du hook pour la persistance
       const result = await completeChallenge(id);
       
       if (result?.error) {
@@ -473,6 +475,9 @@ const Challenges = () => {
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>Ajouter un nouveau défi</DialogTitle>
+                <DialogDescription>
+                  Créez un nouveau défi personnel pour votre programme de création de contenu.
+                </DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
                 <div>
@@ -596,7 +601,11 @@ const Challenges = () => {
                         className="ml-4 p-2 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 transition-all duration-300"
                         title="Marquer comme accompli"
                       >
-                        <Circle className="w-6 h-6 text-gray-400 transition-transform duration-300 hover:scale-110" />
+                        {userChallenges.some(uc => uc.id === challenge.id && uc.status === 'completed') ? (
+                          <CheckCircle className="w-6 h-6 text-green-600 transition-transform duration-300 scale-110" />
+                        ) : (
+                          <Circle className="w-6 h-6 text-gray-400 transition-transform duration-300 hover:scale-110" />
+                        )}
                       </Button>
                     </div>
                   </CardContent>

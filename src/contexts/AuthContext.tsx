@@ -1,11 +1,18 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session, AuthError, createClient } from '@supabase/supabase-js';
 
-// Configuration Supabase (remplacez par vos vraies clés)
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://your-project.supabase.co';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'your-anon-key';
+// Vérifier les variables d'environnement
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Créer une seule instance du client Supabase seulement si les variables sont définies
+let supabaseClient = null;
+if (supabaseUrl && supabaseAnonKey) {
+  supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
+}
+
+// Utiliser cette instance unique
+export const supabase = supabaseClient;
 
 export interface AuthContextType {
   user: User | null;
@@ -28,6 +35,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Si Supabase n'est pas configuré, on simule un utilisateur connecté pour le développement
+    if (!supabase) {
+      console.warn('Supabase non configuré - mode développement activé');
+      setLoading(false);
+      return;
+    }
+
     // Récupérer la session initiale
     const getSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -51,6 +65,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const signUp = async (email: string, password: string, metadata?: Record<string, unknown>) => {
+    if (!supabase) {
+      console.warn('Supabase non configuré');
+      return { error: null };
+    }
+    
     try {
       const { error } = await supabase.auth.signUp({
         email,
@@ -66,6 +85,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const signIn = async (email: string, password: string) => {
+    if (!supabase) {
+      console.warn('Supabase non configuré');
+      return { error: null };
+    }
+    
     try {
       const { error } = await supabase.auth.signInWithPassword({
         email,
@@ -78,6 +102,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const signOut = async () => {
+    if (!supabase) {
+      console.warn('Supabase non configuré');
+      return { error: null };
+    }
+    
     try {
       const { error } = await supabase.auth.signOut();
       return { error };
@@ -87,6 +116,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const signInWithGoogle = async () => {
+    if (!supabase) {
+      console.warn('Supabase non configuré');
+      return { error: null };
+    }
+    
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -98,6 +132,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const signInWithApple = async () => {
+    if (!supabase) {
+      console.warn('Supabase non configuré');
+      return { error: null };
+    }
+    
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'apple',
