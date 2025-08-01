@@ -162,7 +162,7 @@ const Subcategories = () => {
             <motion.div key={subcategory.id} variants={itemVariants}>
               <div 
                 onClick={() => navigate(`/category/${categoryId}/subcategory/${subcategory.id}`)}
-                className="relative overflow-hidden rounded-xl cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-lg group h-20 sm:h-24 md:h-28 bg-white dark:bg-gray-800 border-4 border-blue-500"
+                className="relative overflow-hidden rounded-xl cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-lg group h-20 sm:h-24 md:h-28 bg-white dark:bg-gray-800"
               >
                 {/* Icône cœur en haut à droite */}
                 <div
