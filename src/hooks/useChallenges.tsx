@@ -29,7 +29,7 @@ export const useChallenges = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Charger les défis depuis localStorage
+  // Charger les défis depuis localStorage (préparé pour migration Supabase)
   const loadChallenges = async () => {
     if (!user) return;
 
@@ -37,10 +37,10 @@ export const useChallenges = () => {
       setLoading(true);
       setError(null);
 
-      // Charger les défis personnels depuis localStorage (tous les défis, y compris supprimés)
+      // Charger les défis personnels depuis localStorage
       const storedChallenges = localStorage.getItem(`user_challenges_${user.id}`);
       const challengesData = storedChallenges ? JSON.parse(storedChallenges) : [];
-      setUserChallenges(challengesData); // Charger tous les défis, pas de filtre ici
+      setUserChallenges(challengesData);
 
       // Charger les statistiques depuis localStorage
       const storedStats = localStorage.getItem(`challenge_stats_${user.id}`);
@@ -56,6 +56,8 @@ export const useChallenges = () => {
           contents_per_day: 1
         };
         setStats(defaultStats);
+        // Sauvegarder les stats par défaut
+        localStorage.setItem(`challenge_stats_${user.id}`, JSON.stringify(defaultStats));
       }
     } catch (err) {
       console.error('Erreur lors du chargement:', err);
@@ -184,12 +186,49 @@ export const useChallenges = () => {
     if (!user) return { error: 'Utilisateur non connecté' };
 
     try {
-      setStats(prev => prev ? { ...prev, program_duration: duration } : null);
-      saveChanges();
+      // Mettre à jour les stats avec la nouvelle durée
+      const updatedStats = stats ? { ...stats, program_duration: duration } : {
+        total_challenges: 0,
+        completed_challenges: 0,
+        pending_challenges: 0,
+        program_duration: duration,
+        contents_per_day: 1
+      };
+      
+      setStats(updatedStats);
+      
+      // Sauvegarder immédiatement dans localStorage
+      localStorage.setItem(`challenge_stats_${user.id}`, JSON.stringify(updatedStats));
       
       return { success: true };
     } catch (err) {
       console.error('Erreur lors de la mise à jour de la durée:', err);
+      return { error: err instanceof Error ? err.message : 'Erreur lors de la mise à jour' };
+    }
+  };
+
+  // Mettre à jour le nombre de contenus par jour
+  const updateContentsPerDay = async (contentsPerDay: number) => {
+    if (!user) return { error: 'Utilisateur non connecté' };
+
+    try {
+      // Mettre à jour les stats avec le nouveau nombre de contenus
+      const updatedStats = stats ? { ...stats, contents_per_day: contentsPerDay } : {
+        total_challenges: 0,
+        completed_challenges: 0,
+        pending_challenges: 0,
+        program_duration: '3months',
+        contents_per_day: contentsPerDay
+      };
+      
+      setStats(updatedStats);
+      
+      // Sauvegarder immédiatement dans localStorage
+      localStorage.setItem(`challenge_stats_${user.id}`, JSON.stringify(updatedStats));
+      
+      return { success: true };
+    } catch (err) {
+      console.error('Erreur lors de la mise à jour du nombre de contenus:', err);
       return { error: err instanceof Error ? err.message : 'Erreur lors de la mise à jour' };
     }
   };
@@ -303,6 +342,7 @@ export const useChallenges = () => {
     restoreChallenge,
     reorderChallenges,
     updateProgramDuration,
+    updateContentsPerDay,
     restoreDeletedChallenge,
     permanentlyDeleteChallenge
   };
