@@ -300,7 +300,7 @@ const Publish = () => {
         const { error } = await supabase
           .from('content_titles')
           .insert({
-            title: formData.title,
+        title: formData.title,
             platform: selectedNetwork === 'all' ? null : selectedNetwork,
             type: 'hook'
           });
@@ -320,15 +320,15 @@ const Publish = () => {
       console.log('=== PUBLICATION RÉUSSIE ===');
 
       // Réinitialiser le formulaire
-      setFormData({
-        title: '',
-        content_type: 'title',
-        category_id: '',
-        subcategory_id: '',
-        description: '',
-        url: '',
-        platform: ''
-      });
+        setFormData({
+          title: '',
+          content_type: 'title',
+          category_id: '',
+          subcategory_id: '',
+          description: '',
+          url: '',
+          platform: ''
+        });
 
       // Rediriger vers la page de succès ou la page d'accueil
       navigate('/profile');

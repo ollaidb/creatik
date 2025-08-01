@@ -10,6 +10,7 @@ import { usePublicChallenges } from '@/hooks/usePublicChallenges';
 import { useFavorites } from '@/hooks/useFavorites';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import Navigation from '@/components/Navigation';
 
 const PublicChallenges = () => {
   const navigate = useNavigate();
@@ -110,6 +111,7 @@ const PublicChallenges = () => {
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-gray-100"></div>
           </div>
         </main>
+        <Navigation />
       </div>
     );
   }
@@ -142,6 +144,7 @@ const PublicChallenges = () => {
             </CardContent>
           </Card>
         </main>
+        <Navigation />
       </div>
     );
   }
@@ -299,6 +302,7 @@ const PublicChallenges = () => {
           </div>
         )}
       </main>
+      <Navigation />
     </div>
   );
 };
