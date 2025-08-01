@@ -4,13 +4,14 @@ import { useAuth } from './useAuth';
 import { useToast } from './use-toast';
 
 interface PublishData {
-  content_type: 'category' | 'subcategory' | 'title' | 'challenge' | 'source' | 'account';
+  content_type: 'category' | 'subcategory' | 'title' | 'challenge' | 'source' | 'account' | 'hooks' | 'inspiration';
   title: string;
   description?: string;
   category_id?: string;
   subcategory_id?: string;
   url?: string;
   platform?: string;
+  social_network_id?: string; // Ajouter ce champ
 }
 
 interface DuplicateCheckResult {
@@ -71,6 +72,7 @@ export const usePendingPublish = () => {
           subcategory_id: data.subcategory_id,
           url: data.url,
           platform: data.platform,
+          social_network_id: data.social_network_id,
           status: 'pending'
         })
         .select()
