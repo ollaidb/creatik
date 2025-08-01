@@ -24,6 +24,17 @@ const PublicChallenges = () => {
   const filterLikedOnly = searchParams.get('filter') === 'liked';
   const { challenges, loading, error, addToPersonalChallenges } = usePublicChallenges(filterLikedOnly);
 
+  // Récupérer le paramètre de retour
+  const returnTo = searchParams.get('returnTo') || 'profile';
+
+  const handleBackClick = () => {
+    if (returnTo === 'home') {
+      navigate('/');
+    } else {
+      navigate('/profile');
+    }
+  };
+
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
       case 'easy': return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400';
@@ -97,7 +108,7 @@ const PublicChallenges = () => {
           <Button 
             variant="ghost" 
             size="icon" 
-            onClick={() => navigate(-1)} 
+            onClick={handleBackClick} 
             className="mr-2"
           >
             <ArrowLeft className="h-5 w-5" />
@@ -123,7 +134,7 @@ const PublicChallenges = () => {
           <Button 
             variant="ghost" 
             size="icon" 
-            onClick={() => navigate(-1)} 
+            onClick={handleBackClick} 
             className="mr-2"
           >
             <ArrowLeft className="h-5 w-5" />
@@ -156,7 +167,7 @@ const PublicChallenges = () => {
           <Button 
             variant="ghost" 
             size="icon" 
-            onClick={() => navigate(-1)} 
+            onClick={handleBackClick} 
             className="mr-2"
           >
             <ArrowLeft className="h-5 w-5" />

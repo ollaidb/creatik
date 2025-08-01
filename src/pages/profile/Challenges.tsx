@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, Reorder, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,6 +17,7 @@ import { Label } from '@/components/ui/label';
 
 const Challenges = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('challenges');
@@ -68,6 +69,17 @@ const Challenges = () => {
 
   // État pour les défis en cours de validation
   const [validatingChallenges, setValidatingChallenges] = useState<Set<string>>(new Set());
+
+  // Récupérer le paramètre de retour
+  const returnTo = searchParams.get('returnTo') || 'profile';
+
+  const handleBackClick = () => {
+    if (returnTo === 'home') {
+      navigate('/');
+    } else {
+      navigate('/profile');
+    }
+  };
 
   const getDurationText = (duration: string) => {
     switch (duration) {
@@ -594,7 +606,7 @@ const Challenges = () => {
           <Button 
             variant="ghost" 
             size="icon" 
-            onClick={() => navigate('/profile')} 
+            onClick={handleBackClick} 
             className="mr-2"
           >
             <ArrowLeft className="h-5 w-5" />
@@ -608,7 +620,7 @@ const Challenges = () => {
               <p className="text-muted-foreground mb-4">
                 Connectez-vous pour accéder à vos défis personnalisés
               </p>
-              <Button onClick={() => navigate('/profile')}>
+              <Button onClick={handleBackClick}>
                 Se connecter
               </Button>
             </CardContent>
@@ -625,7 +637,7 @@ const Challenges = () => {
           <Button 
             variant="ghost" 
             size="icon" 
-            onClick={() => navigate('/profile')} 
+            onClick={handleBackClick} 
             className="mr-2"
           >
             <ArrowLeft className="h-5 w-5" />
@@ -651,7 +663,7 @@ const Challenges = () => {
           <Button 
             variant="ghost" 
             size="icon" 
-            onClick={() => navigate('/profile')} 
+            onClick={handleBackClick} 
             className="mr-2"
           >
             <ArrowLeft className="h-5 w-5" />
@@ -682,7 +694,7 @@ const Challenges = () => {
           <Button 
             variant="ghost" 
             size="icon" 
-            onClick={() => navigate('/profile')} 
+            onClick={handleBackClick} 
             className="mr-2"
           >
             <ArrowLeft className="h-5 w-5" />

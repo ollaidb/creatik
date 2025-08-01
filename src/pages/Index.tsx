@@ -425,7 +425,7 @@ const Index: React.FC = () => {
             <Button 
               variant="outline" 
               size="sm"
-              onClick={() => navigate('/challenges')}
+              onClick={() => navigate('/challenges?returnTo=home')}
               className="flex items-center gap-1 text-xs px-2 py-1 border-border text-foreground hover:bg-accent"
             >
               <Target className="w-3 h-3" />

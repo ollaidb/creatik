@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Plus, Heart, Search } from 'lucide-react';
@@ -30,6 +30,7 @@ const FAVORITE_TABS = [
 
 const Favorites = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [selectedTab, setSelectedTab] = useState('categories');
   const [selectedTheme, setSelectedTheme] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
@@ -47,6 +48,17 @@ const Favorites = () => {
   const { data: allSources = [] } = useSources();
   const { challenges: allChallenges = [] } = usePublicChallenges();
   const { toast } = useToast();
+
+  // Récupérer le paramètre de retour
+  const returnTo = searchParams.get('returnTo') || 'profile';
+
+  const handleBackClick = () => {
+    if (returnTo === 'home') {
+      navigate('/');
+    } else {
+      navigate('/profile');
+    }
+  };
 
   const categoriesToShow = allCategories.filter(cat => favoriteCategories.includes(cat.id));
   const subcategoriesToShow = allSubcategories.filter(sub => favoriteSubcategories.includes(sub.id));
@@ -123,9 +135,9 @@ const Favorites = () => {
 
   const handleSourceClick = (source: {
     id: string;
-    title: string;
-    url: string;
-    description: string;
+    name: string;
+    url: string | null;
+    description: string | null;
     category?: string;
     subcategory?: string;
   }) => {
@@ -178,7 +190,7 @@ const Favorites = () => {
             <Button 
               variant="ghost" 
               size="icon" 
-              onClick={() => navigate('/')} 
+              onClick={handleBackClick} 
               className="mr-2"
             >
               <ArrowLeft className="h-5 w-5" />
@@ -209,7 +221,7 @@ const Favorites = () => {
           <Button 
             variant="ghost" 
             size="icon" 
-            onClick={() => navigate('/')} 
+            onClick={handleBackClick} 
             className="mr-2"
           >
             <ArrowLeft className="h-5 w-5" />
@@ -579,17 +591,17 @@ const Favorites = () => {
                       {/* URL et icône */}
                       <div className="flex items-center gap-2 text-sm text-green-700 dark:text-green-400">
                         <Search className="w-4 h-4" />
-                        <span className="truncate">{source.url}</span>
+                        <span className="truncate">{source.url || 'Lien non disponible'}</span>
                       </div>
                       
                       {/* Titre cliquable */}
                       <h3 className="text-lg font-medium text-blue-600 dark:text-blue-400 hover:underline">
-                        {source.title}
+                        {source.name || 'Source non renseignée'}
                       </h3>
                       
                       {/* Description */}
                       <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-                        {source.description}
+                        {source.description || 'Aucune description disponible.'}
                       </p>
                       
                       {/* Actions */}

@@ -1,6 +1,6 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import CategoryCard from "./CategoryCard";
 import IntelligentSearchBar from "./IntelligentSearchBar";
 import { useCategories } from "@/hooks/useCategories";
@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 
 const Hero: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { data: categories, isLoading } = useCategories();
   
   const handleSearch = (query: string) => {
@@ -23,11 +24,15 @@ const Hero: React.FC = () => {
   };
 
   const handleFavoritesClick = () => {
-    navigate('/profile/favorites');
+    // Si on vient de la page d'accueil, on passe l'information
+    const returnTo = location.pathname === '/' ? 'home' : 'profile';
+    navigate(`/profile/favorites?returnTo=${returnTo}`);
   };
 
   const handleChallengesClick = () => {
-    navigate('/profile/challenges');
+    // Si on vient de la page d'accueil, on passe l'information
+    const returnTo = location.pathname === '/' ? 'home' : 'profile';
+    navigate(`/profile/challenges?returnTo=${returnTo}`);
   };
 
   if (isLoading) {
