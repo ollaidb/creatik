@@ -6,17 +6,15 @@ export function useOptimizedQuery<TData, TError = unknown>(
   queryFn: () => Promise<TData>,
   options?: Omit<UseQueryOptions<TData, TError, TData>, 'queryKey' | 'queryFn'>
 ) {
-  // Ajouter un timestamp pour éviter le cache
-  const cacheBustingKey = [...queryKey, Date.now().toString()];
-  
   return useQuery({
-    queryKey: cacheBustingKey,
+    queryKey,
     queryFn,
-    staleTime: 1000 * 60 * 2, // 2 minutes
-    gcTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    gcTime: 1000 * 60 * 10, // 10 minutes
     refetchOnWindowFocus: false,
-    refetchOnReconnect: true,
+    refetchOnReconnect: false,
     retry: 1,
+    retryDelay: 1000,
     ...options,
   });
 }
@@ -24,9 +22,9 @@ export function useOptimizedQuery<TData, TError = unknown>(
 // Hook pour forcer le rechargement des données
 export function useForceRefresh() {
   const refresh = () => {
-    // Vider le cache de React Query
+    // Forcer le rechargement en invalidant le cache
     window.location.reload();
   };
   
-  return refresh;
+  return { refresh };
 } 

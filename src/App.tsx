@@ -29,15 +29,16 @@ import Sources from "./pages/Sources";
 import TrendingIdeas from "./pages/TrendingIdeas";
 import WhatToPostToday from "./pages/WhatToPostToday";
 
-// Configuration optimisée du QueryClient pour éviter les problèmes de cache
+// Configuration optimisée du QueryClient pour de meilleures performances
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 1000 * 60 * 5, // 5 minutes
       gcTime: 1000 * 60 * 10, // 10 minutes (anciennement cacheTime)
       refetchOnWindowFocus: false,
-      refetchOnReconnect: true,
+      refetchOnReconnect: false,
       retry: 1,
+      retryDelay: 1000,
     },
   },
 });

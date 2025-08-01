@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+
 export const useCategories = () => {
   return useQuery({
     queryKey: ['categories'],
@@ -11,16 +12,15 @@ export const useCategories = () => {
       if (error) throw error;
       return data;
     },
-    // Refetch automatique toutes les 30 secondes pour voir les nouvelles publications
-    refetchInterval: 30000,
-    // Refetch quand la fenêtre redevient active
-    refetchOnWindowFocus: true,
-    // Refetch quand on revient en ligne
-    refetchOnReconnect: true,
-    // Garder les données en cache pendant 30 secondes
-    staleTime: 30000
+    // Optimisation des performances
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    gcTime: 1000 * 60 * 10, // 10 minutes (anciennement cacheTime)
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchInterval: false
   });
 };
+
 export const useCategory = (categoryId: string) => {
   return useQuery({
     queryKey: ['category', categoryId],
@@ -34,10 +34,11 @@ export const useCategory = (categoryId: string) => {
       return data;
     },
     enabled: !!categoryId,
-    // Refetch automatique pour les catégories individuelles aussi
-    refetchInterval: 5000,
-    refetchOnWindowFocus: true,
-    refetchOnReconnect: true,
-    staleTime: 10000
+    // Optimisation des performances
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    gcTime: 1000 * 60 * 10, // 10 minutes
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchInterval: false
   });
 };

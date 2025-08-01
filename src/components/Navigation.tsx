@@ -24,7 +24,7 @@ const Navigation: React.FC<NavigationProps> = ({ className }) => {
     { id: "home", label: "Accueil", icon: "home", path: "/" },
     { id: "categories", label: "Catégories", icon: "categories", path: "/categories" },
     { id: "publish", label: "Publier", icon: "publish", path: "/publish" },
-    { id: "challenges", label: "Défis publics", icon: "challenges", path: "/challenges" },
+    { id: "challenges", label: "Défis", icon: "challenges", path: "/challenges" },
     { id: "profile", label: "Profil", icon: "profile", path: "/profile" },
   ];
 
@@ -34,7 +34,7 @@ const Navigation: React.FC<NavigationProps> = ({ className }) => {
 
   return (
     <div className={cn(
-      "fixed bottom-0 left-0 right-0 bg-gradient-to-t from-foreground/80 via-muted-foreground/40 to-transparent backdrop-blur-md z-30",
+      "fixed bottom-0 left-0 right-0 bg-gradient-to-t from-background/95 via-background/90 to-background/80 backdrop-blur-md border-t border-border/50 z-30",
       className
     )}>
       <div className="flex justify-around items-center h-14 sm:h-16 max-w-xl mx-auto px-2">
@@ -42,10 +42,10 @@ const Navigation: React.FC<NavigationProps> = ({ className }) => {
           <button
             key={tab.id}
             className={cn(
-              "flex flex-col items-center justify-center w-full h-full relative py-1 px-1 min-w-0 transition-all duration-300",
+              "flex flex-col items-center justify-center w-full h-full relative py-0.5 px-1 min-w-0 transition-all duration-300",
               activeTab === tab.id 
-                ? "text-primary" 
-                : "text-muted-foreground hover:text-foreground"
+                ? "text-primary font-semibold" 
+                : "text-muted-foreground/80 hover:text-foreground/90"
             )}
             onClick={() => handleTabClick(tab.path)}
           >
@@ -85,7 +85,14 @@ const Navigation: React.FC<NavigationProps> = ({ className }) => {
               </svg>
               </div>
             )}
-            <span className="text-xs mt-0.5 sm:mt-1 truncate leading-tight font-semibold drop-shadow-sm">{tab.label}</span>
+
+            {/* Nom de la page en-dessous de l'icône */}
+            <span className={cn(
+              "text-xs sm:text-sm mt-0.5 truncate leading-tight font-medium drop-shadow-sm",
+              activeTab === tab.id 
+                ? "text-primary font-semibold" 
+                : "text-muted-foreground/80"
+            )}>{tab.label}</span>
           </button>
         ))}
       </div>

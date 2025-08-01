@@ -16,15 +16,13 @@ export const useSubcategories = (categoryId?: string) => {
       if (error) throw error;
       return data;
     },
-    enabled: true, // Toujours activé pour charger toutes les sous-catégories
-    // Refetch automatique toutes les 30 secondes pour voir les nouvelles publications
-    refetchInterval: 30000,
-    // Refetch quand la fenêtre redevient active
-    refetchOnWindowFocus: true,
-    // Refetch quand on revient en ligne
-    refetchOnReconnect: true,
-    // Garder les données en cache pendant 30 secondes
-    staleTime: 30000
+    enabled: !!categoryId, // Seulement activé si categoryId est fourni
+    // Optimisation des performances
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    gcTime: 1000 * 60 * 10, // 10 minutes
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchInterval: false
   });
 };
 
@@ -44,10 +42,11 @@ export const useSubcategory = (subcategoryId: string) => {
       return data;
     },
     enabled: !!subcategoryId,
-    // Refetch automatique pour les sous-catégories individuelles aussi
-    refetchInterval: 5000,
-    refetchOnWindowFocus: true,
-    refetchOnReconnect: true,
-    staleTime: 10000
+    // Optimisation des performances
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    gcTime: 1000 * 60 * 10, // 10 minutes
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchInterval: false
   });
 };
