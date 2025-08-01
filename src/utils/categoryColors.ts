@@ -57,11 +57,11 @@ export const getCategoryHexColor = (categoryId: string, isDarkMode: boolean = fa
   
   if (isDarkMode) {
     const darkColors = [
-      '#010f29', // Bleu foncé
-      '#27020e', // Rouge foncé
-      '#210227', // Violet foncé
-      '#021b27', // Bleu-vert foncé
-      '#221400'  // Marron foncé
+      '#420101', // Rouge foncé riche
+      '#0c2200', // Vert foncé profond
+      '#722900', // Orange foncé chaud
+      '#5d003e', // Violet foncé intense
+      '#1a1a2e'  // Bleu foncé mystérieux
     ];
     return darkColors[colorIndex];
   } else {
@@ -82,11 +82,11 @@ export const getCategoryHexColorByIndex = (index: number, isDarkMode: boolean = 
   
   if (isDarkMode) {
     const darkColors = [
-      '#010f29', // Bleu foncé
-      '#27020e', // Rouge foncé
-      '#210227', // Violet foncé
-      '#021b27', // Bleu-vert foncé
-      '#221400'  // Marron foncé
+      '#420101', // Rouge foncé riche
+      '#0c2200', // Vert foncé profond
+      '#722900', // Orange foncé chaud
+      '#5d003e', // Violet foncé intense
+      '#1a1a2e'  // Bleu foncé mystérieux
     ];
     return darkColors[colorIndex];
   } else {

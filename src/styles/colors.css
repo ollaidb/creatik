@@ -21,12 +21,12 @@
   --creatik-input-bg: #111617;        /* Fond input */
   --creatik-input-text: #E5E7EB;      /* Texte input */
   
-  /* Couleurs pour les blocs de catégories - Mode Sombre */
-  --creatik-category-1: #010f29;      /* Bleu foncé */
-  --creatik-category-2: #27020e;      /* Rouge foncé */
-  --creatik-category-3: #210227;      /* Violet foncé */
-  --creatik-category-4: #021b27;      /* Bleu-vert foncé */
-  --creatik-category-5: #221400;      /* Marron foncé */
+  /* Couleurs pour les blocs de catégories - Mode Sombre (Nouvelles couleurs plus riches) */
+  --creatik-category-1: #420101;      /* Rouge foncé riche */
+  --creatik-category-2: #0c2200;      /* Vert foncé profond */
+  --creatik-category-3: #722900;      /* Orange foncé chaud */
+  --creatik-category-4: #5d003e;      /* Violet foncé intense */
+  --creatik-category-5: #1a1a2e;      /* Bleu foncé mystérieux (ajouté pour compléter) */
 }
 
 /* Mode Light - Nouvelles couleurs */

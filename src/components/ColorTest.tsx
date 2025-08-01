@@ -57,7 +57,7 @@ const ColorTest: React.FC = () => {
 
         {/* Mode Sombre */}
         <div className="space-y-2">
-          <h3 className="font-semibold">Mode Sombre - Distribution Cyclique</h3>
+          <h3 className="font-semibold">Mode Sombre - Nouvelles Couleurs Riches</h3>
           {testCategories.map((category, index) => (
             <div
               key={category.id}
@@ -73,15 +73,24 @@ const ColorTest: React.FC = () => {
       </div>
 
       <div className="mt-8">
-        <h3 className="font-semibold mb-2">Distribution Cyclique :</h3>
+        <h3 className="font-semibold mb-2">Nouvelles Couleurs Mode Sombre :</h3>
+        <div className="bg-gray-100 p-4 rounded text-sm space-y-1">
+          <div><strong>Index 0:</strong> Rouge foncé riche (#420101)</div>
+          <div><strong>Index 1:</strong> Vert foncé profond (#0c2200)</div>
+          <div><strong>Index 2:</strong> Orange foncé chaud (#722900)</div>
+          <div><strong>Index 3:</strong> Violet foncé intense (#5d003e)</div>
+          <div><strong>Index 4:</strong> Bleu foncé mystérieux (#1a1a2e)</div>
+        </div>
+      </div>
+
+      <div className="mt-4">
+        <h3 className="font-semibold mb-2">Couleurs Mode Clair :</h3>
         <div className="bg-gray-100 p-4 rounded text-sm space-y-1">
           <div><strong>Index 0:</strong> Rouge (#dc2329)</div>
           <div><strong>Index 1:</strong> Bleu (#0007ad)</div>
           <div><strong>Index 2:</strong> Rose (#ff55f3)</div>
           <div><strong>Index 3:</strong> Orange (#ffb001)</div>
           <div><strong>Index 4:</strong> Vert (#00a86b)</div>
-          <div><strong>Index 5:</strong> Rouge (#dc2329) - Cycle recommence</div>
-          <div><strong>Index 6:</strong> Bleu (#0007ad) - Cycle recommence</div>
         </div>
       </div>
 
@@ -92,6 +101,7 @@ const ColorTest: React.FC = () => {
           <div>✅ Distribution équilibrée et prévisible</div>
           <div>✅ Cycle de 5 couleurs qui se répète</div>
           <div>✅ Chaque bloc a une couleur différente de ses voisins</div>
+          <div>✅ Nouvelles couleurs plus riches et sophistiquées pour le mode sombre</div>
         </div>
       </div>
 
