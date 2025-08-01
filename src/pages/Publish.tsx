@@ -35,7 +35,7 @@ const Publish = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
-    content_type: 'title' as 'category' | 'subcategory' | 'title' | 'challenge' | 'source' | 'account',
+    content_type: 'title' as 'category' | 'subcategory' | 'title' | 'challenge' | 'source' | 'account' | 'hooks' | 'inspiration',
     category_id: '',
     subcategory_id: '',
     description: '', // Added for challenges
