@@ -301,7 +301,7 @@ const Favorites = () => {
                 initial="hidden"
                 animate="visible"
               >
-                {categoriesToShow.map((category) => (
+                {categoriesToShow.map((category, index) => (
                   <motion.div key={category.id} variants={itemVariants}>
                     <div className="relative">
                       <CategoryCard
@@ -310,6 +310,7 @@ const Favorites = () => {
                           name: category.name,
                           color: category.color
                         }}
+                        index={index}
                         className="w-full h-20 sm:h-24"
                         onClick={() => navigate(`/category/${category.id}/subcategories`)}
                       />

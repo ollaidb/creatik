@@ -278,7 +278,7 @@ const Categories = () => {
                   initial="hidden"
                   animate="visible"
                 >
-          {getSortedCategories(filteredCategories).map((category) => (
+          {getSortedCategories(filteredCategories).map((category, index) => (
                     <motion.div key={category.id} variants={itemVariants}>
                       <CategoryCard 
                         category={{
@@ -286,6 +286,7 @@ const Categories = () => {
                           name: category.name,
                   color: category.color || 'primary'
                         }}
+                        index={index}
                 onClick={() => navigate(`/category/${category.id}/subcategories?network=${selectedNetwork}`)}
                         className="w-full h-20 sm:h-24 md:h-28"
                       />

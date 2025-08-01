@@ -1,45 +1,61 @@
 /* Couleurs personnalisées pour Creatik */
 
-/* Mode Dark */
+/* Mode Dark - Nouvelles couleurs */
 .dark {
   /* Couleurs principales */
-  --creatik-bg-primary: #0F172A;      /* Fond principal */
-  --creatik-bg-secondary: #1E293B;    /* Fond secondaire / cartes */
-  --creatik-text-primary: #F9FAFB;    /* Texte principal */
-  --creatik-text-secondary: #94A3B8;  /* Texte secondaire */
-  --creatik-text-muted: #64748B;      /* Texte inactif */
-  --creatik-icon-active: #8B5CF6;     /* Icônes actives */
+  --creatik-bg-primary: #0F0F10;      /* Fond principal - Anthracite très foncé */
+  --creatik-bg-secondary: #111617;     /* Fond secondaire (cartes) */
+  --creatik-text-primary: #E5E7EB;    /* Texte principal - Gris clair */
+  --creatik-text-secondary: #9CA3AF;  /* Texte secondaire - Gris doux */
+  --creatik-text-muted: #6B7280;      /* Texte inactif */
+  --creatik-icon-active: #60A5FA;     /* Icônes bleues (VPN) - Bleu électrique */
   --creatik-icon-inactive: #475569;   /* Icônes inactives */
-  --creatik-button-primary: linear-gradient(135deg, #8B5CF6 0%, #3B82F6 100%);
+  --creatik-button-primary: #F472B6;  /* Boutons roses - Rose Proton */
   --creatik-button-secondary: #334155; /* Boutons secondaires */
-  --creatik-success: #10B981;         /* Success */
+  --creatik-success: #10B981;         /* Accent vert (promo) - Vert lumineux */
   --creatik-error: #EF4444;           /* Erreur */
-  --creatik-menu-active: #A78BFA;     /* Menu actif */
-  --creatik-hover: rgba(99, 102, 241, 0.15); /* Survol */
-  --creatik-border: #334155;          /* Bordures */
-  --creatik-input-bg: #1E293B;        /* Fond input */
-  --creatik-input-text: #F9FAFB;      /* Texte input */
+  --creatik-accent-pink: #EC4899;     /* Accent rose (meilleure offre) - Rose framboise */
+  --creatik-menu-active: #F472B6;     /* Menu actif */
+  --creatik-hover: rgba(244, 114, 182, 0.15); /* Survol rose */
+  --creatik-border: #374151;          /* Bordures */
+  --creatik-input-bg: #111617;        /* Fond input */
+  --creatik-input-text: #E5E7EB;      /* Texte input */
+  
+  /* Couleurs pour les blocs de catégories - Mode Sombre */
+  --creatik-category-1: #010f29;      /* Bleu foncé */
+  --creatik-category-2: #27020e;      /* Rouge foncé */
+  --creatik-category-3: #210227;      /* Violet foncé */
+  --creatik-category-4: #021b27;      /* Bleu-vert foncé */
+  --creatik-category-5: #221400;      /* Marron foncé */
 }
 
-/* Mode Light */
+/* Mode Light - Nouvelles couleurs */
 :root {
   /* Couleurs principales */
-  --creatik-bg-primary: #FFFFFF;      /* Fond principal */
-  --creatik-bg-secondary: #F9FAFB;    /* Fond secondaire / cartes */
-  --creatik-text-primary: #111827;    /* Texte principal */
-  --creatik-text-secondary: #6B7280;  /* Texte secondaire */
+  --creatik-bg-primary: #F7F8F9;      /* Fond principal - Blanc cassé */
+  --creatik-bg-secondary: #FFFFFF;     /* Fond secondaire (cartes) - Blanc */
+  --creatik-text-primary: #1E1E1E;    /* Texte principal - Gris foncé */
+  --creatik-text-secondary: #5F6368;  /* Texte secondaire - Gris moyen */
   --creatik-text-muted: #9CA3AF;      /* Texte inactif */
-  --creatik-icon-active: #6D28D9;     /* Icônes actives */
+  --creatik-icon-active: #3B82F6;     /* Icônes bleues (streaming) - Bleu clair */
   --creatik-icon-inactive: #D1D5DB;   /* Icônes inactives */
-  --creatik-button-primary: #8B5CF6;  /* Boutons principaux */
+  --creatik-button-primary: #6C5DD3;  /* Liens/boutons violets - Violet Proton */
   --creatik-button-secondary: #E5E7EB; /* Boutons secondaires */
-  --creatik-success: #10B981;         /* Success */
+  --creatik-success: #10B981;         /* Accent vert (promo) - Vert doux */
   --creatik-error: #EF4444;           /* Erreur */
+  --creatik-accent-pink: #EC4899;     /* Accent rose (meilleure offre) - Rose fuchsia */
   --creatik-menu-active: #EDE9FE;     /* Menu actif */
-  --creatik-hover: rgba(139, 92, 246, 0.1); /* Survol */
+  --creatik-hover: rgba(108, 93, 211, 0.1); /* Survol violet */
   --creatik-border: #E5E7EB;          /* Bordures */
   --creatik-input-bg: #F3F4F6;        /* Fond input */
-  --creatik-input-text: #111827;      /* Texte input */
+  --creatik-input-text: #1E1E1E;      /* Texte input */
+  
+  /* Couleurs pour les blocs de catégories - Mode Clair (5 couleurs distinctes) */
+  --creatik-category-1: #dc2329;      /* Rouge */
+  --creatik-category-2: #0007ad;      /* Bleu */
+  --creatik-category-3: #ff55f3;      /* Rose */
+  --creatik-category-4: #ffb001;      /* Orange */
+  --creatik-category-5: #00a86b;      /* Vert */
 }
 
 /* Classes utilitaires pour les couleurs personnalisées */
@@ -49,10 +65,11 @@
 .text-creatik-secondary { color: var(--creatik-text-secondary); }
 .text-creatik-muted { color: var(--creatik-text-muted); }
 .border-creatik { border-color: var(--creatik-border); }
-.bg-creatik-button-primary { background: var(--creatik-button-primary); }
+.bg-creatik-button-primary { background-color: var(--creatik-button-primary); }
 .bg-creatik-button-secondary { background-color: var(--creatik-button-secondary); }
 .text-creatik-success { color: var(--creatik-success); }
 .text-creatik-error { color: var(--creatik-error); }
+.text-creatik-accent-pink { color: var(--creatik-accent-pink); }
 .bg-creatik-input { background-color: var(--creatik-input-bg); }
 .text-creatik-input { color: var(--creatik-input-text); }
 
@@ -67,4 +84,14 @@
 
 /* Classes pour les bordures */
 .border-creatik-primary { border-color: var(--creatik-bg-primary); }
-.border-creatik-secondary { border-color: var(--creatik-bg-secondary); } 
+.border-creatik-secondary { border-color: var(--creatik-bg-secondary); }
+
+/* Classes pour les catégories */
+.bg-creatik-category-1 { background-color: var(--creatik-category-1); }
+.bg-creatik-category-2 { background-color: var(--creatik-category-2); }
+.bg-creatik-category-3 { background-color: var(--creatik-category-3); }
+.bg-creatik-category-4 { background-color: var(--creatik-category-4); }
+.bg-creatik-category-5 { background-color: var(--creatik-category-5); }
+
+/* Classes pour les textes des catégories - TOUJOURS BLANC */
+.text-creatik-category { color: #FFFFFF !important; } 

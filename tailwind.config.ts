@@ -64,6 +64,31 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
+				// Couleurs personnalisées Creatik
+				creatik: {
+					primary: 'var(--creatik-bg-primary)',
+					secondary: 'var(--creatik-bg-secondary)',
+					'text-primary': 'var(--creatik-text-primary)',
+					'text-secondary': 'var(--creatik-text-secondary)',
+					'text-muted': 'var(--creatik-text-muted)',
+					'button-primary': 'var(--creatik-button-primary)',
+					'button-secondary': 'var(--creatik-button-secondary)',
+					success: 'var(--creatik-success)',
+					error: 'var(--creatik-error)',
+					'accent-pink': 'var(--creatik-accent-pink)',
+					border: 'var(--creatik-border)',
+					'input-bg': 'var(--creatik-input-bg)',
+					'input-text': 'var(--creatik-input-text)',
+					'icon-active': 'var(--creatik-icon-active)',
+					'icon-inactive': 'var(--creatik-icon-inactive)',
+					// Couleurs des catégories
+					'category-1': 'var(--creatik-category-1)',
+					'category-2': 'var(--creatik-category-2)',
+					'category-3': 'var(--creatik-category-3)',
+					'category-4': 'var(--creatik-category-4)',
+					'category-5': 'var(--creatik-category-5)',
+					'category-text': '#FFFFFF'
+				}
 			},
 			borderRadius: {
 				lg: 'var(--radius)',

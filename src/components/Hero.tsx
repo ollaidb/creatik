@@ -131,7 +131,7 @@ const Hero: React.FC = () => {
                 <CarouselPrevious className="relative h-8 w-8" />
               </div>
               <CarouselContent className="-ml-1">
-                {categories?.map((category) => (
+                {categories?.map((category, index) => (
                   <CarouselItem key={category.id} className="pl-1 basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5">
                     <div className="p-1">
                       <CategoryCard 
@@ -140,6 +140,7 @@ const Hero: React.FC = () => {
                           name: category.name,
                           color: category.color
                         }}
+                        index={index}
                         className="w-full h-20 sm:h-24 md:h-28"
                         onClick={() => navigate(`/category/${category.id}/subcategories`)}
                       />

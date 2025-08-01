@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Heart, Copy, ExternalLink } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Heart, Copy, ExternalLink, Check } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { getCategoryHexColor } from '@/utils/categoryColors';
 
 interface TitleSelectionCardProps {
   title: {
@@ -36,6 +37,26 @@ export const TitleSelectionCard: React.FC<TitleSelectionCardProps> = ({
 }) => {
   const [ripples, setRipples] = useState<Array<{ id: number; x: number; y: number }>>([]);
   const [isPressed, setIsPressed] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  // Détecter le mode sombre/clair
+  useEffect(() => {
+    const checkDarkMode = () => {
+      const isDark = document.documentElement.classList.contains('dark');
+      setIsDarkMode(isDark);
+    };
+
+    checkDarkMode();
+    
+    // Observer les changements de classe
+    const observer = new MutationObserver(checkDarkMode);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class']
+    });
+
+    return () => observer.disconnect();
+  }, []);
 
   const handleClick = (event: React.MouseEvent<HTMLDivElement>) => {
     const rect = event.currentTarget.getBoundingClientRect();
@@ -93,23 +114,11 @@ export const TitleSelectionCard: React.FC<TitleSelectionCardProps> = ({
     }
   };
 
-  const getCategoryColor = (category?: string) => {
-    switch (category?.toLowerCase()) {
-      case 'activism':
-        return 'from-red-500 to-orange-500';
-      case 'environment':
-        return 'from-green-500 to-emerald-500';
-      case 'social':
-        return 'from-blue-500 to-indigo-500';
-      case 'education':
-        return 'from-purple-500 to-pink-500';
-      case 'health':
-        return 'from-pink-500 to-rose-500';
-      case 'technology':
-        return 'from-cyan-500 to-blue-500';
-      default:
-        return 'from-gray-500 to-gray-600';
-    }
+  // Nouvelle fonction pour obtenir la couleur de catégorie basée sur l'ID et le mode
+  const getCategoryColor = (categoryId?: string) => {
+    if (!categoryId) return '#6B7280'; // Gris par défaut
+    
+    return getCategoryHexColor(categoryId, isDarkMode);
   };
 
   return (
@@ -127,181 +136,127 @@ export const TitleSelectionCard: React.FC<TitleSelectionCardProps> = ({
         relative bg-white dark:bg-gray-800 rounded-xl p-4 border-2 cursor-pointer overflow-hidden
         ${isSelected 
           ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20 shadow-lg' 
-          : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:shadow-md'
+          : 'border-gray-200 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-600'
         }
-        ${isPressed ? 'bg-gray-50 dark:bg-gray-700 shadow-inner transform scale-[0.98]' : ''}
+        transition-all duration-200 ease-out
+        ${isPressed ? 'scale-95' : ''}
       `}
       onClick={handleClick}
       onMouseDown={handleMouseDown}
       onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseUp}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
-      whileHover={{ scale: 1.02 }}
-      whileTap={{ scale: 0.96 }}
     >
-      {/* Ripple effects */}
-      {ripples.map((ripple) => (
+      {/* Ripple effect */}
+      {ripples.map(ripple => (
         <motion.div
           key={ripple.id}
-          className="absolute rounded-full bg-white/40 dark:bg-white/30 pointer-events-none"
-          style={{
-            left: ripple.x - 20,
-            top: ripple.y - 20,
-            width: 40,
-            height: 40,
+          className="absolute inset-0 bg-purple-500/20 rounded-xl"
+          initial={{ 
+            scale: 0, 
+            opacity: 1,
+            x: ripple.x - 50,
+            y: ripple.y - 50
           }}
-          initial={{ scale: 0, opacity: 1 }}
-          animate={{ scale: 4, opacity: 0 }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
+          animate={{ 
+            scale: 4, 
+            opacity: 0 
+          }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
         />
       ))}
 
-      {/* Overlay de pression avec animation progressive */}
-      <motion.div
-        className="absolute inset-0 bg-gradient-to-b from-gray-200/30 via-gray-200/20 to-transparent dark:from-gray-600/30 dark:via-gray-600/20 pointer-events-none"
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ 
-          opacity: isPressed ? 1 : 0,
-          scale: isPressed ? 1 : 0.8
-        }}
-        transition={{ 
-          duration: 0.3,
-          ease: "easeOut",
-          type: "spring",
-          stiffness: 300,
-          damping: 20
-        }}
-      />
+      {/* Selection indicator */}
+      {isSelected && (
+        <div className="absolute top-2 right-2 z-10">
+          <div className="bg-purple-500 text-white rounded-full p-1">
+            <Check className="w-4 h-4" />
+          </div>
+        </div>
+      )}
 
-      <div className="flex items-center gap-4 relative z-10">
-        {/* Icône de catégorie */}
-        <motion.div 
-          className={`
-            w-12 h-12 rounded-full bg-gradient-to-br ${getCategoryColor(title.category)} 
-            flex items-center justify-center text-white text-xl flex-shrink-0
-          `}
-          animate={{ scale: isPressed ? 1.1 : 1 }}
-          transition={{ duration: 0.2 }}
-        >
-          {getCategoryIcon(title.category)}
-        </motion.div>
-
-        {/* Contenu principal */}
-        <div className="flex-1 min-w-0">
-          <motion.h3 
-            className="font-medium text-gray-900 dark:text-white text-base leading-relaxed line-clamp-2"
-            animate={{ 
-              scale: isPressed ? 1.02 : 1,
-              x: isPressed ? 2 : 0
+      {/* Category badge */}
+      {title.category && (
+        <div className="absolute top-2 left-2 z-10">
+          <div 
+            className="px-2 py-1 rounded-full text-xs font-medium text-white"
+            style={{
+              backgroundColor: getCategoryColor(title.category)
             }}
-            transition={{ duration: 0.2 }}
           >
+            <span className="mr-1">{getCategoryIcon(title.category)}</span>
+            {title.category}
+          </div>
+        </div>
+      )}
+
+      {/* Content */}
+      <div className="mt-8">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2 line-clamp-2">
             {title.title}
-          </motion.h3>
+        </h3>
+        
           {title.description && (
-            <motion.p 
-              className="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-1"
-              animate={{ scale: isPressed ? 1.01 : 1 }}
-              transition={{ duration: 0.2 }}
-            >
+          <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-3 mb-3">
               {title.description}
-            </motion.p>
-          )}
-          {title.category && (
-            <div className="flex items-center gap-2 mt-2">
-              <span className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-2 py-1 rounded-full">
-                {title.category}
-              </span>
-              {title.subcategory && (
-                <span className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-2 py-1 rounded-full">
-                  {title.subcategory}
-                </span>
-              )}
+          </p>
+        )}
+
+        {/* Platform badge */}
+        {title.platform && (
+          <div className="inline-block bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 text-xs px-2 py-1 rounded-full mb-3">
+            {title.platform}
             </div>
           )}
         </div>
 
-        {/* Indicateur de sélection */}
-        {isSelected && (
-          <motion.div 
-            className="flex-shrink-0"
-            animate={{ scale: isPressed ? 1.2 : 1 }}
-            transition={{ duration: 0.2 }}
-          >
-            <div className="w-6 h-6 rounded-full bg-purple-500 flex items-center justify-center">
-              <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-              </svg>
-            </div>
-          </motion.div>
-        )}
-
         {/* Actions */}
         {showActions && (
-          <div className="flex items-center gap-1 flex-shrink-0">
+        <div className="absolute bottom-2 right-2 flex gap-1">
             {onFavorite && (
-              <motion.div
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-              >
-                <Button
-                  variant="ghost"
-                  size="sm"
+            <button
                   onClick={(e) => {
                     e.stopPropagation();
                     onFavorite(title.id);
                   }}
-                  className="p-2 h-8 w-8 rounded-full"
+              className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
                 >
                   <Heart 
-                    size={16} 
-                    className={isFavorite ? 'text-red-500 fill-red-500' : 'text-gray-400'} 
-                  />
-                </Button>
-              </motion.div>
+                className={cn(
+                  "w-4 h-4",
+                  isFavorite 
+                    ? "text-red-500 fill-red-500" 
+                    : "text-gray-400 hover:text-red-400"
+                )}
+              />
+            </button>
             )}
             
             {onCopy && (
-              <motion.div
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-              >
-                <Button
-                  variant="ghost"
-                  size="sm"
+            <button
                   onClick={(e) => {
                     e.stopPropagation();
                     onCopy(title.title);
                   }}
-                  className="p-2 h-8 w-8 rounded-full"
+              className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
                 >
-                  <Copy size={16} className="text-gray-400" />
-                </Button>
-              </motion.div>
+              <Copy className="w-4 h-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200" />
+            </button>
             )}
 
             {onExternalLink && title.url && (
-              <motion.div
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-              >
-                <Button
-                  variant="ghost"
-                  size="sm"
+            <button
                   onClick={(e) => {
                     e.stopPropagation();
                     onExternalLink(title.url!);
                   }}
-                  className="p-2 h-8 w-8 rounded-full"
+              className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
                 >
-                  <ExternalLink size={16} className="text-gray-400" />
-                </Button>
-              </motion.div>
+              <ExternalLink className="w-4 h-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200" />
+            </button>
             )}
           </div>
         )}
-      </div>
     </motion.div>
   );
 }; 
