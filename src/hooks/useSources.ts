@@ -3,13 +3,10 @@ import { supabase } from '@/integrations/supabase/client';
 
 interface Source {
   id: string;
-  title: string;
-  url: string;
-  description: string;
-  category?: string;
-  subcategory?: string;
+  name: string;
+  url: string | null;
+  description: string | null;
   created_at: string;
-  updated_at: string;
 }
 
 export const useSources = () => {
