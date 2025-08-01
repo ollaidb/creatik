@@ -375,23 +375,67 @@ const Challenges = () => {
     if (!challengeToDelete) return;
 
     try {
-      // Si on est dans l'onglet corbeille, supprimer définitivement
-      const isInTrash = deletedChallenges.some(c => c.id === challengeToDelete);
-      const result = isInTrash 
-        ? await permanentlyDeleteChallenge(challengeToDelete)
-        : await deleteChallenge(challengeToDelete);
+      if (challengeToDelete === 'bulk') {
+        // Suppression en masse
+        let successCount = 0;
+        let errorCount = 0;
 
-      if (result?.success) {
-        toast({
-          title: isInTrash ? "Supprimé définitivement" : "Supprimé",
-          description: "",
-        });
+        for (const challengeId of challengesToDelete) {
+          // Déterminer le type de suppression selon l'onglet actif
+          const isInTrash = deletedChallenges.some(c => c.id === challengeId);
+          const result = isInTrash 
+            ? await permanentlyDeleteChallenge(challengeId)
+            : await deleteChallenge(challengeId);
+
+          if (result?.success) {
+            successCount++;
+          } else {
+            errorCount++;
+          }
+        }
+
+        if (successCount > 0) {
+          toast({
+            title: "Supprimé",
+            description: `${successCount} élément(s) supprimé(s)${errorCount > 0 ? `, ${errorCount} erreur(s)` : ''}`,
+          });
+        }
+
+        if (errorCount > 0) {
+          toast({
+            title: "Erreur",
+            description: `${errorCount} élément(s) n'ont pas pu être supprimés`,
+            variant: "destructive",
+          });
+        }
+
+        // Réinitialiser et sortir du mode édition
+        setChallengesToDelete(new Set());
+        setIsEditModeChallenges(false);
+        setIsEditModeCompleted(false);
+        setIsEditModeTrash(false);
+        setEditingChallengeId(null);
+        setEditingTitle('');
+
       } else {
-        toast({
-          title: "Erreur",
-          description: result?.error || "Erreur lors de la suppression",
-          variant: "destructive",
-        });
+        // Suppression d'un seul élément
+        const isInTrash = deletedChallenges.some(c => c.id === challengeToDelete);
+        const result = isInTrash 
+          ? await permanentlyDeleteChallenge(challengeToDelete)
+          : await deleteChallenge(challengeToDelete);
+
+        if (result?.success) {
+          toast({
+            title: isInTrash ? "Supprimé définitivement" : "Supprimé",
+            description: "",
+          });
+        } else {
+          toast({
+            title: "Erreur",
+            description: result?.error || "Erreur lors de la suppression",
+            variant: "destructive",
+          });
+        }
       }
     } catch (error) {
       toast({
@@ -417,24 +461,70 @@ const Challenges = () => {
     if (!challengeToRestore) return;
 
     try {
-      let result;
-      if (restoreType === 'completed') {
-        result = await restoreChallenge(challengeToRestore);
-      } else {
-        result = await restoreDeletedChallenge(challengeToRestore);
-      }
+      if (challengeToRestore === 'bulk') {
+        // Restauration en masse
+        let successCount = 0;
+        let errorCount = 0;
 
-      if (result?.success) {
-        toast({
-          title: "Défi restauré",
-          description: "Restauré",
-        });
+        for (const challengeId of challengesToDelete) {
+          let result;
+          if (restoreType === 'completed') {
+            result = await restoreChallenge(challengeId);
+          } else {
+            result = await restoreDeletedChallenge(challengeId);
+          }
+
+          if (result?.success) {
+            successCount++;
+          } else {
+            errorCount++;
+          }
+        }
+
+        if (successCount > 0) {
+          toast({
+            title: "Restauré",
+            description: `${successCount} élément(s) restauré(s)${errorCount > 0 ? `, ${errorCount} erreur(s)` : ''}`,
+          });
+        }
+
+        if (errorCount > 0) {
+          toast({
+            title: "Erreur",
+            description: `${errorCount} élément(s) n'ont pas pu être restaurés`,
+            variant: "destructive",
+          });
+        }
+
+        // Réinitialiser et sortir du mode édition
+        setChallengesToDelete(new Set());
+        setIsEditModeChallenges(false);
+        setIsEditModeCompleted(false);
+        setIsEditModeTrash(false);
+        setEditingChallengeId(null);
+        setEditingTitle('');
+
       } else {
-        toast({
-          title: "Erreur",
-          description: result?.error || "Erreur lors de la restauration",
-          variant: "destructive",
-        });
+        // Restauration d'un seul élément
+        let result;
+        if (restoreType === 'completed') {
+          result = await restoreChallenge(challengeToRestore);
+        } else {
+          result = await restoreDeletedChallenge(challengeToRestore);
+        }
+
+        if (result?.success) {
+          toast({
+            title: "Défi restauré",
+            description: "Restauré",
+          });
+        } else {
+          toast({
+            title: "Erreur",
+            description: result?.error || "Erreur lors de la restauration",
+            variant: "destructive",
+          });
+        }
       }
     } catch (error) {
       toast({
@@ -791,18 +881,36 @@ const Challenges = () => {
                     {challengesToDelete.size === defis.length && defis.length > 0 ? (
                       <>
                         <CheckSquare className="w-4 h-4" />
-                        Désélectionner tout
+                        <span className="hidden sm:inline">Désélectionner tout</span>
                       </>
                     ) : (
                       <>
                         <Square className="w-4 h-4" />
-                        Sélectionner tout
+                        <span className="hidden sm:inline">Sélectionner tout</span>
                       </>
                     )}
                   </Button>
-                  <span className="text-sm text-muted-foreground">
-                    {challengesToDelete.size} sélectionné(s)
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">
+                      {challengesToDelete.size} sélectionné(s)
+                    </span>
+                    {challengesToDelete.size === defis.length && defis.length > 0 && (
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => {
+                          // Supprimer tous les défis sélectionnés
+                          setChallengeToDelete('bulk');
+                          setShowDeleteConfirm(true);
+                        }}
+                        className="flex items-center gap-2"
+                        title="Tout supprimer"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        <span className="hidden sm:inline">Tout supprimer</span>
+                      </Button>
+                    )}
+                  </div>
                 </div>
                 
                 <Reorder.Group 
@@ -964,18 +1072,53 @@ const Challenges = () => {
                     {challengesToDelete.size === accomplis.length && accomplis.length > 0 ? (
                       <>
                         <CheckSquare className="w-4 h-4" />
-                        Désélectionner tout
+                        <span className="hidden sm:inline">Désélectionner tout</span>
                       </>
                     ) : (
                       <>
                         <Square className="w-4 h-4" />
-                        Sélectionner tout
+                        <span className="hidden sm:inline">Sélectionner tout</span>
                       </>
                     )}
                   </Button>
-                  <span className="text-sm text-muted-foreground">
-                    {challengesToDelete.size} sélectionné(s)
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">
+                      {challengesToDelete.size} sélectionné(s)
+                    </span>
+                    {challengesToDelete.size === accomplis.length && accomplis.length > 0 && (
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            // Remettre tous les accomplis en défis
+                            setChallengeToRestore('bulk');
+                            setRestoreType('completed');
+                            setShowRestoreConfirm(true);
+                          }}
+                          className="flex items-center gap-2"
+                          title="Tout remettre en défis"
+                        >
+                          <ArrowLeft className="w-4 h-4" />
+                          <span className="hidden sm:inline">Tout remettre</span>
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => {
+                            // Supprimer définitivement tous les accomplis
+                            setChallengeToDelete('bulk');
+                            setShowDeleteConfirm(true);
+                          }}
+                          className="flex items-center gap-2"
+                          title="Tout supprimer définitivement"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          <span className="hidden sm:inline">Tout supprimer</span>
+                        </Button>
+                      </div>
+                    )}
+                  </div>
                 </div>
                 
                 <div className="space-y-3">
@@ -1099,7 +1242,7 @@ const Challenges = () => {
                 className="flex items-center gap-2"
               >
                 <ArrowLeft className="w-4 h-4" />
-                Retour aux défis
+                <span className="hidden sm:inline">Retour aux défis</span>
               </Button>
             </div>
             
@@ -1118,18 +1261,53 @@ const Challenges = () => {
                      deletedChallenges.filter(challenge => challenge.title && challenge.user_id).length > 0 ? (
                       <>
                         <CheckSquare className="w-4 h-4" />
-                        Désélectionner tout
+                        <span className="hidden sm:inline">Désélectionner tout</span>
                       </>
                     ) : (
                       <>
                         <Square className="w-4 h-4" />
-                        Sélectionner tout
+                        <span className="hidden sm:inline">Sélectionner tout</span>
                       </>
                     )}
                   </Button>
-                  <span className="text-sm text-muted-foreground">
-                    {challengesToDelete.size} sélectionné(s)
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">
+                      {challengesToDelete.size} sélectionné(s)
+                    </span>
+                    {challengesToDelete.size === deletedChallenges.filter(challenge => challenge.title && challenge.user_id).length && 
+                     deletedChallenges.filter(challenge => challenge.title && challenge.user_id).length > 0 && (
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            // Restaurer tous les éléments de la corbeille
+                            setChallengeToRestoreOptions('bulk');
+                            setShowRestoreOptions(true);
+                          }}
+                          className="flex items-center gap-2"
+                          title="Tout restaurer"
+                        >
+                          <ArrowLeft className="w-4 h-4" />
+                          <span className="hidden sm:inline">Tout restaurer</span>
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => {
+                            // Supprimer définitivement tous les éléments de la corbeille
+                            setChallengeToDelete('bulk');
+                            setShowDeleteConfirm(true);
+                          }}
+                          className="flex items-center gap-2"
+                          title="Tout supprimer définitivement"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          <span className="hidden sm:inline">Tout supprimer</span>
+                        </Button>
+                      </div>
+                    )}
+                  </div>
                 </div>
                 
                 <div className="space-y-3">
@@ -1358,9 +1536,11 @@ const Challenges = () => {
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-sm w-full mx-4" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-lg font-semibold mb-4">Confirmer la suppression</h3>
             <p className="text-muted-foreground mb-4">
-              {deletedChallenges.some(c => c.id === challengeToDelete) 
-                ? "Supprimer définitivement ce défi ?"
-                : "Supprimer ce défi ?"
+              {challengeToDelete === 'bulk' 
+                ? `Supprimer ${challengesToDelete.size} élément(s) ?`
+                : deletedChallenges.some(c => c.id === challengeToDelete) 
+                  ? "Supprimer définitivement ce défi ?"
+                  : "Supprimer ce défi ?"
               }
             </p>
             <div className="flex gap-3">
@@ -1368,7 +1548,7 @@ const Challenges = () => {
                 Annuler
               </Button>
               <Button variant="destructive" onClick={confirmDeleteChallenge} className="flex-1">
-                {deletedChallenges.some(c => c.id === challengeToDelete) ? "Supprimer" : "Supprimer"}
+                {challengeToDelete === 'bulk' ? "Tout supprimer" : "Supprimer"}
               </Button>
             </div>
           </div>
@@ -1381,14 +1561,17 @@ const Challenges = () => {
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-sm w-full mx-4" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-lg font-semibold mb-4">Confirmer la restauration</h3>
             <p className="text-muted-foreground mb-4">
-              Restaurer ce défi ?
+              {challengeToRestore === 'bulk'
+                ? `Restaurer ${challengesToDelete.size} élément(s) ?`
+                : "Restaurer ce défi ?"
+              }
             </p>
             <div className="flex gap-3">
               <Button variant="outline" onClick={() => setShowRestoreConfirm(false)} className="flex-1">
                 Annuler
               </Button>
               <Button onClick={confirmRestoreChallenge} className="flex-1">
-                Confirmer
+                {challengeToRestore === 'bulk' ? "Tout restaurer" : "Confirmer"}
               </Button>
             </div>
           </div>
@@ -1468,7 +1651,7 @@ const Challenges = () => {
                 }}
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
-                Restaurer dans les Défis (en cours)
+                <span className="hidden sm:inline">Restaurer dans les Défis (en cours)</span>
               </Button>
               <Button
                 variant="outline"
@@ -1529,7 +1712,7 @@ const Challenges = () => {
                 }}
               >
                 <CheckCircle className="w-4 h-4 mr-2" />
-                Restaurer dans les Accomplis (terminé)
+                <span className="hidden sm:inline">Restaurer dans les Accomplis (terminé)</span>
               </Button>
             </div>
             <div className="mt-4">

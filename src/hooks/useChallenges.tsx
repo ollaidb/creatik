@@ -42,6 +42,9 @@ export const useChallenges = () => {
       const challengesData = storedChallenges ? JSON.parse(storedChallenges) : [];
       setUserChallenges(challengesData);
 
+      console.log('Défis chargés:', challengesData);
+      console.log('Défis supprimés:', challengesData.filter(c => c.status === 'deleted'));
+
       // Charger les statistiques depuis localStorage
       const storedStats = localStorage.getItem(`challenge_stats_${user.id}`);
       if (storedStats) {
@@ -128,15 +131,19 @@ export const useChallenges = () => {
     if (!user) return { error: 'Utilisateur non connecté' };
 
     try {
+      const now = new Date().toISOString();
+      
       setUserChallenges(prev => 
         prev.map(c => 
           c.id === id 
-            ? { ...c, status: 'deleted' }
+            ? { ...c, status: 'deleted', updated_at: now }
             : c
         )
       );
 
       saveChanges();
+      
+      console.log('Défi supprimé vers la corbeille:', id);
       
       return { success: true };
     } catch (err) {
