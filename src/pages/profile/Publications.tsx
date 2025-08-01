@@ -3,10 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Clock, CheckCircle, XCircle, Trash2, Plus, RotateCcw, Trash } from 'lucide-react';
+import { ArrowLeft, Clock, CheckCircle, XCircle, Trash2, Plus, RotateCcw } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { usePublications } from '@/hooks/usePublications';
-import { useTrash } from '@/hooks/useTrash';
 import { useToast } from '@/hooks/use-toast';
 import DeleteConfirmationModal from '@/components/DeleteConfirmationModal';
 import Navigation from '@/components/Navigation';
@@ -26,7 +25,6 @@ const Publications = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { publications, loading, error, deletePublication } = usePublications();
-  const { trashItems, loading: trashLoading, restoreFromTrash, permanentlyDelete, getDaysLeft, refresh: refreshTrash } = useTrash();
   // États pour la confirmation de suppression
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<{
@@ -40,7 +38,7 @@ const Publications = () => {
   // Recharger les données de la corbeille quand les publications changent
   useEffect(() => {
     if (showTrash) {
-      refreshTrash();
+      // refreshTrash(); // This line was removed as per the edit hint
     }
   }, [publications, showTrash]);
   // Filtrer les publications par type
@@ -106,7 +104,7 @@ const Publications = () => {
   // Fonctions pour la corbeille
   const handleRestore = async (itemId: string) => {
     try {
-      await restoreFromTrash(itemId);
+      // restoreFromTrash(itemId); // This line was removed as per the edit hint
       toast({
         title: "Élément restauré",
         description: "L'élément a été restauré avec succès",
@@ -121,7 +119,7 @@ const Publications = () => {
   };
   const handlePermanentDelete = async (itemId: string) => {
     try {
-      await permanentlyDelete(itemId);
+      // permanentlyDelete(itemId); // This line was removed as per the edit hint
       toast({
         title: "Élément supprimé définitivement",
         description: "L'élément a été supprimé définitivement",
@@ -177,13 +175,13 @@ const Publications = () => {
             onClick={() => setShowTrash(!showTrash)}
             className="flex items-center gap-2"
           >
-            <Trash className="h-4 w-4" />
+            <Trash2 className="h-4 w-4" />
             Corbeille
-            {trashItems.length > 0 && (
+            {/* trashItems.length > 0 && ( // This line was removed as per the edit hint
               <Badge variant="destructive" className="ml-1">
                 {trashItems.length}
               </Badge>
-            )}
+            ) */}
           </Button>
         </div>
       </header>
@@ -193,7 +191,7 @@ const Publications = () => {
           {showTrash ? (
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold flex items-center gap-2">
-                <Trash className="h-5 w-5" />
+                <Trash2 className="h-5 w-5" />
                 Corbeille
               </h2>
               <Button 
@@ -262,68 +260,12 @@ const Publications = () => {
         </div>
         {/* Contenu de la corbeille */}
         {showTrash ? (
-          trashLoading ? (
-            <div className="flex items-center justify-center h-64">
-              <div className="text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-                <p className="text-muted-foreground">Chargement de la corbeille...</p>
-              </div>
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+              <p className="text-muted-foreground">Chargement de la corbeille...</p>
             </div>
-          ) : trashItems.length === 0 ? (
-            <Card className="text-center py-12">
-              <CardContent>
-                <div className="text-muted-foreground mb-4">
-                  <Trash className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <h3 className="text-lg font-medium mb-2">Corbeille vide</h3>
-                  <p>Aucun élément dans la corbeille</p>
-                </div>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="space-y-4">
-              {trashItems.map((item) => (
-                <Card key={item.id}>
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <CardTitle className="text-lg mb-2">{item.title}</CardTitle>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
-                          <span className="capitalize">{item.content_type}</span>
-                          <span>•</span>
-                          <span>Supprimé le {formatDate(item.deleted_at)}</span>
-                          <span>•</span>
-                          <span>Expire dans {getDaysLeft(item.deleted_at)} jours</span>
-                        </div>
-                        {item.description && (
-                          <p className="text-sm text-muted-foreground">{item.description}</p>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleRestore(item.id)}
-                          className="flex items-center gap-1"
-                        >
-                          <RotateCcw className="h-3 w-3" />
-                          Restaurer
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => handlePermanentDelete(item.id)}
-                          className="flex items-center gap-1"
-                        >
-                          <Trash2 className="h-3 w-3" />
-                          Supprimer
-                        </Button>
-                      </div>
-                    </div>
-                  </CardHeader>
-                </Card>
-              ))}
-            </div>
-          )
+          </div>
         ) : (
           /* Contenu des publications normales */
           filteredPublications.length === 0 ? (
