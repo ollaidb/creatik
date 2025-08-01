@@ -8,7 +8,6 @@ import { Send, Loader2, ArrowLeft, Search, X, Check, AlertTriangle, Eye, FileTex
 import { useToast } from '@/hooks/use-toast';
 import { useCategories } from '@/hooks/useCategories';
 import { useSubcategories } from '@/hooks/useSubcategories';
-import { usePendingPublish } from '@/hooks/usePendingPublish';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import Navigation from '@/components/Navigation';
@@ -31,7 +30,6 @@ const Publish = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
-  const { publishContent, isPublishing } = usePendingPublish();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
@@ -98,93 +96,154 @@ const Publish = () => {
 
     if (!formData.title || !formData.content_type) {
       toast({
-        title: "Champs requis",
-        description: "Veuillez remplir tous les champs",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    // Validation selon le type de contenu
-    if (formData.content_type === 'subcategory' && !formData.category_id) {
-      toast({
-        title: "Catégorie requise",
-        description: "Veuillez sélectionner une catégorie pour une sous-catégorie",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    if ((formData.content_type === 'title' || formData.content_type === 'source' || formData.content_type === 'account') && (!formData.category_id || !formData.subcategory_id)) {
-      toast({
-        title: "Catégorie et sous-catégorie requises",
-        description: "Veuillez sélectionner une catégorie et une sous-catégorie",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    // Validation pour les sources
-    if (formData.content_type === 'source' && !formData.url) {
-      toast({
-        title: "URL requise",
-        description: "Veuillez entrer l'URL de la source",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    // Validation pour les comptes
-    if (formData.content_type === 'account' && (!formData.platform || !formData.url)) {
-      toast({
-        title: "Champs requis",
-        description: "Veuillez entrer la plateforme et l'URL du compte",
+        title: "Informations manquantes",
+        description: "Veuillez remplir tous les champs obligatoires",
         variant: "destructive"
       });
       return;
     }
 
     setIsSubmitting(true);
+
     try {
-      // Publier avec vérification des doublons
-      const result = await publishContent({
-        content_type: formData.content_type,
-        title: formData.title,
-        category_id: formData.category_id || undefined,
-        subcategory_id: formData.subcategory_id || undefined,
-        description: formData.content_type === 'challenge' ? formData.description : undefined,
-        url: (formData.content_type === 'source' || formData.content_type === 'account') ? formData.url : undefined,
-        platform: formData.content_type === 'account' ? formData.platform : undefined,
-        social_network_id: selectedNetwork !== 'all' ? selectedNetwork : undefined
+      // Publication directe selon le type de contenu
+      if (formData.content_type === 'category') {
+        const { error } = await supabase
+          .from('categories')
+          .insert({
+            name: formData.title,
+            description: formData.description,
+            color: '#3B82F6'
+          });
+        
+        if (error) throw error;
+        
+        toast({
+          title: "Catégorie publiée",
+          description: `La catégorie "${formData.title}" a été publiée avec succès`
+        });
+      } else if (formData.content_type === 'subcategory') {
+        if (!formData.category_id) {
+          toast({
+            title: "Catégorie requise",
+            description: "Veuillez sélectionner une catégorie",
+            variant: "destructive"
+          });
+          return;
+        }
+
+        const { error } = await supabase
+          .from('subcategories')
+          .insert({
+            name: formData.title,
+            description: formData.description,
+            category_id: formData.category_id
+          });
+        
+        if (error) throw error;
+        
+        toast({
+          title: "Sous-catégorie publiée",
+          description: `La sous-catégorie "${formData.title}" a été publiée avec succès`
+        });
+      } else if (formData.content_type === 'title') {
+        if (!formData.subcategory_id) {
+          toast({
+            title: "Sous-catégorie requise",
+            description: "Veuillez sélectionner une sous-catégorie",
+            variant: "destructive"
+          });
+          return;
+        }
+
+        const { error } = await supabase
+          .from('content_titles')
+          .insert({
+            title: formData.title,
+            subcategory_id: formData.subcategory_id,
+            platform: selectedNetwork,
+            type: 'title'
+          });
+        
+        if (error) throw error;
+        
+        toast({
+          title: "Titre publié",
+          description: `Le titre "${formData.title}" a été publié avec succès`
+        });
+      } else if (formData.content_type === 'challenge') {
+        const { error } = await supabase
+          .from('challenges')
+          .insert({
+            title: formData.title,
+            description: formData.description,
+            category: 'Challenge',
+            points: 50,
+            difficulty: 'medium',
+            duration_days: 1,
+            is_daily: false,
+            is_active: true
+          });
+        
+        if (error) throw error;
+        
+        toast({
+          title: "Challenge publié",
+          description: `Le challenge "${formData.title}" a été publié avec succès`
+        });
+      } else if (formData.content_type === 'source') {
+        const { error } = await supabase
+          .from('sources')
+          .insert({
+            name: formData.title,
+            description: formData.description,
+            url: formData.url
+          });
+        
+        if (error) throw error;
+        
+        toast({
+          title: "Source publiée",
+          description: `La source "${formData.title}" a été publiée avec succès`
+        });
+      } else if (formData.content_type === 'account') {
+        const { error } = await supabase
+          .from('exemplary_accounts')
+          .insert({
+            account_name: formData.title,
+            description: formData.description,
+            platform: formData.platform,
+            account_url: formData.url,
+            subcategory_id: formData.subcategory_id
+          });
+        
+        if (error) throw error;
+        
+        toast({
+          title: "Compte publié",
+          description: `Le compte "${formData.title}" a été publié avec succès`
+        });
+      }
+
+      // Réinitialiser le formulaire
+      setFormData({
+        title: '',
+        content_type: 'title',
+        category_id: '',
+        subcategory_id: '',
+        description: '',
+        url: '',
+        platform: ''
       });
 
-      if (result && result.success) {
-        toast({
-          title: "Publication soumise !",
-          description: "Votre contenu sera validé dans quelques secondes"
-        });
-        // Reset form
-        setFormData({
-          title: '',
-          content_type: 'title',
-          category_id: '',
-          subcategory_id: '',
-          description: '',
-          url: '',
-          platform: ''
-        });
-        setCategorySearch('');
-        setSubcategorySearch('');
-      } else {
-        throw new Error(result?.error || 'Échec de la publication');
-      }
+      // Rediriger vers la page de succès ou la page d'accueil
+      navigate('/profile');
+
     } catch (error) {
-      console.error('=== ERREUR PUBLICATION ===');
-      console.error('Erreur complète:', error);
-      console.error('Message:', error.message);
+      console.error('Erreur lors de la publication:', error);
       toast({
         title: "Erreur",
-        description: `Erreur lors de la publication: ${error.message}`,
+        description: "Une erreur est survenue lors de la publication",
         variant: "destructive"
       });
     } finally {
@@ -548,14 +607,14 @@ const Publish = () => {
               <Button 
                 type="submit" 
                 className="w-full" 
-                disabled={isSubmitting || isPublishing || !formData.title || !formData.content_type || 
+                disabled={isSubmitting || 
                          (formData.content_type === 'subcategory' && !formData.category_id) ||
                          ((formData.content_type === 'title' || formData.content_type === 'source' || formData.content_type === 'account' || formData.content_type === 'hooks' || formData.content_type === 'inspiration') && (!formData.category_id || !formData.subcategory_id)) ||
                          (formData.content_type === 'challenge' && !formData.description) ||
                          (formData.content_type === 'source' && !formData.url) ||
                          (formData.content_type === 'account' && (!formData.platform || !formData.url))}
               >
-                {isSubmitting || isPublishing ? (
+                {isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Publication en cours...

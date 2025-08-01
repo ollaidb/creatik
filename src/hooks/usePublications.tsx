@@ -30,7 +30,6 @@ export const usePublications = () => {
       setLoading(true);
       setError(null);
       const { data, error: fetchError } = await supabase
-        .from('user_publications')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
@@ -51,7 +50,6 @@ export const usePublications = () => {
     try {
       // Récupérer la publication avant de la supprimer
       const { data: publication, error: fetchError } = await supabase
-        .from('user_publications')
         .select('*')
         .eq('id', publicationId)
         .single();
@@ -82,9 +80,7 @@ export const usePublications = () => {
       if (trashError) {
         throw new Error(`Erreur lors de l'ajout à la corbeille: ${trashError.message}`);
       }
-      // Supprimer de la table user_publications
       const { error: deleteError } = await supabase
-        .from('user_publications')
         .delete()
         .eq('id', publicationId);
       if (deleteError) {
