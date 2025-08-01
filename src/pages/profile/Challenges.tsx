@@ -35,7 +35,6 @@ const Challenges = () => {
   const [currentDay, setCurrentDay] = useState(1);
   const [isEditModeChallenges, setIsEditModeChallenges] = useState(false);
   const [isEditModeCompleted, setIsEditModeCompleted] = useState(false);
-  const [isEditModeTrash, setIsEditModeTrash] = useState(false);
   const [challengesToDelete, setChallengesToDelete] = useState<Set<string>>(new Set());
   const {
     challenges,
@@ -326,16 +325,6 @@ const Challenges = () => {
     }
   };
 
-  // Fonction pour activer/désactiver le mode édition de la corbeille
-  const toggleEditModeTrash = () => {
-    setIsEditModeTrash(!isEditModeTrash);
-    if (!isEditModeTrash) {
-      setChallengesToDelete(new Set());
-      setEditingChallengeId(null);
-      setEditingTitle('');
-    }
-  };
-
   // Fonction pour gérer la sélection multiple
   const toggleChallengeSelection = (challengeId: string) => {
     setChallengesToDelete(prev => {
@@ -413,7 +402,6 @@ const Challenges = () => {
         setChallengesToDelete(new Set());
         setIsEditModeChallenges(false);
         setIsEditModeCompleted(false);
-        setIsEditModeTrash(false);
         setEditingChallengeId(null);
         setEditingTitle('');
 
@@ -450,7 +438,6 @@ const Challenges = () => {
     // Revenir en mode normal après suppression
     setIsEditModeChallenges(false);
     setIsEditModeCompleted(false);
-    setIsEditModeTrash(false);
     setChallengesToDelete(new Set());
     setEditingChallengeId(null);
     setEditingTitle('');
@@ -500,7 +487,6 @@ const Challenges = () => {
         setChallengesToDelete(new Set());
         setIsEditModeChallenges(false);
         setIsEditModeCompleted(false);
-        setIsEditModeTrash(false);
         setEditingChallengeId(null);
         setEditingTitle('');
 
@@ -540,7 +526,6 @@ const Challenges = () => {
     // Revenir en mode normal après restauration
     setIsEditModeChallenges(false);
     setIsEditModeCompleted(false);
-    setIsEditModeTrash(false);
     setChallengesToDelete(new Set());
     setEditingChallengeId(null);
     setEditingTitle('');
@@ -711,13 +696,12 @@ const Challenges = () => {
           <h1 className="text-xl font-semibold">Mes Défis</h1>
         </div>
         <div className="flex items-center gap-2">
-          {/* Bouton Éditer unique qui fonctionne pour tous les onglets */}
-          {(activeTab === 'challenges' || activeTab === 'completed' || activeTab === 'trash') && (
+          {/* Bouton Éditer unique qui fonctionne pour tous les onglets sauf la corbeille */}
+          {(activeTab === 'challenges' || activeTab === 'completed') && (
             <Button
               variant={
                 (activeTab === 'challenges' && isEditModeChallenges) ||
-                (activeTab === 'completed' && isEditModeCompleted) ||
-                (activeTab === 'trash' && isEditModeTrash)
+                (activeTab === 'completed' && isEditModeCompleted)
                   ? "default" 
                   : "outline"
               }
@@ -727,15 +711,12 @@ const Challenges = () => {
                   setIsEditModeChallenges(!isEditModeChallenges);
                 } else if (activeTab === 'completed') {
                   setIsEditModeCompleted(!isEditModeCompleted);
-                } else if (activeTab === 'trash') {
-                  setIsEditModeTrash(!isEditModeTrash);
                 }
               }}
               className="w-10 h-10"
               title={
                 (activeTab === 'challenges' && isEditModeChallenges) ||
-                (activeTab === 'completed' && isEditModeCompleted) ||
-                (activeTab === 'trash' && isEditModeTrash)
+                (activeTab === 'completed' && isEditModeCompleted)
                   ? "Terminer l'édition"
                   : "Éditer"
               }
@@ -894,7 +875,7 @@ const Challenges = () => {
                     <span className="text-sm text-muted-foreground">
                       {challengesToDelete.size} sélectionné(s)
                     </span>
-                    {challengesToDelete.size === defis.length && defis.length > 0 && (
+                    {challengesToDelete.size > 0 && (
                       <Button
                         variant="destructive"
                         size="sm"
@@ -904,10 +885,10 @@ const Challenges = () => {
                           setShowDeleteConfirm(true);
                         }}
                         className="flex items-center gap-2"
-                        title="Tout supprimer"
+                        title="Supprimer les éléments sélectionnés"
                       >
                         <Trash2 className="w-4 h-4" />
-                        <span className="hidden sm:inline">Tout supprimer</span>
+                        <span className="hidden sm:inline">Supprimer</span>
                       </Button>
                     )}
                   </div>
@@ -1085,36 +1066,36 @@ const Challenges = () => {
                     <span className="text-sm text-muted-foreground">
                       {challengesToDelete.size} sélectionné(s)
                     </span>
-                    {challengesToDelete.size === accomplis.length && accomplis.length > 0 && (
+                    {challengesToDelete.size > 0 && (
                       <div className="flex gap-2">
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => {
-                            // Remettre tous les accomplis en défis
+                            // Remettre tous les accomplis sélectionnés en défis
                             setChallengeToRestore('bulk');
                             setRestoreType('completed');
                             setShowRestoreConfirm(true);
                           }}
                           className="flex items-center gap-2"
-                          title="Tout remettre en défis"
+                          title="Remettre les éléments sélectionnés en défis"
                         >
                           <ArrowLeft className="w-4 h-4" />
-                          <span className="hidden sm:inline">Tout remettre</span>
+                          <span className="hidden sm:inline">Remettre</span>
                         </Button>
                         <Button
                           variant="destructive"
                           size="sm"
                           onClick={() => {
-                            // Supprimer définitivement tous les accomplis
+                            // Supprimer définitivement tous les accomplis sélectionnés
                             setChallengeToDelete('bulk');
                             setShowDeleteConfirm(true);
                           }}
                           className="flex items-center gap-2"
-                          title="Tout supprimer définitivement"
+                          title="Supprimer définitivement les éléments sélectionnés"
                         >
                           <Trash2 className="w-4 h-4" />
-                          <span className="hidden sm:inline">Tout supprimer</span>
+                          <span className="hidden sm:inline">Supprimer</span>
                         </Button>
                       </div>
                     )}
@@ -1246,196 +1227,134 @@ const Challenges = () => {
               </Button>
             </div>
             
-            {isEditModeTrash ? (
-              // Mode édition pour la corbeille
-              <div>
-                {/* Bouton Sélectionner tout */}
-                <div className="flex items-center justify-between mb-4">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={toggleSelectAll}
-                    className="flex items-center gap-2"
-                  >
-                    {challengesToDelete.size === deletedChallenges.filter(challenge => challenge.title && challenge.user_id).length && 
-                     deletedChallenges.filter(challenge => challenge.title && challenge.user_id).length > 0 ? (
-                      <>
-                        <CheckSquare className="w-4 h-4" />
-                        <span className="hidden sm:inline">Désélectionner tout</span>
-                      </>
-                    ) : (
-                      <>
-                        <Square className="w-4 h-4" />
-                        <span className="hidden sm:inline">Sélectionner tout</span>
-                      </>
-                    )}
-                  </Button>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-muted-foreground">
-                      {challengesToDelete.size} sélectionné(s)
-                    </span>
-                    {challengesToDelete.size === deletedChallenges.filter(challenge => challenge.title && challenge.user_id).length && 
-                     deletedChallenges.filter(challenge => challenge.title && challenge.user_id).length > 0 && (
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            // Restaurer tous les éléments de la corbeille
-                            setChallengeToRestoreOptions('bulk');
-                            setShowRestoreOptions(true);
-                          }}
-                          className="flex items-center gap-2"
-                          title="Tout restaurer"
-                        >
-                          <ArrowLeft className="w-4 h-4" />
-                          <span className="hidden sm:inline">Tout restaurer</span>
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => {
-                            // Supprimer définitivement tous les éléments de la corbeille
-                            setChallengeToDelete('bulk');
-                            setShowDeleteConfirm(true);
-                          }}
-                          className="flex items-center gap-2"
-                          title="Tout supprimer définitivement"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                          <span className="hidden sm:inline">Tout supprimer</span>
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                
-                <div className="space-y-3">
-                  {deletedChallenges.filter(challenge => challenge.title && challenge.user_id).length === 0 ? (
-                    <Card className="text-center py-12">
-                      <CardContent>
-                        <Trash2 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                        <h3 className="text-lg font-medium mb-2">Corbeille vide</h3>
-                        <p className="text-muted-foreground">
-                          Aucun défi personnel supprimé pour le moment
-                        </p>
-                      </CardContent>
-                    </Card>
-                  ) : (
-                    deletedChallenges.filter(challenge => challenge.title && challenge.user_id).map((challenge) => (
-                      <Card key={challenge.id} className="hover:shadow-md transition-shadow border-red-200 dark:border-red-800">
-                        <CardContent className="p-4">
-                          <div className="flex items-center justify-between">
-                            <div className="flex-1 flex items-center gap-3">
-                              {/* Case à cocher pour la sélection */}
-                              <button
-                                onClick={() => toggleChallengeSelection(challenge.id)}
-                                className="p-1 rounded transition-colors hover:bg-gray-100"
-                              >
-                                {challengesToDelete.has(challenge.id) ? (
-                                  <CheckSquare className="w-5 h-5 text-primary" />
-                                ) : (
-                                  <Square className="w-5 h-5 text-gray-400" />
-                                )}
-                              </button>
-                              
-                              <div className="flex-1">
-                                <h3 className="font-semibold text-lg text-gray-600 dark:text-gray-400">{challenge.title}</h3>
-                                <p className="text-sm text-gray-500 dark:text-gray-500">
-                                  Supprimé le {new Date(challenge.updated_at || challenge.created_at || Date.now()).toLocaleDateString()}
-                                </p>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => {
-                                  setChallengeToRestoreOptions(challenge.id);
-                                  setShowRestoreOptions(true);
-                                }}
-                                className="text-blue-600"
-                                title="Restaurer le défi"
-                              >
-                                <ArrowLeft className="w-4 h-4" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => {
-                                  setChallengeToDelete(challenge.id);
-                                  setShowDeleteConfirm(true);
-                                }}
-                                className="text-red-600"
-                                title="Supprimer définitivement"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))
-                  )}
-                </div>
-              </div>
-            ) : (
-              // Mode normal pour la corbeille
-              <div className="space-y-3">
-                {deletedChallenges.filter(challenge => challenge.title && challenge.user_id).length === 0 ? (
-                  <Card className="text-center py-12">
-                    <CardContent>
-                      <Trash2 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                      <h3 className="text-lg font-medium mb-2">Corbeille vide</h3>
-                      <p className="text-muted-foreground">
-                        Aucun défi personnel supprimé pour le moment
-                      </p>
-                    </CardContent>
-                  </Card>
+            {/* Boutons d'actions en masse pour la corbeille */}
+            <div className="flex items-center justify-between mb-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={toggleSelectAll}
+                className="flex items-center gap-2"
+              >
+                {challengesToDelete.size === deletedChallenges.filter(challenge => challenge.title && challenge.user_id).length && 
+                 deletedChallenges.filter(challenge => challenge.title && challenge.title && challenge.user_id).length > 0 ? (
+                  <>
+                    <CheckSquare className="w-4 h-4" />
+                    <span className="hidden sm:inline">Désélectionner tout</span>
+                  </>
                 ) : (
-                  deletedChallenges.filter(challenge => challenge.title && challenge.user_id).map((challenge) => (
-                    <Card key={challenge.id} className="hover:shadow-md transition-shadow border-red-200 dark:border-red-800">
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between">
+                  <>
+                    <Square className="w-4 h-4" />
+                    <span className="hidden sm:inline">Sélectionner tout</span>
+                  </>
+                )}
+              </Button>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">
+                  {challengesToDelete.size} sélectionné(s)
+                </span>
+                {challengesToDelete.size > 0 && (
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        // Restaurer tous les éléments sélectionnés de la corbeille
+                        setChallengeToRestoreOptions('bulk');
+                        setShowRestoreOptions(true);
+                      }}
+                      className="flex items-center gap-2"
+                      title="Restaurer les éléments sélectionnés"
+                    >
+                      <ArrowLeft className="w-4 h-4" />
+                      <span className="hidden sm:inline">Restaurer</span>
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => {
+                        // Supprimer définitivement tous les éléments sélectionnés de la corbeille
+                        setChallengeToDelete('bulk');
+                        setShowDeleteConfirm(true);
+                      }}
+                      className="flex items-center gap-2"
+                      title="Supprimer définitivement les éléments sélectionnés"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      <span className="hidden sm:inline">Supprimer</span>
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            <div className="space-y-3">
+              {deletedChallenges.filter(challenge => challenge.title && challenge.user_id).length === 0 ? (
+                <Card className="text-center py-12">
+                  <CardContent>
+                    <Trash2 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium mb-2">Corbeille vide</h3>
+                    <p className="text-muted-foreground">
+                      Aucun défi personnel supprimé pour le moment
+                    </p>
+                  </CardContent>
+                </Card>
+              ) : (
+                deletedChallenges.filter(challenge => challenge.title && challenge.user_id).map((challenge) => (
+                  <Card key={challenge.id} className="hover:shadow-md transition-shadow border-red-200 dark:border-red-800">
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1 flex items-center gap-3">
+                          {/* Case à cocher pour la sélection */}
+                          <button
+                            onClick={() => toggleChallengeSelection(challenge.id)}
+                            className="p-1 rounded transition-colors hover:bg-gray-100"
+                          >
+                            {challengesToDelete.has(challenge.id) ? (
+                              <CheckSquare className="w-5 h-5 text-primary" />
+                            ) : (
+                              <Square className="w-5 h-5 text-gray-400" />
+                            )}
+                          </button>
+                          
                           <div className="flex-1">
                             <h3 className="font-semibold text-lg text-gray-600 dark:text-gray-400">{challenge.title}</h3>
                             <p className="text-sm text-gray-500 dark:text-gray-500">
                               Supprimé le {new Date(challenge.updated_at || challenge.created_at || Date.now()).toLocaleDateString()}
                             </p>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => {
-                                setChallengeToRestoreOptions(challenge.id);
-                                setShowRestoreOptions(true);
-                              }}
-                              className="text-blue-600"
-                              title="Restaurer le défi"
-                            >
-                              <ArrowLeft className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => {
-                                setChallengeToDelete(challenge.id);
-                                setShowDeleteConfirm(true);
-                              }}
-                              className="text-red-600"
-                              title="Supprimer définitivement"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
                         </div>
-                      </CardContent>
-                    </Card>
-                  ))
-                )}
-              </div>
-            )}
+                        <div className="flex items-center gap-2">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => {
+                              setChallengeToRestoreOptions(challenge.id);
+                              setShowRestoreOptions(true);
+                            }}
+                            className="text-blue-600"
+                            title="Restaurer le défi"
+                          >
+                            <ArrowLeft className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => {
+                              setChallengeToDelete(challenge.id);
+                              setShowDeleteConfirm(true);
+                            }}
+                            className="text-red-600"
+                            title="Supprimer définitivement"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
+            </div>
           </TabsContent>
           
           {/* Onglet Statistiques */}
@@ -1537,7 +1456,7 @@ const Challenges = () => {
             <h3 className="text-lg font-semibold mb-4">Confirmer la suppression</h3>
             <p className="text-muted-foreground mb-4">
               {challengeToDelete === 'bulk' 
-                ? `Supprimer ${challengesToDelete.size} élément(s) ?`
+                ? `Supprimer ${challengesToDelete.size} élément(s) sélectionné(s) ?`
                 : deletedChallenges.some(c => c.id === challengeToDelete) 
                   ? "Supprimer définitivement ce défi ?"
                   : "Supprimer ce défi ?"
@@ -1548,7 +1467,7 @@ const Challenges = () => {
                 Annuler
               </Button>
               <Button variant="destructive" onClick={confirmDeleteChallenge} className="flex-1">
-                {challengeToDelete === 'bulk' ? "Tout supprimer" : "Supprimer"}
+                {challengeToDelete === 'bulk' ? "Supprimer" : "Supprimer"}
               </Button>
             </div>
           </div>
@@ -1562,7 +1481,7 @@ const Challenges = () => {
             <h3 className="text-lg font-semibold mb-4">Confirmer la restauration</h3>
             <p className="text-muted-foreground mb-4">
               {challengeToRestore === 'bulk'
-                ? `Restaurer ${challengesToDelete.size} élément(s) ?`
+                ? `Restaurer ${challengesToDelete.size} élément(s) sélectionné(s) ?`
                 : "Restaurer ce défi ?"
               }
             </p>
@@ -1571,7 +1490,7 @@ const Challenges = () => {
                 Annuler
               </Button>
               <Button onClick={confirmRestoreChallenge} className="flex-1">
-                {challengeToRestore === 'bulk' ? "Tout restaurer" : "Confirmer"}
+                {challengeToRestore === 'bulk' ? "Restaurer" : "Confirmer"}
               </Button>
             </div>
           </div>
@@ -1628,7 +1547,7 @@ const Challenges = () => {
 
                       // Réinitialiser et sortir du mode édition
                       setChallengesToDelete(new Set());
-                      setIsEditModeTrash(false);
+                      setIsEditModeChallenges(false);
                       setEditingChallengeId(null);
                       setEditingTitle('');
 
@@ -1689,7 +1608,7 @@ const Challenges = () => {
 
                       // Réinitialiser et sortir du mode édition
                       setChallengesToDelete(new Set());
-                      setIsEditModeTrash(false);
+                      setIsEditModeChallenges(false);
                       setEditingChallengeId(null);
                       setEditingTitle('');
 
