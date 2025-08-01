@@ -180,57 +180,45 @@ const Challenges = () => {
 
   // Fonction améliorée pour valider un défi
   const handleCompleteChallenge = async (id) => {
-    // Marquer comme en cours de validation
+    // Marquer comme en cours de validation immédiatement
     setValidatingChallenges(prev => new Set([...prev, id]));
 
-    const now = new Date().toISOString();
+    // Commencer la validation en arrière-plan
+    setTimeout(async () => {
+      const now = new Date().toISOString();
 
-    // Étape 2 – Mise à jour en base via le hook
-    try {
-      // Utiliser la fonction du hook pour la persistance
-      const result = await completeChallenge(id);
-      
-      if (result?.error) {
-      toast({
-        title: "Erreur",
-        description: result.error,
-        variant: "destructive",
-      });
-        // Retirer de la validation en cours en cas d'erreur
+      try {
+        // Utiliser la fonction du hook pour la persistance
+        const result = await completeChallenge(id);
+        
+        if (result?.error) {
+          toast({
+            title: "Erreur",
+            description: result.error,
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Défi accompli !",
+            description: "",
+          });
+        }
+      } catch (error) {
+        console.error('Erreur lors de la validation:', error);
+        toast({
+          title: "Erreur",
+          description: "",
+          variant: "destructive",
+        });
+      } finally {
+        // Retirer de la validation en cours après l'animation
         setValidatingChallenges(prev => {
           const newSet = new Set(prev);
           newSet.delete(id);
           return newSet;
         });
-    } else {
-        // Attendre 1.5 secondes avant de retirer de la validation pour voir le feedback
-        setTimeout(() => {
-          setValidatingChallenges(prev => {
-            const newSet = new Set(prev);
-            newSet.delete(id);
-            return newSet;
-          });
-        }, 1500); // Réduit à 1.5 secondes
-
-      toast({
-        title: "Défi accompli !",
-          description: "",
-        });
       }
-    } catch (error) {
-      console.error('Erreur lors de la validation:', error);
-      toast({
-        title: "Erreur",
-        description: "",
-        variant: "destructive",
-      });
-      // Retirer de la validation en cours en cas d'erreur
-      setValidatingChallenges(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(id);
-        return newSet;
-      });
-    }
+    }, 100); // Petit délai pour permettre l'animation de commencer
   };
 
   // Fonctions pour l'édition par long press
@@ -582,6 +570,12 @@ const Challenges = () => {
   const defis = userChallenges.filter((c) => c.status === "pending");
   const accomplis = userChallenges.filter((c) => c.status === "completed");
 
+  // Créer une liste de défis qui inclut ceux en cours de validation
+  const defisAvecValidation = [
+    ...defis,
+    ...userChallenges.filter(c => c.status === "completed" && validatingChallenges.has(c.id))
+  ];
+
   // Forcer la mise à jour des filtres quand userChallenges change
   useEffect(() => {
     // Cette ligne force la re-render quand userChallenges change
@@ -896,11 +890,11 @@ const Challenges = () => {
                 
                 <Reorder.Group 
                   axis="y" 
-                  values={defis} 
+                  values={defisAvecValidation} 
                   onReorder={handleReorder}
                   className="space-y-3"
                 >
-                  {defis.map((challenge) => (
+                  {defisAvecValidation.map((challenge) => (
                     <Reorder.Item
                       key={challenge.id}
                       value={challenge}
@@ -1001,7 +995,7 @@ const Challenges = () => {
             ) : (
               // Mode normal
               <div className="space-y-3">
-                {defis.map((challenge) => (
+                {defisAvecValidation.map((challenge) => (
                   <Card key={challenge.id} className="hover:shadow-md transition-shadow">
                     <CardContent className="p-4">
                         <div className="flex items-center justify-between">
@@ -1015,15 +1009,15 @@ const Challenges = () => {
                             <button 
                               onClick={() => handleCompleteChallenge(challenge.id)}
                               disabled={validatingChallenges.has(challenge.id)}
-                              className={`p-2 rounded transition-all duration-300 ${
+                              className={`p-2 rounded transition-all duration-700 ease-in-out ${
                                 validatingChallenges.has(challenge.id)
-                                  ? 'bg-green-500 border-2 border-green-600 scale-125 shadow-lg'
+                                  ? 'bg-green-500 border-2 border-green-600 scale-150 shadow-xl animate-pulse'
                                   : 'hover:bg-gray-100 hover:scale-105'
                               }`}
                               title="Marquer comme accompli"
                             >
                               {userChallenges.some(uc => uc.id === challenge.id && uc.status === 'completed') || validatingChallenges.has(challenge.id) ? (
-                                <CheckSquare className="w-6 h-6 text-white transition-all duration-300" />
+                                <CheckSquare className="w-6 h-6 text-white transition-all duration-700 ease-in-out" />
                               ) : (
                                 <Square className="w-6 h-6 text-gray-400 transition-all duration-300" />
                               )}

@@ -109,6 +109,9 @@ export const useChallenges = () => {
     try {
       const now = new Date().toISOString();
       
+      // Attendre un délai pour permettre l'animation
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
       setUserChallenges(prev => 
         prev.map(c => 
           c.id === id 
