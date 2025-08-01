@@ -11,14 +11,14 @@ export const useCategories = () => {
       if (error) throw error;
       return data;
     },
-    // Refetch automatique toutes les 5 secondes pour voir les nouvelles publications
-    refetchInterval: 5000,
+    // Refetch automatique toutes les 30 secondes pour voir les nouvelles publications
+    refetchInterval: 30000,
     // Refetch quand la fenêtre redevient active
     refetchOnWindowFocus: true,
     // Refetch quand on revient en ligne
     refetchOnReconnect: true,
-    // Garder les données en cache pendant 10 secondes
-    staleTime: 10000
+    // Garder les données en cache pendant 30 secondes
+    staleTime: 30000
   });
 };
 export const useCategory = (categoryId: string) => {

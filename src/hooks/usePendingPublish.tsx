@@ -61,20 +61,26 @@ export const usePendingPublish = () => {
 
       // Si pas de doublon, procéder à la publication
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const insertData: any = {
+        user_id: user.id,
+        content_type: data.content_type,
+        title: data.title,
+        description: data.description,
+        category_id: data.category_id,
+        subcategory_id: data.subcategory_id,
+        url: data.url,
+        platform: data.platform,
+        status: 'pending'
+      };
+
+      // Ajouter social_network_id seulement s'il est défini
+      if (data.social_network_id) {
+        insertData.social_network_id = data.social_network_id;
+      }
+
       const { data: publication, error } = await (supabase as any)
         .from('pending_publications')
-        .insert({
-          user_id: user.id,
-          content_type: data.content_type,
-          title: data.title,
-          description: data.description,
-          category_id: data.category_id,
-          subcategory_id: data.subcategory_id,
-          url: data.url,
-          platform: data.platform,
-          social_network_id: data.social_network_id,
-          status: 'pending'
-        })
+        .insert(insertData)
         .select()
         .single();
 

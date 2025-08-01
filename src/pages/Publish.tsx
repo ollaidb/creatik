@@ -155,7 +155,7 @@ const Publish = () => {
         description: formData.content_type === 'challenge' ? formData.description : undefined,
         url: (formData.content_type === 'source' || formData.content_type === 'account') ? formData.url : undefined,
         platform: formData.content_type === 'account' ? formData.platform : undefined,
-        social_network_id: selectedNetwork !== 'all' ? selectedNetwork : socialNetworks?.[0]?.id
+        social_network_id: selectedNetwork !== 'all' ? selectedNetwork : undefined
       });
 
       if (result && result.success) {
