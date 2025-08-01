@@ -78,7 +78,7 @@ export const usePendingPublish = () => {
         insertData.social_network_id = data.social_network_id;
       }
 
-      const { data: publication, error } = await (supabase as any)
+      const { data: publication, error } = await supabase
         .from('pending_publications')
         .insert(insertData)
         .select()

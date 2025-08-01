@@ -17,14 +17,14 @@ const Navigation: React.FC<NavigationProps> = ({ className }) => {
     currentPath === "/" ? "home" :
     currentPath.startsWith("/categories") ? "categories" :
     currentPath.startsWith("/publish") ? "publish" :
-    currentPath.startsWith("/favorites") || currentPath.startsWith("/profile/favorites") ? "favorites" :
+    currentPath.startsWith("/challenges") ? "challenges" :
     currentPath.startsWith("/profile") ? "profile" : "home";
 
   const tabs = [
     { id: "home", label: "Accueil", icon: "home", path: "/" },
     { id: "categories", label: "Catégories", icon: "categories", path: "/categories" },
     { id: "publish", label: "Publier", icon: "publish", path: "/publish" },
-    { id: "favorites", label: "Favoris", icon: "favorites", path: "/profile/favorites" },
+    { id: "challenges", label: "Défis publics", icon: "challenges", path: "/challenges" },
     { id: "profile", label: "Profil", icon: "profile", path: "/profile" },
   ];
 
@@ -71,11 +71,11 @@ const Navigation: React.FC<NavigationProps> = ({ className }) => {
               </svg>
               </div>
             )}
-            {tab.icon === "favorites" && (
+            {tab.icon === "challenges" && (
               <div className="p-2 rounded-full bg-gradient-to-br from-primary/10 to-transparent hover:from-primary/20 hover:to-primary/5 transition-all duration-300 shadow-sm">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={activeTab === tab.id ? 2.2 : 2} stroke="currentColor" className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0 drop-shadow-sm">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
-              </svg>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" />
+                </svg>
               </div>
             )}
             {tab.icon === "profile" && (

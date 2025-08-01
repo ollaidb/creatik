@@ -11,12 +11,25 @@ import {
   CarouselNext, 
   CarouselPrevious 
 } from "@/components/ui/carousel";
+import { Heart, Target } from "lucide-react";
+import { Button } from "@/components/ui/button";
+
 const Hero: React.FC = () => {
   const navigate = useNavigate();
   const { data: categories, isLoading } = useCategories();
+  
   const handleSearch = (query: string) => {
     navigate(`/search?search=${encodeURIComponent(query)}`);
   };
+
+  const handleFavoritesClick = () => {
+    navigate('/profile/favorites');
+  };
+
+  const handleChallengesClick = () => {
+    navigate('/profile/challenges');
+  };
+
   if (isLoading) {
     return (
       <section className="relative py-4 bg-card">
@@ -28,6 +41,7 @@ const Hero: React.FC = () => {
       </section>
     );
   }
+
   return (
     <section className="relative py-4 bg-card">
       <div className="container mx-auto px-4">
@@ -38,19 +52,57 @@ const Hero: React.FC = () => {
             <h1 className="text-2xl md:text-3xl font-bold text-foreground">
               Creatik
             </h1>
-            <div className="w-[600px]">
-              <IntelligentSearchBar 
-                onSearch={handleSearch}
-                placeholder="Rechercher des idées de contenu..."
-                className="w-full"
-              />
+            <div className="flex items-center gap-3">
+              <div className="w-[600px]">
+                <IntelligentSearchBar 
+                  onSearch={handleSearch}
+                  placeholder="Rechercher des idées de contenu..."
+                  className="w-full"
+                />
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleFavoritesClick}
+                className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-accent"
+              >
+                <Heart className="h-5 w-5" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleChallengesClick}
+                className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-accent"
+              >
+                <Target className="h-5 w-5" />
+              </Button>
             </div>
           </div>
           {/* Version Mobile - Titre en haut, barre en bas */}
           <div className="md:hidden">
-            <h1 className="text-2xl font-bold text-foreground text-center mb-6">
-              Creatik
-            </h1>
+            <div className="flex items-center justify-between mb-6">
+              <h1 className="text-2xl font-bold text-foreground">
+                Creatik
+              </h1>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleFavoritesClick}
+                  className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-accent"
+                >
+                  <Heart className="h-5 w-5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleChallengesClick}
+                  className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-accent"
+                >
+                  <Target className="h-5 w-5" />
+                </Button>
+              </div>
+            </div>
             <div className="w-full">
               <IntelligentSearchBar 
                 onSearch={handleSearch}
