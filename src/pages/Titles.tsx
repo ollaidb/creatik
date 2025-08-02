@@ -6,6 +6,7 @@ import { useSubcategory } from '@/hooks/useSubcategory';
 import { useContentTitles } from '@/hooks/useContentTitles';
 import { useAccounts } from '@/hooks/useAccounts';
 import { useSources } from '@/hooks/useSources';
+import { useThemes } from '@/hooks/useThemes';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useFavorites } from '@/hooks/useFavorites';
@@ -14,6 +15,8 @@ import SubcategoryTabs from '@/components/SubcategoryTabs';
 import HashtagsSection from '@/components/HashtagsSection';
 import { RippleCard } from '@/components/RippleCard';
 import Navigation from '@/components/Navigation';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const Titles = () => {
   const { subcategoryId, categoryId } = useParams();
@@ -27,14 +30,11 @@ const Titles = () => {
     (searchParams.toString().includes('youtube') || 
      window.location.href.includes('youtube')) 
     ? 'youtube' 
-    : selectedNetwork === 'all' && 
-      (searchParams.toString().includes('twitch') || 
-       window.location.href.includes('twitch'))
-    ? 'twitch'
     : selectedNetwork;
   const { data: titles, isLoading: titlesLoading, refetch: refreshTitles } = useContentTitles(subcategoryId, detectedNetwork);
   const { data: accounts = [], isLoading: accountsLoading } = useAccounts(detectedNetwork);
   const { data: sources = [], isLoading: sourcesLoading } = useSources(detectedNetwork);
+  const { data: themes } = useThemes();
   
   // Filtrer les comptes selon la catégorie et sous-catégorie
   const filteredAccounts = accounts.filter(account => 
@@ -312,8 +312,8 @@ const Titles = () => {
           activeTab={tab}
           onTabChange={handleTabChange}
           showHooks={isHooksAvailableForNetwork(detectedNetwork)}
-          showSources={detectedNetwork !== 'twitch'}
-          showHashtags={detectedNetwork !== 'twitch'}
+          showSources={detectedNetwork !== 'twitch' && detectedNetwork !== '550e8400-e29b-41d4-a716-446655440004'}
+          showHashtags={detectedNetwork !== 'twitch' && detectedNetwork !== '550e8400-e29b-41d4-a716-446655440004'}
           networkId={detectedNetwork}
         />
         {/* Barre de recherche intelligente */}

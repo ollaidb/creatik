@@ -84,7 +84,7 @@
 
 /* Classes pour les bordures */
 .border-creatik-primary { border-color: var(--creatik-bg-primary); }
-.border-creatik-secondary { border-color: var(--creatik-bg-secondary); }
+.border-creatik-secondary { border-color: var(--creatik-bg-secondary); } 
 
 /* Classes pour les catégories */
 .bg-creatik-category-1 { background-color: var(--creatik-category-1); }

@@ -61,8 +61,8 @@ const FavoriteCard: React.FC<FavoriteCardProps> = ({ category, index, onClick, c
         </div>
         <div className="w-full h-full flex items-center justify-center">
           <h3 className="font-semibold text-lg leading-tight text-center break-words text-white">
-            {category.name}
-          </h3>
+          {category.name}
+        </h3>
         </div>
       </div>
     </div>
