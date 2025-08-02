@@ -9,15 +9,21 @@ interface Source {
   created_at: string;
 }
 
-export const useSources = () => {
+export const useSources = (networkId?: string) => {
   return useQuery({
-    queryKey: ['sources'],
+    queryKey: ['sources', networkId],
     queryFn: async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error } = await (supabase as any)
+      let query = (supabase as any)
         .from('sources')
         .select('*')
         .order('created_at', { ascending: false });
+      
+      // Filtrer par réseau social si spécifié
+      if (networkId && networkId !== 'all') {
+        query = query.eq('social_network_id', networkId);
+      }
+      
+      const { data, error } = await query;
       
       if (error) {
         console.error('Erreur lors du chargement des sources:', error);

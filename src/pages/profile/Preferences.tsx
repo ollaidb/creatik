@@ -20,7 +20,7 @@ const Preferences = () => {
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h1 className="text-xl font-semibold">Préférences</h1>
+          <h1 className="text-xl font-semibold">Centres d'intérêt</h1>
         </div>
       </header>
       <main className="max-w-4xl mx-auto p-4">

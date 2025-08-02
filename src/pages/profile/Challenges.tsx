@@ -611,7 +611,7 @@ const Challenges = () => {
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h1 className="text-xl font-semibold">Mes Défis</h1>
+          <h1 className="text-xl font-semibold">Défis</h1>
         </header>
         <main className="max-w-4xl mx-auto p-4">
           <Card className="text-center py-12">
@@ -642,7 +642,7 @@ const Challenges = () => {
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h1 className="text-xl font-semibold">Mes Défis</h1>
+          <h1 className="text-xl font-semibold">Défis</h1>
         </header>
         <main className="max-w-4xl mx-auto p-4">
           <div className="flex items-center justify-center h-60">
@@ -668,7 +668,7 @@ const Challenges = () => {
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h1 className="text-xl font-semibold">Mes Défis</h1>
+          <h1 className="text-xl font-semibold">Défis</h1>
         </header>
         <main className="max-w-4xl mx-auto p-4">
           <Card className="text-center py-12">
@@ -699,7 +699,7 @@ const Challenges = () => {
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h1 className="text-xl font-semibold">Mes Défis</h1>
+          <h1 className="text-xl font-semibold">Défis</h1>
         </div>
         <div className="flex items-center gap-2">
           {/* Bouton Éditer unique qui fonctionne pour tous les onglets sauf la corbeille */}

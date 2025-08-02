@@ -144,7 +144,7 @@ const Publications = () => {
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h1 className="text-xl font-semibold">Mes Publications</h1>
+          <h1 className="text-xl font-semibold">Publications</h1>
         </header>
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
@@ -167,7 +167,7 @@ const Publications = () => {
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h1 className="text-xl font-semibold">Mes Publications</h1>
+          <h1 className="text-xl font-semibold">Publications</h1>
         </div>
         <div className="flex items-center gap-2">
           <Button 

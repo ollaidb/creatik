@@ -2,15 +2,17 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 
 interface SubcategoryTabsProps {
-  activeTab: 'titres' | 'comptes' | 'sources' | 'hashtags';
-  onTabChange: (tab: 'titres' | 'comptes' | 'sources' | 'hashtags') => void;
+  activeTab: 'titres' | 'comptes' | 'sources' | 'hashtags' | 'hooks';
+  onTabChange: (tab: 'titres' | 'comptes' | 'sources' | 'hashtags' | 'hooks') => void;
   className?: string;
+  showHooks?: boolean;
 }
 
 const SubcategoryTabs: React.FC<SubcategoryTabsProps> = ({ 
   activeTab, 
   onTabChange, 
-  className = "" 
+  className = "",
+  showHooks = true
 }) => {
   return (
     <div className={`flex gap-2 mb-6 justify-center ${className}`}>
@@ -38,6 +40,16 @@ const SubcategoryTabs: React.FC<SubcategoryTabsProps> = ({
       >
         Sources
       </Button>
+      {showHooks && (
+        <Button
+          variant={activeTab === 'hooks' ? 'default' : 'outline'}
+          size="sm"
+          className="rounded-full"
+          onClick={() => onTabChange('hooks')}
+        >
+          Hooks
+        </Button>
+      )}
       <Button
         variant={activeTab === 'hashtags' ? 'default' : 'outline'}
         size="sm"

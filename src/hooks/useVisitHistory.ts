@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 
 export interface VisitItem {
@@ -18,7 +18,7 @@ export const useVisitHistory = () => {
   const { user } = useAuth();
 
   // Charger l'historique depuis localStorage
-  const loadVisits = () => {
+  const loadVisits = useCallback(() => {
     if (typeof window !== 'undefined') {
       const stored = localStorage.getItem('visitHistory');
       if (stored) {
@@ -31,37 +31,39 @@ export const useVisitHistory = () => {
       }
     }
     setLoading(false);
-  };
+  }, []);
 
   // Sauvegarder l'historique dans localStorage
-  const saveVisits = (newVisits: VisitItem[]) => {
+  const saveVisits = useCallback((newVisits: VisitItem[]) => {
     if (typeof window !== 'undefined') {
       localStorage.setItem('visitHistory', JSON.stringify(newVisits));
     }
-  };
+  }, []);
 
   // Ajouter une nouvelle visite
-  const addVisit = (visit: Omit<VisitItem, 'id' | 'timestamp'>) => {
+  const addVisit = useCallback((visit: Omit<VisitItem, 'id' | 'timestamp'>) => {
     const newVisit: VisitItem = {
       ...visit,
       id: Date.now().toString(),
       timestamp: new Date().toISOString()
     };
 
-    const updatedVisits = [newVisit, ...visits.filter(v => v.url !== visit.url)].slice(0, 50);
-    setVisits(updatedVisits);
-    saveVisits(updatedVisits);
-  };
+    setVisits(prevVisits => {
+      const updatedVisits = [newVisit, ...prevVisits.filter(v => v.url !== visit.url)].slice(0, 50);
+      saveVisits(updatedVisits);
+      return updatedVisits;
+    });
+  }, [saveVisits]);
 
   // Effacer l'historique
-  const clearHistory = () => {
+  const clearHistory = useCallback(() => {
     setVisits([]);
     saveVisits([]);
-  };
+  }, [saveVisits]);
 
   useEffect(() => {
     loadVisits();
-  }, []);
+  }, [loadVisits]);
 
   return {
     visits,

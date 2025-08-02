@@ -12,9 +12,9 @@ export interface Hook {
   updated_at: string;
 }
 
-export const useHooks = (categoryId?: string, subcategoryId?: string) => {
+export const useHooks = (categoryId?: string, subcategoryId?: string, networkId?: string) => {
   return useQuery({
-    queryKey: ['hooks', categoryId, subcategoryId],
+    queryKey: ['hooks', categoryId, subcategoryId, networkId],
     queryFn: async (): Promise<Hook[]> => {
       let query = supabase
         .from('hooks')
@@ -27,6 +27,11 @@ export const useHooks = (categoryId?: string, subcategoryId?: string) => {
 
       if (subcategoryId) {
         query = query.eq('subcategory_id', subcategoryId);
+      }
+
+      // Filtrer par réseau social si spécifié
+      if (networkId && networkId !== 'all') {
+        query = query.eq('social_network_id', networkId);
       }
 
       const { data, error } = await query;

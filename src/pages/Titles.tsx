@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Copy, Heart, Search, Plus, User, ExternalLink, Link } from 'lucide-react';
 import { useSubcategory } from '@/hooks/useSubcategory';
@@ -18,30 +18,80 @@ import Navigation from '@/components/Navigation';
 const Titles = () => {
   const { subcategoryId, categoryId } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const selectedNetwork = searchParams.get('network') || 'all';
   const { toast } = useToast();
+  
   const { data: subcategory, isLoading: subcategoryLoading } = useSubcategory(subcategoryId);
-  const { data: titles, isLoading: titlesLoading, refetch: refreshTitles } = useContentTitles(subcategoryId);
-  const { data: accounts = [], isLoading: accountsLoading } = useAccounts();
-  const { data: sources = [], isLoading: sourcesLoading } = useSources();
+  const detectedNetwork = selectedNetwork === 'all' && 
+    (searchParams.toString().includes('youtube') || 
+     window.location.href.includes('youtube')) 
+    ? 'youtube' 
+    : selectedNetwork;
+  const { data: titles, isLoading: titlesLoading, refetch: refreshTitles } = useContentTitles(subcategoryId, detectedNetwork);
+  const { data: accounts = [], isLoading: accountsLoading } = useAccounts(detectedNetwork);
+  const { data: sources = [], isLoading: sourcesLoading } = useSources(detectedNetwork);
   
   // Filtrer les comptes selon la catégorie et sous-catégorie
   const filteredAccounts = accounts.filter(account => 
     account.category === subcategory?.category?.name && account.subcategory === subcategory?.name
   );
 
-  // Filtrer les sources selon la catégorie et sous-catégorie
-  const filteredSources = sources.filter(source => 
-    source.category === subcategory?.category?.name && source.subcategory === subcategory?.name
-  );
+  // Utiliser toutes les sources (pas de filtrage par catégorie/sous-catégorie)
+  const filteredSources = sources;
+
+  // Fonction pour obtenir le nom d'affichage du réseau social
+  const getNetworkDisplayName = (networkId: string) => {
+    switch (networkId) {
+      case 'tiktok': return 'TikTok';
+      case 'instagram': return 'Instagram';
+      case 'youtube': return 'YouTube';
+      case 'twitter': return 'Twitter';
+      case 'facebook': return 'Facebook';
+      case 'linkedin': return 'LinkedIn';
+      case 'pinterest': return 'Pinterest';
+      case 'snapchat': return 'Snapchat';
+      case 'twitch': return 'Twitch';
+      default: return 'Toutes les plateformes';
+    }
+  };
+
+  // Vérifier si les hooks sont disponibles pour ce réseau
+  const isHooksAvailableForNetwork = (networkId: string) => {
+    // Les hooks ne sont disponibles que pour YouTube
+    const isAvailable = networkId === 'youtube' || 
+                       networkId === 'YouTube' ||
+                       networkId === '550e8400-e29b-41d4-a716-446655440003' || // UUID de YouTube
+                       searchParams.toString().includes('youtube') ||
+                       searchParams.toString().includes('YouTube') ||
+                       window.location.href.includes('youtube') ||
+                       window.location.href.includes('YouTube');
+    
+    console.log('🔍 Debug Hooks Availability:', {
+      networkId,
+      isAvailable,
+      selectedNetwork,
+      detectedNetwork,
+      urlParams: searchParams.toString(),
+      currentUrl: window.location.href
+    });
+    
+    return isAvailable;
+  };
 
   // Logs de débogage
   console.log('🔍 Debug Titles:', {
+    selectedNetwork,
+    detectedNetwork,
     accounts: accounts.length,
     filteredAccounts: filteredAccounts.length,
     sources: sources.length,
     filteredSources: filteredSources.length,
     accountsData: accounts.slice(0, 3), // Afficher les 3 premiers comptes
     sourcesData: sources.slice(0, 3), // Afficher les 3 premières sources
+    showHooksValue: isHooksAvailableForNetwork(detectedNetwork),
+    urlParams: searchParams.toString(),
+    currentUrl: window.location.href
   });
 
   const handleSearch = (query: string) => {
@@ -103,9 +153,9 @@ const Titles = () => {
 
   const handleSourceClick = (source: {
     id: string;
-    title: string;
-    url: string;
-    description: string;
+    name: string;
+    url: string | null;
+    description: string | null;
     category?: string;
     subcategory?: string;
   }) => {
@@ -151,17 +201,27 @@ const Titles = () => {
   };
 
   // Onglet Titres / Comptes / Sources / Hashtags
-  const [tab, setTab] = useState<'titres' | 'comptes' | 'sources' | 'hashtags'>('titres');
+  const [tab, setTab] = useState<'titres' | 'comptes' | 'sources' | 'hashtags' | 'hooks'>('titres');
   
   // Gestion des favoris pour les titres, comptes et sources
   const { favorites, toggleFavorite, isFavorite } = useFavorites(
-    tab === 'comptes' ? 'account' : tab === 'sources' ? 'source' : 'title'
+    tab === 'comptes' ? 'account' : tab === 'sources' ? 'source' : tab === 'hooks' ? 'hook' : 'title'
   );
+
+  // Gestion du changement d'onglet
+  const handleTabChange = (newTab: 'titres' | 'comptes' | 'sources' | 'hashtags' | 'hooks') => {
+    if (newTab === 'hooks') {
+      // Naviguer vers la page Hooks
+      navigate(`/category/${categoryId}/subcategory/${subcategoryId}/hooks?network=${selectedNetwork}`);
+    } else {
+      setTab(newTab);
+    }
+  };
 
   // Correction du bouton retour
   const handleBack = () => {
     if (categoryId) {
-      navigate(`/category/${categoryId}/subcategories`);
+      navigate(`/category/${categoryId}/subcategories?network=${selectedNetwork}`);
     } else {
       navigate('/categories');
     }
@@ -176,7 +236,7 @@ const Titles = () => {
             <Button 
               variant="ghost" 
               size="sm"
-              onClick={() => navigate(`/category/${subcategoryId}/subcategories`)} 
+              onClick={() => navigate(`/category/${subcategoryId}/subcategories?network=${selectedNetwork}`)} 
               className="p-2 h-10 w-10 rounded-full"
             >
               <ArrowLeft size={20} />
@@ -222,8 +282,14 @@ const Titles = () => {
             <p className="text-sm text-gray-600 dark:text-gray-400">
               {tab === 'titres' ? (titles?.length || 0) : 
                tab === 'comptes' ? (filteredAccounts?.length || 0) : 
-               (filteredSources?.length || 0)} {tab === 'titres' ? 'titres' : tab === 'comptes' ? 'comptes' : 'sources'} disponibles
+               (filteredSources?.length || 0)} {tab === 'titres' ? 'titres' : tab === 'comptes' ? 'comptes' : 'sources'}
             </p>
+            {/* Indicateur du réseau social sélectionné */}
+            {selectedNetwork !== 'all' && (
+              <p className="text-xs text-blue-600 dark:text-blue-400 font-medium">
+                {getNetworkDisplayName(selectedNetwork)}
+              </p>
+            )}
           </div>
           <Button 
             size="sm"
@@ -240,7 +306,8 @@ const Titles = () => {
         {/* Onglets Titres / Comptes / Sources / Hashtags */}
         <SubcategoryTabs 
           activeTab={tab}
-          onTabChange={setTab}
+          onTabChange={handleTabChange}
+          showHooks={isHooksAvailableForNetwork(detectedNetwork)}
         />
         {/* Barre de recherche intelligente */}
         <div className="mb-6">
@@ -256,21 +323,26 @@ const Titles = () => {
         {tab === 'titres' && (
           // Liste des titres avec structure inspirée de la photo
           <div className="space-y-3">
-            {titles?.map((title, index) => (
-              <RippleCard
-                key={title.id}
-                title={title}
-                index={index}
-                isFavorite={isFavorite(title.id)}
-                onFavorite={toggleFavorite}
-                onAddToChallenge={handleAddToChallenge}
-              />
-            ))}
+            {titles
+              ?.filter(t => detectedNetwork === 'all' || t.social_network_id === detectedNetwork)
+              .map((title, index) => (
+                <RippleCard
+                  key={title.id}
+                  title={title}
+                  index={index}
+                  isFavorite={isFavorite(title.id)}
+                  onFavorite={toggleFavorite}
+                  onAddToChallenge={handleAddToChallenge}
+                />
+              ))}
             {/* Message si pas de titres */}
-            {titles?.length === 0 && (
+            {titles?.filter(t => detectedNetwork === 'all' || t.social_network_id === detectedNetwork).length === 0 && (
               <div className="text-center py-12">
                 <div className="text-gray-500 dark:text-gray-400 mb-4 text-sm">
-                  Aucun titre disponible pour cette sous-catégorie
+                  {detectedNetwork !== 'all' 
+                    ? `Aucun titre disponible pour ${getNetworkDisplayName(detectedNetwork)}`
+                    : 'Aucun titre disponible pour cette sous-catégorie'
+                  }
                 </div>
               </div>
             )}
@@ -348,7 +420,12 @@ const Titles = () => {
             ))}
             {filteredAccounts?.length === 0 && (
               <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-                <p>Aucun compte disponible pour cette sous-catégorie.</p>
+                <p>
+                  {selectedNetwork !== 'all' 
+                    ? `Aucun compte disponible pour ${getNetworkDisplayName(selectedNetwork)}`
+                    : 'Aucun compte disponible pour cette sous-catégorie.'
+                  }
+                </p>
               </div>
             )}
           </div>
@@ -363,7 +440,14 @@ const Titles = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.05 }}
                 className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all duration-200 cursor-pointer"
-                onClick={() => handleSourceClick(source)}
+                onClick={() => handleSourceClick({
+                  id: source.id,
+                  name: source.name,
+                  url: source.url,
+                  description: source.description,
+                  category: undefined,
+                  subcategory: undefined
+                })}
               >
                 <div className="space-y-2">
                   {/* URL et icône */}
@@ -374,7 +458,7 @@ const Titles = () => {
                   
                   {/* Titre cliquable */}
                   <h3 className="text-lg font-medium text-blue-600 dark:text-blue-400 hover:underline">
-                    {source.title}
+                    {source.name}
                   </h3>
                   
                   {/* Description */}
@@ -400,7 +484,14 @@ const Titles = () => {
                       size="sm"
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleSourceClick(source);
+                        handleSourceClick({
+                          id: source.id,
+                          name: source.name,
+                          url: source.url,
+                          description: source.description,
+                          category: undefined,
+                          subcategory: undefined
+                        });
                       }}
                       className="p-2 h-8 w-8 rounded-full text-blue-600 hover:text-blue-700"
                     >
@@ -412,7 +503,12 @@ const Titles = () => {
             ))}
             {filteredSources?.length === 0 && (
               <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-                <p>Aucune source disponible pour cette sous-catégorie.</p>
+                <p>
+                  {selectedNetwork !== 'all' 
+                    ? `Aucune source disponible pour ${getNetworkDisplayName(selectedNetwork)}`
+                    : 'Aucune source disponible pour cette sous-catégorie.'
+                  }
+                </p>
               </div>
             )}
           </div>

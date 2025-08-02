@@ -200,7 +200,7 @@ export const TitleSelectionCard: React.FC<TitleSelectionCardProps> = ({
           <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-3 mb-3">
               {title.description}
           </p>
-        )}
+          )}
 
         {/* Platform badge */}
         {title.platform && (
@@ -228,7 +228,7 @@ export const TitleSelectionCard: React.FC<TitleSelectionCardProps> = ({
                     ? "text-red-500 fill-red-500" 
                     : "text-gray-400 hover:text-red-400"
                 )}
-              />
+                  />
             </button>
             )}
             

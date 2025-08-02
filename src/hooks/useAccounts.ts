@@ -41,16 +41,22 @@ const getDefaultAvatar = (platform: string, name: string): string => {
   `)}`;
 };
 
-export const useAccounts = () => {
+export const useAccounts = (networkId?: string) => {
   return useQuery({
-    queryKey: ['exemplary_accounts'],
+    queryKey: ['exemplary_accounts', networkId],
     queryFn: async (): Promise<Account[]> => {
       try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data, error } = await (supabase as any)
+        let query = (supabase as any)
           .from('exemplary_accounts')
           .select('*')
           .order('created_at', { ascending: false });
+
+        // Filtrer par réseau social si spécifié
+        if (networkId && networkId !== 'all') {
+          query = query.eq('social_network_id', networkId);
+        }
+
+        const { data, error } = await query;
 
         if (error) {
           console.error('Erreur lors du chargement des comptes:', error);

@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+
 export const useThemes = () => {
   return useQuery({
     queryKey: ['themes'],
@@ -7,12 +8,14 @@ export const useThemes = () => {
       const { data, error } = await supabase
         .from('themes')
         .select('*')
+        .neq('name', 'Tout') // Exclure le thème "Tout" de la liste
         .order('display_order');
       if (error) throw error;
       return data;
     }
   });
 };
+
 export const useCategoriesByTheme = (themeId?: string) => {
   return useQuery({
     queryKey: ['categories-by-theme', themeId],

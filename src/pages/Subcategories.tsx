@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Plus, Heart, Filter } from 'lucide-react';
 import { useSubcategories } from '@/hooks/useSubcategories';
@@ -12,12 +12,30 @@ import Navigation from '@/components/Navigation';
 const Subcategories = () => {
   const { categoryId } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const selectedNetwork = searchParams.get('network') || 'all';
   const [searchTerm, setSearchTerm] = useState('');
   const [sortOrder, setSortOrder] = useState<'alphabetical' | 'priority' | 'recent'>('priority');
   const { data: subcategories, isLoading } = useSubcategories(categoryId);
   const { data: categories } = useCategories();
   const currentCategory = categories?.find(cat => cat.id === categoryId);
   const { favorites, toggleFavorite, isFavorite } = useFavorites('subcategory');
+  
+  // Fonction pour obtenir le nom d'affichage du réseau social
+  const getNetworkDisplayName = (networkId: string) => {
+    switch (networkId) {
+      case 'tiktok': return 'TikTok';
+      case 'instagram': return 'Instagram';
+      case 'youtube': return 'YouTube';
+      case 'twitter': return 'Twitter';
+      case 'facebook': return 'Facebook';
+      case 'linkedin': return 'LinkedIn';
+      case 'pinterest': return 'Pinterest';
+      case 'snapchat': return 'Snapchat';
+      case 'twitch': return 'Twitch';
+      default: return 'Toutes les plateformes';
+    }
+  };
   
   // Fonction de tri
   const getSortedSubcategories = (subcategories: Array<{id: string, name: string, created_at?: string}>) => {
@@ -48,7 +66,7 @@ const Subcategories = () => {
     subcategory.name.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
   const handleBackClick = () => {
-    navigate('/categories');
+    navigate(`/categories?network=${selectedNetwork}`);
   };
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -115,8 +133,14 @@ const Subcategories = () => {
               {currentCategory?.name || 'Catégorie'}
             </h1>
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              {filteredSubcategories.length} sous-catégories disponibles
+              {filteredSubcategories.length} sous-catégories
             </p>
+            {/* Indicateur du réseau social sélectionné */}
+            {selectedNetwork !== 'all' && (
+              <p className="text-xs text-blue-600 dark:text-blue-400 font-medium">
+                {getNetworkDisplayName(selectedNetwork)}
+              </p>
+            )}
           </div>
           <Button 
             size="sm"
@@ -161,8 +185,9 @@ const Subcategories = () => {
           {getSortedSubcategories(filteredSubcategories).map((subcategory) => (
             <motion.div key={subcategory.id} variants={itemVariants}>
               <div 
-                onClick={() => navigate(`/category/${categoryId}/subcategory/${subcategory.id}`)}
-                className="relative overflow-hidden rounded-xl cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-lg group h-20 sm:h-24 md:h-28 bg-white dark:bg-gray-800"
+                onClick={() => navigate(`/category/${categoryId}/subcategory/${subcategory.id}?network=${selectedNetwork}`)}
+                className="relative overflow-hidden rounded-xl cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-lg group h-20 sm:h-24 md:h-28 bg-transparent border-4"
+                style={{ borderColor: '#b6b6b6' }}
               >
                 {/* Icône cœur en haut à droite */}
                 <div

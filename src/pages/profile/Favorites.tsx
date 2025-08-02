@@ -367,7 +367,8 @@ const Favorites = () => {
                   <motion.div key={subcategory.id} variants={itemVariants}>
                     <div 
                       onClick={() => navigate(`/category/${subcategory.category_id}/subcategory/${subcategory.id}`)}
-                      className="relative overflow-hidden rounded-xl cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-lg group h-20 sm:h-24 md:h-28 bg-white dark:bg-gray-800"
+                      className="relative overflow-hidden rounded-xl cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-lg group h-20 sm:h-24 md:h-28 bg-white dark:bg-gray-800 border-2"
+                      style={{ borderColor: '#270014' }}
                     >
                       {/* Icône cœur en haut à droite */}
                       <div

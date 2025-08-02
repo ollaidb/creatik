@@ -61,31 +61,61 @@ export const useSocialNetworks = () => {
   return useQuery({
     queryKey: ['social-networks'],
     queryFn: async (): Promise<SocialNetwork[]> => {
-      // Pour l'instant, retourner les données temporaires
-      // Plus tard, on utilisera la vraie table
-      return TEMP_SOCIAL_NETWORKS;
+      // Utiliser les vraies données de la base de données
+      const { data, error } = await supabase
+        .from('social_networks')
+        .select('*')
+        .eq('is_active', true)
+        .order('display_name');
+      
+      if (error) {
+        console.error('Erreur lors de la récupération des réseaux sociaux:', error);
+        // Fallback vers les données temporaires si la table n'existe pas encore
+        return TEMP_SOCIAL_NETWORKS;
+      }
+      
+      return data || TEMP_SOCIAL_NETWORKS;
     },
   });
 };
 
 export const useFilterCategoriesByNetwork = (categories: Category[], networkId: string) => {
-  if (networkId === 'all') {
-    return categories;
-  }
+  // Utiliser les vraies données de la base de données
+  const { data: networkConfig } = useQuery({
+    queryKey: ['network-config', networkId],
+    queryFn: async () => {
+      if (networkId === 'all') return null;
+      
+      const { data, error } = await supabase
+        .from('network_configurations')
+        .select('*')
+        .eq('network_id', networkId)
+        .single();
+      
+      if (error) {
+        console.error('Erreur lors de la récupération de la config réseau:', error);
+        return null;
+      }
+      
+      return data;
+    },
+    enabled: networkId !== 'all'
+  });
 
-  const networkFilter = NETWORK_FILTERS[networkId];
-  if (!networkFilter) {
+  if (networkId === 'all' || !networkConfig) {
     return categories;
   }
 
   // Filtrer les catégories masquées
+  const hiddenCategories = networkConfig.hidden_categories || [];
   const filteredCategories = categories.filter(category => {
-    return !networkFilter.hidden.includes(category.name.toLowerCase());
+    return !hiddenCategories.includes(category.name.toLowerCase());
   });
 
   // Appliquer les redirections
+  const redirectMappings = networkConfig.redirect_mappings || {};
   const redirectedCategories = filteredCategories.map(category => {
-    const redirectTo = networkFilter.redirects[category.name.toLowerCase()];
+    const redirectTo = redirectMappings[category.name.toLowerCase()];
     if (redirectTo) {
       const targetCategory = categories.find(c => c.name.toLowerCase() === redirectTo);
       return targetCategory || category;
@@ -93,7 +123,15 @@ export const useFilterCategoriesByNetwork = (categories: Category[], networkId: 
     return category;
   });
 
-  return redirectedCategories;
+  // Appliquer le tri par priorité
+  const sortPriority = networkConfig.sort_priority || {};
+  const sortedCategories = redirectedCategories.sort((a, b) => {
+    const priorityA = sortPriority[a.name.toLowerCase()] || 999;
+    const priorityB = sortPriority[b.name.toLowerCase()] || 999;
+    return priorityA - priorityB;
+  });
+
+  return sortedCategories;
 };
 
 export const useGetNetworkDisplayName = (networkId: string) => {

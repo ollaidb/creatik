@@ -114,7 +114,15 @@ const Profile = () => {
   };
   const menuItems: MenuItem[] = [
     {
-      title: "Mes Publications",
+      title: 'Centres d\'intérêt',
+      description: 'Personnalisez vos préférences',
+      icon: Settings,
+      path: '/profile/preferences',
+      color: 'text-blue-500',
+      requiresAuth: true
+    },
+    {
+      title: "Publications",
       description: "Gérez vos publications et suivez leur statut",
       icon: FileText,
       path: '/profile/publications',
@@ -122,7 +130,7 @@ const Profile = () => {
       requiresAuth: true
     },
     {
-      title: 'Mes Défis',
+      title: 'Défis',
       description: 'Participez aux défis et suivez votre progression',
       icon: Target,
       path: '/profile/challenges',
@@ -135,23 +143,6 @@ const Profile = () => {
       icon: History,
       path: '/profile/history',
       color: 'text-purple-500',
-      requiresAuth: true
-    },
-    // Ajout conditionnel du menu admin
-    ...(isAdmin ? [{
-      title: 'Administration',
-      description: 'Gérez les publications en attente de validation',
-      icon: Settings,
-      path: '/admin/publications',
-      color: 'text-red-500',
-      requiresAuth: true
-    }] : []),
-    {
-      title: 'Préférences',
-      description: 'Personnalisez vos préférences',
-      icon: Settings,
-      path: '/profile/preferences',
-      color: 'text-blue-500',
       requiresAuth: true
     },
     {
@@ -177,7 +168,16 @@ const Profile = () => {
       path: '/profile/contact',
       color: 'text-orange-500',
       requiresAuth: false
-    }
+    },
+    // Ajout conditionnel du menu admin
+    ...(isAdmin ? [{
+      title: 'Administration',
+      description: 'Gérez les publications en attente de validation',
+      icon: Settings,
+      path: '/admin/publications',
+      color: 'text-red-500',
+      requiresAuth: true
+    }] : [])
   ];
   const handleMenuClick = (item: MenuItem) => {
     navigate(item.path);
@@ -214,7 +214,7 @@ const Profile = () => {
           <h1 className="text-xl font-semibold">Profil</h1>
         </div>
       </header>
-      <main className="max-w-4xl mx-auto p-4">
+      <main className="max-w-4xl mx-auto p-4 pb-12">
         {/* Profile Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -289,12 +289,12 @@ const Profile = () => {
                 onClick={() => handleMenuClick(item)}
               >
                 <CardContent className="p-4 h-full flex items-center">
-                  <div className="flex items-center space-x-3 w-full">
+                  <div className="flex items-center space-x-2 w-full">
                     <div className={`p-2 rounded-lg bg-gray-100 dark:bg-gray-800 ${item.color}`}>
                       <item.icon className="w-5 h-5" />
                     </div>
                     <div className="flex-1">
-                      <h3 className="font-semibold text-base">{item.title}</h3>
+                      <h3 className="font-semibold text-xs">{item.title}</h3>
                     </div>
                   </div>
                 </CardContent>

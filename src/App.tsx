@@ -23,6 +23,7 @@ import SearchResults from "./pages/SearchResults";
 import Categories from "./pages/Categories";
 import Subcategories from "./pages/Subcategories";
 import Titles from "./pages/Titles";
+import Hooks from "./pages/Hooks";
 import PublicChallenges from "./pages/PublicChallenges";
 import Accounts from "./pages/Accounts";
 import Sources from "./pages/Sources";
@@ -57,6 +58,7 @@ const AppContent = () => {
             <Route path="/categories" element={<Categories />} />
             <Route path="/category/:categoryId/subcategories" element={<Subcategories />} />
             <Route path="/category/:categoryId/subcategory/:subcategoryId" element={<Titles />} />
+            <Route path="/category/:categoryId/subcategory/:subcategoryId/hooks" element={<Hooks />} />
             {/* Challenges Routes */}
             <Route path="/challenges" element={<PublicChallenges />} />
             {/* Trending Ideas Route */}

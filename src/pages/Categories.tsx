@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Plus, Filter, Globe, Smartphone, Youtube, Instagram, Facebook, Twitter, Twitch, Linkedin, ArrowLeft } from 'lucide-react';
 import { useCategories } from '@/hooks/useCategories';
-import { useThemes } from '@/hooks/useThemes';
+import { useThemes, useCategoriesByTheme } from '@/hooks/useThemes';
 import { useSocialNetworks, useFilterCategoriesByNetwork } from '@/hooks/useSocialNetworks';
 import CategoryCard from '@/components/CategoryCard';
 import { Button } from '@/components/ui/button';
@@ -13,22 +13,64 @@ import Navigation from '@/components/Navigation';
 
 const Categories = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedTheme, setSelectedTheme] = useState<string | null>(null);
-  const [selectedNetwork, setSelectedNetwork] = useState('all');
+  
+  // Récupérer les choix depuis l'URL ou utiliser les valeurs par défaut
+  const [selectedTheme, setSelectedTheme] = useState<string | null>(
+    searchParams.get('theme') || null
+  );
+  const [selectedNetwork, setSelectedNetwork] = useState(
+    searchParams.get('network') || 'all'
+  );
   const [sortOrder, setSortOrder] = useState<'alphabetical' | 'priority' | 'recent'>('priority');
   
   const { data: categories, isLoading } = useCategories();
+  const { data: categoriesByTheme } = useCategoriesByTheme(selectedTheme);
   const { data: themes } = useThemes();
   const { data: socialNetworks } = useSocialNetworks();
 
-  // Filtrer les catégories selon le réseau
+  // Mettre à jour l'URL quand les choix changent
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (selectedTheme) params.set('theme', selectedTheme);
+    if (selectedNetwork !== 'all') params.set('network', selectedNetwork);
+    setSearchParams(params, { replace: true });
+  }, [selectedTheme, selectedNetwork]);
+
+  // Utiliser les catégories filtrées par thème et réseau
+  const baseCategories = selectedTheme ? categoriesByTheme : categories;
   const filteredCategories = useFilterCategoriesByNetwork(
-    categories?.filter(category => 
+    baseCategories?.filter(category => 
       category.name.toLowerCase().includes(searchTerm.toLowerCase())
     ) || [],
     selectedNetwork
   );
+
+  // Logs de débogage
+  console.log('🔍 Debug Categories:', {
+    selectedTheme,
+    selectedNetwork,
+    categories: categories?.length || 0,
+    categoriesByTheme: categoriesByTheme?.length || 0,
+    baseCategories: baseCategories?.length || 0,
+    filteredCategories: filteredCategories?.length || 0,
+    themes: themes?.length || 0,
+    socialNetworks: socialNetworks?.length || 0,
+    // Détails du filtrage
+    baseCategoriesNames: baseCategories?.map(c => c.name).slice(0, 5),
+    filteredCategoriesNames: filteredCategories?.map(c => c.name).slice(0, 5),
+    searchTerm,
+    sortOrder,
+    // Détails des réseaux sociaux
+    socialNetworksData: socialNetworks?.slice(0, 3),
+    // Vérifier si la personnalisation fonctionne
+    hasSelectedNetwork: selectedNetwork !== 'all',
+    hasSelectedTheme: selectedTheme !== null,
+    // Détails de l'URL
+    urlParams: searchParams.toString(),
+    allUrlParams: Object.fromEntries(searchParams.entries())
+  });
 
   // Fonction de tri
   const getSortedCategories = (categories: Array<{id: string, name: string, color?: string, created_at?: string}>) => {
@@ -77,10 +119,10 @@ const Categories = () => {
   };
 
   if (isLoading) {
-  return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header fixe pour mobile */}
-      <div className="sticky top-0 z-50 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-4 py-3">
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        {/* Header fixe pour mobile */}
+        <div className="sticky top-0 z-50 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-4 py-3">
           <div className="flex items-center gap-3">
             <Button 
               variant="ghost" 
@@ -120,7 +162,7 @@ const Categories = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-20"> {/* Ajouter pb-20 pour l'espace */}
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-20">
       {/* Header fixe pour mobile */}
       <div className="sticky top-0 z-50 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-4 py-3">
         <div className="flex items-center gap-3">
@@ -136,9 +178,6 @@ const Categories = () => {
             <h1 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
               Catégories
             </h1>
-            {/* <p className="text-sm text-gray-600 dark:text-gray-400">
-              {getSortedCategories(filteredCategories).length} catégories disponibles
-            </p> */}
           </div>
           <Button 
             size="sm"
@@ -227,6 +266,20 @@ const Categories = () => {
                       `}
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
+                      animate={isActive ? {
+                        scale: [1, 1.1, 1.05],
+                        boxShadow: [
+                          "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+                          "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
+                          "0 4px 6px -1px rgba(0, 0, 0, 0.1)"
+                        ]
+                      } : {}}
+                      transition={isActive ? {
+                        duration: 0.6,
+                        ease: "easeInOut"
+                      } : {
+                        duration: 0.2
+                      }}
                     >
                       <span className={`
                         text-xs font-medium leading-tight
@@ -255,11 +308,11 @@ const Categories = () => {
               >
                 <Filter size={20} />
               </Button>
-            <IntelligentSearchBar 
-              onSearch={handleSearch}
-              placeholder="Rechercher une catégorie..."
+              <IntelligentSearchBar 
+                onSearch={handleSearch}
+                placeholder="Rechercher une catégorie..."
                 className="flex-1"
-            />
+              />
             </div>
             <div className="flex justify-center">
               <ChallengeButton 
@@ -272,27 +325,42 @@ const Categories = () => {
         </div>
 
         {/* Grille des catégories */}
-                <motion.div 
-                  className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4"
-                  variants={containerVariants}
-                  initial="hidden"
-                  animate="visible"
-                >
+        <motion.div 
+          className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          key={`${selectedNetwork}-${selectedTheme}`}
+          transition={{
+            duration: 0.5,
+            ease: "easeInOut"
+          }}
+        >
           {getSortedCategories(filteredCategories).map((category, index) => (
-                    <motion.div key={category.id} variants={itemVariants}>
-                      <CategoryCard 
-                        category={{
-                          id: category.id,
-                          name: category.name,
+            <motion.div 
+              key={category.id} 
+              variants={itemVariants}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ 
+                delay: index * 0.1,
+                duration: 0.3,
+                ease: "easeOut"
+              }}
+            >
+              <CategoryCard 
+                category={{
+                  id: category.id,
+                  name: category.name,
                   color: category.color || 'primary'
-                        }}
-                        index={index}
+                }}
+                index={index}
                 onClick={() => navigate(`/category/${category.id}/subcategories?network=${selectedNetwork}`)}
-                        className="w-full h-20 sm:h-24 md:h-28"
-                      />
-                    </motion.div>
-                  ))}
-                </motion.div>
+                className="w-full h-20 sm:h-24 md:h-28"
+              />
+            </motion.div>
+          ))}
+        </motion.div>
 
         {/* Message si pas de catégories */}
         {getSortedCategories(filteredCategories).length === 0 && (
@@ -304,13 +372,13 @@ const Categories = () => {
                 ? `Aucune catégorie disponible pour ${socialNetworks?.find(n => n.id === selectedNetwork)?.display_name}`
                 : 'Aucune catégorie disponible'
               }
-                  </div>
+            </div>
             {searchTerm && (
               <Button onClick={() => setSearchTerm('')} className="text-sm">
                 Effacer la recherche
               </Button>
             )}
-              </div>
+          </div>
         )}
       </div>
       <Navigation />
