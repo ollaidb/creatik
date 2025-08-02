@@ -12,6 +12,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import Navigation from '@/components/Navigation';
 import { useSocialNetworks } from '@/hooks/useSocialNetworks';
+import { useThemes } from '@/hooks/useThemes';
 
 interface Category {
   id: string;
@@ -38,7 +39,8 @@ const Publish = () => {
     subcategory_id: '',
     description: '', // Added for challenges
     url: '', // Added for sources and accounts
-    platform: '' // Added for accounts
+    platform: '', // Added for accounts
+    theme: '' // Added for content theme
   });
 
   // États pour les barres de recherche
@@ -48,6 +50,7 @@ const Publish = () => {
   const [showSubcategoryDropdown, setShowSubcategoryDropdown] = useState(false);
   const [selectedNetwork, setSelectedNetwork] = useState('all');
   const { data: socialNetworks } = useSocialNetworks();
+  const { data: themes } = useThemes();
 
   // Refs pour les dropdowns
   const categoryDropdownRef = useRef<HTMLDivElement>(null);
@@ -327,7 +330,8 @@ const Publish = () => {
           subcategory_id: '',
           description: '',
           url: '',
-          platform: ''
+          platform: '',
+          theme: ''
         });
 
       // Rediriger vers la page de succès ou la page d'accueil
@@ -405,58 +409,56 @@ const Publish = () => {
   };
 
   return (
-    <div className="min-h-screen pb-20">
-      <header className="bg-background border-b p-4">
+    <div className="min-h-screen pb-32" style={{ backgroundColor: '#100e0d' }}>
+      <header className="border-b border-gray-800 p-4" style={{ backgroundColor: '#100e0d' }}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
         <Button 
           variant="ghost" 
           size="icon" 
           onClick={() => navigate('/')} 
-              className="p-2 h-10 w-10 rounded-full"
+              className="p-2 h-10 w-10 rounded-full text-white hover:bg-gray-800"
             >
               <ArrowLeft size={20} />
             </Button>
-            <h1 className="text-xl font-semibold">Publier du contenu</h1>
+            <h1 className="text-xl font-semibold text-white">Publier du contenu</h1>
           </div>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto p-4">
-        {/* NOUVELLE STRUCTURE : Formulaire en étapes */}
-        <div className="max-w-4xl mx-auto">
+      <main className="max-w-4xl mx-auto p-4">
+        <div className="max-w-2xl mx-auto">
           <form onSubmit={handleSubmit}>
           
-          {/* Section 1 : Informations de base */}
-          <div className="mb-8">
-            <h2 className="text-lg font-semibold mb-4">
-              Informations de base
-            </h2>
-            
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Réseau social */}
-                <div className="space-y-2">
-                  <Label htmlFor="network">Réseau social *</Label>
-                  <select
-                    id="network"
-                    value={selectedNetwork}
-                    onChange={(e) => setSelectedNetwork(e.target.value)}
-                    className="w-full p-3 border border-gray-300 rounded-md bg-white text-gray-900"
-                    required
-                  >
-                    <option value="all">Tous les réseaux</option>
-                    {socialNetworks?.map((network) => (
-                      <option key={network.id} value={network.id}>
-                        {network.display_name}
-                      </option>
-                    ))}
-                  </select>
+          {/* Section 1 : Réseau social */}
+          <div className="mb-3">
+            <div className="rounded-lg border border-gray-700 p-3" style={{ backgroundColor: '#100e0d' }}>
+              <div className="space-y-1">
+                <Label htmlFor="network" className="text-sm text-white">Réseau social *</Label>
+                <select
+                  id="network"
+                  value={selectedNetwork}
+                  onChange={(e) => setSelectedNetwork(e.target.value)}
+                  className="w-full p-2 border border-gray-600 rounded-md text-white text-sm"
+                  style={{ backgroundColor: '#100e0d' }}
+                  required
+                >
+                  <option value="all">Tous les réseaux</option>
+                  {socialNetworks?.map((network) => (
+                    <option key={network.id} value={network.id}>
+                      {network.display_name}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
+          </div>
 
-              {/* Type de contenu */}
-              <div className="space-y-2">
-                <Label htmlFor="content_type">Type de contenu *</Label>
+          {/* Section 2 : Type de contenu */}
+          <div className="mb-3">
+            <div className="rounded-lg border border-gray-700 p-3" style={{ backgroundColor: '#100e0d' }}>
+              <div className="space-y-1">
+                <Label htmlFor="content_type" className="text-sm text-white">Type de contenu *</Label>
                 <select
                   id="content_type"
                   value={formData.content_type}
@@ -468,12 +470,14 @@ const Publish = () => {
                         subcategory_id: '',
                         description: '',
                         url: '',
-                        platform: ''
+                        platform: '',
+                        theme: ''
                       }));
                       setCategorySearch('');
                       setSubcategorySearch('');
                   }}
-                  className="w-full p-3 border border-gray-300 rounded-md bg-white text-gray-900"
+                  className="w-full p-2 border border-gray-600 rounded-md text-white text-sm"
+                  style={{ backgroundColor: '#100e0d' }}
                   required
                 >
                   <option value="title">Titre</option>
@@ -484,37 +488,60 @@ const Publish = () => {
                   <option value="account">Compte</option>
                   <option value="hooks">Hooks</option>
                 </select>
-                </div>
               </div>
             </div>
           </div>
 
-          {/* Section 2 : Contenu principal */}
-          <div className="mb-8">
-            <h2 className="text-lg font-semibold mb-4">
-              Contenu principal
-            </h2>
-            
-            <div className="space-y-6">
-              {/* Titre */}
-              <div className="space-y-2">
-                <Label htmlFor="title">{getTitleLabel()} *</Label>
+          {/* Section 3 : Thème de contenu */}
+          <div className="mb-3">
+            <div className="rounded-lg border border-gray-700 p-3" style={{ backgroundColor: '#100e0d' }}>
+              <div className="space-y-1">
+                <Label htmlFor="theme" className="text-sm text-white">Thème de contenu</Label>
+                <select
+                  id="theme"
+                  value={formData.theme}
+                  onChange={(e) => setFormData(prev => ({ ...prev, theme: e.target.value }))}
+                  className="w-full p-2 border border-gray-600 rounded-md text-white text-sm"
+                  style={{ backgroundColor: '#100e0d' }}
+                >
+                  <option value="">Sélectionnez un thème (optionnel)</option>
+                  {themes?.map((theme) => (
+                    <option key={theme.id} value={theme.name}>
+                      {theme.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Section 4 : Titre */}
+          <div className="mb-3">
+            <div className="rounded-lg border border-gray-700 p-3" style={{ backgroundColor: '#100e0d' }}>
+              <div className="space-y-1">
+                <Label htmlFor="title" className="text-sm text-white">{getTitleLabel()} *</Label>
                 <Input
                   id="title"
                   value={formData.title}
                   onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
                   placeholder={getTitlePlaceholder()}
+                  className="text-sm border-gray-600 text-white placeholder-gray-400"
+                  style={{ backgroundColor: '#100e0d' }}
                   required
                 />
               </div>
+            </div>
+          </div>
 
-              {/* Catégorie (si nécessaire) */}
-              {shouldShowCategorySelection() && (
-                <div className="space-y-2">
-                  <Label htmlFor="category">Catégorie *</Label>
+          {/* Section 5 : Catégorie (si nécessaire) */}
+          {shouldShowCategorySelection() && (
+            <div className="mb-3">
+              <div className="rounded-lg border border-gray-700 p-3" style={{ backgroundColor: '#100e0d' }}>
+                <div className="space-y-1">
+                  <Label htmlFor="category" className="text-sm text-white">Catégorie *</Label>
                   <div className="relative" ref={categoryDropdownRef}>
                     <div className="relative">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-3 w-3 text-gray-400" />
                       <Input
                         type="text"
                         placeholder="Rechercher une catégorie..."
@@ -524,39 +551,40 @@ const Publish = () => {
                           setShowCategoryDropdown(true);
                         }}
                         onFocus={() => setShowCategoryDropdown(true)}
-                        className="pl-10 pr-10"
+                        className="pl-8 pr-8 text-sm border-gray-600 text-white placeholder-gray-400"
+                        style={{ backgroundColor: '#100e0d' }}
                       />
                       {categorySearch && (
                         <Button
                           type="button"
                           variant="ghost"
                           size="icon"
-                          className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6"
+                          className="absolute right-1 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 hover:text-white"
                           onClick={() => {
                             setCategorySearch('');
                             setFormData(prev => ({ ...prev, category_id: '', subcategory_id: '' }));
                             setSubcategorySearch('');
                           }}
                         >
-                          <X className="h-4 w-4" />
+                          <X className="h-3 w-3" />
                         </Button>
                       )}
                     </div>
                     {showCategoryDropdown && filteredCategories.length > 0 && (
-                      <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                      <div className="absolute z-10 w-full mt-1 bg-gray-800 border border-gray-600 rounded-md shadow-lg max-h-40 overflow-y-auto">
                         {filteredCategories.map((category) => (
                           <button
                             key={category.id}
                             type="button"
-                            className="w-full px-4 py-2 text-left hover:bg-gray-100 focus:bg-gray-100 focus:outline-none text-gray-900"
+                            className="w-full px-3 py-2 text-left hover:bg-gray-700 focus:bg-gray-700 focus:outline-none text-white text-sm"
                             onClick={() => handleCategorySelect(category)}
                           >
                             <div className="flex items-center gap-2">
                               <div 
-                                className="w-3 h-3 rounded-full" 
+                                className="w-2 h-2 rounded-full" 
                                 style={{ backgroundColor: category.color }}
                               />
-                              <span className="text-gray-900">{category.name}</span>
+                              <span className="text-white">{category.name}</span>
                             </div>
                           </button>
                         ))}
@@ -564,15 +592,19 @@ const Publish = () => {
                     )}
                   </div>
                 </div>
-              )}
+              </div>
+            </div>
+          )}
 
-              {/* Sous-catégorie (si nécessaire) */}
-              {shouldShowSubcategorySelection() && (
-                <div className="space-y-2">
-                  <Label htmlFor="subcategory">Sous-catégorie *</Label>
+          {/* Section 6 : Sous-catégorie (si nécessaire) */}
+          {shouldShowSubcategorySelection() && (
+            <div className="mb-3">
+              <div className="rounded-lg border border-gray-700 p-3" style={{ backgroundColor: '#100e0d' }}>
+                <div className="space-y-1">
+                  <Label htmlFor="subcategory" className="text-sm text-white">Sous-catégorie *</Label>
                   <div className="relative" ref={subcategoryDropdownRef}>
                     <div className="relative">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-3 w-3 text-gray-400" />
                       <Input
                         type="text"
                         placeholder="Rechercher une sous-catégorie..."
@@ -582,36 +614,37 @@ const Publish = () => {
                           setShowSubcategoryDropdown(true);
                         }}
                         onFocus={() => setShowSubcategoryDropdown(true)}
-                        className="pl-10 pr-10"
+                        className="pl-8 pr-8 text-sm border-gray-600 text-white placeholder-gray-400"
+                        style={{ backgroundColor: '#100e0d' }}
                       />
                       {subcategorySearch && (
                         <Button
                           type="button"
                           variant="ghost"
                           size="icon"
-                          className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6"
+                          className="absolute right-1 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 hover:text-white"
                           onClick={() => {
                             setSubcategorySearch('');
                             setFormData(prev => ({ ...prev, subcategory_id: '' }));
                           }}
                         >
-                          <X className="h-4 w-4" />
+                          <X className="h-3 w-3" />
                         </Button>
                       )}
                     </div>
                     {showSubcategoryDropdown && filteredSubcategories.length > 0 && (
-                      <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                      <div className="absolute z-10 w-full mt-1 bg-gray-800 border border-gray-600 rounded-md shadow-lg max-h-40 overflow-y-auto">
                         {filteredSubcategories.map((subcategory) => (
                           <button
                             key={subcategory.id}
                             type="button"
-                            className="w-full px-4 py-2 text-left hover:bg-gray-100 focus:bg-gray-100 focus:outline-none text-gray-900"
+                            className="w-full px-3 py-2 text-left hover:bg-gray-700 focus:bg-gray-700 focus:outline-none text-white text-sm"
                             onClick={() => handleSubcategorySelect(subcategory)}
                           >
                             <div>
-                              <div className="font-medium text-gray-900">{subcategory.name}</div>
+                              <div className="font-medium text-white">{subcategory.name}</div>
                               {subcategory.description && (
-                                <div className="text-sm text-gray-500 truncate">
+                                <div className="text-xs text-gray-400 truncate">
                                   {subcategory.description}
                                 </div>
                               )}
@@ -622,80 +655,91 @@ const Publish = () => {
                     )}
                   </div>
                 </div>
-              )}
+              </div>
             </div>
-          </div>
+          )}
 
-          {/* Section 3 : Informations supplémentaires */}
-          <div className="mb-8">
-            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-              <div className="space-y-6">
-                {formData.content_type === 'account' && (
-                  <div className="space-y-2">
-                    <Label htmlFor="platform">Plateforme *</Label>
-                    <select
-                      id="platform"
-                      value={formData.platform}
-                      onChange={(e) => setFormData(prev => ({ ...prev, platform: e.target.value }))}
-                      className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                      required
-                    >
-                      <option value="">Sélectionnez une plateforme</option>
-                      <option value="tiktok">TikTok</option>
-                      <option value="instagram">Instagram</option>
-                      <option value="youtube">YouTube</option>
-                      <option value="twitter">Twitter/X</option>
-                      <option value="facebook">Facebook</option>
-                      <option value="linkedin">LinkedIn</option>
-                      <option value="pinterest">Pinterest</option>
-                      <option value="snapchat">Snapchat</option>
-                      <option value="twitch">Twitch</option>
-                      <option value="discord">Discord</option>
-                      <option value="telegram">Telegram</option>
-                      <option value="other">Autre</option>
-                    </select>
-                  </div>
-                )}
+          {/* Section 7 : Plateforme (pour les comptes) */}
+          {formData.content_type === 'account' && (
+            <div className="mb-3">
+              <div className="rounded-lg border border-gray-700 p-3" style={{ backgroundColor: '#100e0d' }}>
+                <div className="space-y-1">
+                  <Label htmlFor="platform" className="text-sm text-white">Plateforme *</Label>
+                  <select
+                    id="platform"
+                    value={formData.platform}
+                    onChange={(e) => setFormData(prev => ({ ...prev, platform: e.target.value }))}
+                    className="w-full p-2 border border-gray-600 rounded-md text-white text-sm"
+                    style={{ backgroundColor: '#100e0d' }}
+                    required
+                  >
+                    <option value="">Sélectionnez une plateforme</option>
+                    <option value="tiktok">TikTok</option>
+                    <option value="instagram">Instagram</option>
+                    <option value="youtube">YouTube</option>
+                    <option value="twitter">Twitter/X</option>
+                    <option value="facebook">Facebook</option>
+                    <option value="linkedin">LinkedIn</option>
+                    <option value="pinterest">Pinterest</option>
+                    <option value="snapchat">Snapchat</option>
+                    <option value="twitch">Twitch</option>
+                    <option value="discord">Discord</option>
+                    <option value="telegram">Telegram</option>
+                    <option value="other">Autre</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          )}
 
-                {formData.content_type === 'challenge' && (
-                  <div className="space-y-2">
-                    <Label htmlFor="description">Description du challenge *</Label>
-                    <textarea
-                      id="description"
-                      value={formData.description || ''}
-                      onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                      placeholder="Décrivez votre challenge en détail..."
-                      className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white min-h-[100px] resize-vertical"
+          {/* Section 8 : Description (pour les challenges) */}
+          {formData.content_type === 'challenge' && (
+            <div className="mb-3">
+              <div className="rounded-lg border border-gray-700 p-3" style={{ backgroundColor: '#100e0d' }}>
+                <div className="space-y-1">
+                  <Label htmlFor="description" className="text-sm text-white">Description du challenge *</Label>
+                  <textarea
+                    id="description"
+                    value={formData.description || ''}
+                    onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                    placeholder="Décrivez votre challenge en détail..."
+                    className="w-full p-2 border border-gray-600 rounded-md text-white min-h-[80px] resize-vertical text-sm placeholder-gray-400"
+                    style={{ backgroundColor: '#100e0d' }}
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Section 9 : URL (pour les sources et comptes) */}
+          {(formData.content_type === 'source' || formData.content_type === 'account') && (
+            <div className="mb-3">
+              <div className="rounded-lg border border-gray-700 p-3" style={{ backgroundColor: '#100e0d' }}>
+                <div className="space-y-1">
+                  <Label htmlFor="url" className="text-sm text-white">
+                    {formData.content_type === 'source' ? 'URL de la source' : 'URL du compte'} *
+                  </Label>
+                  <div className="relative">
+                    <Link className="absolute left-3 top-1/2 transform -translate-y-1/2 h-3 w-3 text-gray-400" />
+                    <Input
+                      id="url"
+                      type="url"
+                      value={formData.url || ''}
+                      onChange={(e) => setFormData(prev => ({ ...prev, url: e.target.value }))}
+                      placeholder={formData.content_type === 'source' ? 'https://example.com' : 'https://tiktok.com/@username'}
+                      className="pl-8 text-sm border-gray-600 text-white placeholder-gray-400"
+                      style={{ backgroundColor: '#100e0d' }}
                       required
                     />
                   </div>
-                )}
-
-                {(formData.content_type === 'source' || formData.content_type === 'account') && (
-                  <div className="space-y-2">
-                    <Label htmlFor="url">
-                      {formData.content_type === 'source' ? 'URL de la source' : 'URL du compte'} *
-                    </Label>
-                    <div className="relative">
-                      <Link className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                      <Input
-                        id="url"
-                        type="url"
-                        value={formData.url || ''}
-                        onChange={(e) => setFormData(prev => ({ ...prev, url: e.target.value }))}
-                        placeholder={formData.content_type === 'source' ? 'https://example.com' : 'https://tiktok.com/@username'}
-                        className="pl-10"
-                        required
-                      />
-                    </div>
-                  </div>
-                )}
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
-          {/* Section 4 : Soumission */}
-          <div className="border-t pt-6">
+          {/* Section 10 : Soumission */}
+          <div className="rounded-lg border border-gray-700 p-3" style={{ backgroundColor: '#100e0d' }}>
               <Button 
                 type="submit" 
                 className="w-full" 
