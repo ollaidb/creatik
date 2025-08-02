@@ -95,10 +95,6 @@ const Categories = () => {
     setSortOrder(sortOptions[nextIndex]);
   };
 
-  const handleSearch = (query: string) => {
-    navigate(`/search?search=${encodeURIComponent(query)}`);
-  };
-
   const handleBackClick = () => {
     navigate('/');
   };

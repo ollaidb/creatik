@@ -60,10 +60,6 @@ const SubcategoriesLevel2 = () => {
     setSortOrder(sortOptions[nextIndex]);
   };
 
-  const handleSearch = (query: string) => {
-    navigate(`/search?search=${encodeURIComponent(query)}`);
-  };
-
   const filteredSubcategories = subcategoriesLevel2?.filter(subcategory => 
     subcategory.name.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];

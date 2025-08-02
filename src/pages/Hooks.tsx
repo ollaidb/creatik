@@ -23,6 +23,12 @@ const Hooks = () => {
   
   // Utiliser directement les hooks filtrés par le hook
   const filteredHooks = hooks || [];
+  
+  // Filtrer les hooks par searchTerm
+  const filteredHooksBySearch = filteredHooks.filter(hook => 
+    hook.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (hook.description && hook.description.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
 
   // Fonction pour obtenir le nom d'affichage du réseau social
   const getNetworkDisplayName = (networkId: string) => {
@@ -54,10 +60,6 @@ const Hooks = () => {
     hooksData: hooks?.slice(0, 3), // Afficher les 3 premiers hooks
     isAvailable: isHooksAvailableForNetwork(selectedNetwork)
   });
-
-  const handleSearch = (query: string) => {
-    // Logique de recherche
-  };
 
   const handleCopy = async (text: string) => {
     try {
@@ -202,7 +204,7 @@ const Hooks = () => {
         </div>
         {/* Liste des hooks */}
         <div className="space-y-3">
-          {filteredHooks?.map((hook, index) => (
+          {filteredHooksBySearch?.map((hook, index) => (
             <motion.div 
               key={hook.id}
               initial={{ opacity: 0, y: 20 }}
@@ -257,7 +259,7 @@ const Hooks = () => {
             </motion.div>
           ))}
           {/* Message si pas de hooks */}
-          {filteredHooks?.length === 0 && (
+          {filteredHooksBySearch?.length === 0 && (
             <div className="text-center py-12">
               <div className="text-gray-500 dark:text-gray-400 mb-4 text-sm">
                 {selectedNetwork !== 'all' 

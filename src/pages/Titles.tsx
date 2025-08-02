@@ -50,6 +50,12 @@ const Titles = () => {
     (subcategoryLevel2Loading || titlesLevel2Loading) : 
     (subcategoryLoading || titlesLoading);
   
+  // Filtrer les titres par searchTerm
+  const filteredTitles = currentTitles?.filter(title => 
+    title.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (title.description && title.description.toLowerCase().includes(searchTerm.toLowerCase()))
+  ) || [];
+  
   // Filtrer les comptes selon la catégorie et sous-catégorie
   const filteredAccounts = accounts.filter(account => {
     if (isLevel2) {
@@ -118,10 +124,6 @@ const Titles = () => {
     urlParams: searchParams.toString(),
     currentUrl: window.location.href
   });
-
-  const handleSearch = (query: string) => {
-    // Logique de recherche
-  };
 
   const handleCopyTitle = async (title: string) => {
     try {
@@ -374,7 +376,7 @@ const Titles = () => {
               initial="hidden"
               animate="visible"
             >
-              {currentTitles?.map((title, index) => (
+              {filteredTitles.map((title, index) => (
                 <motion.div key={title.id} variants={itemVariants}>
                   <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all duration-200">
                     <div className="flex items-start justify-between">
