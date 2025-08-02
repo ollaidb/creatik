@@ -27,6 +27,10 @@ const Titles = () => {
     (searchParams.toString().includes('youtube') || 
      window.location.href.includes('youtube')) 
     ? 'youtube' 
+    : selectedNetwork === 'all' && 
+      (searchParams.toString().includes('twitch') || 
+       window.location.href.includes('twitch'))
+    ? 'twitch'
     : selectedNetwork;
   const { data: titles, isLoading: titlesLoading, refetch: refreshTitles } = useContentTitles(subcategoryId, detectedNetwork);
   const { data: accounts = [], isLoading: accountsLoading } = useAccounts(detectedNetwork);
@@ -308,6 +312,9 @@ const Titles = () => {
           activeTab={tab}
           onTabChange={handleTabChange}
           showHooks={isHooksAvailableForNetwork(detectedNetwork)}
+          showSources={detectedNetwork !== 'twitch'}
+          showHashtags={detectedNetwork !== 'twitch'}
+          networkId={detectedNetwork}
         />
         {/* Barre de recherche intelligente */}
         <div className="mb-6">
