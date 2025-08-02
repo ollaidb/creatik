@@ -71,10 +71,15 @@ export const RippleCard: React.FC<RippleCardProps> = ({
         duration: 0.2
       }}
       className={`
-        bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700 
+        bg-white rounded-lg p-4 border border-gray-200 dark:border-gray-700 
         hover:shadow-md relative overflow-hidden cursor-pointer
-        ${isPressed ? 'bg-gray-50 dark:bg-gray-700 shadow-inner transform scale-[0.98]' : ''}
+        ${isPressed ? 'bg-gray-50 shadow-inner transform scale-[0.98]' : ''}
       `}
+      style={{
+        ...(window.matchMedia('(prefers-color-scheme: dark)').matches && !isPressed && {
+          backgroundColor: '#0f0f10'
+        })
+      }}
       onClick={handleClick}
       onMouseDown={handleMouseDown}
       onMouseUp={handleMouseUp}

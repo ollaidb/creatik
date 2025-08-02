@@ -602,7 +602,12 @@ const Challenges = () => {
   if (!user) {
     return (
       <div className="min-h-screen pb-20">
-        <header className="bg-background border-b p-4 flex items-center">
+        <header className="bg-white border-b p-4 flex items-center"
+                 style={{
+                   ...(window.matchMedia('(prefers-color-scheme: dark)').matches && {
+                     backgroundColor: '#0f0f10'
+                   })
+                 }}>
           <Button 
             variant="ghost" 
             size="icon" 
@@ -614,7 +619,11 @@ const Challenges = () => {
           <h1 className="text-xl font-semibold">Défis</h1>
         </header>
         <main className="max-w-4xl mx-auto p-4">
-          <Card className="text-center py-12">
+          <Card className="text-center py-12" style={{
+            ...(window.matchMedia('(prefers-color-scheme: dark)').matches && {
+              backgroundColor: '#0f0f10'
+            })
+          }}>
             <CardContent>
               <h3 className="text-lg font-medium mb-2">Connexion requise</h3>
               <p className="text-muted-foreground mb-4">
@@ -633,7 +642,12 @@ const Challenges = () => {
   if (loading) {
     return (
       <div className="min-h-screen pb-20">
-        <header className="bg-background border-b p-4 flex items-center">
+        <header className="bg-white border-b p-4 flex items-center"
+                 style={{
+                   ...(window.matchMedia('(prefers-color-scheme: dark)').matches && {
+                     backgroundColor: '#0f0f10'
+                   })
+                 }}>
           <Button 
             variant="ghost" 
             size="icon" 
@@ -659,7 +673,12 @@ const Challenges = () => {
   if (error) {
     return (
       <div className="min-h-screen pb-20">
-        <header className="bg-background border-b p-4 flex items-center">
+        <header className="bg-white border-b p-4 flex items-center"
+                 style={{
+                   ...(window.matchMedia('(prefers-color-scheme: dark)').matches && {
+                     backgroundColor: '#0f0f10'
+                   })
+                 }}>
           <Button 
             variant="ghost" 
             size="icon" 
@@ -671,7 +690,11 @@ const Challenges = () => {
           <h1 className="text-xl font-semibold">Défis</h1>
         </header>
         <main className="max-w-4xl mx-auto p-4">
-          <Card className="text-center py-12">
+          <Card className="text-center py-12" style={{
+            ...(window.matchMedia('(prefers-color-scheme: dark)').matches && {
+              backgroundColor: '#0f0f10'
+            })
+          }}>
             <CardContent>
               <h3 className="text-lg font-medium mb-2">Erreur</h3>
               <p className="text-muted-foreground mb-4">
@@ -689,7 +712,12 @@ const Challenges = () => {
 
   return (
     <div className="min-h-screen pb-20">
-      <header className="bg-background border-b p-4 flex items-center justify-between">
+      <header className="bg-white border-b p-4 flex items-center justify-between"
+               style={{
+                 ...(window.matchMedia('(prefers-color-scheme: dark)').matches && {
+                   backgroundColor: '#0f0f10'
+                 })
+               }}>
         <div className="flex items-center">
           <Button 
             variant="ghost" 
@@ -912,7 +940,12 @@ const Challenges = () => {
                       value={challenge}
                       className="cursor-grab active:cursor-grabbing"
                     >
-                      <Card className="hover:shadow-md transition-shadow">
+                      <Card className="hover:shadow-md transition-shadow"
+                            style={{
+                              ...(window.matchMedia('(prefers-color-scheme: dark)').matches && {
+                                backgroundColor: '#0f0f10'
+                              })
+                            }}>
                         <CardContent className="p-4">
                           <div className="flex items-center justify-between">
                             <div className="flex-1 flex items-center gap-3">
@@ -1110,7 +1143,11 @@ const Challenges = () => {
                 
                 <div className="space-y-3">
                   {accomplis.length === 0 ? (
-                    <Card className="text-center py-12">
+                    <Card className="text-center py-12" style={{
+                      ...(window.matchMedia('(prefers-color-scheme: dark)').matches && {
+                        backgroundColor: '#0f0f10'
+                      })
+                    }}>
                       <CardContent>
                         <CheckCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                         <h3 className="text-lg font-medium mb-2">Aucun défi accompli</h3>
@@ -1184,7 +1221,11 @@ const Challenges = () => {
               // Mode normal pour les accomplis
               <div className="space-y-3">
                 {accomplis.length === 0 ? (
-                  <Card className="text-center py-12">
+                  <Card className="text-center py-12" style={{
+                    ...(window.matchMedia('(prefers-color-scheme: dark)').matches && {
+                      backgroundColor: '#0f0f10'
+                    })
+                  }}>
                     <CardContent>
                       <CheckCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                       <h3 className="text-lg font-medium mb-2">Aucun défi accompli</h3>
@@ -1295,7 +1336,11 @@ const Challenges = () => {
             
             <div className="space-y-3">
               {deletedChallenges.filter(challenge => challenge.title && challenge.user_id).length === 0 ? (
-                <Card className="text-center py-12">
+                <Card className="text-center py-12" style={{
+                  ...(window.matchMedia('(prefers-color-scheme: dark)').matches && {
+                    backgroundColor: '#0f0f10'
+                  })
+                }}>
                   <CardContent>
                     <Trash2 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                     <h3 className="text-lg font-medium mb-2">Corbeille vide</h3>
@@ -1306,7 +1351,11 @@ const Challenges = () => {
                 </Card>
               ) : (
                 deletedChallenges.filter(challenge => challenge.title && challenge.user_id).map((challenge) => (
-                  <Card key={challenge.id} className="hover:shadow-md transition-shadow border-red-200 dark:border-red-800">
+                  <Card key={challenge.id} className="hover:shadow-md transition-shadow border-red-200 dark:border-red-800" style={{
+                    ...(window.matchMedia('(prefers-color-scheme: dark)').matches && {
+                      backgroundColor: '#0f0f10'
+                    })
+                  }}>
                     <CardContent className="p-4">
                       <div className="flex items-center justify-between">
                         <div className="flex-1 flex items-center gap-3">

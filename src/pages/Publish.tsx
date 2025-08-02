@@ -409,8 +409,8 @@ const Publish = () => {
   };
 
   return (
-    <div className="min-h-screen pb-32" style={{ backgroundColor: '#100e0d' }}>
-      <header className="border-b border-gray-800 p-4" style={{ backgroundColor: '#100e0d' }}>
+    <div className="min-h-screen pb-32" style={{ backgroundColor: '#0f0f10' }}>
+      <header className="border-b border-gray-800 p-4" style={{ backgroundColor: '#0f0f10' }}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
         <Button 
@@ -432,92 +432,119 @@ const Publish = () => {
           
           {/* Section 1 : Réseau social */}
           <div className="mb-3">
-            <div className="rounded-lg border border-gray-700 p-3" style={{ backgroundColor: '#100e0d' }}>
+            <div className="rounded-lg border border-gray-700 p-3" style={{ backgroundColor: '#0f0f10' }}>
               <div className="space-y-1">
                 <Label htmlFor="network" className="text-sm text-white">Réseau social *</Label>
-                <select
-                  id="network"
-                  value={selectedNetwork}
-                  onChange={(e) => setSelectedNetwork(e.target.value)}
-                  className="w-full p-2 border border-gray-600 rounded-md text-white text-sm"
-                  style={{ backgroundColor: '#100e0d' }}
-                  required
-                >
-                  <option value="all">Tous les réseaux</option>
-                  {socialNetworks?.map((network) => (
-                    <option key={network.id} value={network.id}>
-                      {network.display_name}
-                    </option>
-                  ))}
-                </select>
+                <div className="relative group">
+                  <div className="flex items-center justify-between p-3 border border-gray-600 rounded-lg text-white text-sm cursor-pointer hover:bg-gray-800/50 transition-all duration-200" style={{ backgroundColor: '#0f0f10' }}>
+                    <span className="font-medium">
+                      {selectedNetwork === 'all' ? 'Tous les réseaux' : socialNetworks?.find(n => n.id === selectedNetwork)?.display_name || 'Sélectionner un réseau'}
+                    </span>
+                    <div className="w-2 h-2 border-r-2 border-b-2 border-gray-400 transform rotate-45 transition-transform duration-200 group-hover:rotate-[-135deg]"></div>
+                  </div>
+                  <select
+                    id="network"
+                    value={selectedNetwork}
+                    onChange={(e) => setSelectedNetwork(e.target.value)}
+                    className="absolute inset-0 opacity-0 cursor-pointer"
+                    required
+                  >
+                    <option value="all">Tous les réseaux</option>
+                    {socialNetworks?.map((network) => (
+                      <option key={network.id} value={network.id}>
+                        {network.display_name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
             </div>
           </div>
 
           {/* Section 2 : Type de contenu */}
           <div className="mb-3">
-            <div className="rounded-lg border border-gray-700 p-3" style={{ backgroundColor: '#100e0d' }}>
+            <div className="rounded-lg border border-gray-700 p-3" style={{ backgroundColor: '#0f0f10' }}>
               <div className="space-y-1">
                 <Label htmlFor="content_type" className="text-sm text-white">Type de contenu *</Label>
-                <select
-                  id="content_type"
-                  value={formData.content_type}
-                  onChange={(e) => {
-                    setFormData(prev => ({
-                      ...prev,
-                        content_type: e.target.value as 'category' | 'subcategory' | 'title' | 'challenge' | 'source' | 'account' | 'hooks',
-                        category_id: '',
-                        subcategory_id: '',
-                        description: '',
-                        url: '',
-                        platform: '',
-                        theme: ''
-                      }));
-                      setCategorySearch('');
-                      setSubcategorySearch('');
-                  }}
-                  className="w-full p-2 border border-gray-600 rounded-md text-white text-sm"
-                  style={{ backgroundColor: '#100e0d' }}
-                  required
-                >
-                  <option value="title">Titre</option>
-                  <option value="subcategory">Sous-catégorie</option>
-                  <option value="category">Catégorie</option>
-                  <option value="challenge">Challenge</option>
-                  <option value="source">Source</option>
-                  <option value="account">Compte</option>
-                  <option value="hooks">Hooks</option>
-                </select>
+                <div className="relative group">
+                  <div className="flex items-center justify-between p-3 border border-gray-600 rounded-lg text-white text-sm cursor-pointer hover:bg-gray-800/50 transition-all duration-200" style={{ backgroundColor: '#0f0f10' }}>
+                    <span className="font-medium">
+                      {formData.content_type === 'title' ? 'Titre' :
+                       formData.content_type === 'subcategory' ? 'Sous-catégorie' :
+                       formData.content_type === 'category' ? 'Catégorie' :
+                       formData.content_type === 'challenge' ? 'Challenge' :
+                       formData.content_type === 'source' ? 'Source' :
+                       formData.content_type === 'account' ? 'Compte' :
+                       formData.content_type === 'hooks' ? 'Hooks' : 'Sélectionner un type'}
+                    </span>
+                    <div className="w-2 h-2 border-r-2 border-b-2 border-gray-400 transform rotate-45 transition-transform duration-200 group-hover:rotate-[-135deg]"></div>
+                  </div>
+                  <select
+                    id="content_type"
+                    value={formData.content_type}
+                    onChange={(e) => {
+                      setFormData(prev => ({
+                        ...prev,
+                          content_type: e.target.value as 'category' | 'subcategory' | 'title' | 'challenge' | 'source' | 'account' | 'hooks',
+                          category_id: '',
+                          subcategory_id: '',
+                          description: '',
+                          url: '',
+                          platform: '',
+                          theme: ''
+                        }));
+                        setCategorySearch('');
+                        setSubcategorySearch('');
+                    }}
+                    className="absolute inset-0 opacity-0 cursor-pointer"
+                    required
+                  >
+                    <option value="title">Titre</option>
+                    <option value="subcategory">Sous-catégorie</option>
+                    <option value="category">Catégorie</option>
+                    <option value="challenge">Challenge</option>
+                    <option value="source">Source</option>
+                    <option value="account">Compte</option>
+                    <option value="hooks">Hooks</option>
+                  </select>
+                </div>
               </div>
             </div>
           </div>
 
           {/* Section 3 : Thème de contenu */}
           <div className="mb-3">
-            <div className="rounded-lg border border-gray-700 p-3" style={{ backgroundColor: '#100e0d' }}>
+            <div className="rounded-lg border border-gray-700 p-3" style={{ backgroundColor: '#0f0f10' }}>
               <div className="space-y-1">
                 <Label htmlFor="theme" className="text-sm text-white">Thème de contenu</Label>
-                <select
-                  id="theme"
-                  value={formData.theme}
-                  onChange={(e) => setFormData(prev => ({ ...prev, theme: e.target.value }))}
-                  className="w-full p-2 border border-gray-600 rounded-md text-white text-sm"
-                  style={{ backgroundColor: '#100e0d' }}
-                >
-                  <option value="">Sélectionnez un thème (optionnel)</option>
-                  {themes?.map((theme) => (
-                    <option key={theme.id} value={theme.name}>
-                      {theme.name}
-                    </option>
-                  ))}
-                </select>
+                <div className="relative group">
+                  <div className="flex items-center justify-between p-3 border border-gray-600 rounded-lg text-white text-sm cursor-pointer hover:bg-gray-800/50 transition-all duration-200" style={{ backgroundColor: '#0f0f10' }}>
+                    <span className="font-medium">
+                      {formData.theme ? themes?.find(t => t.name === formData.theme)?.name : 'Sélectionnez un thème (optionnel)'}
+                    </span>
+                    <div className="w-2 h-2 border-r-2 border-b-2 border-gray-400 transform rotate-45 transition-transform duration-200 group-hover:rotate-[-135deg]"></div>
+                  </div>
+                  <select
+                    id="theme"
+                    value={formData.theme}
+                    onChange={(e) => setFormData(prev => ({ ...prev, theme: e.target.value }))}
+                    className="absolute inset-0 opacity-0 cursor-pointer"
+                  >
+                    <option value="">Sélectionnez un thème (optionnel)</option>
+                    {themes?.map((theme) => (
+                      <option key={theme.id} value={theme.name}>
+                        {theme.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
             </div>
           </div>
 
           {/* Section 4 : Titre */}
           <div className="mb-3">
-            <div className="rounded-lg border border-gray-700 p-3" style={{ backgroundColor: '#100e0d' }}>
+            <div className="rounded-lg border border-gray-700 p-3" style={{ backgroundColor: '#0f0f10' }}>
               <div className="space-y-1">
                 <Label htmlFor="title" className="text-sm text-white">{getTitleLabel()} *</Label>
                 <Input
@@ -526,7 +553,7 @@ const Publish = () => {
                   onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
                   placeholder={getTitlePlaceholder()}
                   className="text-sm border-gray-600 text-white placeholder-gray-400"
-                  style={{ backgroundColor: '#100e0d' }}
+                  style={{ backgroundColor: '#0f0f10' }}
                   required
                 />
               </div>
@@ -536,7 +563,7 @@ const Publish = () => {
           {/* Section 5 : Catégorie (si nécessaire) */}
           {shouldShowCategorySelection() && (
             <div className="mb-3">
-              <div className="rounded-lg border border-gray-700 p-3" style={{ backgroundColor: '#100e0d' }}>
+              <div className="rounded-lg border border-gray-700 p-3" style={{ backgroundColor: '#0f0f10' }}>
                 <div className="space-y-1">
                   <Label htmlFor="category" className="text-sm text-white">Catégorie *</Label>
                   <div className="relative" ref={categoryDropdownRef}>
@@ -552,7 +579,7 @@ const Publish = () => {
                         }}
                         onFocus={() => setShowCategoryDropdown(true)}
                         className="pl-8 pr-8 text-sm border-gray-600 text-white placeholder-gray-400"
-                        style={{ backgroundColor: '#100e0d' }}
+                        style={{ backgroundColor: '#0f0f10' }}
                       />
                       {categorySearch && (
                         <Button
@@ -599,7 +626,7 @@ const Publish = () => {
           {/* Section 6 : Sous-catégorie (si nécessaire) */}
           {shouldShowSubcategorySelection() && (
             <div className="mb-3">
-              <div className="rounded-lg border border-gray-700 p-3" style={{ backgroundColor: '#100e0d' }}>
+              <div className="rounded-lg border border-gray-700 p-3" style={{ backgroundColor: '#0f0f10' }}>
                 <div className="space-y-1">
                   <Label htmlFor="subcategory" className="text-sm text-white">Sous-catégorie *</Label>
                   <div className="relative" ref={subcategoryDropdownRef}>
@@ -615,7 +642,7 @@ const Publish = () => {
                         }}
                         onFocus={() => setShowSubcategoryDropdown(true)}
                         className="pl-8 pr-8 text-sm border-gray-600 text-white placeholder-gray-400"
-                        style={{ backgroundColor: '#100e0d' }}
+                        style={{ backgroundColor: '#0f0f10' }}
                       />
                       {subcategorySearch && (
                         <Button
@@ -662,31 +689,40 @@ const Publish = () => {
           {/* Section 7 : Plateforme (pour les comptes) */}
           {formData.content_type === 'account' && (
             <div className="mb-3">
-              <div className="rounded-lg border border-gray-700 p-3" style={{ backgroundColor: '#100e0d' }}>
+              <div className="rounded-lg border border-gray-700 p-3" style={{ backgroundColor: '#0f0f10' }}>
                 <div className="space-y-1">
                   <Label htmlFor="platform" className="text-sm text-white">Plateforme *</Label>
-                  <select
-                    id="platform"
-                    value={formData.platform}
-                    onChange={(e) => setFormData(prev => ({ ...prev, platform: e.target.value }))}
-                    className="w-full p-2 border border-gray-600 rounded-md text-white text-sm"
-                    style={{ backgroundColor: '#100e0d' }}
-                    required
-                  >
-                    <option value="">Sélectionnez une plateforme</option>
-                    <option value="tiktok">TikTok</option>
-                    <option value="instagram">Instagram</option>
-                    <option value="youtube">YouTube</option>
-                    <option value="twitter">Twitter/X</option>
-                    <option value="facebook">Facebook</option>
-                    <option value="linkedin">LinkedIn</option>
-                    <option value="pinterest">Pinterest</option>
-                    <option value="snapchat">Snapchat</option>
-                    <option value="twitch">Twitch</option>
-                    <option value="discord">Discord</option>
-                    <option value="telegram">Telegram</option>
-                    <option value="other">Autre</option>
-                  </select>
+                  <div className="relative group">
+                    <div className="flex items-center justify-between p-3 border border-gray-600 rounded-lg text-white text-sm cursor-pointer hover:bg-gray-800/50 transition-all duration-200" style={{ backgroundColor: '#0f0f10' }}>
+                      <span className="font-medium">
+                        {formData.platform ? 
+                          formData.platform.charAt(0).toUpperCase() + formData.platform.slice(1) : 
+                          'Sélectionnez une plateforme'}
+                      </span>
+                      <div className="w-2 h-2 border-r-2 border-b-2 border-gray-400 transform rotate-45 transition-transform duration-200 group-hover:rotate-[-135deg]"></div>
+                    </div>
+                    <select
+                      id="platform"
+                      value={formData.platform}
+                      onChange={(e) => setFormData(prev => ({ ...prev, platform: e.target.value }))}
+                      className="absolute inset-0 opacity-0 cursor-pointer"
+                      required
+                    >
+                      <option value="">Sélectionnez une plateforme</option>
+                      <option value="tiktok">TikTok</option>
+                      <option value="instagram">Instagram</option>
+                      <option value="youtube">YouTube</option>
+                      <option value="twitter">Twitter/X</option>
+                      <option value="facebook">Facebook</option>
+                      <option value="linkedin">LinkedIn</option>
+                      <option value="pinterest">Pinterest</option>
+                      <option value="snapchat">Snapchat</option>
+                      <option value="twitch">Twitch</option>
+                      <option value="discord">Discord</option>
+                      <option value="telegram">Telegram</option>
+                      <option value="other">Autre</option>
+                    </select>
+                  </div>
                 </div>
               </div>
             </div>
@@ -695,7 +731,7 @@ const Publish = () => {
           {/* Section 8 : Description (pour les challenges) */}
           {formData.content_type === 'challenge' && (
             <div className="mb-3">
-              <div className="rounded-lg border border-gray-700 p-3" style={{ backgroundColor: '#100e0d' }}>
+              <div className="rounded-lg border border-gray-700 p-3" style={{ backgroundColor: '#0f0f10' }}>
                 <div className="space-y-1">
                   <Label htmlFor="description" className="text-sm text-white">Description du challenge *</Label>
                   <textarea
@@ -704,7 +740,7 @@ const Publish = () => {
                     onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                     placeholder="Décrivez votre challenge en détail..."
                     className="w-full p-2 border border-gray-600 rounded-md text-white min-h-[80px] resize-vertical text-sm placeholder-gray-400"
-                    style={{ backgroundColor: '#100e0d' }}
+                    style={{ backgroundColor: '#0f0f10' }}
                     required
                   />
                 </div>
@@ -715,7 +751,7 @@ const Publish = () => {
           {/* Section 9 : URL (pour les sources et comptes) */}
           {(formData.content_type === 'source' || formData.content_type === 'account') && (
             <div className="mb-3">
-              <div className="rounded-lg border border-gray-700 p-3" style={{ backgroundColor: '#100e0d' }}>
+              <div className="rounded-lg border border-gray-700 p-3" style={{ backgroundColor: '#0f0f10' }}>
                 <div className="space-y-1">
                   <Label htmlFor="url" className="text-sm text-white">
                     {formData.content_type === 'source' ? 'URL de la source' : 'URL du compte'} *
@@ -729,7 +765,7 @@ const Publish = () => {
                       onChange={(e) => setFormData(prev => ({ ...prev, url: e.target.value }))}
                       placeholder={formData.content_type === 'source' ? 'https://example.com' : 'https://tiktok.com/@username'}
                       className="pl-8 text-sm border-gray-600 text-white placeholder-gray-400"
-                      style={{ backgroundColor: '#100e0d' }}
+                      style={{ backgroundColor: '#0f0f10' }}
                       required
                     />
                   </div>
@@ -739,7 +775,7 @@ const Publish = () => {
           )}
 
           {/* Section 10 : Soumission */}
-          <div className="rounded-lg border border-gray-700 p-3" style={{ backgroundColor: '#100e0d' }}>
+          <div className="rounded-lg border border-gray-700 p-3" style={{ backgroundColor: '#0f0f10' }}>
               <Button 
                 type="submit" 
                 className="w-full" 
