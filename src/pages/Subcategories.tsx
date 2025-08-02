@@ -6,10 +6,12 @@ import { useSubcategories } from '@/hooks/useSubcategories';
 import { useCategories } from '@/hooks/useCategories';
 import { useFavorites } from '@/hooks/useFavorites';
 import { useCategoryHierarchy } from '@/hooks/useCategoryHierarchy';
+import { useSubcategoryHierarchy } from '@/hooks/useSubcategoryHierarchy';
 import SubcategoryCard from '@/components/SubcategoryCard';
 import { Button } from '@/components/ui/button';
 import LocalSearchBar from '@/components/LocalSearchBar';
 import Navigation from '@/components/Navigation';
+import { supabase } from '@/integrations/supabase/client';
 
 const Subcategories = () => {
   const { categoryId } = useParams();
@@ -72,12 +74,25 @@ const Subcategories = () => {
   };
 
   // Fonction pour gérer le clic sur une sous-catégorie
-  const handleSubcategoryClick = (subcategoryId: string) => {
-    // Si la catégorie a besoin du niveau 2, rediriger vers "Sous-catégories 2"
+  const handleSubcategoryClick = async (subcategoryId: string) => {
+    // Vérifier d'abord la configuration de la catégorie
     if (hierarchyConfig?.has_level2) {
-      navigate(`/category/${categoryId}/subcategory/${subcategoryId}/subcategories-level2?network=${selectedNetwork}`);
+      // Si la catégorie a le niveau 2, vérifier la configuration de la sous-catégorie
+      const { data: subcategoryConfig } = await supabase
+        .from('subcategory_hierarchy_config')
+        .select('*')
+        .eq('subcategory_id', subcategoryId)
+        .single();
+
+      if (subcategoryConfig?.has_level2) {
+        // La sous-catégorie a besoin du niveau 2
+        navigate(`/category/${categoryId}/subcategory/${subcategoryId}/subcategories-level2?network=${selectedNetwork}`);
+      } else {
+        // La sous-catégorie va directement aux titres
+        navigate(`/category/${categoryId}/subcategory/${subcategoryId}?network=${selectedNetwork}`);
+      }
     } else {
-      // Sinon, rediriger vers les titres directement
+      // La catégorie n'a pas de niveau 2, aller directement aux titres
       navigate(`/category/${categoryId}/subcategory/${subcategoryId}?network=${selectedNetwork}`);
     }
   };
