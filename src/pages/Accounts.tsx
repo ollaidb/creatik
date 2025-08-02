@@ -1,15 +1,16 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, User, Heart, ExternalLink, Plus } from 'lucide-react';
+import { ArrowLeft, Plus, Heart, Filter, User, ExternalLink } from 'lucide-react';
 import { useAccounts } from '@/hooks/useAccounts';
 import { useFavorites } from '@/hooks/useFavorites';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { Button } from '@/components/ui/button';
+import LocalSearchBar from '@/components/LocalSearchBar';
 import Navigation from '@/components/Navigation';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 
 const Accounts = () => {
   const navigate = useNavigate();

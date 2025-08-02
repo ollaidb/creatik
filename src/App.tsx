@@ -22,6 +22,7 @@ import Publish from "./pages/Publish";
 import SearchResults from "./pages/SearchResults";
 import Categories from "./pages/Categories";
 import Subcategories from "./pages/Subcategories";
+import SubcategoriesLevel2 from "./pages/SubcategoriesLevel2";
 import Titles from "./pages/Titles";
 import Hooks from "./pages/Hooks";
 import PublicChallenges from "./pages/PublicChallenges";
@@ -57,6 +58,8 @@ const AppContent = () => {
             {/* Categories Routes */}
             <Route path="/categories" element={<Categories />} />
             <Route path="/category/:categoryId/subcategories" element={<Subcategories />} />
+            <Route path="/category/:categoryId/subcategory/:subcategoryId/subcategories-level2" element={<SubcategoriesLevel2 />} />
+            <Route path="/category/:categoryId/subcategory/:subcategoryId/subcategory-level2/:subcategoryLevel2Id" element={<Titles />} />
             <Route path="/category/:categoryId/subcategory/:subcategoryId" element={<Titles />} />
             <Route path="/category/:categoryId/subcategory/:subcategoryId/hooks" element={<Hooks />} />
             {/* Challenges Routes */}

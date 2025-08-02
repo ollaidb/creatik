@@ -2,27 +2,24 @@ import React, { useState } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Plus, Heart, Filter } from 'lucide-react';
-import { useSubcategories } from '@/hooks/useSubcategories';
+import { useSubcategoriesLevel2 } from '@/hooks/useSubcategoriesLevel2';
 import { useCategories } from '@/hooks/useCategories';
 import { useFavorites } from '@/hooks/useFavorites';
-import { useCategoryHierarchy } from '@/hooks/useCategoryHierarchy';
-import SubcategoryCard from '@/components/SubcategoryCard';
 import { Button } from '@/components/ui/button';
 import LocalSearchBar from '@/components/LocalSearchBar';
 import Navigation from '@/components/Navigation';
 
-const Subcategories = () => {
-  const { categoryId } = useParams();
+const SubcategoriesLevel2 = () => {
+  const { categoryId, subcategoryId } = useParams();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const selectedNetwork = searchParams.get('network') || 'all';
   const [searchTerm, setSearchTerm] = useState('');
   const [sortOrder, setSortOrder] = useState<'alphabetical' | 'priority' | 'recent'>('priority');
-  const { data: subcategories, isLoading } = useSubcategories(categoryId);
+  const { data: subcategoriesLevel2, isLoading } = useSubcategoriesLevel2(subcategoryId);
   const { data: categories } = useCategories();
-  const { data: hierarchyConfig } = useCategoryHierarchy(categoryId);
   const currentCategory = categories?.find(cat => cat.id === categoryId);
-  const { favorites, toggleFavorite, isFavorite } = useFavorites('subcategory');
+  const { favorites, toggleFavorite, isFavorite } = useFavorites('subcategory_level2');
   
   // Fonction pour obtenir le nom d'affichage du réseau social
   const getNetworkDisplayName = (networkId: string) => {
@@ -67,23 +64,12 @@ const Subcategories = () => {
     navigate(`/search?search=${encodeURIComponent(query)}`);
   };
 
-  const filteredSubcategories = subcategories?.filter(subcategory => 
+  const filteredSubcategories = subcategoriesLevel2?.filter(subcategory => 
     subcategory.name.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
 
   const handleBackClick = () => {
-    navigate(`/categories?network=${selectedNetwork}`);
-  };
-
-  // Fonction pour gérer le clic sur une sous-catégorie
-  const handleSubcategoryClick = (subcategoryId: string) => {
-    // Si la catégorie a besoin du niveau 2, rediriger vers "Sous-catégories 2"
-    if (hierarchyConfig?.has_level2) {
-      navigate(`/category/${categoryId}/subcategory/${subcategoryId}/subcategories-level2?network=${selectedNetwork}`);
-    } else {
-      // Sinon, rediriger vers les titres directement
-      navigate(`/category/${categoryId}/subcategory/${subcategoryId}?network=${selectedNetwork}`);
-    }
+    navigate(`/category/${categoryId}/subcategories?network=${selectedNetwork}`);
   };
 
   const containerVariants = {
@@ -161,7 +147,7 @@ const Subcategories = () => {
           </Button>
           <div className="flex-1 min-w-0">
             <h1 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
-              {currentCategory?.name || 'Sous-catégories'}
+              Sous-catégories 2
             </h1>
             <p className="text-sm text-gray-600 dark:text-gray-400">
               {filteredSubcategories.length} sous-catégories
@@ -207,7 +193,7 @@ const Subcategories = () => {
             </div>
           </div>
         </div>
-        {/* Liste des sous-catégories */}
+        {/* Liste des sous-catégories niveau 2 */}
         <motion.div 
           className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4"
           variants={containerVariants}
@@ -217,7 +203,7 @@ const Subcategories = () => {
           {getSortedSubcategories(filteredSubcategories).map((subcategory) => (
             <motion.div key={subcategory.id} variants={itemVariants}>
               <div 
-                onClick={() => handleSubcategoryClick(subcategory.id)}
+                onClick={() => navigate(`/category/${categoryId}/subcategory/${subcategoryId}/subcategory-level2/${subcategory.id}?network=${selectedNetwork}`)}
                 className="relative overflow-hidden rounded-xl cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-lg group h-20 sm:h-24 md:h-28 bg-transparent border-4"
                 style={{ borderColor: '#b6b6b6' }}
               >
@@ -256,4 +242,4 @@ const Subcategories = () => {
   );
 };
 
-export default Subcategories; 
+export default SubcategoriesLevel2; 

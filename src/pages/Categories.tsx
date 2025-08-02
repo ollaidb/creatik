@@ -7,7 +7,7 @@ import { useThemes, useCategoriesByTheme } from '@/hooks/useThemes';
 import { useSocialNetworks, useFilterCategoriesByNetwork } from '@/hooks/useSocialNetworks';
 import CategoryCard from '@/components/CategoryCard';
 import { Button } from '@/components/ui/button';
-import IntelligentSearchBar from '@/components/IntelligentSearchBar';
+import LocalSearchBar from '@/components/LocalSearchBar';
 import ChallengeButton from '@/components/ChallengeButton';
 import Navigation from '@/components/Navigation';
 
@@ -318,8 +318,9 @@ const Categories = () => {
               >
                 <Filter size={20} />
               </Button>
-              <IntelligentSearchBar 
-                onSearch={handleSearch}
+              <LocalSearchBar 
+                value={searchTerm}
+                onChange={setSearchTerm}
                 placeholder="Rechercher une catégorie..."
                 className="flex-1"
               />

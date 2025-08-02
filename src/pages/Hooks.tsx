@@ -7,7 +7,7 @@ import { useHooks } from '@/hooks/useHooks';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useFavorites } from '@/hooks/useFavorites';
-import IntelligentSearchBar from '@/components/IntelligentSearchBar';
+import LocalSearchBar from '@/components/LocalSearchBar';
 import Navigation from '@/components/Navigation';
 
 const Hooks = () => {
@@ -15,6 +15,7 @@ const Hooks = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const selectedNetwork = searchParams.get('network') || 'all';
+  const [searchTerm, setSearchTerm] = useState('');
   const { toast } = useToast();
   
   const { data: subcategory, isLoading: subcategoryLoading } = useSubcategory(subcategoryId);
@@ -191,8 +192,9 @@ const Hooks = () => {
         {/* Barre de recherche intelligente */}
         <div className="mb-6">
           <div className="max-w-lg mx-auto md:max-w-2xl">
-            <IntelligentSearchBar 
-              onSearch={handleSearch}
+            <LocalSearchBar 
+              value={searchTerm}
+              onChange={setSearchTerm}
               placeholder={`Rechercher un hook ${networkStyle.name}...`}
               className="w-full"
             />
