@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ExternalLink, Instagram, Twitter, Youtube } from 'lucide-react';
+import { ExternalLink, Instagram, Twitter, Youtube, FileText, BookOpen } from 'lucide-react';
 
 interface Creator {
   id: string;
@@ -10,7 +10,7 @@ interface Creator {
   username: string;
   bio: string;
   avatar: string;
-  platform: 'instagram' | 'tiktok' | 'youtube' | 'twitter';
+  platform: 'instagram' | 'tiktok' | 'youtube' | 'twitter' | 'blog' | 'article';
   followers: number;
   category: string;
   isPublic: boolean;
@@ -31,6 +31,10 @@ const CreatorCard: React.FC<CreatorCardProps> = ({ creator, onFollow }) => {
         return <Twitter className="w-4 h-4" />;
       case 'youtube':
         return <Youtube className="w-4 h-4" />;
+      case 'blog':
+        return <FileText className="w-4 h-4" />;
+      case 'article':
+        return <BookOpen className="w-4 h-4" />;
       default:
         return <ExternalLink className="w-4 h-4" />;
     }

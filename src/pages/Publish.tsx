@@ -48,7 +48,7 @@ const Publish = () => {
   const [subcategorySearch, setSubcategorySearch] = useState('');
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   const [showSubcategoryDropdown, setShowSubcategoryDropdown] = useState(false);
-  const [selectedNetwork, setSelectedNetwork] = useState('all');
+  const [selectedNetwork, setSelectedNetwork] = useState('');
   const { data: socialNetworks } = useSocialNetworks();
   const { data: themes } = useThemes();
 
@@ -108,6 +108,15 @@ const Publish = () => {
       toast({
         title: "Informations manquantes",
         description: "Veuillez remplir tous les champs obligatoires",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!selectedNetwork || selectedNetwork === '') {
+      toast({
+        title: "Réseau social requis",
+        description: "Veuillez sélectionner un réseau social",
         variant: "destructive"
       });
       return;
@@ -217,7 +226,7 @@ const Publish = () => {
           .insert({
             title: formData.title,
             subcategory_id: formData.subcategory_id,
-            platform: selectedNetwork === 'all' ? null : selectedNetwork,
+            platform: selectedNetwork,
             type: 'title'
           });
         
@@ -303,8 +312,8 @@ const Publish = () => {
         const { error } = await supabase
           .from('content_titles')
           .insert({
-        title: formData.title,
-            platform: selectedNetwork === 'all' ? null : selectedNetwork,
+            title: formData.title,
+            platform: selectedNetwork,
             type: 'hook'
           });
         
@@ -438,7 +447,10 @@ const Publish = () => {
                 <div className="relative group">
                   <div className="flex items-center justify-between p-3 border border-gray-600 rounded-lg text-white text-sm cursor-pointer hover:bg-gray-800/50 transition-all duration-200" style={{ backgroundColor: '#0f0f10' }}>
                     <span className="font-medium">
-                      {selectedNetwork === 'all' ? 'Tous les réseaux' : socialNetworks?.find(n => n.id === selectedNetwork)?.display_name || 'Sélectionner un réseau'}
+                      {selectedNetwork && selectedNetwork !== '' ? 
+                        socialNetworks?.find(n => n.id === selectedNetwork)?.display_name || 'Sélectionner un réseau' :
+                        'Sélectionner un réseau'
+                      }
                     </span>
                     <div className="w-2 h-2 border-r-2 border-b-2 border-gray-400 transform rotate-45 transition-transform duration-200 group-hover:rotate-[-135deg]"></div>
                   </div>
@@ -449,7 +461,7 @@ const Publish = () => {
                     className="absolute inset-0 opacity-0 cursor-pointer"
                     required
                   >
-                    <option value="all">Tous les réseaux</option>
+                    <option value="">Sélectionner un réseau</option>
                     {socialNetworks?.map((network) => (
                       <option key={network.id} value={network.id}>
                         {network.display_name}
@@ -513,34 +525,36 @@ const Publish = () => {
           </div>
 
           {/* Section 3 : Thème de contenu */}
-          <div className="mb-3">
-            <div className="rounded-lg border border-gray-700 p-3" style={{ backgroundColor: '#0f0f10' }}>
-              <div className="space-y-1">
-                <Label htmlFor="theme" className="text-sm text-white">Thème de contenu</Label>
-                <div className="relative group">
-                  <div className="flex items-center justify-between p-3 border border-gray-600 rounded-lg text-white text-sm cursor-pointer hover:bg-gray-800/50 transition-all duration-200" style={{ backgroundColor: '#0f0f10' }}>
-                    <span className="font-medium">
-                      {formData.theme ? themes?.find(t => t.name === formData.theme)?.name : 'Sélectionnez un thème (optionnel)'}
-                    </span>
-                    <div className="w-2 h-2 border-r-2 border-b-2 border-gray-400 transform rotate-45 transition-transform duration-200 group-hover:rotate-[-135deg]"></div>
+          {formData.content_type === 'category' && (
+            <div className="mb-3">
+              <div className="rounded-lg border border-gray-700 p-3" style={{ backgroundColor: '#0f0f10' }}>
+                <div className="space-y-1">
+                  <Label htmlFor="theme" className="text-sm text-white">Thème de contenu</Label>
+                  <div className="relative group">
+                    <div className="flex items-center justify-between p-3 border border-gray-600 rounded-lg text-white text-sm cursor-pointer hover:bg-gray-800/50 transition-all duration-200" style={{ backgroundColor: '#0f0f10' }}>
+                      <span className="font-medium">
+                        {formData.theme ? themes?.find(t => t.name === formData.theme)?.name : 'Sélectionnez un thème (optionnel)'}
+                      </span>
+                      <div className="w-2 h-2 border-r-2 border-b-2 border-gray-400 transform rotate-45 transition-transform duration-200 group-hover:rotate-[-135deg]"></div>
+                    </div>
+                    <select
+                      id="theme"
+                      value={formData.theme}
+                      onChange={(e) => setFormData(prev => ({ ...prev, theme: e.target.value }))}
+                      className="absolute inset-0 opacity-0 cursor-pointer"
+                    >
+                      <option value="">Sélectionnez un thème (optionnel)</option>
+                      {themes?.map((theme) => (
+                        <option key={theme.id} value={theme.name}>
+                          {theme.name}
+                        </option>
+                      ))}
+                    </select>
                   </div>
-                  <select
-                    id="theme"
-                    value={formData.theme}
-                    onChange={(e) => setFormData(prev => ({ ...prev, theme: e.target.value }))}
-                    className="absolute inset-0 opacity-0 cursor-pointer"
-                  >
-                    <option value="">Sélectionnez un thème (optionnel)</option>
-                    {themes?.map((theme) => (
-                      <option key={theme.id} value={theme.name}>
-                        {theme.name}
-                      </option>
-                    ))}
-                  </select>
                 </div>
               </div>
             </div>
-          </div>
+          )}
 
           {/* Section 4 : Titre */}
           <div className="mb-3">
@@ -715,11 +729,9 @@ const Publish = () => {
                       <option value="twitter">Twitter/X</option>
                       <option value="facebook">Facebook</option>
                       <option value="linkedin">LinkedIn</option>
-                      <option value="pinterest">Pinterest</option>
-                      <option value="snapchat">Snapchat</option>
                       <option value="twitch">Twitch</option>
-                      <option value="discord">Discord</option>
-                      <option value="telegram">Telegram</option>
+                      <option value="blog">Blog</option>
+                      <option value="article">Article</option>
                       <option value="other">Autre</option>
                     </select>
                   </div>
@@ -780,6 +792,7 @@ const Publish = () => {
                 type="submit" 
                 className="w-full" 
                 disabled={isSubmitting || 
+                         !selectedNetwork ||
                          (formData.content_type === 'subcategory' && !formData.category_id) ||
                          ((formData.content_type === 'title' || formData.content_type === 'account') && (!formData.category_id || !formData.subcategory_id)) ||
                          (formData.content_type === 'challenge' && !formData.description) ||

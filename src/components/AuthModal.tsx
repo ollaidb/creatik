@@ -6,11 +6,13 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
-import { Mail, Lock, User, Phone, Apple } from 'lucide-react';
+import { Mail, Lock, User, Phone, Apple, Eye, EyeOff } from 'lucide-react';
+
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
+
 const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
@@ -18,8 +20,10 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const { signUp, signIn, signInWithGoogle, signInWithApple } = useAuth();
   const { toast } = useToast();
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -56,6 +60,7 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
       setLoading(false);
     }
   };
+
   const handleSocialLogin = async (provider: 'google' | 'apple') => {
     setLoading(true);
     try {
@@ -79,6 +84,7 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
       setLoading(false);
     }
   };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
@@ -180,12 +186,23 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                 <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
                   id="password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10"
+                  className="pl-10 pr-10"
                   required
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
               </div>
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
@@ -209,4 +226,5 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
     </Dialog>
   );
 };
+
 export default AuthModal;

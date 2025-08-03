@@ -16,20 +16,19 @@ export interface Account {
 
 // Fonction pour générer un avatar par défaut basé sur la plateforme
 const getDefaultAvatar = (platform: string, name: string): string => {
-  const platformColors: Record<string, string> = {
+  const PLATFORM_COLORS: Record<string, string> = {
     'TikTok': '#000000',
     'Instagram': '#E4405F',
     'YouTube': '#FF0000',
     'Twitter': '#1DA1F2',
     'Facebook': '#1877F2',
-    'LinkedIn': '#0A66C2',
+    'LinkedIn': '#0077B5',
     'Twitch': '#9146FF',
-    'Discord': '#5865F2',
-    'Telegram': '#0088CC',
-    'Snapchat': '#FFFC00'
+    'Blog': '#FF6B35',
+    'Article': '#2E8B57'
   };
 
-  const color = platformColors[platform] || '#6B7280';
+  const color = PLATFORM_COLORS[platform] || '#6B7280';
   const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   
   return `data:image/svg+xml,${encodeURIComponent(`

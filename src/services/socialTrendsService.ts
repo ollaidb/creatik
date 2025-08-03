@@ -2,7 +2,7 @@ interface TrendingTopic {
   id: string;
   title: string;
   description: string;
-  platform: 'twitter' | 'reddit' | 'instagram' | 'tiktok';
+  platform: 'twitter' | 'reddit' | 'instagram' | 'tiktok' | 'blog' | 'article';
   hashtags: string[];
   engagement: number;
   category: string;
@@ -15,7 +15,7 @@ class SocialTrendsService {
       const response = await fetch('https://www.reddit.com/r/popular.json');
       const data = await response.json();
       
-      return data.data.children.slice(0, 10).map((post: any) => ({
+      return data.data.children.slice(0, 10).map((post: { data: { id: string; title: string; selftext: string; score: number; num_comments: number } }) => ({
         id: post.data.id,
         title: post.data.title,
         description: post.data.selftext || '',

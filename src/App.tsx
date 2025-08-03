@@ -30,6 +30,7 @@ import Accounts from "./pages/Accounts";
 import Sources from "./pages/Sources";
 import TrendingIdeas from "./pages/TrendingIdeas";
 import WhatToPostToday from "./pages/WhatToPostToday";
+import AuthCallback from "./pages/AuthCallback";
 
 // Configuration optimisée du QueryClient pour de meilleures performances
 const queryClient = new QueryClient({
@@ -55,6 +56,8 @@ const AppContent = () => {
         <VisitTracker>
           <Routes>
             <Route path="/" element={<Index />} />
+            {/* Auth Callback Route */}
+            <Route path="/auth/callback" element={<AuthCallback />} />
             {/* Categories Routes */}
             <Route path="/categories" element={<Categories />} />
             <Route path="/category/:categoryId/subcategories" element={<Subcategories />} />

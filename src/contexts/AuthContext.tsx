@@ -1,18 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import { User, Session, AuthError, createClient } from '@supabase/supabase-js';
-
-// Vérifier les variables d'environnement
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-// Créer une seule instance du client Supabase seulement si les variables sont définies
-let supabaseClient = null;
-if (supabaseUrl && supabaseAnonKey) {
-  supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
-}
-
-// Utiliser cette instance unique
-export const supabase = supabaseClient;
+import { User, Session, AuthError } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface AuthContextType {
   user: User | null;
@@ -29,7 +17,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export { AuthContext };
 
-export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
@@ -44,10 +32,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     // Récupérer la session initiale
     const getSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        setSession(session);
+        setUser(session?.user ?? null);
+      } catch (error) {
+        console.error('Erreur lors de la récupération de la session:', error);
+      } finally {
+        setLoading(false);
+      }
     };
 
     getSession();
@@ -55,6 +48,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // Écouter les changements d'authentification
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('Auth state changed:', event, session?.user?.email);
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
@@ -76,10 +70,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         password,
         options: {
           data: metadata,
+          emailRedirectTo: `${window.location.origin}/auth/callback`
         },
       });
       return { error };
     } catch (error) {
+      console.error('Erreur lors de l\'inscription:', error);
       return { error: error as AuthError };
     }
   };
@@ -97,6 +93,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       });
       return { error };
     } catch (error) {
+      console.error('Erreur lors de la connexion:', error);
       return { error: error as AuthError };
     }
   };
@@ -111,6 +108,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const { error } = await supabase.auth.signOut();
       return { error };
     } catch (error) {
+      console.error('Erreur lors de la déconnexion:', error);
       return { error: error as AuthError };
     }
   };
@@ -124,9 +122,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`
+        }
       });
       return { error };
     } catch (error) {
+      console.error('Erreur lors de la connexion Google:', error);
       return { error: error as AuthError };
     }
   };
@@ -140,9 +142,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'apple',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`
+        }
       });
       return { error };
     } catch (error) {
+      console.error('Erreur lors de la connexion Apple:', error);
       return { error: error as AuthError };
     }
   };
@@ -164,6 +170,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     </AuthContext.Provider>
   );
 };
+
+export { AuthProvider };
 
 export const useAuth = () => {
   const context = useContext(AuthContext);

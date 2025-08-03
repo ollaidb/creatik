@@ -14,15 +14,16 @@ export const useContentTitles = (subcategoryId?: string, networkId?: string) => 
         query = query.eq('subcategory_id', subcategoryId);
       }
       
-      // Filtrer par réseau social si spécifié
+      // Filtrer par plateforme si spécifié
       if (networkId && networkId !== 'all') {
-        query = query.eq('social_network_id', networkId);
+        // Chercher d'abord les titres spécifiques à la plateforme
+        query = query.or(`platform.eq.${networkId},platform.eq.all`);
       }
       
       const { data, error } = await query;
       if (error) throw error;
       return data;
     },
-    enabled: true // Toujours activé pour charger tous les titres
+    enabled: true
   });
 };

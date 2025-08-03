@@ -7,7 +7,7 @@ export type ContentIdea = {
   id: string;
   title: string;
   description: string;
-  platform: "tiktok" | "instagram" | "youtube" | "all";
+  platform: "tiktok" | "instagram" | "youtube" | "blog" | "article" | "all";
   type: "storytelling" | "humor" | "educational" | "trending";
   category: string;
   popularity: number;

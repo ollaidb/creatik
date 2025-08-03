@@ -153,32 +153,52 @@ const Favorites = () => {
   };
 
   const getPlatformIcon = (platform: string) => {
-    switch (platform?.toLowerCase()) {
-      case 'tiktok': return '🎵';
-      case 'instagram': return '📷';
-      case 'youtube': return '📺';
-      case 'twitter': return '🐦';
-      case 'facebook': return '📘';
-      case 'linkedin': return '💼';
-      case 'pinterest': return '📌';
-      case 'snapchat': return '👻';
-      case 'twitch': return '🎮';
-      default: return '👤';
+    switch (platform.toLowerCase()) {
+      case 'tiktok':
+        return '🎵';
+      case 'instagram':
+        return '📷';
+      case 'youtube':
+        return '📺';
+      case 'twitter':
+        return '🐦';
+      case 'facebook':
+        return '📘';
+      case 'linkedin':
+        return '💼';
+      case 'twitch':
+        return '🎮';
+      case 'blog':
+        return '📝';
+      case 'article':
+        return '📄';
+      default:
+        return '🌐';
     }
   };
 
   const getPlatformColor = (platform: string) => {
-    switch (platform?.toLowerCase()) {
-      case 'tiktok': return 'from-pink-500 to-red-500';
-      case 'instagram': return 'from-purple-500 to-pink-500';
-      case 'youtube': return 'from-red-500 to-red-600';
-      case 'twitter': return 'from-blue-400 to-blue-500';
-      case 'facebook': return 'from-blue-600 to-blue-700';
-      case 'linkedin': return 'from-blue-700 to-blue-800';
-      case 'pinterest': return 'from-red-500 to-red-600';
-      case 'snapchat': return 'from-yellow-400 to-yellow-500';
-      case 'twitch': return 'from-purple-600 to-purple-700';
-      default: return 'from-gray-500 to-gray-600';
+    switch (platform.toLowerCase()) {
+      case 'tiktok':
+        return 'from-pink-500 to-red-500';
+      case 'instagram':
+        return 'from-purple-500 to-pink-500';
+      case 'youtube':
+        return 'from-red-500 to-red-600';
+      case 'twitter':
+        return 'from-blue-400 to-blue-500';
+      case 'facebook':
+        return 'from-blue-600 to-blue-700';
+      case 'linkedin':
+        return 'from-blue-700 to-blue-800';
+      case 'twitch':
+        return 'from-purple-600 to-purple-700';
+      case 'blog':
+        return 'from-orange-500 to-orange-600';
+      case 'article':
+        return 'from-green-600 to-green-700';
+      default:
+        return 'from-gray-500 to-gray-600';
     }
   };
 

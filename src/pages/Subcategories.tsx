@@ -35,9 +35,9 @@ const Subcategories = () => {
       case 'twitter': return 'Twitter';
       case 'facebook': return 'Facebook';
       case 'linkedin': return 'LinkedIn';
-      case 'pinterest': return 'Pinterest';
-      case 'snapchat': return 'Snapchat';
       case 'twitch': return 'Twitch';
+      case 'blog': return 'Blog';
+      case 'article': return 'Article';
       default: return 'Toutes les plateformes';
     }
   };

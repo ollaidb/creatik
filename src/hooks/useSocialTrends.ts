@@ -4,7 +4,7 @@ export interface TrendingTopic {
   id: string;
   title: string;
   description: string;
-  platform: 'twitter' | 'reddit' | 'instagram' | 'tiktok';
+  platform: 'twitter' | 'reddit' | 'instagram' | 'tiktok' | 'blog' | 'article';
   hashtags: string[];
   engagement: number;
   category: string;
@@ -65,6 +65,24 @@ export const useSocialTrends = () => {
           platform: 'twitter',
           hashtags: ['#business', '#entrepreneur', '#conseils'],
           engagement: 6000,
+          category: 'business'
+        },
+        {
+          id: '6',
+          title: 'Guide complet du développement personnel',
+          description: 'Article approfondi sur les techniques de développement personnel',
+          platform: 'blog',
+          hashtags: ['#développement', '#personnel', '#croissance'],
+          engagement: 9500,
+          category: 'lifestyle'
+        },
+        {
+          id: '7',
+          title: 'Analyse des tendances marketing 2024',
+          description: 'Étude détaillée des nouvelles stratégies marketing',
+          platform: 'article',
+          hashtags: ['#marketing', '#tendances', '#2024'],
+          engagement: 7500,
           category: 'business'
         }
       ];

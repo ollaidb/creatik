@@ -68,7 +68,7 @@ const Accounts = () => {
   };
 
   const getPlatformIcon = (platform: string) => {
-    switch (platform?.toLowerCase()) {
+    switch (platform.toLowerCase()) {
       case 'tiktok':
         return '🎵';
       case 'instagram':
@@ -81,39 +81,39 @@ const Accounts = () => {
         return '📘';
       case 'linkedin':
         return '💼';
-      case 'pinterest':
-        return '📌';
-      case 'snapchat':
-        return '👻';
       case 'twitch':
         return '🎮';
+      case 'blog':
+        return '📝';
+      case 'article':
+        return '📄';
       default:
-        return '👤';
+        return '🌐';
     }
   };
 
   const getPlatformColor = (platform: string) => {
-    switch (platform?.toLowerCase()) {
+    switch (platform.toLowerCase()) {
       case 'tiktok':
-        return 'from-pink-500 to-red-500';
+        return 'bg-black text-white';
       case 'instagram':
-        return 'from-purple-500 to-pink-500';
+        return 'bg-gradient-to-r from-purple-500 to-pink-500 text-white';
       case 'youtube':
-        return 'from-red-500 to-red-600';
+        return 'bg-red-600 text-white';
       case 'twitter':
-        return 'from-blue-400 to-blue-500';
+        return 'bg-blue-400 text-white';
       case 'facebook':
-        return 'from-blue-600 to-blue-700';
+        return 'bg-blue-600 text-white';
       case 'linkedin':
-        return 'from-blue-700 to-blue-800';
-      case 'pinterest':
-        return 'from-red-500 to-red-600';
-      case 'snapchat':
-        return 'from-yellow-400 to-yellow-500';
+        return 'bg-blue-700 text-white';
       case 'twitch':
-        return 'from-purple-600 to-purple-700';
+        return 'bg-purple-600 text-white';
+      case 'blog':
+        return 'bg-orange-500 text-white';
+      case 'article':
+        return 'bg-green-600 text-white';
       default:
-        return 'from-gray-500 to-gray-600';
+        return 'bg-gray-500 text-white';
     }
   };
 

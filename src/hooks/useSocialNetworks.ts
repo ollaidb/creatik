@@ -30,7 +30,9 @@ const TEMP_SOCIAL_NETWORKS: SocialNetwork[] = [
   { id: 'facebook', name: 'facebook', display_name: 'Facebook', description: 'Posts et groupes', icon_url: '/icons/facebook.svg', color_theme: '#1877F2', is_active: true, created_at: '', updated_at: '' },
   { id: 'twitter', name: 'twitter', display_name: 'Twitter', description: 'Micro-blogging et threads', icon_url: '/icons/twitter.svg', color_theme: '#1DA1F2', is_active: true, created_at: '', updated_at: '' },
   { id: 'twitch', name: 'twitch', display_name: 'Twitch', description: 'Streaming et gaming', icon_url: '/icons/twitch.svg', color_theme: '#9146FF', is_active: true, created_at: '', updated_at: '' },
-  { id: 'linkedin', name: 'linkedin', display_name: 'LinkedIn', description: 'Réseau professionnel', icon_url: '/icons/linkedin.svg', color_theme: '#0077B5', is_active: true, created_at: '', updated_at: '' }
+  { id: 'linkedin', name: 'linkedin', display_name: 'LinkedIn', description: 'Réseau professionnel', icon_url: '/icons/linkedin.svg', color_theme: '#0077B5', is_active: true, created_at: '', updated_at: '' },
+  { id: 'blog', name: 'blog', display_name: 'Blog', description: 'Articles de blog et contenus longs', icon_url: '/icons/blog.svg', color_theme: '#FF6B35', is_active: true, created_at: '', updated_at: '' },
+  { id: 'article', name: 'article', display_name: 'Article', description: 'Articles détaillés et analyses', icon_url: '/icons/article.svg', color_theme: '#2E8B57', is_active: true, created_at: '', updated_at: '' }
 ];
 
 // Configuration temporaire des filtres par réseau

@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, Copy, Heart, Search, Plus, User, ExternalLink, Link } from 'lucide-react';
 import { useSubcategory } from '@/hooks/useSubcategory';
 import { useSubcategoryLevel2 } from '@/hooks/useSubcategoryLevel2';
+import { useGeneratedTitles } from '@/hooks/useGeneratedTitles';
 import { useContentTitles } from '@/hooks/useContentTitles';
 import { useContentTitlesLevel2 } from '@/hooks/useContentTitlesLevel2';
 import { useAccounts } from '@/hooks/useAccounts';
@@ -37,24 +38,63 @@ const Titles = () => {
     ? 'youtube' 
     : selectedNetwork;
     
-  const { data: titles, isLoading: titlesLoading, refetch: refreshTitles } = useContentTitles(subcategoryId, detectedNetwork);
-  const { data: titlesLevel2, isLoading: titlesLevel2Loading, refetch: refreshTitlesLevel2 } = useContentTitlesLevel2(subcategoryLevel2Id, detectedNetwork);
+  // Récupérer TOUS les types de titres
+  const { 
+    data: generatedTitles, 
+    isLoading: generatedTitlesLoading, 
+    refetch: refreshGeneratedTitles 
+  } = useGeneratedTitles({
+    platform: detectedNetwork,
+    subcategoryId: isLevel2 ? subcategoryLevel2Id! : subcategoryId!,
+    limit: 50
+  });
+
+  // Récupérer les titres de content_titles (publiés, manuels, IA)
+  const { 
+    data: contentTitlesLevel2, 
+    isLoading: contentTitlesLevel2Loading 
+  } = useContentTitlesLevel2(subcategoryLevel2Id, detectedNetwork);
+
+  const { 
+    data: contentTitlesLevel1, 
+    isLoading: contentTitlesLevel1Loading 
+  } = useContentTitles(subcategoryId, detectedNetwork);
+
+  // Utiliser les données appropriées selon le niveau
+  const contentTitles = isLevel2 ? contentTitlesLevel2 : contentTitlesLevel1;
+  const contentTitlesLoading = isLevel2 ? contentTitlesLevel2Loading : contentTitlesLevel1Loading;
   
   const { data: accounts = [], isLoading: accountsLoading } = useAccounts(detectedNetwork);
   const { data: sources = [], isLoading: sourcesLoading } = useSources(detectedNetwork);
   
   // Utiliser les données appropriées selon le niveau
   const currentSubcategory = isLevel2 ? subcategoryLevel2 : subcategory;
-  const currentTitles = isLevel2 ? titlesLevel2 : titles;
   const isLoading = isLevel2 ? 
-    (subcategoryLevel2Loading || titlesLevel2Loading) : 
-    (subcategoryLoading || titlesLoading);
+    (subcategoryLevel2Loading || generatedTitlesLoading || contentTitlesLoading) : 
+    (subcategoryLoading || generatedTitlesLoading || contentTitlesLoading);
+  
+  // Combiner tous les types de titres
+  const allTitles = [
+    // Titres générés avec les mots de la base de données
+    ...(generatedTitles || []).map(title => ({
+      ...title,
+      type: 'generated',
+      source: 'word_blocks'
+    })),
+    // Titres de content_titles (publiés, manuels, IA)
+    ...(contentTitles || []).map(title => ({
+      ...title,
+      type: 'content',
+      source: 'content_titles',
+      usage_count: 0, // Valeur par défaut pour les titres content
+      generation_date: title.created_at || new Date().toISOString()
+    }))
+  ];
   
   // Filtrer les titres par searchTerm
-  const filteredTitles = currentTitles?.filter(title => 
-    title.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (title.description && title.description.toLowerCase().includes(searchTerm.toLowerCase()))
-  ) || [];
+  const filteredTitles = allTitles.filter(title => 
+    title.title.toLowerCase().includes(searchTerm.toLowerCase())
+  );
   
   // Filtrer les comptes selon la catégorie et sous-catégorie
   const filteredAccounts = accounts.filter(account => {
@@ -79,11 +119,21 @@ const Titles = () => {
       case 'twitter': return 'Twitter';
       case 'facebook': return 'Facebook';
       case 'linkedin': return 'LinkedIn';
-      case 'pinterest': return 'Pinterest';
-      case 'snapchat': return 'Snapchat';
       case 'twitch': return 'Twitch';
+      case 'blog': return 'Blog';
+      case 'article': return 'Article';
       default: return 'Toutes les plateformes';
     }
+  };
+
+  // Fonction pour obtenir le type de titre
+  const getTitleType = (title: { type?: string; source?: string }) => {
+    if (title.type === 'generated') {
+      return 'Généré avec IA';
+    } else if (title.type === 'content') {
+      return 'Titre publié';
+    }
+    return 'Titre disponible';
   };
 
   // Vérifier si les hooks sont disponibles pour ce réseau
@@ -114,12 +164,14 @@ const Titles = () => {
     isLevel2,
     selectedNetwork,
     detectedNetwork,
+    generatedTitles: generatedTitles?.length || 0,
+    contentTitles: contentTitles?.length || 0,
+    allTitles: allTitles.length,
+    filteredTitles: filteredTitles.length,
     accounts: accounts.length,
     filteredAccounts: filteredAccounts.length,
     sources: sources.length,
     filteredSources: filteredSources.length,
-    accountsData: accounts.slice(0, 3), // Afficher les 3 premiers comptes
-    sourcesData: sources.slice(0, 3), // Afficher les 3 premières sources
     showHooksValue: isHooksAvailableForNetwork(detectedNetwork),
     urlParams: searchParams.toString(),
     currentUrl: window.location.href
@@ -198,10 +250,6 @@ const Titles = () => {
         return '📘';
       case 'linkedin':
         return '💼';
-      case 'pinterest':
-        return '📌';
-      case 'snapchat':
-        return '👻';
       case 'twitch':
         return '🎮';
       default:
@@ -223,10 +271,6 @@ const Titles = () => {
         return 'bg-blue-600 text-white';
       case 'linkedin':
         return 'bg-blue-700 text-white';
-      case 'pinterest':
-        return 'bg-red-500 text-white';
-      case 'snapchat':
-        return 'bg-yellow-400 text-black';
       case 'twitch':
         return 'bg-purple-600 text-white';
       default:
@@ -326,7 +370,7 @@ const Titles = () => {
               {currentSubcategory?.name || 'Titres'}
             </h1>
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              {currentTitles?.length || 0} titres disponibles
+              {filteredTitles.length} titres disponibles
             </p>
             {/* Indicateur du réseau social sélectionné */}
             {selectedNetwork !== 'all' && (
@@ -354,7 +398,7 @@ const Titles = () => {
             <LocalSearchBar 
               value={searchTerm}
               onChange={setSearchTerm}
-              placeholder="Rechercher des titres..."
+              placeholder="Rechercher tous les titres..."
               className="w-full"
             />
           </div>
@@ -376,28 +420,33 @@ const Titles = () => {
               initial="hidden"
               animate="visible"
             >
-              {filteredTitles.map((title, index) => (
-                <motion.div key={title.id} variants={itemVariants}>
+              {filteredTitles.length === 0 ? (
+                <div className="text-center py-12">
+                  <p className="text-gray-500 dark:text-gray-400 mb-4">
+                    Aucun titre disponible pour {getNetworkDisplayName(detectedNetwork)}
+                  </p>
+                  <p className="text-sm text-gray-400 dark:text-gray-500">
+                    Les titres incluent les titres publiés, manuels, générés par IA et avec les mots de la base de données.
+                  </p>
+                </div>
+              ) : (
+                filteredTitles.map((title, index) => (
+                  <motion.div key={`${title.type}-${title.id}`} variants={itemVariants}>
                   <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all duration-200">
                     <div className="flex items-start justify-between">
                       <div className="flex-1 min-w-0">
                         <h3 className="text-gray-900 dark:text-white font-medium text-base leading-relaxed">
                           {title.title}
                         </h3>
-                        {title.description && (
-                          <p className="text-gray-600 dark:text-gray-400 text-sm mt-2">
-                            {title.description}
-                          </p>
-                        )}
                       </div>
                       <div className="flex items-center gap-2 ml-4">
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleCopyTitle(title.title)}
+                            onClick={() => handleAddToChallenge(title.id)}
                           className="p-2 h-8 w-8"
                         >
-                          <Copy size={16} />
+                            <Plus size={16} />
                         </Button>
                         <Button
                           variant="ghost"
@@ -411,7 +460,8 @@ const Titles = () => {
                     </div>
                   </div>
                 </motion.div>
-              ))}
+                ))
+              )}
             </motion.div>
           )}
 

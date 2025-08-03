@@ -1,19 +1,18 @@
 -- Migration: Configure Social Networks and Category Filters
 -- Description: Configure social networks with their category filters and mappings
 
--- 1. Insérer les réseaux sociaux dans la table social_networks
-INSERT INTO public.social_networks (id, name, display_name, description, color_theme, is_active) VALUES
-('all', 'all', 'Tout', 'Toutes les catégories', '#8B5CF6', true),
-('youtube', 'youtube', 'YouTube', 'Vidéos longues et chaînes', '#FF0000', true),
-('tiktok', 'tiktok', 'TikTok', 'Vidéos courtes et tendances', '#000000', true),
-('instagram', 'instagram', 'Instagram', 'Contenu visuel et stories', '#E4405F', true),
-('facebook', 'facebook', 'Facebook', 'Posts et groupes', '#1877F2', true),
-('twitter', 'twitter', 'Twitter', 'Micro-blogging et threads', '#1DA1F2', true),
-('linkedin', 'linkedin', 'LinkedIn', 'Réseau professionnel', '#0077B5', true),
-('twitch', 'twitch', 'Twitch', 'Streaming et gaming', '#9146FF', true),
-('pinterest', 'pinterest', 'Pinterest', 'Inspiration visuelle', '#E60023', true),
-('snapchat', 'snapchat', 'Snapchat', 'Contenu éphémère', '#FFFC00', true)
-ON CONFLICT (name) DO NOTHING;
+-- Insérer les réseaux sociaux
+INSERT INTO social_networks (id, name, display_name, icon_url, color_theme) VALUES
+  ('550e8400-e29b-41d4-a716-446655440001', 'all', 'Tout', '/icons/globe.svg', '#8B5CF6'),
+  ('550e8400-e29b-41d4-a716-446655440002', 'tiktok', 'TikTok', '/icons/tiktok.svg', '#000000'),
+  ('550e8400-e29b-41d4-a716-446655440003', 'youtube', 'YouTube', '/icons/youtube.svg', '#FF0000'),
+  ('550e8400-e29b-41d4-a716-446655440004', 'instagram', 'Instagram', '/icons/instagram.svg', '#E4405F'),
+  ('550e8400-e29b-41d4-a716-446655440005', 'facebook', 'Facebook', '/icons/facebook.svg', '#1877F2'),
+  ('550e8400-e29b-41d4-a716-446655440006', 'twitter', 'Twitter', '/icons/twitter.svg', '#1DA1F2'),
+  ('550e8400-e29b-41d4-a716-446655440007', 'twitch', 'Twitch', '/icons/twitch.svg', '#9146FF'),
+  ('550e8400-e29b-41d4-a716-446655440008', 'linkedin', 'LinkedIn', '/icons/linkedin.svg', '#0077B5'),
+  ('550e8400-e29b-41d4-a716-446655440009', 'blog', 'Blog', '/icons/blog.svg', '#FF6B35'),
+  ('550e8400-e29b-41d4-a716-446655440010', 'article', 'Article', '/icons/article.svg', '#2E8B57');
 
 -- 2. Configurer les filtres par réseau social
 -- LinkedIn : Masquer les catégories divertissantes, rediriger vers business/professionnel

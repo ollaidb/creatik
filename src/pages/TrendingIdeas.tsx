@@ -14,7 +14,7 @@ const TrendingIdeas: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const navigate = useNavigate();
 
-  const platforms = ['all', 'twitter', 'reddit', 'instagram', 'tiktok'];
+  const platforms = ['all', 'twitter', 'reddit', 'instagram', 'tiktok', 'blog', 'article'];
   const categories = ['all', 'technology', 'lifestyle', 'entertainment', 'business'];
 
   const filteredTrends = trends.filter(trend => {
