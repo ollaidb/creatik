@@ -33,13 +33,13 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // Récupérer la session initiale
     const getSession = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        setSession(session);
-        setUser(session?.user ?? null);
+      const { data: { session } } = await supabase.auth.getSession();
+      setSession(session);
+      setUser(session?.user ?? null);
       } catch (error) {
         console.error('Erreur lors de la récupération de la session:', error);
       } finally {
-        setLoading(false);
+      setLoading(false);
       }
     };
 

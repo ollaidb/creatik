@@ -263,11 +263,11 @@ const Categories = () => {
             <div className="overflow-x-auto scrollbar-hide">
               <div className="flex gap-2 pb-2 min-w-max">
                 {socialNetworks.map((network) => {
-                  const isActive = selectedNetwork === network.id;
+                  const isActive = selectedNetwork === network.name;
                   return (
                     <motion.button
                       key={network.id}
-                      onClick={() => setSelectedNetwork(network.id)}
+                      onClick={() => setSelectedNetwork(network.name)}
                       className={`
                         px-3 py-2 rounded-lg transition-all duration-300 min-w-[70px] text-center flex items-center justify-center gap-2
                         ${isActive
@@ -387,7 +387,7 @@ const Categories = () => {
               {searchTerm 
                 ? 'Aucune catégorie trouvée pour cette recherche' 
                 : selectedNetwork !== 'all'
-                ? `Aucune catégorie disponible pour ${socialNetworks?.find(n => n.id === selectedNetwork)?.display_name}`
+                ? `Aucune catégorie disponible pour ${socialNetworks?.find(n => n.name === selectedNetwork)?.display_name}`
                 : 'Aucune catégorie disponible'
               }
             </div>

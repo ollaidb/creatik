@@ -113,7 +113,9 @@ const Publish = () => {
       return;
     }
 
-    if (!selectedNetwork || selectedNetwork === '') {
+    // Validation du réseau social seulement pour les types qui en ont besoin
+    const needsNetwork = ['title', 'hooks'].includes(formData.content_type);
+    if (needsNetwork && (!selectedNetwork || selectedNetwork === '')) {
       toast({
         title: "Réseau social requis",
         description: "Veuillez sélectionner un réseau social",
@@ -221,13 +223,12 @@ const Publish = () => {
         });
       } else if (formData.content_type === 'title') {
         console.log('Publication titre...');
-        const selectedNetworkName = socialNetworks?.find(n => n.id === selectedNetwork)?.name;
         const { error } = await supabase
           .from('content_titles')
           .insert({
             title: formData.title,
             subcategory_id: formData.subcategory_id,
-            platform: selectedNetworkName,
+            platform: selectedNetwork,
             type: 'title'
           });
         
@@ -310,14 +311,12 @@ const Publish = () => {
         });
       } else if (formData.content_type === 'hooks') {
         console.log('Publication hook...');
-        const selectedNetworkName = socialNetworks?.find(n => n.id === selectedNetwork)?.name;
         const { error } = await supabase
           .from('content_titles')
           .insert({
             title: formData.title,
-            platform: selectedNetworkName,
-            type: 'hook',
-            subcategory_id: formData.subcategory_id || null
+            platform: selectedNetwork,
+            type: 'hook'
           });
         
         if (error) {
@@ -421,6 +420,9 @@ const Publish = () => {
     return ['title', 'source', 'account', 'hooks'].includes(formData.content_type) && formData.category_id;
   };
 
+  // Fonction pour déterminer si le réseau social est requis
+  const needsNetwork = ['title', 'hooks'].includes(formData.content_type);
+
   return (
     <div className="min-h-screen pb-32" style={{ backgroundColor: '#0f0f10' }}>
       <header className="border-b border-gray-800 p-4" style={{ backgroundColor: '#0f0f10' }}>
@@ -444,6 +446,7 @@ const Publish = () => {
           <form onSubmit={handleSubmit}>
           
           {/* Section 1 : Réseau social */}
+          {needsNetwork && (
           <div className="mb-3">
             <div className="rounded-lg border border-gray-700 p-3" style={{ backgroundColor: '#0f0f10' }}>
               <div className="space-y-1">
@@ -452,7 +455,7 @@ const Publish = () => {
                   <div className="flex items-center justify-between p-3 border border-gray-600 rounded-lg text-white text-sm cursor-pointer hover:bg-gray-800/50 transition-all duration-200" style={{ backgroundColor: '#0f0f10' }}>
                     <span className="font-medium">
                       {selectedNetwork && selectedNetwork !== '' ? 
-                        socialNetworks?.find(n => n.id === selectedNetwork)?.display_name || 'Sélectionner un réseau' :
+                        socialNetworks?.find(n => n.name === selectedNetwork)?.display_name || 'Sélectionner un réseau' :
                         'Sélectionner un réseau'
                       }
                     </span>
@@ -467,7 +470,7 @@ const Publish = () => {
                   >
                     <option value="">Sélectionner un réseau</option>
                     {socialNetworks?.map((network) => (
-                      <option key={network.id} value={network.id}>
+                      <option key={network.id} value={network.name}>
                         {network.display_name}
                       </option>
                     ))}
@@ -476,6 +479,7 @@ const Publish = () => {
               </div>
             </div>
           </div>
+          )}
 
           {/* Section 2 : Type de contenu */}
           <div className="mb-3">
@@ -798,7 +802,7 @@ const Publish = () => {
                 disabled={isSubmitting || 
                          !formData.title ||
                          !formData.content_type ||
-                         !selectedNetwork ||
+                         (needsNetwork && !selectedNetwork) ||
                          (formData.content_type === 'subcategory' && !formData.category_id) ||
                          ((formData.content_type === 'title' || formData.content_type === 'account') && (!formData.category_id || !formData.subcategory_id)) ||
                          (formData.content_type === 'challenge' && !formData.description) ||

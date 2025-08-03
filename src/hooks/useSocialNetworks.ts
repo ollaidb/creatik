@@ -67,7 +67,7 @@ export const useSocialNetworks = () => {
       const { data, error } = await supabase
         .from('social_networks')
         .select('*')
-        .order('display_name');
+        .eq('is_active', true);
       
       if (error) {
         console.error('Erreur lors de la récupération des réseaux sociaux:', error);
@@ -75,7 +75,27 @@ export const useSocialNetworks = () => {
         return TEMP_SOCIAL_NETWORKS;
       }
       
-      return data || TEMP_SOCIAL_NETWORKS;
+      // Ordonner les réseaux selon un ordre spécifique
+      const orderMap: Record<string, number> = {
+        'all': 0,
+        'tiktok': 1,
+        'youtube': 2,
+        'instagram': 3,
+        'facebook': 4,
+        'twitter': 5,
+        'linkedin': 6,
+        'twitch': 7,
+        'blog': 8,
+        'article': 9
+      };
+      
+      const sortedData = (data || TEMP_SOCIAL_NETWORKS).sort((a, b) => {
+        const orderA = orderMap[a.name] ?? 999;
+        const orderB = orderMap[b.name] ?? 999;
+        return orderA - orderB;
+      });
+      
+      return sortedData;
     },
   });
 };
@@ -87,18 +107,23 @@ export const useFilterCategoriesByNetwork = (categories: Category[], networkId: 
     queryFn: async () => {
       if (networkId === 'all') return null;
       
-      const { data, error } = await supabase
-        .from('network_configurations')
-        .select('*')
-        .eq('network_id', networkId)
-        .single();
-      
-      if (error) {
-        console.error('Erreur lors de la récupération de la config réseau:', error);
+      try {
+        const { data, error } = await supabase
+          .from('network_configurations')
+          .select('*')
+          .eq('network_id', networkId)
+          .single();
+        
+        if (error) {
+          console.error('Erreur lors de la récupération de la config réseau:', error);
+          return null;
+        }
+        
+        return data;
+      } catch (error) {
+        console.error('Table network_configurations non trouvée, utilisation du fallback');
         return null;
       }
-      
-      return data;
     },
     enabled: networkId !== 'all'
   });

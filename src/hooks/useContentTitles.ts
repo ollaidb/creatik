@@ -17,7 +17,7 @@ export const useContentTitles = (subcategoryId?: string, networkId?: string) => 
       // Filtrer par plateforme si spécifié
       if (networkId && networkId !== 'all') {
         // Chercher d'abord les titres spécifiques à la plateforme
-        query = query.or(`platform.eq.${networkId},platform.eq.all`);
+        query = query.eq('platform', networkId);
       }
       
       const { data, error } = await query;

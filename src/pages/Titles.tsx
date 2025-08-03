@@ -32,11 +32,7 @@ const Titles = () => {
   const { data: subcategory, isLoading: subcategoryLoading } = useSubcategory(subcategoryId);
   const { data: subcategoryLevel2, isLoading: subcategoryLevel2Loading } = useSubcategoryLevel2(subcategoryLevel2Id);
   
-  const detectedNetwork = selectedNetwork === 'all' && 
-    (searchParams.toString().includes('youtube') || 
-     window.location.href.includes('youtube')) 
-    ? 'youtube' 
-    : selectedNetwork;
+  const detectedNetwork = selectedNetwork;
     
   // Récupérer TOUS les types de titres
   const { 
