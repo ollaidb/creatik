@@ -64,6 +64,8 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       return { error: null };
     }
     
+    console.log('Tentative d\'inscription pour:', email);
+    
     try {
       const { error } = await supabase.auth.signUp({
         email,
@@ -73,6 +75,8 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           emailRedirectTo: `${window.location.origin}/auth/callback`
         },
       });
+      
+      console.log('Résultat inscription:', { error });
       return { error };
     } catch (error) {
       console.error('Erreur lors de l\'inscription:', error);
@@ -86,11 +90,15 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       return { error: null };
     }
     
+    console.log('Tentative de connexion pour:', email);
+    
     try {
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
+      
+      console.log('Résultat connexion:', { error });
       return { error };
     } catch (error) {
       console.error('Erreur lors de la connexion:', error);
