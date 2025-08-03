@@ -163,7 +163,10 @@ const Categories = () => {
   }
 
   return (
-    <div className="min-h-screen pb-20">
+    <div className="min-h-screen pb-20" style={{ 
+      WebkitOverflowScrolling: 'touch',
+      overscrollBehavior: 'contain'
+    }}>
       {/* Header fixe pour mobile */}
       <div className="sticky top-0 z-50 bg-white border-b border-gray-200 dark:border-gray-700 px-4 py-3"
            style={{
@@ -176,12 +179,14 @@ const Categories = () => {
             variant="ghost" 
             size="sm"
             onClick={handleBackClick} 
-            className="p-2 h-10 w-10 rounded-full text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800"
+            className="p-2 h-10 w-10 rounded-full text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800 touch-manipulation"
+            style={{ WebkitTapHighlightColor: 'transparent' }}
           >
             <ArrowLeft size={20} />
           </Button>
           <div className="flex-1 min-w-0">
             <h1 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
+              {/* currentCategory?.name || 'Catégories' */}
               Catégories
             </h1>
           </div>
@@ -339,7 +344,7 @@ const Categories = () => {
           animate="visible"
           key={`${selectedNetwork}-${selectedTheme}`}
           transition={{
-            duration: 0.5,
+            duration: 0.3,
             ease: "easeInOut"
           }}
         >
@@ -350,10 +355,11 @@ const Categories = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ 
-                delay: index * 0.1,
-                duration: 0.3,
+                delay: Math.min(index * 0.05, 0.5), // Réduire le délai maximum
+                duration: 0.2, // Réduire la durée
                 ease: "easeOut"
               }}
+              layout
             >
               <CategoryCard 
                 category={{
@@ -362,7 +368,12 @@ const Categories = () => {
                   color: category.color || 'primary'
                 }}
                 index={index}
-                onClick={() => navigate(`/category/${category.id}/subcategories?network=${selectedNetwork}`)}
+                onClick={() => {
+                  // Ajouter un délai minimal pour éviter les clics accidentels
+                  setTimeout(() => {
+                    navigate(`/category/${category.id}/subcategories?network=${selectedNetwork}`);
+                  }, 50);
+                }}
                 className="w-full h-20 sm:h-24 md:h-28"
               />
             </motion.div>

@@ -21,6 +21,7 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ category, index, onClick, c
   const { favorites, toggleFavorite, isLoading } = useFavorites('category');
   const isFavorite = favorites.includes(category.id);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isPressed, setIsPressed] = useState(false);
 
   // Détecter le mode sombre/clair
   useEffect(() => {
@@ -49,15 +50,39 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ category, index, onClick, c
     toggleFavorite(category.id);
   };
 
+  const handleClick = (e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onClick();
+  };
+
+  const handleTouchStart = () => {
+    setIsPressed(true);
+  };
+
+  const handleTouchEnd = () => {
+    setIsPressed(false);
+  };
+
   return (
     <div
       className={cn(
-        "relative overflow-hidden rounded-xl cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-lg group",
+        "relative overflow-hidden rounded-xl cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-lg group touch-manipulation",
+        isPressed && "scale-95",
         className
       )}
       data-title={category.name}
       data-type="category"
       data-category={category.id}
+      onClick={handleClick}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      style={{ 
+        WebkitTapHighlightColor: 'transparent',
+        WebkitTouchCallout: 'none',
+        WebkitUserSelect: 'none',
+        userSelect: 'none'
+      }}
     >
       <div 
         className="absolute inset-0 opacity-90"
@@ -65,13 +90,17 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ category, index, onClick, c
           backgroundColor: categoryHexColor
         }}
       />
-      <div className="relative p-2 sm:p-4 h-full flex flex-col justify-center items-center text-center" onClick={onClick}>
+      <div className="relative p-2 sm:p-4 h-full flex flex-col justify-center items-center text-center">
         <div className="absolute top-1 right-1 sm:top-2 sm:right-2 z-10">
           {user && (
             <button
               onClick={handleFavoriteClick}
               disabled={isLoading}
-              className="p-1 hover:bg-white/20 rounded-full transition-colors"
+              className="p-1 hover:bg-white/20 rounded-full transition-colors touch-manipulation"
+              style={{ 
+                WebkitTapHighlightColor: 'transparent',
+                WebkitTouchCallout: 'none'
+              }}
             >
               <Heart 
                 className={cn(
