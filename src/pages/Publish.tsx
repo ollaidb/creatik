@@ -170,6 +170,16 @@ const Publish = () => {
       return;
     }
 
+    // Validation du thème de contenu pour les catégories
+    if (formData.content_type === 'category' && !formData.theme) {
+      toast({
+        title: "Thème de contenu requis",
+        description: "Veuillez sélectionner un thème de contenu",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -179,9 +189,11 @@ const Publish = () => {
       // Publication directe selon le type de contenu
       if (formData.content_type === 'category') {
         console.log('Publication catégorie...');
-        // Couleurs valides pour les catégories
-        const colors = ['primary', 'orange', 'green', 'pink', 'blue', 'purple', 'red', 'yellow'];
+        // Couleurs valides pour les catégories (mises à jour)
+        const colors = ['primary', 'orange', 'green', 'pink', 'blue', 'purple', 'red', 'yellow', 'gray', 'indigo', 'teal', 'cyan', 'emerald', 'violet', 'amber', 'lime', 'rose', 'slate'];
         const randomColor = colors[Math.floor(Math.random() * colors.length)];
+        
+        console.log('Couleur sélectionnée:', randomColor);
         
         const { error } = await supabase
           .from('categories')
@@ -193,6 +205,9 @@ const Publish = () => {
         
         if (error) {
           console.error('Erreur catégorie:', error);
+          console.error('Code d\'erreur:', error.code);
+          console.error('Message d\'erreur:', error.message);
+          console.error('Détails:', error.details);
           throw error;
         }
         
@@ -333,21 +348,95 @@ const Publish = () => {
 
       console.log('=== PUBLICATION RÉUSSIE ===');
 
-      // Réinitialiser le formulaire
-        setFormData({
-          title: '',
-          content_type: 'title',
-          category_id: '',
-          subcategory_id: '',
-          description: '',
-          url: '',
-          platform: '',
-          theme: ''
-        });
-        setSelectedNetwork('');
+      // AJOUTER LA PUBLICATION DANS USER_PUBLICATIONS
+      try {
+        console.log('=== AJOUT DANS USER_PUBLICATIONS ===');
+        console.log('User ID:', user.id);
+        console.log('Content Type:', formData.content_type);
+        console.log('Title:', formData.title);
+        console.log('Description:', formData.description);
+        console.log('Category ID:', formData.category_id);
+        console.log('Subcategory ID:', formData.subcategory_id);
+        console.log('Platform:', selectedNetwork || formData.platform);
+        console.log('URL:', formData.url);
+        
+        const publicationData = {
+          user_id: user.id,
+          content_type: formData.content_type,
+          title: formData.title,
+          description: formData.description,
+          category_id: formData.category_id || null,
+          subcategory_id: formData.subcategory_id || null,
+          platform: selectedNetwork || formData.platform || null,
+          url: formData.url || null,
+          status: 'approved'
+        };
+        
+        console.log('Données à insérer:', publicationData);
+        
+        const { data: insertedData, error: userPubError } = await supabase
+          .from('user_publications')
+          .insert(publicationData)
+          .select();
 
-      // Rediriger vers la page d'accueil au lieu de /profile
-      navigate('/');
+        if (userPubError) {
+          console.error('❌ Erreur lors de l\'ajout dans user_publications:', userPubError);
+          console.error('Code d\'erreur:', userPubError.code);
+          console.error('Message d\'erreur:', userPubError.message);
+          console.error('Détails:', userPubError.details);
+          console.error('Hint:', userPubError.hint);
+          
+          // Afficher l'erreur à l'utilisateur
+          toast({
+            title: "Attention",
+            description: `Publication réussie mais problème d'enregistrement personnel: ${userPubError.message}`,
+            variant: "destructive"
+          });
+        } else {
+          console.log('✅ Publication ajoutée dans user_publications avec succès');
+          console.log('Données insérées:', insertedData);
+          
+          toast({
+            title: "Publication enregistrée",
+            description: "Votre publication a été ajoutée à votre liste personnelle",
+          });
+        }
+      } catch (userPubErr) {
+        console.error('❌ Exception lors de l\'ajout dans user_publications:', userPubErr);
+        console.error('Type d\'erreur:', typeof userPubErr);
+        console.error('Message:', userPubErr instanceof Error ? userPubErr.message : 'Erreur inconnue');
+        
+        // Afficher l'erreur à l'utilisateur
+        toast({
+          title: "Attention",
+          description: `Publication réussie mais problème d'enregistrement personnel: ${userPubErr instanceof Error ? userPubErr.message : 'Erreur inconnue'}`,
+          variant: "destructive"
+        });
+      }
+
+      // Réinitialiser le formulaire
+      setFormData({
+        title: '',
+        content_type: 'title',
+        category_id: '',
+        subcategory_id: '',
+        description: '',
+        url: '',
+        platform: '',
+        theme: ''
+      });
+      setSelectedNetwork('');
+
+      // REDIRIGER VERS MES PUBLICATIONS AU LIEU DE LA PAGE D'ACCUEIL
+      toast({
+        title: "Publication réussie !",
+        description: "Votre publication a été ajoutée. Redirection vers vos publications...",
+      });
+      
+      // Rediriger vers la page "Mes publications" après un délai
+      setTimeout(() => {
+        navigate('/profile/publications');
+      }, 1500);
 
     } catch (error: unknown) {
       console.error('=== ERREUR DE PUBLICATION ===');
@@ -537,11 +626,11 @@ const Publish = () => {
             <div className="mb-3">
               <div className="rounded-lg border border-gray-700 p-3" style={{ backgroundColor: '#0f0f10' }}>
                 <div className="space-y-1">
-                  <Label htmlFor="theme" className="text-sm text-white">Thème de contenu</Label>
+                  <Label htmlFor="theme" className="text-sm text-white">Thème de contenu *</Label>
                   <div className="relative group">
                     <div className="flex items-center justify-between p-3 border border-gray-600 rounded-lg text-white text-sm cursor-pointer hover:bg-gray-800/50 transition-all duration-200" style={{ backgroundColor: '#0f0f10' }}>
                       <span className="font-medium">
-                        {formData.theme ? themes?.find(t => t.name === formData.theme)?.name : 'Sélectionnez un thème (optionnel)'}
+                        {formData.theme ? themes?.find(t => t.name === formData.theme)?.name : 'Sélectionnez un thème'}
                       </span>
                       <div className="w-2 h-2 border-r-2 border-b-2 border-gray-400 transform rotate-45 transition-transform duration-200 group-hover:rotate-[-135deg]"></div>
                     </div>
@@ -550,8 +639,9 @@ const Publish = () => {
                       value={formData.theme}
                       onChange={(e) => setFormData(prev => ({ ...prev, theme: e.target.value }))}
                       className="absolute inset-0 opacity-0 cursor-pointer"
+                      required
                     >
-                      <option value="">Sélectionnez un thème (optionnel)</option>
+                      <option value="">Sélectionnez un thème</option>
                       {themes?.map((theme) => (
                         <option key={theme.id} value={theme.name}>
                           {theme.name}
@@ -807,7 +897,8 @@ const Publish = () => {
                          ((formData.content_type === 'title' || formData.content_type === 'account') && (!formData.category_id || !formData.subcategory_id)) ||
                          (formData.content_type === 'challenge' && !formData.description) ||
                          (formData.content_type === 'source' && !formData.url) ||
-                         (formData.content_type === 'account' && (!formData.platform || !formData.url))}
+                         (formData.content_type === 'account' && (!formData.platform || !formData.url)) ||
+                         (formData.content_type === 'category' && !formData.theme)}
               >
                 {isSubmitting ? (
                   <>
