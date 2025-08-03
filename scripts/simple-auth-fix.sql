@@ -1,10 +1,10 @@
--- Script simple pour corriger l'authentification
+-- Script de correction simple pour l'authentification
 
 -- 1. Vérifier les permissions de base
 GRANT USAGE ON SCHEMA auth TO anon;
 GRANT USAGE ON SCHEMA auth TO authenticated;
 
--- 2. Vérifier les permissions sur les tables d'authentification
+-- 2. Vérifier les permissions sur auth.users
 GRANT SELECT ON auth.users TO anon;
 GRANT SELECT ON auth.users TO authenticated;
 GRANT INSERT ON auth.users TO anon;
@@ -18,12 +18,16 @@ GRANT ALL ON auth.sessions TO authenticated;
 GRANT ALL ON auth.identities TO anon;
 GRANT ALL ON auth.identities TO authenticated;
 
--- 5. Vérifier les permissions sur les audit logs
-GRANT SELECT ON auth.audit_log_entries TO authenticated;
-
--- 6. Vérifier que les séquences sont accessibles
+-- 5. Vérifier que les séquences sont accessibles
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA auth TO anon;
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA auth TO authenticated;
 
--- 7. Test simple
-SELECT 'Permissions d authentification verifiees' as status; 
+-- 6. Vérifier que les fonctions sont accessibles
+GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA auth TO anon;
+GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA auth TO authenticated;
+
+-- 7. Test de correction
+SELECT 
+    'Correction d authentification terminee' as status,
+    current_user as current_user,
+    session_user as session_user; 

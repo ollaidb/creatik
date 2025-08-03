@@ -49,7 +49,7 @@ export const useContentSearch = () => {
       const searchTermLower = searchTerm.toLowerCase();
       const results: SearchResult[] = [];
       // 1. Rechercher dans les titres
-      const { data: titlesData, error: titlesError } = await (supabase as any)
+      const { data: titlesData, error: titlesError } = await supabase
         .from('content_titles')
         .select(`
           id,
@@ -68,7 +68,7 @@ export const useContentSearch = () => {
       if (titlesError) {
         console.error('Erreur recherche titres:', titlesError);
       } else {
-        const titleResults: SearchResult[] = (titlesData || []).map((item: TitleData) => ({
+        const titleResults: SearchResult[] = (titlesData || []).map((item: any) => ({ // eslint-disable-line @typescript-eslint/no-explicit-any
           content_type: 'title',
           id: item.id,
           title: item.title,
@@ -81,7 +81,7 @@ export const useContentSearch = () => {
         results.push(...titleResults);
       }
       // 2. Rechercher dans les catégories
-      const { data: categoriesData, error: categoriesError } = await (supabase as any)
+      const { data: categoriesData, error: categoriesError } = await supabase
         .from('categories')
         .select('id, name')
         .ilike('name', `%${searchTermLower}%`)
@@ -89,7 +89,7 @@ export const useContentSearch = () => {
       if (categoriesError) {
         console.error('Erreur recherche catégories:', categoriesError);
       } else {
-        const categoryResults: SearchResult[] = (categoriesData || []).map((item: CategoryData) => ({
+        const categoryResults: SearchResult[] = (categoriesData || []).map((item: any) => ({ // eslint-disable-line @typescript-eslint/no-explicit-any
           content_type: 'category',
           id: item.id,
           title: item.name,
@@ -99,7 +99,7 @@ export const useContentSearch = () => {
         results.push(...categoryResults);
       }
       // 3. Rechercher dans les sous-catégories
-      const { data: subcategoriesData, error: subcategoriesError } = await (supabase as any)
+      const { data: subcategoriesData, error: subcategoriesError } = await supabase
         .from('subcategories')
         .select(`
           id,
@@ -114,7 +114,7 @@ export const useContentSearch = () => {
       if (subcategoriesError) {
         console.error('Erreur recherche sous-catégories:', subcategoriesError);
       } else {
-        const subcategoryResults: SearchResult[] = (subcategoriesData || []).map((item: SubcategoryData) => ({
+        const subcategoryResults: SearchResult[] = (subcategoriesData || []).map((item: any) => ({ // eslint-disable-line @typescript-eslint/no-explicit-any
           content_type: 'subcategory',
           id: item.id,
           title: item.name,

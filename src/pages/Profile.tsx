@@ -12,7 +12,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { useUserRole } from '@/hooks/useUserRole';
+
 interface MenuItem {
   title: string;
   description: string;
@@ -21,12 +21,12 @@ interface MenuItem {
   color: string;
   requiresAuth: boolean;
 }
+
 const Profile = () => {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
   const { user, signOut } = useAuth();
   const { toast } = useToast();
-  const { isAdmin } = useUserRole();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -168,16 +168,7 @@ const Profile = () => {
       path: '/profile/contact',
       color: 'text-orange-500',
       requiresAuth: false
-    },
-    // Ajout conditionnel du menu admin
-    ...(isAdmin ? [{
-      title: 'Administration',
-      description: 'Gérez les publications en attente de validation',
-      icon: Settings,
-      path: '/admin/publications',
-      color: 'text-red-500',
-      requiresAuth: true
-    }] : [])
+    }
   ];
   const handleMenuClick = (item: MenuItem) => {
     navigate(item.path);

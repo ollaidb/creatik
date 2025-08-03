@@ -117,7 +117,7 @@ export const usePublications = () => {
 
   useEffect(() => {
     loadPublications();
-  }, [user]);
+  }, [user, loadPublications]);
 
   return {
     publications,
