@@ -5,7 +5,9 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, Plus, Heart, Search } from 'lucide-react';
 import { useCategoriesByTheme } from '@/hooks/useCategoriesByTheme';
 import { useSubcategories } from '@/hooks/useSubcategories';
+import { useSubcategoriesLevel2 } from '@/hooks/useSubcategoriesLevel2';
 import { useContentTitles } from '@/hooks/useContentTitles';
+import { useGeneratedTitles } from '@/hooks/useGeneratedTitles';
 import { useAccounts } from '@/hooks/useAccounts';
 import { useSources } from '@/hooks/useSources';
 import { usePublicChallenges } from '@/hooks/usePublicChallenges';
@@ -22,9 +24,11 @@ import IntelligentSearchBar from '@/components/IntelligentSearchBar';
 const FAVORITE_TABS = [
   { key: 'categories', label: 'Catégories' },
   { key: 'subcategories', label: 'Sous-catégories' },
+  { key: 'subcategories-level2', label: 'Sous-sous-catégories' },
   { key: 'titles', label: 'Titres' },
   { key: 'comptes', label: 'Comptes' },
   { key: 'sources', label: 'Sources' },
+  { key: 'hooks', label: 'Hooks' },
   { key: 'challenges', label: 'Challenges' },
 ];
 
@@ -37,15 +41,24 @@ const Favorites = () => {
   const { user } = useAuth();
   const { favorites: favoriteCategories, toggleFavorite, isFavorite } = useFavorites('category');
   const { favorites: favoriteSubcategories, toggleFavorite: toggleSubcategoryFavorite, isFavorite: isSubcategoryFavorite } = useFavorites('subcategory');
+  const { favorites: favoriteSubcategoriesLevel2, toggleFavorite: toggleSubcategoryLevel2Favorite, isFavorite: isSubcategoryLevel2Favorite } = useFavorites('subcategory_level2');
   const { favorites: favoriteTitles, toggleFavorite: toggleTitleFavorite, isFavorite: isTitleFavorite } = useFavorites('title');
   const { favorites: favoriteAccounts, toggleFavorite: toggleAccountFavorite, isFavorite: isAccountFavorite } = useFavorites('account');
   const { favorites: favoriteSources, toggleFavorite: toggleSourceFavorite, isFavorite: isSourceFavorite } = useFavorites('source');
+  const { favorites: favoriteHooks, toggleFavorite: toggleHookFavorite, isFavorite: isHookFavorite } = useFavorites('hook');
   const { favorites: favoriteChallenges, toggleFavorite: toggleChallengeFavorite, isFavorite: isChallengeFavorite } = useFavorites('challenge');
   const { data: allCategories = [] } = useCategoriesByTheme('all');
   const { data: allSubcategories = [] } = useSubcategories();
-  const { data: allTitles = [] } = useContentTitles();
+  const { data: allSubcategoriesLevel2 = [] } = useSubcategoriesLevel2(null); // Passer null pour récupérer toutes
+  const { data: contentTitles = [] } = useContentTitles();
+  const { data: generatedTitles = [] } = useGeneratedTitles({
+    platform: 'all',
+    subcategoryId: null,
+    limit: 1000
+  });
   const { data: allAccounts = [] } = useAccounts();
   const { data: allSources = [] } = useSources();
+  const { data: allHooks = [] } = useContentTitles(); // Utiliser contentTitles pour les hooks
   const { challenges: allChallenges = [] } = usePublicChallenges();
   const { toast } = useToast();
 
@@ -60,11 +73,29 @@ const Favorites = () => {
     }
   };
 
+  // Combiner tous les types de titres
+  const allTitles = [
+    // Titres de content_titles (publiés, manuels, IA)
+    ...(contentTitles || []).map(title => ({
+      ...title,
+      type: 'content',
+      source: 'content_titles'
+    })),
+    // Titres générés avec les mots de la base de données
+    ...(generatedTitles || []).map(title => ({
+      ...title,
+      type: 'generated',
+      source: 'word_blocks'
+    }))
+  ];
+
   const categoriesToShow = allCategories.filter(cat => favoriteCategories.includes(cat.id));
   const subcategoriesToShow = allSubcategories.filter(sub => favoriteSubcategories.includes(sub.id));
+  const subcategoriesLevel2ToShow = allSubcategoriesLevel2.filter(sub => favoriteSubcategoriesLevel2.includes(sub.id));
   const titlesToShow = allTitles.filter(title => favoriteTitles.includes(title.id));
   const accountsToShow = allAccounts.filter(account => favoriteAccounts.includes(account.id));
   const sourcesToShow = allSources.filter(source => favoriteSources.includes(source.id));
+  const hooksToShow = allHooks.filter(hook => hook.type === 'hook' && favoriteHooks.includes(hook.id));
   const challengesToShow = allChallenges.filter(challenge => favoriteChallenges.includes(challenge.id));
 
   // Logs de débogage
@@ -75,6 +106,11 @@ const Favorites = () => {
     allSubcategories: allSubcategories.length,
     favoriteSubcategories: favoriteSubcategories.length,
     subcategoriesToShow: subcategoriesToShow.length,
+    allSubcategoriesLevel2: allSubcategoriesLevel2.length,
+    favoriteSubcategoriesLevel2: favoriteSubcategoriesLevel2.length,
+    subcategoriesLevel2ToShow: subcategoriesLevel2ToShow.length,
+    contentTitles: contentTitles.length,
+    generatedTitles: generatedTitles.length,
     allTitles: allTitles.length,
     favoriteTitles: favoriteTitles.length,
     titlesToShow: titlesToShow.length,
@@ -84,9 +120,25 @@ const Favorites = () => {
     allSources: allSources.length,
     favoriteSources: favoriteSources.length,
     sourcesToShow: sourcesToShow.length,
+    allHooks: allHooks.length,
+    favoriteHooks: favoriteHooks.length,
+    hooksToShow: hooksToShow.length,
     allChallenges: allChallenges.length,
     favoriteChallenges: favoriteChallenges.length,
-    challengesToShow: challengesToShow.length
+    challengesToShow: challengesToShow.length,
+    // Détails des titres
+    contentTitlesIds: contentTitles.slice(0, 3).map(t => t.id),
+    generatedTitlesIds: generatedTitles.slice(0, 3).map(t => t.id),
+    favoriteTitlesIds: favoriteTitles.slice(0, 5),
+    titlesToShowIds: titlesToShow.slice(0, 3).map(t => t.id),
+    // Détails des sous-catégories
+    allSubcategoriesIds: allSubcategories.slice(0, 3).map(s => s.id),
+    favoriteSubcategoriesIds: favoriteSubcategories.slice(0, 5),
+    subcategoriesToShowIds: subcategoriesToShow.slice(0, 3).map(s => s.id),
+    // Détails des sous-sous-catégories
+    allSubcategoriesLevel2Ids: allSubcategoriesLevel2.slice(0, 3).map(s => s.id),
+    favoriteSubcategoriesLevel2Ids: favoriteSubcategoriesLevel2.slice(0, 5),
+    subcategoriesLevel2ToShowIds: subcategoriesLevel2ToShow.slice(0, 3).map(s => s.id)
   });
 
   const containerVariants = {
@@ -271,14 +323,18 @@ const Favorites = () => {
                       return 'from-blue-500 to-cyan-500';
                     case 'subcategories':
                       return 'from-green-500 to-emerald-500';
+                    case 'subcategories-level2':
+                      return 'from-purple-500 to-pink-500';
                     case 'titles':
                       return 'from-purple-500 to-pink-500';
                     case 'comptes':
                       return 'from-orange-500 to-red-500';
                     case 'sources':
                       return 'from-indigo-500 to-purple-500';
-                    case 'challenges':
+                    case 'hooks':
                       return 'from-yellow-500 to-orange-500';
+                    case 'challenges':
+                      return 'from-red-500 to-pink-500';
                     default:
                       return 'from-gray-500 to-gray-600';
                   }
@@ -397,8 +453,9 @@ const Favorites = () => {
                 initial="hidden"
                 animate="visible"
               >
+                {/* Sous-catégories de niveau 1 */}
                 {subcategoriesToShow.map((subcategory) => (
-                  <motion.div key={subcategory.id} variants={itemVariants}>
+                  <motion.div key={`level1-${subcategory.id}`} variants={itemVariants}>
                     <div 
                       onClick={() => navigate(`/category/${subcategory.category_id}/subcategory/${subcategory.id}`)}
                       className="relative overflow-hidden rounded-xl cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-lg group h-20 sm:h-24 md:h-28 bg-white dark:bg-gray-800 border-2"
@@ -437,6 +494,62 @@ const Favorites = () => {
                 <h3 className="text-base sm:text-lg font-medium">Aucun favori trouvé</h3>
                 <p className="text-muted-foreground mt-2 text-sm sm:text-base">
                   Vous n'avez pas encore ajouté de sous-catégories en favoris
+                </p>
+              </div>
+            )}
+          </>
+        )}
+
+        {selectedTab === 'subcategories-level2' && (
+          <>
+            {subcategoriesLevel2ToShow.length > 0 ? (
+              <motion.div
+                className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4"
+                variants={containerVariants}
+                initial="hidden"
+                animate="visible"
+              >
+                {/* Sous-catégories de niveau 2 */}
+                {subcategoriesLevel2ToShow.map((subcategory) => (
+                  <motion.div key={`level2-${subcategory.id}`} variants={itemVariants}>
+                    <div 
+                      onClick={() => navigate(`/subcategory/${subcategory.subcategory_id}/subcategory-level2/${subcategory.id}`)}
+                      className="relative overflow-hidden rounded-xl cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-lg group h-20 sm:h-24 md:h-28 bg-white dark:bg-gray-800 border-2"
+                      style={{ borderColor: '#270014' }}
+                    >
+                      {/* Icône cœur en haut à droite */}
+                      <div
+                        className="absolute top-2 right-2 z-10"
+                        onClick={e => { 
+                          e.stopPropagation(); 
+                          toggleSubcategoryLevel2Favorite(subcategory.id);
+                          toast({
+                            title: isSubcategoryLevel2Favorite(subcategory.id)
+                              ? "Retiré des favoris"
+                              : "Ajouté à vos favoris !",
+                            description: isSubcategoryLevel2Favorite(subcategory.id)
+                              ? "La sous-catégorie a été retirée de vos favoris."
+                              : "Vous verrez cette sous-catégorie dans vos favoris.",
+                          });
+                        }}
+                      >
+                        <Heart className={isSubcategoryLevel2Favorite(subcategory.id) ? 'w-5 h-5 text-red-500 fill-red-500' : 'w-5 h-5 text-gray-300'} />
+                      </div>
+                      <div className="p-4 h-full flex flex-col justify-center items-center text-center">
+                        <h3 className="text-gray-900 dark:text-white font-semibold text-base md:text-lg leading-tight text-center">
+                          {subcategory.name}
+                        </h3>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </motion.div>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-60 text-center px-4">
+                <Heart className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 mb-4" />
+                <h3 className="text-base sm:text-lg font-medium">Aucun favori trouvé</h3>
+                <p className="text-muted-foreground mt-2 text-sm sm:text-base">
+                  Vous n'avez pas encore ajouté de sous-sous-catégories en favoris
                 </p>
               </div>
             )}
@@ -485,9 +598,20 @@ const Favorites = () => {
                                 : "Vous verrez ce titre dans vos favoris.",
                             });
                           }}
-                          className="p-2 h-10 w-10 rounded-full"
+                          className={`p-2 h-10 w-10 rounded-full transition-all duration-200 ${
+                            isTitleFavorite(title.id) 
+                              ? 'text-red-500 hover:text-red-600' 
+                              : 'text-gray-400 hover:text-red-400'
+                          }`}
                         >
-                          <Heart size={18} className={isTitleFavorite(title.id) ? 'text-red-500 fill-red-500' : ''} />
+                          <Heart 
+                            size={18} 
+                            className={`transition-all duration-200 ${
+                              isTitleFavorite(title.id) 
+                                ? 'fill-red-500 text-red-500' 
+                                : 'fill-transparent text-current'
+                            }`}
+                          />
                         </Button>
                       </div>
                     </div>
@@ -683,6 +807,69 @@ const Favorites = () => {
                 <h3 className="text-base sm:text-lg font-medium">Aucun favori trouvé</h3>
                 <p className="text-muted-foreground mt-2 text-sm sm:text-base">
                   Vous n'avez pas encore ajouté de sources en favoris
+                </p>
+              </div>
+            )}
+          </>
+        )}
+
+        {selectedTab === 'hooks' && (
+          <>
+            {hooksToShow.length > 0 ? (
+              <motion.div
+                className="space-y-3"
+                variants={containerVariants}
+                initial="hidden"
+                animate="visible"
+              >
+                {hooksToShow.map((hook, index) => (
+                  <motion.div 
+                    key={hook.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all duration-200"
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <span className="text-xs text-gray-500 font-mono flex-shrink-0">
+                          {(index + 1).toString().padStart(2, '0')}
+                        </span>
+                        <h3 className="font-medium text-gray-900 dark:text-white text-base leading-relaxed">
+                          {hook.title}
+                        </h3>
+                      </div>
+                      {/* Actions */}
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            toggleHookFavorite(hook.id);
+                            toast({
+                              title: isHookFavorite(hook.id)
+                                ? "Retiré des favoris"
+                                : "Ajouté à vos favoris !",
+                              description: isHookFavorite(hook.id)
+                                ? "Le hook a été retiré de vos favoris."
+                                : "Vous verrez ce hook dans vos favoris.",
+                            });
+                          }}
+                          className="p-2 h-10 w-10 rounded-full"
+                        >
+                          <Heart size={18} className={isHookFavorite(hook.id) ? 'text-red-500 fill-red-500' : ''} />
+                        </Button>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </motion.div>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-60 text-center px-4">
+                <Heart className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 mb-4" />
+                <h3 className="text-base sm:text-lg font-medium">Aucun favori trouvé</h3>
+                <p className="text-muted-foreground mt-2 text-sm sm:text-base">
+                  Vous n'avez pas encore ajouté de hooks en favoris
                 </p>
               </div>
             )}

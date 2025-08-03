@@ -1,10 +1,12 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 
 export function useFavorites(type: string) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const [localFavorites, setLocalFavorites] = useState<string[]>([]);
 
   const { data: favorites = [], isLoading } = useQuery({
     queryKey: ['favorites', user?.id, type],
@@ -27,54 +29,76 @@ export function useFavorites(type: string) {
       
       console.log(`✅ Favoris chargés pour ${type}:`, data);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return data ? data.map((fav: any) => fav.item_id) : [];
+      const favoriteIds = data ? data.map((fav: any) => fav.item_id) : [];
+      setLocalFavorites(favoriteIds); // Synchroniser l'état local
+      return favoriteIds;
     },
     enabled: !!user
   });
 
-  const toggleFavorite = async (itemId: string) => {
+  const toggleFavorite = useCallback(async (itemId: string) => {
     if (!user) return;
     
     console.log(`🔄 Toggle favori - Type: ${type}, ItemId: ${itemId}`);
     
-    const isFavorite = favorites.includes(itemId);
+    const isCurrentlyFavorite = localFavorites.includes(itemId);
     
-    if (isFavorite) {
-      console.log(`🗑️ Suppression du favori: ${itemId}`);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabase as any)
-        .from('user_favorites')
-        .delete()
-        .eq('user_id', user.id)
-        .eq('item_id', itemId)
-        .eq('item_type', type);
-      
-      if (error) {
-        console.error(`❌ Erreur lors de la suppression du favori:`, error);
-        throw error;
-      }
-      console.log(`✅ Favori supprimé: ${itemId}`);
+    // Mise à jour immédiate de l'état local pour un feedback instantané
+    if (isCurrentlyFavorite) {
+      setLocalFavorites(prev => prev.filter(id => id !== itemId));
     } else {
-      console.log(`➕ Ajout du favori: ${itemId}`);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabase as any)
-        .from('user_favorites')
-        .insert({ user_id: user.id, item_id: itemId, item_type: type });
-      
-      if (error) {
-        console.error(`❌ Erreur lors de l'ajout du favori:`, error);
-        throw error;
-      }
-      console.log(`✅ Favori ajouté: ${itemId}`);
+      setLocalFavorites(prev => [...prev, itemId]);
     }
     
-    queryClient.invalidateQueries({ queryKey: ['favorites', user?.id, type] });
-  };
+    try {
+      if (isCurrentlyFavorite) {
+        console.log(`🗑️ Suppression du favori: ${itemId}`);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { error } = await (supabase as any)
+          .from('user_favorites')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('item_id', itemId)
+          .eq('item_type', type);
+        
+        if (error) {
+          console.error(`❌ Erreur lors de la suppression du favori:`, error);
+          // Remettre l'état local en cas d'erreur
+          setLocalFavorites(prev => [...prev, itemId]);
+          throw error;
+        }
+        console.log(`✅ Favori supprimé: ${itemId}`);
+      } else {
+        console.log(`➕ Ajout du favori: ${itemId}`);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { error } = await (supabase as any)
+          .from('user_favorites')
+          .insert({ user_id: user.id, item_id: itemId, item_type: type });
+        
+        if (error) {
+          console.error(`❌ Erreur lors de l'ajout du favori:`, error);
+          // Remettre l'état local en cas d'erreur
+          setLocalFavorites(prev => prev.filter(id => id !== itemId));
+          throw error;
+        }
+        console.log(`✅ Favori ajouté: ${itemId}`);
+      }
+      
+      // Invalider le cache pour synchroniser avec la base de données
+      queryClient.invalidateQueries({ queryKey: ['favorites', user?.id, type] });
+    } catch (error) {
+      console.error(`❌ Erreur lors du toggle favori:`, error);
+      throw error;
+    }
+  }, [user, type, localFavorites, queryClient]);
+
+  // Utiliser l'état local pour le feedback immédiat, sinon les données du cache
+  const currentFavorites = localFavorites.length > 0 ? localFavorites : favorites;
 
   return {
-    favorites,
+    favorites: currentFavorites,
     isLoading,
     toggleFavorite,
-    isFavorite: (itemId: string) => favorites.includes(itemId)
+    isFavorite: (itemId: string) => currentFavorites.includes(itemId)
   };
 }

@@ -5,6 +5,7 @@ import { Plus, Filter, Globe, Smartphone, Youtube, Instagram, Facebook, Twitter,
 import { useCategories } from '@/hooks/useCategories';
 import { useThemes, useCategoriesByTheme } from '@/hooks/useThemes';
 import { useSocialNetworks, useFilterCategoriesByNetwork } from '@/hooks/useSocialNetworks';
+import { useFavorites } from '@/hooks/useFavorites';
 import CategoryCard from '@/components/CategoryCard';
 import { Button } from '@/components/ui/button';
 import LocalSearchBar from '@/components/LocalSearchBar';
@@ -29,6 +30,7 @@ const Categories = () => {
   const { data: categoriesByTheme } = useCategoriesByTheme(selectedTheme);
   const { data: themes } = useThemes();
   const { data: socialNetworks } = useSocialNetworks();
+  const { favorites, toggleFavorite, isFavorite } = useFavorites('category');
 
   // Mettre à jour l'URL quand les choix changent
   useEffect(() => {

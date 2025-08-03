@@ -69,6 +69,11 @@ const Titles = () => {
     (subcategoryLevel2Loading || generatedTitlesLoading || contentTitlesLoading) : 
     (subcategoryLoading || generatedTitlesLoading || contentTitlesLoading);
   
+  // Hooks pour les favoris
+  const { favorites: titleFavorites, toggleFavorite: toggleTitleFavorite, isFavorite: isTitleFavorite } = useFavorites('title');
+  const { favorites: accountFavorites, toggleFavorite: toggleAccountFavorite, isFavorite: isAccountFavorite } = useFavorites('account');
+  const { favorites: sourceFavorites, toggleFavorite: toggleSourceFavorite, isFavorite: isSourceFavorite } = useFavorites('source');
+  
   // Combiner tous les types de titres
   const allTitles = [
     // Titres générés avec les mots de la base de données
@@ -102,9 +107,13 @@ const Titles = () => {
              account.subcategory === currentSubcategory?.name;
     }
   });
-
-  // Utiliser toutes les sources (pas de filtrage par catégorie/sous-catégorie)
-  const filteredSources = sources;
+  
+  // Filtrer les sources selon la catégorie et sous-catégorie
+  const filteredSources = sources.filter(source => {
+    // Pour l'instant, on affiche toutes les sources car les propriétés category/subcategory n'existent pas
+    // TODO: Implémenter le filtrage quand la structure sera mise à jour
+    return true;
+  });
 
   // Fonction pour obtenir le nom d'affichage du réseau social
   const getNetworkDisplayName = (networkId: string) => {
@@ -190,9 +199,61 @@ const Titles = () => {
     }
   };
 
-  const handleLikeTitle = (titleId: string) => {
-    // Logique pour liker un titre
-    console.log('Liking title:', titleId);
+  const handleLikeTitle = async (titleId: string) => {
+    try {
+      await toggleTitleFavorite(titleId);
+      toast({
+        title: isTitleFavorite(titleId) ? "Retiré des favoris" : "Ajouté à vos favoris !",
+        description: isTitleFavorite(titleId) 
+          ? "Le titre a été retiré de vos favoris."
+          : "Vous verrez ce titre dans vos favoris.",
+      });
+    } catch (error) {
+      console.error('Erreur lors du like:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de modifier les favoris",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleLikeAccount = async (accountId: string) => {
+    try {
+      await toggleAccountFavorite(accountId);
+      toast({
+        title: isAccountFavorite(accountId) ? "Retiré des favoris" : "Ajouté à vos favoris !",
+        description: isAccountFavorite(accountId) 
+          ? "Le compte a été retiré de vos favoris."
+          : "Vous verrez ce compte dans vos favoris.",
+      });
+    } catch (error) {
+      console.error('Erreur lors du like:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de modifier les favoris",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleLikeSource = async (sourceId: string) => {
+    try {
+      await toggleSourceFavorite(sourceId);
+      toast({
+        title: isSourceFavorite(sourceId) ? "Retiré des favoris" : "Ajouté à vos favoris !",
+        description: isSourceFavorite(sourceId) 
+          ? "La source a été retirée de vos favoris."
+          : "Vous verrez cette source dans vos favoris.",
+      });
+    } catch (error) {
+      console.error('Erreur lors du like:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de modifier les favoris",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleAddToChallenge = (titleId: string) => {
@@ -448,9 +509,20 @@ const Titles = () => {
                           variant="ghost"
                           size="sm"
                           onClick={() => handleLikeTitle(title.id)}
-                          className="p-2 h-8 w-8"
+                          className={`p-2 h-8 w-8 transition-all duration-200 ${
+                            isTitleFavorite(title.id) 
+                              ? 'text-red-500 hover:text-red-600' 
+                              : 'text-gray-400 hover:text-red-400'
+                          }`}
                         >
-                          <Heart size={16} />
+                          <Heart 
+                            size={16} 
+                            className={`transition-all duration-200 ${
+                              isTitleFavorite(title.id) 
+                                ? 'fill-red-500 text-red-500' 
+                                : 'fill-transparent text-current'
+                            }`}
+                          />
                         </Button>
                       </div>
                     </div>
@@ -500,9 +572,33 @@ const Titles = () => {
                           </div>
                         )}
                       </div>
-                      {account.account_url && (
-                        <ExternalLink size={16} className="text-gray-400 flex-shrink-0" />
-                      )}
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleLikeAccount(account.id);
+                          }}
+                          className={`p-2 h-8 w-8 transition-all duration-200 ${
+                            isAccountFavorite(account.id) 
+                              ? 'text-red-500 hover:text-red-600' 
+                              : 'text-gray-400 hover:text-red-400'
+                          }`}
+                        >
+                          <Heart 
+                            size={16} 
+                            className={`transition-all duration-200 ${
+                              isAccountFavorite(account.id) 
+                                ? 'fill-red-500 text-red-500' 
+                                : 'fill-transparent text-current'
+                            }`}
+                          />
+                        </Button>
+                        {account.account_url && (
+                          <ExternalLink size={16} className="text-gray-400 flex-shrink-0" />
+                        )}
+                      </div>
                     </div>
                   </div>
                 </motion.div>
@@ -534,9 +630,33 @@ const Titles = () => {
                           </p>
                         )}
                       </div>
-                      {source.url && (
-                        <ExternalLink size={16} className="text-gray-400 flex-shrink-0 ml-4" />
-                      )}
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleLikeSource(source.id);
+                          }}
+                          className={`p-2 h-8 w-8 transition-all duration-200 ${
+                            isSourceFavorite(source.id) 
+                              ? 'text-red-500 hover:text-red-600' 
+                              : 'text-gray-400 hover:text-red-400'
+                          }`}
+                        >
+                          <Heart 
+                            size={16} 
+                            className={`transition-all duration-200 ${
+                              isSourceFavorite(source.id) 
+                                ? 'fill-red-500 text-red-500' 
+                                : 'fill-transparent text-current'
+                            }`}
+                          />
+                        </Button>
+                        {source.url && (
+                          <ExternalLink size={16} className="text-gray-400 flex-shrink-0" />
+                        )}
+                      </div>
                     </div>
                   </div>
                 </motion.div>
