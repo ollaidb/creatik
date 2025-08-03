@@ -283,7 +283,6 @@ const Accounts = () => {
           </div>
         )}
       </main>
-      <Navigation />
     </div>
   );
 };

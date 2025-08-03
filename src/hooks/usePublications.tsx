@@ -1,42 +1,88 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
+
 interface Publication {
   id: string;
-  user_id: string;
-  content_type: 'category' | 'subcategory' | 'title';
+  user_id: string | null;
+  content_type: 'category' | 'subcategory' | 'title' | 'account' | 'source' | 'challenge' | 'hooks';
   title: string;
   description?: string;
   category_id?: string;
   subcategory_id?: string;
+  platform?: string;
   status: 'pending' | 'approved' | 'rejected';
   rejection_reason?: string;
   created_at: string;
   updated_at: string;
 }
+
 export const usePublications = () => {
   const { user } = useAuth();
   const [publications, setPublications] = useState<Publication[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  // Charger les publications de l'utilisateur
+
+  // Charger les publications de l'utilisateur depuis la table user_publications
   const loadPublications = async () => {
     if (!user) {
       setPublications([]);
       setLoading(false);
       return;
     }
+
     try {
       setLoading(true);
       setError(null);
-      const { data, error: fetchError } = await supabase
+      
+      console.log('=== DÉBUT CHARGEMENT PUBLICATIONS ===');
+      console.log('User ID:', user.id);
+      
+      // Récupérer les publications de l'utilisateur depuis user_publications
+      console.log('Récupération des publications utilisateur...');
+      
+      // Filtrer par date récente pour exclure les anciennes publications ajoutées manuellement
+      // On prend seulement les publications des 30 derniers jours
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      
+      const { data: userPublications, error: publicationsError } = await supabase
+        .from('user_publications')
         .select('*')
-        .eq('user_id', user.id)
+        .gte('created_at', thirtyDaysAgo.toISOString())
         .order('created_at', { ascending: false });
-      if (fetchError) {
-        throw fetchError;
+
+      console.log('Publications utilisateur récupérées:', userPublications);
+      console.log('Erreur publications:', publicationsError);
+
+      if (publicationsError) {
+        console.error('Erreur publications:', publicationsError);
+        setError('Impossible de charger les publications');
+      } else if (userPublications) {
+        // Convertir les données de user_publications au format Publication
+        const formattedPublications: Publication[] = userPublications.map(pub => ({
+          id: pub.id,
+          user_id: pub.user_id,
+          content_type: pub.content_type as 'category' | 'subcategory' | 'title' | 'account' | 'source' | 'challenge' | 'hooks',
+          title: pub.title,
+          description: pub.description,
+          category_id: pub.category_id,
+          subcategory_id: pub.subcategory_id,
+          platform: pub.platform,
+          status: pub.status || 'approved',
+          rejection_reason: pub.rejection_reason,
+          created_at: pub.created_at,
+          updated_at: pub.updated_at
+        }));
+        
+        console.log('=== FIN CHARGEMENT PUBLICATIONS ===');
+        console.log('Total publications:', formattedPublications.length);
+        console.log('Publications formatées:', formattedPublications);
+        
+        setPublications(formattedPublications);
+      } else {
+        setPublications([]);
       }
-      setPublications((data as Publication[]) || []);
     } catch (err) {
       console.error('Erreur lors du chargement des publications:', err);
       setError('Impossible de charger les publications');
@@ -44,48 +90,22 @@ export const usePublications = () => {
       setLoading(false);
     }
   };
+
   // Supprimer une publication
   const deletePublication = async (publicationId: string) => {
     if (!user) return { error: 'Utilisateur non connecté' };
+    
     try {
-      // Récupérer la publication avant de la supprimer
-      const { data: publication, error: fetchError } = await supabase
-        .select('*')
-        .eq('id', publicationId)
-        .single();
-      if (fetchError || !publication) {
-        throw new Error('Publication non trouvée');
-      }
-      // Ajouter à la corbeille avec gestion des doublons
-      const { error: trashError } = await (supabase as any)
-        .from('deleted_content')
-        .upsert({
-          original_id: publication.id,
-          content_type: publication.content_type,
-          title: publication.title,
-          description: publication.description,
-          category_id: publication.category_id,
-          subcategory_id: publication.subcategory_id,
-          user_id: user.id,
-          deleted_at: new Date().toISOString(),
-          metadata: {
-            status: publication.status,
-            rejection_reason: publication.rejection_reason,
-            created_at: publication.created_at,
-            updated_at: publication.updated_at
-          }
-        }, {
-          onConflict: 'original_id,content_type,user_id'
-        });
-      if (trashError) {
-        throw new Error(`Erreur lors de l'ajout à la corbeille: ${trashError.message}`);
-      }
+      // Supprimer de la table user_publications
       const { error: deleteError } = await supabase
+        .from('user_publications')
         .delete()
         .eq('id', publicationId);
+
       if (deleteError) {
         throw new Error(`Erreur lors de la suppression: ${deleteError.message}`);
       }
+
       // Recharger les publications
       await loadPublications();
       return { success: true };
@@ -94,9 +114,11 @@ export const usePublications = () => {
       return { error: err instanceof Error ? err.message : 'Impossible de supprimer la publication' };
     }
   };
+
   useEffect(() => {
     loadPublications();
   }, [user]);
+
   return {
     publications,
     loading,

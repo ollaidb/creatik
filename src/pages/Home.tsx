@@ -289,7 +289,6 @@ const Home = () => {
           </motion.div>
         )}
       </main>
-      <Navigation />
     </div>
   );
 };

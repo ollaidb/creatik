@@ -8,7 +8,6 @@ import { motion } from 'framer-motion';
 import { usePublications } from '@/hooks/usePublications';
 import { useToast } from '@/hooks/use-toast';
 import DeleteConfirmationModal from '@/components/DeleteConfirmationModal';
-import Navigation from '@/components/Navigation';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
@@ -21,10 +20,12 @@ const PUBLICATION_TABS = [
   { key: 'source', label: 'Sources' },
   { key: 'challenge', label: 'Challenges' },
 ];
+
 const Publications = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { publications, loading, error, deletePublication } = usePublications();
+  
   // États pour la confirmation de suppression
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<{
@@ -35,17 +36,20 @@ const Publications = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [activeTab, setActiveTab] = useState('all');
   const [showTrash, setShowTrash] = useState(false);
+
   // Recharger les données de la corbeille quand les publications changent
   useEffect(() => {
     if (showTrash) {
       // refreshTrash(); // This line was removed as per the edit hint
     }
   }, [publications, showTrash]);
+
   // Filtrer les publications par type
   const filteredPublications = publications.filter(publication => {
     if (activeTab === 'all') return true;
     return publication.content_type === activeTab;
   });
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'approved':
@@ -56,9 +60,11 @@ const Publications = () => {
         return <Badge variant="default" className="flex items-center gap-1 bg-green-500"><CheckCircle className="w-3 h-3" />Publié</Badge>;
     }
   };
+
   const formatDate = (dateString: string) => {
     return format(new Date(dateString), 'dd/MM/yyyy à HH:mm', { locale: fr });
   };
+
   // Fonctions pour la suppression
   const handleDeleteClick = (publication: { id: string; title: string; content_type: string }) => {
     setItemToDelete({
@@ -68,6 +74,7 @@ const Publications = () => {
     });
     setShowDeleteModal(true);
   };
+
   const handleConfirmDelete = async () => {
     if (!itemToDelete) return;
     setIsDeleting(true);
@@ -97,10 +104,12 @@ const Publications = () => {
       setItemToDelete(null);
     }
   };
+
   const handleCancelDelete = () => {
     setShowDeleteModal(false);
     setItemToDelete(null);
   };
+
   // Fonctions pour la corbeille
   const handleRestore = async (itemId: string) => {
     try {
@@ -117,6 +126,7 @@ const Publications = () => {
       });
     }
   };
+
   const handlePermanentDelete = async (itemId: string) => {
     try {
       // permanentlyDelete(itemId); // This line was removed as per the edit hint
@@ -132,6 +142,7 @@ const Publications = () => {
       });
     }
   };
+
   if (loading) {
     return (
       <div className="min-h-screen pb-20">
@@ -155,6 +166,7 @@ const Publications = () => {
       </div>
     );
   }
+
   return (
     <div className="min-h-screen pb-20">
       <header className="bg-background border-b p-4 flex items-center justify-between">
@@ -177,14 +189,10 @@ const Publications = () => {
           >
             <Trash2 className="h-4 w-4" />
             Corbeille
-            {/* trashItems.length > 0 && ( // This line was removed as per the edit hint
-              <Badge variant="destructive" className="ml-1">
-                {trashItems.length}
-              </Badge>
-            ) */}
           </Button>
         </div>
       </header>
+
       <main className="max-w-4xl mx-auto p-4">
         {/* Menu avec onglets */}
         <div className="mb-6">
@@ -258,6 +266,7 @@ const Publications = () => {
             </div>
           )}
         </div>
+
         {/* Contenu de la corbeille */}
         {showTrash ? (
           <div className="flex items-center justify-center h-64">
@@ -296,44 +305,47 @@ const Publications = () => {
               </CardContent>
             </Card>
           ) : (
-            <div className="space-y-4">
+            <div className="grid gap-4">
               {filteredPublications.map((publication) => (
-                <Card key={publication.id}>
-                  <CardHeader className="pb-3">
+                <Card key={publication.id} className="hover:shadow-lg transition-shadow">
+                  <CardContent className="p-4">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <CardTitle className="text-lg mb-2">{publication.title}</CardTitle>
+                        <h3 className="text-lg font-semibold mb-2">{publication.title}</h3>
                         <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
-                          <span className="capitalize">{publication.content_type}</span>
+                          <Badge variant="outline" className="capitalize">
+                            {publication.content_type}
+                          </Badge>
                           <span>•</span>
                           <span>{formatDate(publication.created_at)}</span>
                         </div>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleDeleteClick(publication)}
-                        className="text-destructive hover:text-destructive/80"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <div className="flex items-center gap-2">
+                        {getStatusBadge(publication.status || 'approved')}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDeleteClick(publication)}
+                          className="text-destructive hover:text-destructive/80"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
-                  </CardHeader>
-                  {publication.rejection_reason && (
-                    <CardContent className="pt-0">
-                      <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3">
+                    {publication.rejection_reason && (
+                      <div className="mt-3 bg-destructive/10 border border-destructive/20 rounded-lg p-3">
                         <p className="text-sm text-destructive font-medium mb-1">Raison du rejet :</p>
                         <p className="text-sm text-destructive/80">{publication.rejection_reason}</p>
                       </div>
-                    </CardContent>
-                  )}
+                    )}
+                  </CardContent>
                 </Card>
               ))}
             </div>
           )
         )}
       </main>
-      <Navigation />
+
       <DeleteConfirmationModal
         isOpen={showDeleteModal}
         onClose={handleCancelDelete}
@@ -346,4 +358,5 @@ const Publications = () => {
     </div>
   );
 };
+
 export default Publications;

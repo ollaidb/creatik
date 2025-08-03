@@ -825,7 +825,6 @@ const Publish = () => {
         </form>
         </div>
       </main>
-      <Navigation />
     </div>
   );
 };
