@@ -38,21 +38,16 @@ export const usePublications = () => {
       console.log('=== DÉBUT CHARGEMENT PUBLICATIONS ===');
       console.log('User ID:', user.id);
       
-      // Récupérer les publications de l'utilisateur depuis user_publications
-      console.log('Récupération des publications utilisateur...');
-      
-      // Filtrer par date récente pour exclure les anciennes publications ajoutées manuellement
-      // On prend seulement les publications des 30 derniers jours
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      // Récupérer UNIQUEMENT les publications de l'utilisateur connecté
+      console.log('Récupération des publications de l\'utilisateur connecté...');
       
       const { data: userPublications, error: publicationsError } = await supabase
         .from('user_publications')
         .select('*')
-        .gte('created_at', thirtyDaysAgo.toISOString())
+        .eq('user_id', user.id) // FILTRE PAR UTILISATEUR CONNECTÉ
         .order('created_at', { ascending: false });
 
-      console.log('Publications utilisateur récupérées:', userPublications);
+      console.log('Publications de l\'utilisateur récupérées:', userPublications);
       console.log('Erreur publications:', publicationsError);
 
       if (publicationsError) {
@@ -76,7 +71,7 @@ export const usePublications = () => {
         }));
         
         console.log('=== FIN CHARGEMENT PUBLICATIONS ===');
-        console.log('Total publications:', formattedPublications.length);
+        console.log('Total publications de l\'utilisateur:', formattedPublications.length);
         console.log('Publications formatées:', formattedPublications);
         
         setPublications(formattedPublications);
@@ -96,11 +91,12 @@ export const usePublications = () => {
     if (!user) return { error: 'Utilisateur non connecté' };
     
     try {
-      // Supprimer de la table user_publications
+      // Supprimer de la table user_publications (vérifier que c'est bien la publication de l'utilisateur)
       const { error: deleteError } = await supabase
         .from('user_publications')
         .delete()
-        .eq('id', publicationId);
+        .eq('id', publicationId)
+        .eq('user_id', user.id); // S'assurer que l'utilisateur ne peut supprimer que ses propres publications
 
       if (deleteError) {
         throw new Error(`Erreur lors de la suppression: ${deleteError.message}`);
