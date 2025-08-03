@@ -271,6 +271,7 @@ const Hooks = () => {
           )}
         </div>
       </div>
+      <Navigation />
     </div>
   );
 };

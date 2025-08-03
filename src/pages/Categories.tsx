@@ -399,6 +399,7 @@ const Categories = () => {
           </div>
         )}
       </div>
+      <Navigation />
     </div>
   );
 };

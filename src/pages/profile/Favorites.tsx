@@ -260,8 +260,8 @@ const Favorites = () => {
 
       <main className="max-w-7xl mx-auto p-4">
         {/* Menu d'onglets favoris adapté pour mobile */}
-        <div className="mb-6">
-          <div className="overflow-x-auto">
+        <div className="mb-3">
+          <div className="overflow-x-auto scrollbar-hide">
             <div className="flex gap-2 pb-2 min-w-max">
               {FAVORITE_TABS.map(tab => {
                 const isActive = selectedTab === tab.key;
@@ -286,10 +286,10 @@ const Favorites = () => {
                 
                 return (
                   <motion.button
-                key={tab.key}
-                onClick={() => setSelectedTab(tab.key)}
+                    key={tab.key}
+                    onClick={() => setSelectedTab(tab.key)}
                     className={`
-                      px-3 py-2 rounded-lg transition-all duration-300 min-w-[60px] text-center
+                      px-3 py-2 rounded-lg transition-all duration-300 min-w-[70px] text-center flex items-center justify-center gap-2
                       ${isActive 
                         ? 'bg-gradient-to-r ' + getTabColor(tab.key) + ' text-white shadow-lg scale-105' 
                         : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
@@ -297,17 +297,31 @@ const Favorites = () => {
                     `}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
+                    animate={isActive ? {
+                      scale: [1, 1.1, 1.05],
+                      boxShadow: [
+                        "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+                        "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
+                        "0 4px 6px -1px rgba(0, 0, 0, 0.1)"
+                      ]
+                    } : {}}
+                    transition={isActive ? {
+                      duration: 0.6,
+                      ease: "easeInOut"
+                    } : {
+                      duration: 0.2
+                    }}
                   >
                     <span className={`
                       text-xs font-medium leading-tight
                       ${isActive ? 'text-white' : 'text-gray-700 dark:text-gray-300'}
                     `}>
-                {tab.label}
+                      {tab.label}
                     </span>
                   </motion.button>
                 );
               })}
-          </div>
+            </div>
           </div>
         </div>
 

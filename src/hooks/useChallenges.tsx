@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { useToast } from './use-toast';
 
@@ -30,7 +31,7 @@ export const useChallenges = () => {
   const [error, setError] = useState<string | null>(null);
 
   // Charger les défis depuis localStorage (préparé pour migration Supabase)
-  const loadChallenges = async () => {
+  const loadChallenges = useCallback(async () => {
     if (!user) return;
 
     try {
@@ -68,16 +69,16 @@ export const useChallenges = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
   // Sauvegarder les changements
-  const saveChanges = () => {
+  const saveChanges = useCallback(() => {
     if (!user) return;
     localStorage.setItem(`user_challenges_${user.id}`, JSON.stringify(userChallenges));
     if (stats) {
       localStorage.setItem(`challenge_stats_${user.id}`, JSON.stringify(stats));
     }
-  };
+  }, [user, userChallenges, stats]);
 
   // Ajouter un défi
   const addChallenge = async (title: string) => {
@@ -244,7 +245,7 @@ export const useChallenges = () => {
   };
 
   // Mettre à jour les statistiques
-  const updateStats = async () => {
+  const updateStats = useCallback(async () => {
     if (!user) return;
 
     try {
@@ -265,7 +266,7 @@ export const useChallenges = () => {
     } catch (err) {
       console.error('Erreur lors de la mise à jour des stats:', err);
     }
-  };
+  }, [user, userChallenges, stats, saveChanges]);
 
   // Remettre un défi accompli en défis
   const restoreChallenge = async (id: string) => {
@@ -324,14 +325,14 @@ export const useChallenges = () => {
   // Charger les données au montage et quand l'utilisateur change
   useEffect(() => {
     loadChallenges();
-  }, [user]);
+  }, [user, loadChallenges]);
 
   // Mettre à jour les statistiques automatiquement quand userChallenges change
   useEffect(() => {
     if (userChallenges.length > 0) {
       updateStats();
     }
-  }, [userChallenges]);
+  }, [userChallenges, updateStats]);
 
   // Filtrer les défis par statut
   const challenges = userChallenges.filter(c => c.status === 'pending');

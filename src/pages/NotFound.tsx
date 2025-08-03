@@ -1,6 +1,8 @@
 import { useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import Navigation from "@/components/Navigation";
+
 const NotFound = () => {
   const location = useLocation();
   useEffect(() => {
@@ -18,6 +20,7 @@ const NotFound = () => {
           <a href="/">Retour à l'accueil</a>
         </Button>
       </div>
+      <Navigation />
     </div>
   );
 };

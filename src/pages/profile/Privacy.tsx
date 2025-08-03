@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { ArrowLeft } from 'lucide-react';
+import Navigation from '@/components/Navigation';
 const Privacy = () => {
   const navigate = useNavigate();
   const [dataSharing, setDataSharing] = React.useState(false);
@@ -93,6 +94,7 @@ const Privacy = () => {
           </Card>
         </section>
       </main>
+      <Navigation />
     </div>
   );
 };

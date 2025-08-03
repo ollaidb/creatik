@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 
@@ -24,7 +24,7 @@ export const usePublications = () => {
   const [error, setError] = useState<string | null>(null);
 
   // Charger les publications de l'utilisateur depuis la table user_publications
-  const loadPublications = async () => {
+  const loadPublications = useCallback(async () => {
     if (!user) {
       setPublications([]);
       setLoading(false);
@@ -89,7 +89,7 @@ export const usePublications = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
   // Supprimer une publication
   const deletePublication = async (publicationId: string) => {
@@ -117,7 +117,7 @@ export const usePublications = () => {
 
   useEffect(() => {
     loadPublications();
-  }, [user, loadPublications]);
+  }, [loadPublications]);
 
   return {
     publications,

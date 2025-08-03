@@ -557,6 +557,7 @@ const Titles = () => {
           )}
         </div>
       </div>
+      <Navigation />
     </div>
   );
 };

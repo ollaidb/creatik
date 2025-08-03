@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import IntelligentSearchBar from './IntelligentSearchBar';
 import { Button } from '@/components/ui/button';
 interface StickyHeaderProps {
+  title?: string;
   onSearch?: (query: string) => void;
 }
 const StickyHeader: React.FC<StickyHeaderProps> = ({ onSearch }) => {

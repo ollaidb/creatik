@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Calendar, Clock, TrendingUp, CalendarDays, Gift, Star, Flag } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import type { Event } from '@/hooks/useTodayEvents';
+import Navigation from '@/components/Navigation';
 
 const WhatToPostToday: React.FC = () => {
   const { events, loading, error, fetchTodayEvents, getHolidays, getBirthdays, getAnniversaries } = useTodayEvents();
@@ -261,6 +262,7 @@ const WhatToPostToday: React.FC = () => {
           </div>
         )}
       </div>
+      <Navigation />
     </div>
   );
 };

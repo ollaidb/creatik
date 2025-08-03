@@ -262,6 +262,7 @@ const Subcategories = () => {
           </div>
         )}
       </div>
+      <Navigation />
     </div>
   );
 };

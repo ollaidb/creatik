@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Clock, Trash2, Eye } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import Navigation from '@/components/Navigation';
 
 const History: React.FC = () => {
   const { visits, loading, clearHistory } = useVisitHistory();
@@ -158,6 +159,7 @@ const History: React.FC = () => {
           </div>
         )}
       </div>
+      <Navigation />
     </div>
   );
 };

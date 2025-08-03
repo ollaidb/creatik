@@ -49,54 +49,54 @@ const queryClient = new QueryClient({
 const AppContent = () => {
   return (
     <CacheManager>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <VisitTracker>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              {/* Auth Callback Route */}
-              <Route path="/auth/callback" element={<AuthCallback />} />
-              {/* Categories Routes */}
-              <Route path="/categories" element={<Categories />} />
-              <Route path="/category/:categoryId/subcategories" element={<Subcategories />} />
-              <Route path="/category/:categoryId/subcategory/:subcategoryId/subcategories-level2" element={<SubcategoriesLevel2 />} />
-              <Route path="/category/:categoryId/subcategory/:subcategoryId/subcategory-level2/:subcategoryLevel2Id" element={<Titles />} />
-              <Route path="/category/:categoryId/subcategory/:subcategoryId" element={<Titles />} />
-              <Route path="/category/:categoryId/subcategory/:subcategoryId/hooks" element={<Hooks />} />
-              {/* Challenges Routes */}
-              <Route path="/challenges" element={<PublicChallenges />} />
-              {/* Trending Ideas Route */}
-              <Route path="/trending" element={<TrendingIdeas />} />
-              {/* What to Post Today Route */}
-              <Route path="/what-to-post" element={<WhatToPostToday />} />
-              {/* Accounts and Sources Routes */}
-              <Route path="/accounts" element={<Accounts />} />
-              <Route path="/sources" element={<Sources />} />
-              {/* Profile Routes */}
-              <Route path="/profile" element={<ProfilePage />} />
-              <Route path="/profile/favorites" element={<Favorites />} />
-              <Route path="/profile/history" element={<History />} />
-              <Route path="/profile/preferences" element={<Preferences />} />
-              <Route path="/profile/legal" element={<Legal />} />
-              <Route path="/profile/contact" element={<Contact />} />
-              <Route path="/profile/publications" element={<Publications />} />
-              <Route path="/profile/challenges" element={<Challenges />} />
+    <TooltipProvider>
+      <Toaster />
+      <Sonner />
+      <BrowserRouter>
+        <VisitTracker>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            {/* Auth Callback Route */}
+            <Route path="/auth/callback" element={<AuthCallback />} />
+            {/* Categories Routes */}
+            <Route path="/categories" element={<Categories />} />
+            <Route path="/category/:categoryId/subcategories" element={<Subcategories />} />
+            <Route path="/category/:categoryId/subcategory/:subcategoryId/subcategories-level2" element={<SubcategoriesLevel2 />} />
+            <Route path="/category/:categoryId/subcategory/:subcategoryId/subcategory-level2/:subcategoryLevel2Id" element={<Titles />} />
+            <Route path="/category/:categoryId/subcategory/:subcategoryId" element={<Titles />} />
+            <Route path="/category/:categoryId/subcategory/:subcategoryId/hooks" element={<Hooks />} />
+            {/* Challenges Routes */}
+            <Route path="/challenges" element={<PublicChallenges />} />
+            {/* Trending Ideas Route */}
+            <Route path="/trending" element={<TrendingIdeas />} />
+            {/* What to Post Today Route */}
+            <Route path="/what-to-post" element={<WhatToPostToday />} />
+            {/* Accounts and Sources Routes */}
+            <Route path="/accounts" element={<Accounts />} />
+            <Route path="/sources" element={<Sources />} />
+            {/* Profile Routes */}
+            <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/profile/favorites" element={<Favorites />} />
+            <Route path="/profile/history" element={<History />} />
+            <Route path="/profile/preferences" element={<Preferences />} />
+            <Route path="/profile/legal" element={<Legal />} />
+            <Route path="/profile/contact" element={<Contact />} />
+            <Route path="/profile/publications" element={<Publications />} />
+            <Route path="/profile/challenges" element={<Challenges />} />
               <Route path="/profile/settings" element={<Settings />} />
-              {/* Publish Route */}
-              <Route path="/publish" element={<Publish />} />
-              <Route path="/search" element={<SearchResults />} />
-              {/* Inspiration Card Routes */}
-              <Route path="/ideas/trending" element={<NotFound />} />
-              <Route path="/categories/explore" element={<Categories />} />
-              <Route path="/ideas/create" element={<NotFound />} />
-              {/* 404 Route */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </VisitTracker>
-        </BrowserRouter>
-      </TooltipProvider>
+            {/* Publish Route */}
+            <Route path="/publish" element={<Publish />} />
+            <Route path="/search" element={<SearchResults />} />
+            {/* Inspiration Card Routes */}
+            <Route path="/ideas/trending" element={<NotFound />} />
+            <Route path="/categories/explore" element={<Categories />} />
+            <Route path="/ideas/create" element={<NotFound />} />
+            {/* 404 Route */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </VisitTracker>
+      </BrowserRouter>
+    </TooltipProvider>
     </CacheManager>
   );
 };

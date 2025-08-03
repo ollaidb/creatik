@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RefreshCw, TrendingUp, Filter } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import Navigation from '@/components/Navigation';
 
 const TrendingIdeas: React.FC = () => {
   const { trends, loading, error, fetchTrends, filterByPlatform, filterByCategory, getTopTrends } = useSocialTrends();
@@ -165,6 +166,7 @@ const TrendingIdeas: React.FC = () => {
           </div>
         )}
       </div>
+      <Navigation />
     </div>
   );
 };

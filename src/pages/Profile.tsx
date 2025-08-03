@@ -298,6 +298,7 @@ const Profile = () => {
         isOpen={showAuthModal} 
         onClose={() => setShowAuthModal(false)} 
       />
+      <Navigation />
     </div>
   );
 };
