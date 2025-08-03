@@ -221,12 +221,13 @@ const Publish = () => {
         });
       } else if (formData.content_type === 'title') {
         console.log('Publication titre...');
+        const selectedNetworkName = socialNetworks?.find(n => n.id === selectedNetwork)?.name;
         const { error } = await supabase
           .from('content_titles')
           .insert({
             title: formData.title,
             subcategory_id: formData.subcategory_id,
-            platform: selectedNetwork,
+            platform: selectedNetworkName,
             type: 'title'
           });
         
@@ -309,12 +310,14 @@ const Publish = () => {
         });
       } else if (formData.content_type === 'hooks') {
         console.log('Publication hook...');
+        const selectedNetworkName = socialNetworks?.find(n => n.id === selectedNetwork)?.name;
         const { error } = await supabase
           .from('content_titles')
           .insert({
             title: formData.title,
-            platform: selectedNetwork,
-            type: 'hook'
+            platform: selectedNetworkName,
+            type: 'hook',
+            subcategory_id: formData.subcategory_id || null
           });
         
         if (error) {
@@ -342,9 +345,10 @@ const Publish = () => {
           platform: '',
           theme: ''
         });
+        setSelectedNetwork('');
 
-      // Rediriger vers la page de succès ou la page d'accueil
-      navigate('/profile');
+      // Rediriger vers la page d'accueil au lieu de /profile
+      navigate('/');
 
     } catch (error: unknown) {
       console.error('=== ERREUR DE PUBLICATION ===');
@@ -792,6 +796,8 @@ const Publish = () => {
                 type="submit" 
                 className="w-full" 
                 disabled={isSubmitting || 
+                         !formData.title ||
+                         !formData.content_type ||
                          !selectedNetwork ||
                          (formData.content_type === 'subcategory' && !formData.category_id) ||
                          ((formData.content_type === 'title' || formData.content_type === 'account') && (!formData.category_id || !formData.subcategory_id)) ||

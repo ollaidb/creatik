@@ -67,7 +67,6 @@ export const useSocialNetworks = () => {
       const { data, error } = await supabase
         .from('social_networks')
         .select('*')
-        .eq('is_active', true)
         .order('display_name');
       
       if (error) {
