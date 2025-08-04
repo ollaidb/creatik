@@ -33,6 +33,8 @@ const SubcategoryTabs: React.FC<SubcategoryTabsProps> = ({
         return ['titres', 'comptes', 'sources', 'hashtags', 'hooks'];
       case 'podcasts':
         return ['titres', 'sources', 'podcast', 'mots-cles'];
+      case 'twitch':
+        return ['titres', 'comptes', 'idees'];
       default:
         return ['titres', 'comptes', 'sources', 'hashtags'];
     }
@@ -58,13 +60,13 @@ const SubcategoryTabs: React.FC<SubcategoryTabsProps> = ({
   };
 
   return (
-    <div className={`flex gap-2 mb-6 justify-center overflow-x-auto scrollbar-hide ${className}`}>
+    <div className={`flex gap-1 mb-4 justify-center overflow-x-auto scrollbar-hide ${className}`}>
       {visibleTabs.map((tab) => (
         <Button
           key={tab}
           variant={activeTab === tab ? 'default' : 'outline'}
           size="sm"
-          className="rounded-full min-w-[70px] flex items-center justify-center gap-2"
+          className="rounded-full min-w-[60px] h-8 px-2 text-xs flex items-center justify-center"
           onClick={() => onTabChange(tab)}
         >
           {getTabLabel(tab)}
