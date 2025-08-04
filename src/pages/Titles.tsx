@@ -9,6 +9,11 @@ import { useContentTitles } from '@/hooks/useContentTitles';
 import { useContentTitlesLevel2 } from '@/hooks/useContentTitlesLevel2';
 import { useAccounts } from '@/hooks/useAccounts';
 import { useSources } from '@/hooks/useSources';
+import { useBlogs } from '@/hooks/useBlogs';
+import { useArticles } from '@/hooks/useArticles';
+import { useMotsCles } from '@/hooks/useMotsCles';
+import { useExemples } from '@/hooks/useExemples';
+import { useIdees } from '@/hooks/useIdees';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useFavorites } from '@/hooks/useFavorites';
@@ -16,6 +21,8 @@ import LocalSearchBar from '@/components/LocalSearchBar';
 import SubcategoryTabs from '@/components/SubcategoryTabs';
 import HashtagsSection from '@/components/HashtagsSection';
 import Navigation from '@/components/Navigation';
+
+type TabType = 'titres' | 'comptes' | 'sources' | 'hashtags' | 'hooks' | 'blog' | 'article' | 'mots-cles' | 'exemple' | 'idees';
 
 const Titles = () => {
   const { subcategoryId, categoryId, subcategoryLevel2Id } = useParams();
@@ -33,6 +40,7 @@ const Titles = () => {
   const { data: subcategoryLevel2, isLoading: subcategoryLevel2Loading } = useSubcategoryLevel2(subcategoryLevel2Id);
   
   const detectedNetwork = selectedNetwork;
+  const currentSubcategoryId = isLevel2 ? subcategoryLevel2Id! : subcategoryId!;
     
   // Récupérer TOUS les types de titres
   const { 
@@ -41,7 +49,7 @@ const Titles = () => {
     refetch: refreshGeneratedTitles 
   } = useGeneratedTitles({
     platform: detectedNetwork,
-    subcategoryId: isLevel2 ? subcategoryLevel2Id! : subcategoryId!,
+    subcategoryId: currentSubcategoryId,
     limit: 50
   });
 
@@ -63,6 +71,13 @@ const Titles = () => {
   const { data: accounts = [], isLoading: accountsLoading } = useAccounts(detectedNetwork);
   const { data: sources = [], isLoading: sourcesLoading } = useSources(detectedNetwork);
   
+  // Nouveaux hooks pour les nouveaux types de contenu
+  const { data: blogs = [], isLoading: blogsLoading } = useBlogs(currentSubcategoryId, detectedNetwork);
+  const { data: articles = [], isLoading: articlesLoading } = useArticles(currentSubcategoryId, detectedNetwork);
+  const { data: motsCles = [], isLoading: motsClesLoading } = useMotsCles(currentSubcategoryId, detectedNetwork);
+  const { data: exemples = [], isLoading: exemplesLoading } = useExemples(currentSubcategoryId, detectedNetwork);
+  const { data: idees = [], isLoading: ideesLoading } = useIdees(currentSubcategoryId, detectedNetwork);
+  
   // Utiliser les données appropriées selon le niveau
   const currentSubcategory = isLevel2 ? subcategoryLevel2 : subcategory;
   const isLoading = isLevel2 ? 
@@ -73,6 +88,11 @@ const Titles = () => {
   const { favorites: titleFavorites, toggleFavorite: toggleTitleFavorite, isFavorite: isTitleFavorite } = useFavorites('title');
   const { favorites: accountFavorites, toggleFavorite: toggleAccountFavorite, isFavorite: isAccountFavorite } = useFavorites('account');
   const { favorites: sourceFavorites, toggleFavorite: toggleSourceFavorite, isFavorite: isSourceFavorite } = useFavorites('source');
+  const { favorites: blogFavorites, toggleFavorite: toggleBlogFavorite, isFavorite: isBlogFavorite } = useFavorites('blog');
+  const { favorites: articleFavorites, toggleFavorite: toggleArticleFavorite, isFavorite: isArticleFavorite } = useFavorites('article');
+  const { favorites: motsClesFavorites, toggleFavorite: toggleMotsClesFavorite, isFavorite: isMotsClesFavorite } = useFavorites('mots-cles');
+  const { favorites: exempleFavorites, toggleFavorite: toggleExempleFavorite, isFavorite: isExempleFavorite } = useFavorites('exemple');
+  const { favorites: ideeFavorites, toggleFavorite: toggleIdeeFavorite, isFavorite: isIdeeFavorite } = useFavorites('idee');
   
   // Combiner tous les types de titres
   const allTitles = [
@@ -143,87 +163,25 @@ const Titles = () => {
 
   // Vérifier si les hooks sont disponibles pour ce réseau
   const isHooksAvailableForNetwork = (networkId: string) => {
-    return networkId === 'youtube';
-  };
-
-  // Nouvelle fonction pour déterminer les onglets disponibles selon le réseau
-  const getAvailableTabs = (networkId: string) => {
-    switch (networkId) {
-      case 'blog':
-        return [
-          { key: 'titres', label: 'Titres' },
-          { key: 'sources', label: 'Sources' },
-          { key: 'blog', label: 'Blog' },
-          { key: 'mots-cles', label: 'Mots-clés' }
-        ];
-      case 'article':
-        return [
-          { key: 'titres', label: 'Titres' },
-          { key: 'sources', label: 'Sources' },
-          { key: 'article', label: 'Article' },
-          { key: 'mots-cles', label: 'Mots-clés' }
-        ];
-      case 'twitter':
-        return [
-          { key: 'exemple', label: 'Exemple' },
-          { key: 'comptes', label: 'Comptes' },
-          { key: 'sources', label: 'Sources' },
-          { key: 'hashtags', label: 'Hashtags' }
-        ];
-      case 'instagram':
-        return [
-          { key: 'titres', label: 'Titres' },
-          { key: 'comptes', label: 'Comptes' },
-          { key: 'sources', label: 'Sources' },
-          { key: 'idees', label: 'Idées' },
-          { key: 'hashtags', label: 'Hashtags' }
-        ];
-      case 'youtube':
-        return [
-          { key: 'titres', label: 'Titres' },
-          { key: 'comptes', label: 'Comptes' },
-          { key: 'sources', label: 'Sources' },
-          { key: 'hashtags', label: 'Hashtags' },
-          { key: 'hooks', label: 'Hooks' }
-        ];
-      default:
-        return [
-          { key: 'titres', label: 'Titres' },
-          { key: 'comptes', label: 'Comptes' },
-          { key: 'sources', label: 'Sources' },
-          { key: 'hashtags', label: 'Hashtags' },
-          { key: 'hooks', label: 'Hooks' }
-        ];
-    }
-  };
-
-  // Fonction pour rediriger vers la page appropriée selon l'onglet
-  const handleTabClick = (tabKey: string) => {
-    const baseUrl = isLevel2 
-      ? `/category/${categoryId}/subcategory/${subcategoryId}/subcategory-level2/${subcategoryLevel2Id}`
-      : `/category/${categoryId}/subcategory/${subcategoryId}`;
-
-    switch (tabKey) {
-      case 'blog':
-        navigate(`/blog?network=${selectedNetwork}`);
-        break;
-      case 'article':
-        navigate(`/article?network=${selectedNetwork}`);
-        break;
-      case 'mots-cles':
-        navigate(`/mots-cles?network=${selectedNetwork}`);
-        break;
-      case 'exemple':
-        navigate(`/exemple?network=${selectedNetwork}`);
-        break;
-      case 'idees':
-        navigate(`/idees?network=${selectedNetwork}`);
-        break;
-      default:
-        // Pour les onglets existants (titres, comptes, sources, hashtags, hooks)
-        setActiveTab(tabKey as 'titres' | 'comptes' | 'sources' | 'hashtags' | 'hooks');
-        break;
-    }
+    // Les hooks ne sont disponibles que pour YouTube
+    const isAvailable = networkId === 'youtube' || 
+                       networkId === 'YouTube' ||
+                       networkId === '550e8400-e29b-41d4-a716-446655440003' || // UUID de YouTube
+                       searchParams.toString().includes('youtube') ||
+                       searchParams.toString().includes('YouTube') ||
+                       window.location.href.includes('youtube') ||
+                       window.location.href.includes('YouTube');
+    
+    console.log('🔍 Debug Hooks Availability:', {
+      networkId,
+      isAvailable,
+      selectedNetwork,
+      detectedNetwork,
+      urlParams: searchParams.toString(),
+      currentUrl: window.location.href
+    });
+    
+    return isAvailable;
   };
 
   // Logs de débogage
@@ -239,6 +197,11 @@ const Titles = () => {
     filteredAccounts: filteredAccounts.length,
     sources: sources.length,
     filteredSources: filteredSources.length,
+    blogs: blogs.length,
+    articles: articles.length,
+    motsCles: motsCles.length,
+    exemples: exemples.length,
+    idees: idees.length,
     showHooksValue: isHooksAvailableForNetwork(detectedNetwork),
     urlParams: searchParams.toString(),
     currentUrl: window.location.href
@@ -294,6 +257,81 @@ const Titles = () => {
       await toggleSourceFavorite(sourceId);
       toast({
         title: isSourceFavorite(sourceId) ? "Retiré" : "Ajouté"
+      });
+    } catch (error) {
+      console.error('Erreur lors du like:', error);
+      toast({
+        title: "Erreur",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleLikeBlog = async (blogId: string) => {
+    try {
+      await toggleBlogFavorite(blogId);
+      toast({
+        title: isBlogFavorite(blogId) ? "Retiré" : "Ajouté"
+      });
+    } catch (error) {
+      console.error('Erreur lors du like:', error);
+      toast({
+        title: "Erreur",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleLikeArticle = async (articleId: string) => {
+    try {
+      await toggleArticleFavorite(articleId);
+      toast({
+        title: isArticleFavorite(articleId) ? "Retiré" : "Ajouté"
+      });
+    } catch (error) {
+      console.error('Erreur lors du like:', error);
+      toast({
+        title: "Erreur",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleLikeMotsCles = async (motsClesId: string) => {
+    try {
+      await toggleMotsClesFavorite(motsClesId);
+      toast({
+        title: isMotsClesFavorite(motsClesId) ? "Retiré" : "Ajouté"
+      });
+    } catch (error) {
+      console.error('Erreur lors du like:', error);
+      toast({
+        title: "Erreur",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleLikeExemple = async (exempleId: string) => {
+    try {
+      await toggleExempleFavorite(exempleId);
+      toast({
+        title: isExempleFavorite(exempleId) ? "Retiré" : "Ajouté"
+      });
+    } catch (error) {
+      console.error('Erreur lors du like:', error);
+      toast({
+        title: "Erreur",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleLikeIdee = async (ideeId: string) => {
+    try {
+      await toggleIdeeFavorite(ideeId);
+      toast({
+        title: isIdeeFavorite(ideeId) ? "Retiré" : "Ajouté"
       });
     } catch (error) {
       console.error('Erreur lors du like:', error);
@@ -383,9 +421,9 @@ const Titles = () => {
     }
   };
 
-  const [activeTab, setActiveTab] = useState<'titres' | 'comptes' | 'sources' | 'hashtags' | 'hooks'>('titres');
+  const [activeTab, setActiveTab] = useState<TabType>('titres');
 
-  const handleTabChange = (newTab: 'titres' | 'comptes' | 'sources' | 'hashtags' | 'hooks') => {
+  const handleTabChange = (newTab: TabType) => {
     setActiveTab(newTab);
   };
 
@@ -510,51 +548,12 @@ const Titles = () => {
         </div>
 
         {/* Onglets */}
-        <div className="mb-6">
-          <div className="overflow-x-auto scrollbar-hide">
-            <div className="flex gap-2 pb-2 min-w-max">
-              {getAvailableTabs(detectedNetwork).map(tab => {
-                const isActive = activeTab === tab.key;
-                return (
-                  <motion.button
-                    key={tab.key}
-                    onClick={() => handleTabClick(tab.key)}
-                    className={`
-                      px-3 py-2 rounded-lg transition-all duration-300 min-w-[70px] text-center flex items-center justify-center gap-2
-                      ${isActive 
-                        ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-lg scale-105' 
-                        : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
-                      }
-                    `}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    animate={isActive ? {
-                      scale: [1, 1.1, 1.05],
-                      boxShadow: [
-                        "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
-                        "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
-                        "0 4px 6px -1px rgba(0, 0, 0, 0.1)"
-                      ]
-                    } : {}}
-                    transition={isActive ? {
-                      duration: 0.6,
-                      ease: "easeInOut"
-                    } : {
-                      duration: 0.2
-                    }}
-                  >
-                    <span className={`
-                      text-xs font-medium leading-tight
-                      ${isActive ? 'text-white' : 'text-gray-700 dark:text-gray-300'}
-                    `}>
-                      {tab.label}
-                    </span>
-                  </motion.button>
-                );
-              })}
-            </div>
-          </div>
-        </div>
+        <SubcategoryTabs 
+          activeTab={activeTab}
+          onTabChange={handleTabChange}
+          showHooks={isHooksAvailableForNetwork(detectedNetwork)}
+          selectedNetwork={selectedNetwork}
+        />
 
         {/* Contenu des onglets */}
         <div className="mt-6">
@@ -749,6 +748,291 @@ const Titles = () => {
                   </div>
                 </motion.div>
               ))}
+            </motion.div>
+          )}
+
+          {activeTab === 'blog' && (
+            <motion.div 
+              className="space-y-4"
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+            >
+              {blogs.length === 0 ? (
+                <div className="text-center py-12">
+                  <p className="text-gray-500 dark:text-gray-400 mb-4">
+                    Aucun blog disponible pour {getNetworkDisplayName(detectedNetwork)}
+                  </p>
+                </div>
+              ) : (
+                blogs.map((blog) => (
+                  <motion.div key={blog.id} variants={itemVariants}>
+                    <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all duration-200">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-gray-900 dark:text-white font-medium text-base leading-relaxed">
+                            {blog.title}
+                          </h3>
+                          {blog.content && (
+                            <p className="text-gray-600 dark:text-gray-400 text-sm mt-2">
+                              {blog.content}
+                            </p>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 ml-4">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleLikeBlog(blog.id)}
+                            className={`p-2 h-8 w-8 transition-all duration-200 ${
+                              isBlogFavorite(blog.id) 
+                                ? 'text-red-500 hover:text-red-600' 
+                                : 'text-gray-400 hover:text-red-400'
+                            }`}
+                          >
+                            <Heart 
+                              size={16} 
+                              className={`transition-all duration-200 ${
+                                isBlogFavorite(blog.id) 
+                                  ? 'fill-red-500 text-red-500' 
+                                  : 'fill-transparent text-current'
+                              }`}
+                            />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))
+              )}
+            </motion.div>
+          )}
+
+          {activeTab === 'article' && (
+            <motion.div 
+              className="space-y-4"
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+            >
+              {articles.length === 0 ? (
+                <div className="text-center py-12">
+                  <p className="text-gray-500 dark:text-gray-400 mb-4">
+                    Aucun article disponible pour {getNetworkDisplayName(detectedNetwork)}
+                  </p>
+                </div>
+              ) : (
+                articles.map((article) => (
+                  <motion.div key={article.id} variants={itemVariants}>
+                    <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all duration-200">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-gray-900 dark:text-white font-medium text-base leading-relaxed">
+                            {article.title}
+                          </h3>
+                          {article.content && (
+                            <p className="text-gray-600 dark:text-gray-400 text-sm mt-2">
+                              {article.content}
+                            </p>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 ml-4">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleLikeArticle(article.id)}
+                            className={`p-2 h-8 w-8 transition-all duration-200 ${
+                              isArticleFavorite(article.id) 
+                                ? 'text-red-500 hover:text-red-600' 
+                                : 'text-gray-400 hover:text-red-400'
+                            }`}
+                          >
+                            <Heart 
+                              size={16} 
+                              className={`transition-all duration-200 ${
+                                isArticleFavorite(article.id) 
+                                  ? 'fill-red-500 text-red-500' 
+                                  : 'fill-transparent text-current'
+                              }`}
+                            />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))
+              )}
+            </motion.div>
+          )}
+
+          {activeTab === 'mots-cles' && (
+            <motion.div 
+              className="space-y-4"
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+            >
+              {motsCles.length === 0 ? (
+                <div className="text-center py-12">
+                  <p className="text-gray-500 dark:text-gray-400 mb-4">
+                    Aucun mot-clé disponible pour {getNetworkDisplayName(detectedNetwork)}
+                  </p>
+                </div>
+              ) : (
+                motsCles.map((motsCle) => (
+                  <motion.div key={motsCle.id} variants={itemVariants}>
+                    <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all duration-200">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-gray-900 dark:text-white font-medium text-base leading-relaxed">
+                            {motsCle.title}
+                          </h3>
+                          {motsCle.content && (
+                            <p className="text-gray-600 dark:text-gray-400 text-sm mt-2">
+                              {motsCle.content}
+                            </p>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 ml-4">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleLikeMotsCles(motsCle.id)}
+                            className={`p-2 h-8 w-8 transition-all duration-200 ${
+                              isMotsClesFavorite(motsCle.id) 
+                                ? 'text-red-500 hover:text-red-600' 
+                                : 'text-gray-400 hover:text-red-400'
+                            }`}
+                          >
+                            <Heart 
+                              size={16} 
+                              className={`transition-all duration-200 ${
+                                isMotsClesFavorite(motsCle.id) 
+                                  ? 'fill-red-500 text-red-500' 
+                                  : 'fill-transparent text-current'
+                              }`}
+                            />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))
+              )}
+            </motion.div>
+          )}
+
+          {activeTab === 'exemple' && (
+            <motion.div 
+              className="space-y-4"
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+            >
+              {exemples.length === 0 ? (
+                <div className="text-center py-12">
+                  <p className="text-gray-500 dark:text-gray-400 mb-4">
+                    Aucun exemple disponible pour {getNetworkDisplayName(detectedNetwork)}
+                  </p>
+                </div>
+              ) : (
+                exemples.map((exemple) => (
+                  <motion.div key={exemple.id} variants={itemVariants}>
+                    <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all duration-200">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-gray-900 dark:text-white font-medium text-base leading-relaxed">
+                            {exemple.title}
+                          </h3>
+                          {exemple.content && (
+                            <p className="text-gray-600 dark:text-gray-400 text-sm mt-2">
+                              {exemple.content}
+                            </p>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 ml-4">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleLikeExemple(exemple.id)}
+                            className={`p-2 h-8 w-8 transition-all duration-200 ${
+                              isExempleFavorite(exemple.id) 
+                                ? 'text-red-500 hover:text-red-600' 
+                                : 'text-gray-400 hover:text-red-400'
+                            }`}
+                          >
+                            <Heart 
+                              size={16} 
+                              className={`transition-all duration-200 ${
+                                isExempleFavorite(exemple.id) 
+                                  ? 'fill-red-500 text-red-500' 
+                                  : 'fill-transparent text-current'
+                              }`}
+                            />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))
+              )}
+            </motion.div>
+          )}
+
+          {activeTab === 'idees' && (
+            <motion.div 
+              className="space-y-4"
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+            >
+              {idees.length === 0 ? (
+                <div className="text-center py-12">
+                  <p className="text-gray-500 dark:text-gray-400 mb-4">
+                    Aucune idée disponible pour {getNetworkDisplayName(detectedNetwork)}
+                  </p>
+                </div>
+              ) : (
+                idees.map((idee) => (
+                  <motion.div key={idee.id} variants={itemVariants}>
+                    <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all duration-200">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-gray-900 dark:text-white font-medium text-base leading-relaxed">
+                            {idee.title}
+                          </h3>
+                          {idee.content && (
+                            <p className="text-gray-600 dark:text-gray-400 text-sm mt-2">
+                              {idee.content}
+                            </p>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 ml-4">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleLikeIdee(idee.id)}
+                            className={`p-2 h-8 w-8 transition-all duration-200 ${
+                              isIdeeFavorite(idee.id) 
+                                ? 'text-red-500 hover:text-red-600' 
+                                : 'text-gray-400 hover:text-red-400'
+                            }`}
+                          >
+                            <Heart 
+                              size={16} 
+                              className={`transition-all duration-200 ${
+                                isIdeeFavorite(idee.id) 
+                                  ? 'fill-red-500 text-red-500' 
+                                  : 'fill-transparent text-current'
+                              }`}
+                            />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))
+              )}
             </motion.div>
           )}
 

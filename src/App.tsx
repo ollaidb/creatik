@@ -31,11 +31,6 @@ import Sources from "./pages/Sources";
 import TrendingIdeas from "./pages/TrendingIdeas";
 import WhatToPostToday from "./pages/WhatToPostToday";
 import AuthCallback from "./pages/AuthCallback";
-import Blog from "./pages/Blog";
-import Article from "./pages/Article";
-import MotsCles from "./pages/MotsCles";
-import Exemple from "./pages/Exemple";
-import Idees from "./pages/Idees";
 
 // Configuration optimisée du QueryClient pour de meilleures performances
 const queryClient = new QueryClient({
@@ -70,12 +65,6 @@ const AppContent = () => {
             <Route path="/category/:categoryId/subcategory/:subcategoryId/subcategory-level2/:subcategoryLevel2Id" element={<Titles />} />
             <Route path="/category/:categoryId/subcategory/:subcategoryId" element={<Titles />} />
             <Route path="/category/:categoryId/subcategory/:subcategoryId/hooks" element={<Hooks />} />
-            {/* Nouvelles pages spécialisées par réseau social */}
-            <Route path="/blog" element={<Blog />} />
-            <Route path="/article" element={<Article />} />
-            <Route path="/mots-cles" element={<MotsCles />} />
-            <Route path="/exemple" element={<Exemple />} />
-            <Route path="/idees" element={<Idees />} />
             {/* Challenges Routes */}
             <Route path="/challenges" element={<PublicChallenges />} />
             {/* Trending Ideas Route */}
