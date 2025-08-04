@@ -34,7 +34,7 @@ const Publish = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
-    content_type: 'title' as 'category' | 'subcategory' | 'title' | 'challenge' | 'source' | 'account' | 'hooks' | 'blog' | 'article' | 'mots-cles' | 'exemple' | 'idee' | 'podcast',
+    content_type: 'title' as 'category' | 'subcategory' | 'title' | 'challenge' | 'source' | 'account' | 'hooks',
     category_id: '',
     subcategory_id: '',
     description: '', // Added for challenges
@@ -328,138 +328,6 @@ const Publish = () => {
         toast({
           title: "Hook publié"
         });
-      } else if (formData.content_type === 'blog') {
-        console.log('Publication blog...');
-        const { error } = await supabase
-          .from('content_blogs')
-          .insert({
-            title: formData.title,
-            content: formData.description,
-            author_id: user.id,
-            category_id: formData.category_id,
-            subcategory_id: formData.subcategory_id,
-            platform: selectedNetwork || 'blog'
-          });
-        
-        if (error) {
-          console.error('Erreur blog:', error);
-          throw error;
-        }
-        
-        console.log('Blog publié avec succès');
-        toast({
-          title: "Blog publié"
-        });
-      } else if (formData.content_type === 'article') {
-        console.log('Publication article...');
-        const { error } = await supabase
-          .from('content_articles')
-          .insert({
-            title: formData.title,
-            content: formData.description,
-            author_id: user.id,
-            category_id: formData.category_id,
-            subcategory_id: formData.subcategory_id,
-            platform: selectedNetwork || 'article'
-          });
-        
-        if (error) {
-          console.error('Erreur article:', error);
-          throw error;
-        }
-        
-        console.log('Article publié avec succès');
-        toast({
-          title: "Article publié"
-        });
-      } else if (formData.content_type === 'mots-cles') {
-        console.log('Publication mots-clés...');
-        const { error } = await supabase
-          .from('content_mots_cles')
-          .insert({
-            title: formData.title,
-            content: formData.description,
-            author_id: user.id,
-            category_id: formData.category_id,
-            subcategory_id: formData.subcategory_id,
-            platform: selectedNetwork || 'blog'
-          });
-        
-        if (error) {
-          console.error('Erreur mots-clés:', error);
-          throw error;
-        }
-        
-        console.log('Mots-clés publiés avec succès');
-        toast({
-          title: "Mots-clés publiés"
-        });
-      } else if (formData.content_type === 'exemple') {
-        console.log('Publication exemple...');
-        const { error } = await supabase
-          .from('content_exemples')
-          .insert({
-            title: formData.title,
-            content: formData.description,
-            author_id: user.id,
-            category_id: formData.category_id,
-            subcategory_id: formData.subcategory_id,
-            platform: selectedNetwork || 'twitter'
-          });
-        
-        if (error) {
-          console.error('Erreur exemple:', error);
-          throw error;
-        }
-        
-        console.log('Exemple publié avec succès');
-        toast({
-          title: "Exemple publié"
-        });
-      } else if (formData.content_type === 'idee') {
-        console.log('Publication idée...');
-        const { error } = await supabase
-          .from('content_idees')
-          .insert({
-            title: formData.title,
-            content: formData.description,
-            author_id: user.id,
-            category_id: formData.category_id,
-            subcategory_id: formData.subcategory_id,
-            platform: selectedNetwork || 'instagram'
-          });
-        
-        if (error) {
-          console.error('Erreur idée:', error);
-          throw error;
-        }
-        
-        console.log('Idée publiée avec succès');
-        toast({
-          title: "Idée publiée"
-        });
-      } else if (formData.content_type === 'podcast') {
-        console.log('Publication podcast...');
-        const { error } = await supabase
-          .from('content_podcasts')
-          .insert({
-            title: formData.title,
-            content: formData.description,
-            author_id: user.id,
-            category_id: formData.category_id,
-            subcategory_id: formData.subcategory_id,
-            platform: selectedNetwork || 'podcast'
-          });
-        
-        if (error) {
-          console.error('Erreur podcast:', error);
-          throw error;
-        }
-        
-        console.log('Podcast publié avec succès');
-        toast({
-          title: "Podcast publié"
-        });
       }
 
       console.log('=== PUBLICATION RÉUSSIE ===');
@@ -710,7 +578,7 @@ const Publish = () => {
                     onChange={(e) => {
                       setFormData(prev => ({
                         ...prev,
-                          content_type: e.target.value as 'category' | 'subcategory' | 'title' | 'challenge' | 'source' | 'account' | 'hooks' | 'blog' | 'article' | 'mots-cles' | 'exemple' | 'idee' | 'podcast',
+                          content_type: e.target.value as 'category' | 'subcategory' | 'title' | 'challenge' | 'source' | 'account' | 'hooks',
                           category_id: '',
                           subcategory_id: '',
                           description: '',
@@ -731,12 +599,6 @@ const Publish = () => {
                     <option value="source">Source</option>
                     <option value="account">Compte</option>
                     <option value="hooks">Hooks</option>
-                    <option value="blog">Blog</option>
-                    <option value="article">Article</option>
-                    <option value="mots-cles">Mots-clés</option>
-                    <option value="exemple">Exemple</option>
-                    <option value="idee">Idée</option>
-                    <option value="podcast">Podcast</option>
                   </select>
                 </div>
               </div>

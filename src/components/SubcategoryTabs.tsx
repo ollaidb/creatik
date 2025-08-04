@@ -25,14 +25,14 @@ const SubcategoryTabs: React.FC<SubcategoryTabsProps> = ({
         return ['titres', 'sources', 'blog', 'mots-cles'];
       case 'article':
         return ['titres', 'sources', 'article', 'mots-cles'];
-      case 'podcast':
-        return ['titres', 'sources', 'podcast', 'mots-cles'];
       case 'twitter':
         return ['exemple', 'comptes', 'sources', 'hashtags'];
       case 'instagram':
         return ['titres', 'comptes', 'sources', 'idees', 'hashtags'];
       case 'youtube':
         return ['titres', 'comptes', 'sources', 'hashtags', 'hooks'];
+      case 'podcasts':
+        return ['titres', 'sources', 'podcast', 'mots-cles'];
       default:
         return ['titres', 'comptes', 'sources', 'hashtags'];
     }
@@ -49,10 +49,10 @@ const SubcategoryTabs: React.FC<SubcategoryTabsProps> = ({
       case 'hooks': return 'Hooks';
       case 'blog': return 'Blog';
       case 'article': return 'Article';
-      case 'podcast': return 'Podcast';
       case 'mots-cles': return 'Mots-clés';
       case 'exemple': return 'Exemple';
       case 'idees': return 'Idées';
+      case 'podcast': return 'Podcast';
       default: return tab;
     }
   };

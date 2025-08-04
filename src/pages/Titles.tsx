@@ -150,7 +150,7 @@ const Titles = () => {
       case 'twitch': return 'Twitch';
       case 'blog': return 'Blog';
       case 'article': return 'Article';
-      case 'podcast': return 'Podcast';
+      case 'podcasts': return 'Podcasts';
       default: return 'Toutes les plateformes';
     }
   };
@@ -415,6 +415,8 @@ const Titles = () => {
         return '💼';
       case 'twitch':
         return '🎮';
+      case 'podcasts':
+        return '🎧';
       default:
         return '🌐';
     }
@@ -436,6 +438,8 @@ const Titles = () => {
         return 'bg-blue-700 text-white';
       case 'twitch':
         return 'bg-purple-600 text-white';
+      case 'podcasts':
+        return 'bg-purple-500 text-white';
       default:
         return 'bg-gray-500 text-white';
     }
@@ -1042,6 +1046,63 @@ const Titles = () => {
                               size={16} 
                               className={`transition-all duration-200 ${
                                 isIdeeFavorite(idee.id) 
+                                  ? 'fill-red-500 text-red-500' 
+                                  : 'fill-transparent text-current'
+                              }`}
+                            />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))
+              )}
+            </motion.div>
+          )}
+
+          {activeTab === 'podcast' && (
+            <motion.div 
+              className="space-y-4"
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+            >
+              {podcasts.length === 0 ? (
+                <div className="text-center py-12">
+                  <p className="text-gray-500 dark:text-gray-400 mb-4">
+                    Aucun podcast disponible pour {getNetworkDisplayName(detectedNetwork)}
+                  </p>
+                </div>
+              ) : (
+                podcasts.map((podcast) => (
+                  <motion.div key={podcast.id} variants={itemVariants}>
+                    <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all duration-200">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-gray-900 dark:text-white font-medium text-base leading-relaxed">
+                            {podcast.title}
+                          </h3>
+                          {podcast.content && (
+                            <p className="text-gray-600 dark:text-gray-400 text-sm mt-2">
+                              {podcast.content}
+                            </p>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 ml-4">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleLikePodcast(podcast.id)}
+                            className={`p-2 h-8 w-8 transition-all duration-200 ${
+                              isPodcastFavorite(podcast.id) 
+                                ? 'text-red-500 hover:text-red-600' 
+                                : 'text-gray-400 hover:text-red-400'
+                            }`}
+                          >
+                            <Heart 
+                              size={16} 
+                              className={`transition-all duration-200 ${
+                                isPodcastFavorite(podcast.id) 
                                   ? 'fill-red-500 text-red-500' 
                                   : 'fill-transparent text-current'
                               }`}

@@ -32,7 +32,8 @@ const TEMP_SOCIAL_NETWORKS: SocialNetwork[] = [
   { id: 'twitch', name: 'twitch', display_name: 'Twitch', description: 'Streaming et gaming', icon_url: '/icons/twitch.svg', color_theme: '#9146FF', is_active: true, created_at: '', updated_at: '' },
   { id: 'linkedin', name: 'linkedin', display_name: 'LinkedIn', description: 'Réseau professionnel', icon_url: '/icons/linkedin.svg', color_theme: '#0077B5', is_active: true, created_at: '', updated_at: '' },
   { id: 'blog', name: 'blog', display_name: 'Blog', description: 'Articles de blog et contenus longs', icon_url: '/icons/blog.svg', color_theme: '#FF6B35', is_active: true, created_at: '', updated_at: '' },
-  { id: 'article', name: 'article', display_name: 'Article', description: 'Articles détaillés et analyses', icon_url: '/icons/article.svg', color_theme: '#2E8B57', is_active: true, created_at: '', updated_at: '' }
+  { id: 'article', name: 'article', display_name: 'Article', description: 'Articles détaillés et analyses', icon_url: '/icons/article.svg', color_theme: '#2E8B57', is_active: true, created_at: '', updated_at: '' },
+  { id: 'podcasts', name: 'podcasts', display_name: 'Podcasts', description: 'Contenu audio et épisodes', icon_url: '/icons/podcast.svg', color_theme: '#8A2BE2', is_active: true, created_at: '', updated_at: '' }
 ];
 
 // Configuration temporaire des filtres par réseau
@@ -86,7 +87,8 @@ export const useSocialNetworks = () => {
         'linkedin': 6,
         'twitch': 7,
         'blog': 8,
-        'article': 9
+        'article': 9,
+        'podcasts': 10
       };
       
       const sortedData = (data || TEMP_SOCIAL_NETWORKS).sort((a, b) => {
