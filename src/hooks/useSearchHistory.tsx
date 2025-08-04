@@ -1,27 +1,32 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from './useAuth';
+
 interface SearchHistoryItem {
   id: string;
   query: string;
   timestamp: string;
 }
+
 export const useSearchHistory = () => {
   const [history, setHistory] = useState<SearchHistoryItem[]>([]);
   const { user } = useAuth();
+
+  const loadHistory = useCallback(() => {
+    if (!user) return;
+    const savedHistory = localStorage.getItem(`search_history_${user.id}`);
+    if (savedHistory) {
+      setHistory(JSON.parse(savedHistory));
+    }
+  }, [user]);
+
   useEffect(() => {
     if (user) {
       loadHistory();
     } else {
       setHistory([]);
     }
-  }, [user]);
-  const loadHistory = () => {
-    if (!user) return;
-    const savedHistory = localStorage.getItem(`search_history_${user.id}`);
-    if (savedHistory) {
-      setHistory(JSON.parse(savedHistory));
-    }
-  };
+  }, [user, loadHistory]);
+
   const addToHistory = (query: string) => {
     if (!user || !query.trim()) return;
     const newItem: SearchHistoryItem = {
@@ -41,11 +46,13 @@ export const useSearchHistory = () => {
       return updated;
     });
   };
+
   const clearHistory = () => {
     if (!user) return;
     setHistory([]);
     localStorage.removeItem(`search_history_${user.id}`);
   };
+
   return {
     history,
     addToHistory,

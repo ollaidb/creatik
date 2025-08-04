@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Plus, Heart, Filter, User, ExternalLink } from 'lucide-react';
-import { useAccounts } from '@/hooks/useAccounts';
+import { useAccounts, Account } from '@/hooks/useAccounts';
 import { useFavorites } from '@/hooks/useFavorites';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -51,9 +51,9 @@ const Accounts = () => {
     });
   };
 
-  const handleProfileClick = (account: any) => {
-    if (account.url) {
-      window.open(account.url, '_blank');
+  const handleProfileClick = (account: Account) => {
+    if (account.account_url) {
+      window.open(account.account_url, '_blank');
     } else {
       toast({
         title: "Lien manquant",
@@ -192,7 +192,7 @@ const Accounts = () => {
                         {account.avatar_url ? (
                           <img 
                             src={account.avatar_url} 
-                            alt={account.name}
+                            alt={account.account_name}
                             className="w-full h-full object-cover"
                           />
                         ) : (
@@ -212,7 +212,7 @@ const Accounts = () => {
 
                     {/* Nom du compte */}
                     <h3 className="font-semibold text-sm mb-1 text-gray-900 dark:text-gray-100 truncate">
-                      {account.name}
+                      {account.account_name}
                     </h3>
 
                     {/* Description courte */}

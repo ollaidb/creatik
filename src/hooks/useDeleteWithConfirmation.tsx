@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
+import { SupabaseClient } from '@supabase/supabase-js';
+
 interface DeleteItem {
   id: string;
   title: string;
@@ -11,10 +13,12 @@ interface DeleteItem {
   subcategory_id?: string;
   metadata?: Record<string, unknown>;
 }
+
 export const useDeleteWithConfirmation = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [isDeleting, setIsDeleting] = useState(false);
+
   const deleteItem = async (item: DeleteItem) => {
     if (!user) {
       toast({
@@ -24,10 +28,11 @@ export const useDeleteWithConfirmation = () => {
       });
       return { success: false };
     }
+
     setIsDeleting(true);
     try {
       // 1. Ajouter à la corbeille
-      const { error: trashError } = await (supabase as any)
+      const { error: trashError } = await (supabase as SupabaseClient)
         .from('trash')
         .insert({
           user_id: user.id,
@@ -41,9 +46,11 @@ export const useDeleteWithConfirmation = () => {
           deleted_at: new Date().toISOString(),
           will_be_deleted_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() // 30 jours
         });
+
       if (trashError) {
         throw new Error(`Erreur lors de l'ajout à la corbeille: ${trashError.message}`);
       }
+
       // 2. Supprimer de la table d'origine selon le type
       let deleteError = null;
       switch (item.type) {
@@ -74,9 +81,11 @@ export const useDeleteWithConfirmation = () => {
         default:
           throw new Error('Type de publication non supporté');
       }
+
       if (deleteError) {
         throw new Error(`Erreur lors de la suppression: ${deleteError.message}`);
       }
+
       toast({
         title: "Élément supprimé",
         description: `${item.title} a été déplacé vers la corbeille`,
@@ -94,6 +103,7 @@ export const useDeleteWithConfirmation = () => {
       setIsDeleting(false);
     }
   };
+
   return {
     deleteItem,
     isDeleting

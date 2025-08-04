@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { SupabaseClient } from '@supabase/supabase-js';
 
 interface Source {
   id: string;
@@ -13,7 +14,7 @@ export const useSources = (networkId?: string) => {
   return useQuery({
     queryKey: ['sources', networkId],
     queryFn: async () => {
-      let query = (supabase as any)
+      let query = (supabase as SupabaseClient)
         .from('sources')
         .select('*')
         .order('created_at', { ascending: false });

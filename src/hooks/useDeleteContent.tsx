@@ -2,14 +2,18 @@ import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { SupabaseClient } from '@supabase/supabase-js';
+
 interface DeleteContentParams {
   content_type: 'category' | 'subcategory' | 'title' | 'challenge';
   content_id: string;
 }
+
 export const useDeleteContent = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
+
   const deleteContent = async ({ content_type, content_id }: DeleteContentParams) => {
     if (!user) {
       toast({
@@ -19,14 +23,16 @@ export const useDeleteContent = () => {
       });
       return false;
     }
+
     setIsDeleting(true);
     try {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await (supabase as SupabaseClient)
         .rpc('delete_user_content', {
           p_content_type: content_type,
           p_content_id: content_id,
           p_user_id: user.id
         });
+
       if (error) {
         console.error('❌ Erreur suppression:', error);
         toast({
@@ -36,6 +42,7 @@ export const useDeleteContent = () => {
         });
         return false;
       }
+
       if (data && data.success) {
         toast({
           title: "Contenu supprimé",
@@ -55,7 +62,7 @@ export const useDeleteContent = () => {
       console.error('❌ Exception suppression:', error);
       toast({
         title: "Erreur",
-        description: `Erreur lors de la suppression: ${error.message}`,
+        description: `Erreur lors de la suppression: ${error instanceof Error ? error.message : 'Erreur inconnue'}`,
         variant: "destructive"
       });
       return false;
@@ -63,6 +70,7 @@ export const useDeleteContent = () => {
       setIsDeleting(false);
     }
   };
+
   return {
     deleteContent,
     isDeleting

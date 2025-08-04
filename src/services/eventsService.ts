@@ -9,14 +9,19 @@ interface Event {
   category: string;
 }
 
+interface WikipediaEvent {
+  year: number;
+  text: string;
+}
+
 class EventsService {
-  // Wikipedia Events (déjà intégré)
+  // Événements Wikipedia
   async getWikipediaEvents(date: string): Promise<Event[]> {
     try {
       const events = await fetch(`https://fr.wikipedia.org/api/rest_v1/feed/onthisday/all/${date}`);
       const data = await events.json();
       
-      return data.events?.map((event: any) => ({
+      return data.events?.map((event: WikipediaEvent) => ({
         id: `wiki_${event.year}_${event.text}`,
         title: event.text,
         description: `Événement historique de ${event.year}`,

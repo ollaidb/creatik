@@ -121,7 +121,7 @@ const IntelligentSearchBar: React.FC<IntelligentSearchBarProps> = ({
       }
     }, 300);
     return () => clearTimeout(timeoutId);
-  }, [query]);
+  }, [query, searchContentWithDebounce]);
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setQuery(value);

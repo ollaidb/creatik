@@ -1,81 +1,89 @@
--- Script pour sécuriser toutes les tables "Unrestricted"
--- Date: 2025-08-04
+-- Script de diagnostic pour les tables d'événements
+-- Vérifier l'existence et la structure des tables
 
--- 1. ACTIVER RLS SUR TOUTES LES TABLES "UNRESTRICTED" QUI EXISTENT
-ALTER TABLE social_networks ENABLE ROW LEVEL SECURITY;
-ALTER TABLE subcategories ENABLE ROW LEVEL SECURITY;
-ALTER TABLE user_challenges ENABLE ROW LEVEL SECURITY;
-ALTER TABLE word_blocks ENABLE ROW LEVEL SECURITY;
+-- 1. Vérifier si la table daily_events existe
+SELECT 
+    table_name,
+    table_type
+FROM information_schema.tables 
+WHERE table_schema = 'public' 
+AND table_name LIKE '%event%';
 
--- 2. CRÉER DES POLITIQUES RLS SÉCURISÉES
+-- 2. Si la table daily_events existe, vérifier sa structure
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'daily_events') THEN
+        RAISE NOTICE 'Table daily_events existe - Vérification de la structure:';
+        
+        SELECT 
+            column_name,
+            data_type,
+            is_nullable,
+            column_default
+        FROM information_schema.columns 
+        WHERE table_schema = 'public' 
+        AND table_name = 'daily_events'
+        ORDER BY ordinal_position;
+        
+        -- Compter les enregistrements
+        EXECUTE 'SELECT COUNT(*) as total_events FROM daily_events';
+        
+        -- Vérifier les RLS policies
+        SELECT 
+            policyname,
+            permissive,
+            roles,
+            cmd,
+            qual,
+            with_check
+        FROM pg_policies 
+        WHERE tablename = 'daily_events';
+        
+    ELSE
+        RAISE NOTICE 'Table daily_events n''existe PAS';
+    END IF;
+END $$;
 
--- Social Networks - Lecture publique, écriture utilisateurs authentifiés
-DROP POLICY IF EXISTS "social_networks_select_policy" ON social_networks;
-CREATE POLICY "social_networks_select_policy" ON social_networks
-    FOR SELECT USING (true);
+-- 3. Vérifier si la table event_categories existe
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'event_categories') THEN
+        RAISE NOTICE 'Table event_categories existe - Vérification de la structure:';
+        
+        SELECT 
+            column_name,
+            data_type,
+            is_nullable,
+            column_default
+        FROM information_schema.columns 
+        WHERE table_schema = 'public' 
+        AND table_name = 'event_categories'
+        ORDER BY ordinal_position;
+        
+        -- Compter les enregistrements
+        EXECUTE 'SELECT COUNT(*) as total_categories FROM event_categories';
+        
+    ELSE
+        RAISE NOTICE 'Table event_categories n''existe PAS';
+    END IF;
+END $$;
 
-DROP POLICY IF EXISTS "social_networks_insert_policy" ON social_networks;
-CREATE POLICY "social_networks_insert_policy" ON social_networks
-    FOR INSERT WITH CHECK (auth.role() = 'authenticated');
-
-DROP POLICY IF EXISTS "social_networks_update_policy" ON social_networks;
-CREATE POLICY "social_networks_update_policy" ON social_networks
-    FOR UPDATE USING (auth.role() = 'authenticated');
-
--- Subcategories - Lecture publique, écriture utilisateurs authentifiés
-DROP POLICY IF EXISTS "subcategories_select_policy" ON subcategories;
-CREATE POLICY "subcategories_select_policy" ON subcategories
-    FOR SELECT USING (true);
-
-DROP POLICY IF EXISTS "subcategories_insert_policy" ON subcategories;
-CREATE POLICY "subcategories_insert_policy" ON subcategories
-    FOR INSERT WITH CHECK (auth.role() = 'authenticated');
-
-DROP POLICY IF EXISTS "subcategories_update_policy" ON subcategories;
-CREATE POLICY "subcategories_update_policy" ON subcategories
-    FOR UPDATE USING (auth.role() = 'authenticated');
-
--- User Challenges - Accès personnel uniquement
-DROP POLICY IF EXISTS "user_challenges_personal_policy" ON user_challenges;
-CREATE POLICY "user_challenges_personal_policy" ON user_challenges
-    FOR ALL USING (auth.uid() = user_id);
-
--- Word Blocks - Lecture publique, écriture utilisateurs authentifiés
-DROP POLICY IF EXISTS "word_blocks_select_policy" ON word_blocks;
-CREATE POLICY "word_blocks_select_policy" ON word_blocks
-    FOR SELECT USING (true);
-
-DROP POLICY IF EXISTS "word_blocks_insert_policy" ON word_blocks;
-CREATE POLICY "word_blocks_insert_policy" ON word_blocks
-    FOR INSERT WITH CHECK (auth.role() = 'authenticated');
-
-DROP POLICY IF EXISTS "word_blocks_update_policy" ON word_blocks;
-CREATE POLICY "word_blocks_update_policy" ON word_blocks
-    FOR UPDATE USING (auth.role() = 'authenticated');
-
--- 3. VÉRIFIER QUE LES TABLES SONT SÉCURISÉES
+-- 4. Vérifier les permissions RLS
 SELECT 
     schemaname,
     tablename,
-    rowsecurity,
-    CASE 
-        WHEN rowsecurity = true THEN '✅ SÉCURISÉ'
-        ELSE '❌ NON SÉCURISÉ'
-    END as status
+    rowsecurity
 FROM pg_tables 
-WHERE tablename IN ('social_networks', 'subcategories', 'user_challenges', 'word_blocks')
-ORDER BY tablename;
+WHERE tablename LIKE '%event%';
 
--- 4. VÉRIFIER LES POLITIQUES RLS
+-- 5. Vérifier les contraintes
 SELECT 
-    schemaname,
-    tablename,
-    policyname,
-    permissive,
-    roles,
-    cmd,
-    qual,
-    with_check
-FROM pg_policies 
-WHERE tablename IN ('social_networks', 'subcategories', 'user_challenges', 'word_blocks')
-ORDER BY tablename, policyname; 
+    tc.table_name,
+    tc.constraint_name,
+    tc.constraint_type,
+    kcu.column_name
+FROM information_schema.table_constraints tc
+JOIN information_schema.key_column_usage kcu 
+    ON tc.constraint_name = kcu.constraint_name
+WHERE tc.table_schema = 'public' 
+AND tc.table_name LIKE '%event%'; 

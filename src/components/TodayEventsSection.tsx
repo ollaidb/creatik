@@ -1,16 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { Calendar, ChevronDown, ChevronUp } from 'lucide-react';
-import { useEvents } from '@/hooks/useEvents';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import type { Event } from '@/hooks/useEvents';
+import { Calendar, ChevronDown, ChevronUp } from 'lucide-react';
+import { useTodayEvents } from '@/hooks/useTodayEvents';
 
 const TodayEventsSection: React.FC = () => {
-  const { getEventsForDate, loading, error } = useEvents();
   const [open, setOpen] = useState(true);
-  const [todayEvents, setTodayEvents] = useState<Event[]>([]);
+  const { events: todayEvents, loading, error, fetchTodayEvents } = useTodayEvents();
 
-  // Formater la date d'aujourd'hui
-  const today = new Date();
+  // Formater la date d'aujourd'hui avec useMemo
+  const today = useMemo(() => new Date(), []);
   const formattedDate = today.toLocaleDateString('fr-FR', {
     day: '2-digit',
     month: '2-digit',
@@ -19,18 +17,8 @@ const TodayEventsSection: React.FC = () => {
 
   // Charger les événements d'aujourd'hui
   useEffect(() => {
-    const loadTodayEvents = async () => {
-      try {
-        const events = await getEventsForDate(today);
-        setTodayEvents(events || []);
-      } catch (err) {
-        console.error('Erreur lors du chargement des événements:', err);
-        setTodayEvents([]);
-      }
-    };
-
-    loadTodayEvents();
-  }, [getEventsForDate, today]);
+    fetchTodayEvents();
+  }, [fetchTodayEvents]);
 
   const handleEventClick = (eventId: string) => {
     window.location.href = `/events?event=${eventId}`;
@@ -107,84 +95,69 @@ const TodayEventsSection: React.FC = () => {
           >
             {todayEvents.length === 0 ? (
               <div className="text-center py-6 sm:py-8">
-                <p className="text-base sm:text-lg text-gray-200">Aucun événement aujourd'hui</p>
-                <p className="text-xs text-gray-400 mt-1">Cliquez pour voir tous les événements</p>
+                <p className="text-gray-400 text-sm">Aucun événement aujourd'hui</p>
               </div>
             ) : (
-              <div className="space-y-1 sm:space-y-2">
-                {todayEvents.slice(0, 5).map((event, index) => (
+              <div className="space-y-2 sm:space-y-3">
+                {todayEvents.slice(0, 5).map((event) => (
                   <motion.div
                     key={event.id}
-                    className="relative"
-                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    transition={{ 
-                      delay: index * 0.1,
-                      duration: 0.3,
-                      type: "spring",
-                      stiffness: 300,
-                      damping: 20
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.2 }}
+                    className="bg-neutral-800 rounded-lg p-3 sm:p-4 hover:bg-neutral-700 transition-colors cursor-pointer"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleEventClick(event.id);
                     }}
                   >
-                    {/* Séparateur visuel */}
-                    {index > 0 && (
-                      <motion.div
-                        initial={{ opacity: 0, scaleX: 0 }}
-                        animate={{ opacity: 1, scaleX: 1 }}
-                        transition={{ 
-                          delay: index * 0.1 + 0.1,
-                          duration: 0.3
-                        }}
-                        className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-neutral-600 to-transparent"
-                      />
-                    )}
-                    
-                    <motion.button
-                      className="w-full text-left p-2 sm:p-3 rounded-lg font-medium text-white text-sm sm:text-base border border-transparent hover:text-blue-300 hover:bg-neutral-700 focus:bg-neutral-700 focus:outline-none transition-all duration-200 cursor-pointer shadow-sm leading-tight active:scale-95 active:bg-neutral-600 event-button-mobile"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleEventClick(event.id);
-                      }}
-                      whileHover={{ 
-                        scale: 1.02, 
-                        y: -2,
-                        boxShadow: "0 4px 12px rgba(0, 0, 0, 0.3)"
-                      }}
-                      whileTap={{ 
-                        scale: 0.95, 
-                        y: 0,
-                        boxShadow: "0 2px 6px rgba(0, 0, 0, 0.2)"
-                      }}
-                      // Animations spécifiques pour mobile
-                      style={{
-                        WebkitTapHighlightColor: 'transparent',
-                        touchAction: 'manipulation',
-                        WebkitTransform: 'translateZ(0)', // Force hardware acceleration
-                        transform: 'translateZ(0)'
-                      }}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <div className="font-semibold text-white">
-                            {event.person_name || event.title}
-                          </div>
-                          <div className="text-xs text-gray-300 mt-1">
-                            {event.event_type === 'birthday' ? 'Anniversaire' : 
-                             event.event_type === 'anniversary' ? 'Événement' : 
-                             event.event_type === 'holiday' ? 'Fête' : 'Événement'}
-                          </div>
-                        </div>
-                        <div className="text-xs text-gray-400 text-right">
-                          {new Date(event.date).toLocaleDateString('fr-FR', {
-                            day: 'numeric',
-                            month: 'long',
-                            year: 'numeric'
-                          })}
+                    <div className="flex items-start gap-3">
+                      <div className="flex-shrink-0">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium ${
+                          event.type === 'holiday' ? 'bg-blue-500' :
+                          event.type === 'birthday' ? 'bg-pink-500' :
+                          event.type === 'anniversary' ? 'bg-purple-500' :
+                          event.type === 'cultural' ? 'bg-green-500' :
+                          'bg-gray-500'
+                        }`}>
+                          {event.type === 'holiday' ? '🎉' :
+                           event.type === 'birthday' ? '🎂' :
+                           event.type === 'anniversary' ? '🎊' :
+                           event.type === 'cultural' ? '🎭' :
+                           '📅'}
                         </div>
                       </div>
-                    </motion.button>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-white font-medium text-sm sm:text-base line-clamp-1">
+                          {event.title}
+                        </h3>
+                        <p className="text-gray-400 text-xs sm:text-sm line-clamp-2 mt-1">
+                          {event.description}
+                        </p>
+                        {event.hashtags.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {event.hashtags.slice(0, 3).map((hashtag, index) => (
+                              <span
+                                key={index}
+                                className="text-xs bg-neutral-700 text-gray-300 px-2 py-1 rounded-full"
+                              >
+                                {hashtag}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </motion.div>
                 ))}
+                {todayEvents.length > 5 && (
+                  <div className="text-center pt-2">
+                    <p className="text-gray-400 text-sm">
+                      +{todayEvents.length - 5} autres événements
+                    </p>
+                  </div>
+                )}
               </div>
             )}
           </motion.div>
