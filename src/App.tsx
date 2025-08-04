@@ -30,6 +30,7 @@ import Accounts from "./pages/Accounts";
 import Sources from "./pages/Sources";
 import TrendingIdeas from "./pages/TrendingIdeas";
 import WhatToPostToday from "./pages/WhatToPostToday";
+import Events from "./pages/Events";
 import AuthCallback from "./pages/AuthCallback";
 
 // Configuration optimisée du QueryClient pour de meilleures performances
@@ -71,6 +72,8 @@ const AppContent = () => {
             <Route path="/trending" element={<TrendingIdeas />} />
             {/* What to Post Today Route */}
             <Route path="/what-to-post" element={<WhatToPostToday />} />
+            {/* Events Route */}
+            <Route path="/events" element={<Events />} />
             {/* Accounts and Sources Routes */}
             <Route path="/accounts" element={<Accounts />} />
             <Route path="/sources" element={<Sources />} />

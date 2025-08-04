@@ -1,56 +1,45 @@
--- Script pour vérifier les tables existantes dans votre base de données
--- Exécutez ce script dans Supabase SQL Editor
+-- Script pour vérifier les tables existantes
+-- Date: 2025-08-04
 
--- 1. Lister toutes les tables existantes
+-- 1. LISTER TOUTES LES TABLES PUBLIQUES
 SELECT 
-  table_name,
-  table_type
-FROM information_schema.tables 
-WHERE table_schema = 'public'
-ORDER BY table_name;
+    schemaname,
+    tablename,
+    rowsecurity,
+    CASE 
+        WHEN rowsecurity = true THEN '✅ RLS ACTIVÉ'
+        ELSE '❌ RLS DÉSACTIVÉ (UNRESTRICTED)'
+    END as status
+FROM pg_tables 
+WHERE schemaname = 'public'
+  AND tablename NOT LIKE 'pg_%'
+  AND tablename NOT LIKE 'information_schema%'
+ORDER BY tablename;
 
--- 2. Vérifier spécifiquement les tables de titres
+-- 2. VÉRIFIER SPÉCIFIQUEMENT LES TABLES "UNRESTRICTED"
 SELECT 
-  CASE 
-    WHEN EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'content_titles') 
-    THEN '✅ Table content_titles existe'
-    ELSE '❌ Table content_titles manquante'
-  END as status;
+    tablename,
+    rowsecurity,
+    CASE 
+        WHEN rowsecurity = true THEN '✅ SÉCURISÉ'
+        ELSE '❌ NON SÉCURISÉ (UNRESTRICTED)'
+    END as status
+FROM pg_tables 
+WHERE schemaname = 'public'
+  AND rowsecurity = false
+  AND tablename NOT LIKE 'pg_%'
+ORDER BY tablename;
 
+-- 3. VÉRIFIER LES POLITIQUES RLS EXISTANTES
 SELECT 
-  CASE 
-    WHEN EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'word_blocks') 
-    THEN '✅ Table word_blocks existe'
-    ELSE '❌ Table word_blocks manquante'
-  END as status;
-
-SELECT 
-  CASE 
-    WHEN EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'title_templates') 
-    THEN '✅ Table title_templates existe'
-    ELSE '❌ Table title_templates manquante'
-  END as status;
-
-SELECT 
-  CASE 
-    WHEN EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'title_variables') 
-    THEN '✅ Table title_variables existe'
-    ELSE '❌ Table title_variables manquante'
-  END as status;
-
-SELECT 
-  CASE 
-    WHEN EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'generated_titles') 
-    THEN '✅ Table generated_titles existe'
-    ELSE '❌ Table generated_titles manquante'
-  END as status;
-
--- 3. Vérifier la structure de content_titles si elle existe
-SELECT 
-  'content_titles' as table_name,
-  column_name,
-  data_type,
-  is_nullable
-FROM information_schema.columns 
-WHERE table_name = 'content_titles'
-ORDER BY ordinal_position; 
+    tablename,
+    COUNT(*) as policy_count,
+    CASE 
+        WHEN COUNT(*) = 0 THEN '❌ AUCUNE POLITIQUE'
+        WHEN COUNT(*) < 3 THEN '⚠️ POLITIQUES INCOMPLÈTES'
+        ELSE '✅ POLITIQUES COMPLÈTES'
+    END as status
+FROM pg_policies 
+WHERE schemaname = 'public'
+GROUP BY tablename
+ORDER BY tablename; 
