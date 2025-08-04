@@ -24,8 +24,7 @@ const Contact = () => {
     e.preventDefault();
     // Ici on traiterait normalement l'envoi du message
     toast({
-      title: "Message envoyé",
-      description: "Nous vous répondrons dans les plus brefs délais."
+      title: "Envoyé"
     });
     setFormData({ name: '', email: '', subject: '', category: '', message: '' });
   };

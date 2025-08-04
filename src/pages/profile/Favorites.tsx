@@ -178,8 +178,7 @@ const Favorites = () => {
       window.open(account.account_url, '_blank');
     } else {
       toast({
-        title: "Lien non disponible",
-        description: "Ce profil n'a pas de lien externe configuré.",
+        title: "Lien manquant",
         variant: "destructive"
       });
     }
@@ -197,8 +196,7 @@ const Favorites = () => {
       window.open(source.url, '_blank');
     } else {
       toast({
-        title: "Lien non disponible",
-        description: "Cette source n'a pas de lien externe configuré.",
+        title: "Lien manquant",
         variant: "destructive"
       });
     }
@@ -411,11 +409,8 @@ const Favorites = () => {
                           toggleFavorite(category.id);
                           toast({
                             title: isFavorite(category.id)
-                              ? "Retiré des favoris"
-                              : "Ajouté à vos favoris !",
-                            description: isFavorite(category.id)
-                              ? "La catégorie a été retirée de vos favoris."
-                              : "Vous verrez cette catégorie dans votre page de favoris.",
+                              ? "Retiré"
+                              : "Ajouté"
                           });
                         }}
                       >
@@ -469,11 +464,8 @@ const Favorites = () => {
                           toggleSubcategoryFavorite(subcategory.id);
                           toast({
                             title: isSubcategoryFavorite(subcategory.id)
-                              ? "Retiré des favoris"
-                              : "Ajouté à vos favoris !",
-                            description: isSubcategoryFavorite(subcategory.id)
-                              ? "La sous-catégorie a été retirée de vos favoris."
-                              : "Vous verrez cette sous-catégorie dans vos favoris.",
+                              ? "Retiré"
+                              : "Ajouté"
                           });
                         }}
                       >
@@ -525,11 +517,8 @@ const Favorites = () => {
                           toggleSubcategoryLevel2Favorite(subcategory.id);
                           toast({
                             title: isSubcategoryLevel2Favorite(subcategory.id)
-                              ? "Retiré des favoris"
-                              : "Ajouté à vos favoris !",
-                            description: isSubcategoryLevel2Favorite(subcategory.id)
-                              ? "La sous-catégorie a été retirée de vos favoris."
-                              : "Vous verrez cette sous-catégorie dans vos favoris.",
+                              ? "Retiré"
+                              : "Ajouté"
                           });
                         }}
                       >
@@ -591,11 +580,8 @@ const Favorites = () => {
                             toggleTitleFavorite(title.id);
                             toast({
                               title: isTitleFavorite(title.id)
-                                ? "Retiré des favoris"
-                                : "Ajouté à vos favoris !",
-                              description: isTitleFavorite(title.id)
-                                ? "Le titre a été retiré de vos favoris."
-                                : "Vous verrez ce titre dans vos favoris.",
+                                ? "Retiré"
+                                : "Ajouté"
                             });
                           }}
                           className={`p-2 h-10 w-10 rounded-full transition-all duration-200 ${
@@ -693,11 +679,8 @@ const Favorites = () => {
                             toggleAccountFavorite(account.id);
                             toast({
                               title: isAccountFavorite(account.id)
-                                ? "Retiré des favoris"
-                                : "Ajouté à vos favoris !",
-                              description: isAccountFavorite(account.id)
-                                ? "Le compte a été retiré de vos favoris."
-                                : "Vous verrez ce compte dans vos favoris.",
+                                ? "Retiré"
+                                : "Ajouté"
                             });
                           }}
                           className="p-2 h-10 w-10 rounded-full"
@@ -774,11 +757,8 @@ const Favorites = () => {
                             toggleSourceFavorite(source.id);
                             toast({
                               title: isSourceFavorite(source.id)
-                                ? "Retiré des favoris"
-                                : "Ajouté à vos favoris !",
-                              description: isSourceFavorite(source.id)
-                                ? "La source a été retirée de vos favoris."
-                                : "Vous verrez cette source dans vos favoris.",
+                                ? "Retiré"
+                                : "Ajouté"
                             });
                           }}
                           className="p-2 h-8 w-8 rounded-full"
@@ -848,11 +828,8 @@ const Favorites = () => {
                             toggleHookFavorite(hook.id);
                             toast({
                               title: isHookFavorite(hook.id)
-                                ? "Retiré des favoris"
-                                : "Ajouté à vos favoris !",
-                              description: isHookFavorite(hook.id)
-                                ? "Le hook a été retiré de vos favoris."
-                                : "Vous verrez ce hook dans vos favoris.",
+                                ? "Retiré"
+                                : "Ajouté"
                             });
                           }}
                           className="p-2 h-10 w-10 rounded-full"
@@ -911,11 +888,8 @@ const Favorites = () => {
                             toggleChallengeFavorite(challenge.id);
                             toast({
                               title: isChallengeFavorite(challenge.id)
-                                ? "Retiré des favoris"
-                                : "Ajouté à vos favoris !",
-                              description: isChallengeFavorite(challenge.id)
-                                ? "Le challenge a été retiré de vos favoris."
-                                : "Vous verrez ce challenge dans vos favoris.",
+                                ? "Retiré"
+                                : "Ajouté"
                             });
                           }}
                           className="p-2 h-10 w-10 rounded-full"

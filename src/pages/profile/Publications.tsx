@@ -83,20 +83,17 @@ const Publications = () => {
       const result = await deletePublication(itemToDelete.id);
       if (result.success) {
         toast({
-          title: "Publication supprimée",
-          description: `${itemToDelete.title} a été déplacé vers la corbeille`,
+          title: "Supprimé"
         });
       } else {
         toast({
           title: "Erreur",
-          description: result.error || "Impossible de supprimer la publication",
           variant: "destructive"
         });
       }
     } catch (error) {
       toast({
         title: "Erreur",
-        description: "Impossible de supprimer la publication",
         variant: "destructive"
       });
     } finally {
@@ -116,13 +113,11 @@ const Publications = () => {
     try {
       // restoreFromTrash(itemId); // This line was removed as per the edit hint
       toast({
-        title: "Élément restauré",
-        description: "L'élément a été restauré avec succès",
+        title: "Restauré"
       });
     } catch (error) {
       toast({
         title: "Erreur",
-        description: "Impossible de restaurer l'élément",
         variant: "destructive"
       });
     }
@@ -132,13 +127,11 @@ const Publications = () => {
     try {
       // permanentlyDelete(itemId); // This line was removed as per the edit hint
       toast({
-        title: "Élément supprimé définitivement",
-        description: "L'élément a été supprimé définitivement",
+        title: "Supprimé"
       });
     } catch (error) {
       toast({
         title: "Erreur",
-        description: "Impossible de supprimer définitivement l'élément",
         variant: "destructive"
       });
     }

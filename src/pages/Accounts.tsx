@@ -41,17 +41,13 @@ const Accounts = () => {
   const handleFavorite = (accountId: string) => {
     if (!user) {
       toast({
-        title: "Connexion requise",
-        description: "Connectez-vous pour ajouter des comptes à vos favoris.",
+        title: "Connexion requise"
       });
       return;
     }
     toggleFavorite(accountId);
     toast({
-      title: isFavorite(accountId) ? "Retiré des favoris" : "Ajouté à vos favoris !",
-      description: isFavorite(accountId)
-        ? "Le compte a été retiré de vos favoris."
-        : "Vous verrez ce compte dans votre page de favoris.",
+      title: isFavorite(accountId) ? "Retiré" : "Ajouté"
     });
   };
 
@@ -60,8 +56,7 @@ const Accounts = () => {
       window.open(account.url, '_blank');
     } else {
       toast({
-        title: "Lien non disponible",
-        description: "Ce profil n'a pas de lien externe configuré.",
+        title: "Lien manquant",
         variant: "destructive"
       });
     }

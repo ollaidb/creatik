@@ -140,13 +140,11 @@ const Index: React.FC = () => {
     if (result.error) {
       toast({
         title: "Erreur",
-        description: result.error,
         variant: "destructive",
       });
     } else {
       toast({
-        title: "Défi accompli !",
-        description: `Félicitations ! Vous avez gagné ${challenge?.points || 0} points.`,
+        title: "Accompli"
       });
     }
   };

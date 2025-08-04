@@ -143,25 +143,87 @@ const Titles = () => {
 
   // Vérifier si les hooks sont disponibles pour ce réseau
   const isHooksAvailableForNetwork = (networkId: string) => {
-    // Les hooks ne sont disponibles que pour YouTube
-    const isAvailable = networkId === 'youtube' || 
-                       networkId === 'YouTube' ||
-                       networkId === '550e8400-e29b-41d4-a716-446655440003' || // UUID de YouTube
-                       searchParams.toString().includes('youtube') ||
-                       searchParams.toString().includes('YouTube') ||
-                       window.location.href.includes('youtube') ||
-                       window.location.href.includes('YouTube');
-    
-    console.log('🔍 Debug Hooks Availability:', {
-      networkId,
-      isAvailable,
-      selectedNetwork,
-      detectedNetwork,
-      urlParams: searchParams.toString(),
-      currentUrl: window.location.href
-    });
-    
-    return isAvailable;
+    return networkId === 'youtube';
+  };
+
+  // Nouvelle fonction pour déterminer les onglets disponibles selon le réseau
+  const getAvailableTabs = (networkId: string) => {
+    switch (networkId) {
+      case 'blog':
+        return [
+          { key: 'titres', label: 'Titres' },
+          { key: 'sources', label: 'Sources' },
+          { key: 'blog', label: 'Blog' },
+          { key: 'mots-cles', label: 'Mots-clés' }
+        ];
+      case 'article':
+        return [
+          { key: 'titres', label: 'Titres' },
+          { key: 'sources', label: 'Sources' },
+          { key: 'article', label: 'Article' },
+          { key: 'mots-cles', label: 'Mots-clés' }
+        ];
+      case 'twitter':
+        return [
+          { key: 'exemple', label: 'Exemple' },
+          { key: 'comptes', label: 'Comptes' },
+          { key: 'sources', label: 'Sources' },
+          { key: 'hashtags', label: 'Hashtags' }
+        ];
+      case 'instagram':
+        return [
+          { key: 'titres', label: 'Titres' },
+          { key: 'comptes', label: 'Comptes' },
+          { key: 'sources', label: 'Sources' },
+          { key: 'idees', label: 'Idées' },
+          { key: 'hashtags', label: 'Hashtags' }
+        ];
+      case 'youtube':
+        return [
+          { key: 'titres', label: 'Titres' },
+          { key: 'comptes', label: 'Comptes' },
+          { key: 'sources', label: 'Sources' },
+          { key: 'hashtags', label: 'Hashtags' },
+          { key: 'hooks', label: 'Hooks' }
+        ];
+      default:
+        return [
+          { key: 'titres', label: 'Titres' },
+          { key: 'comptes', label: 'Comptes' },
+          { key: 'sources', label: 'Sources' },
+          { key: 'hashtags', label: 'Hashtags' },
+          { key: 'hooks', label: 'Hooks' }
+        ];
+    }
+  };
+
+  // Fonction pour rediriger vers la page appropriée selon l'onglet
+  const handleTabClick = (tabKey: string) => {
+    const baseUrl = isLevel2 
+      ? `/category/${categoryId}/subcategory/${subcategoryId}/subcategory-level2/${subcategoryLevel2Id}`
+      : `/category/${categoryId}/subcategory/${subcategoryId}`;
+
+    switch (tabKey) {
+      case 'blog':
+        navigate(`/blog?network=${selectedNetwork}`);
+        break;
+      case 'article':
+        navigate(`/article?network=${selectedNetwork}`);
+        break;
+      case 'mots-cles':
+        navigate(`/mots-cles?network=${selectedNetwork}`);
+        break;
+      case 'exemple':
+        navigate(`/exemple?network=${selectedNetwork}`);
+        break;
+      case 'idees':
+        navigate(`/idees?network=${selectedNetwork}`);
+        break;
+      default:
+        // Pour les onglets existants (titres, comptes, sources, hashtags, hooks)
+        setActiveTab(tabKey as 'titres' | 'comptes' | 'sources' | 'hashtags' | 'hooks');
+        break;
+    }
   };
 
   // Logs de débogage
@@ -186,14 +248,12 @@ const Titles = () => {
     try {
       await navigator.clipboard.writeText(title);
       toast({
-        title: "Titre copié !",
-        description: "Le titre a été copié dans votre presse-papiers.",
+        title: "Titre copié"
       });
     } catch (err) {
       console.error('Erreur lors de la copie:', err);
       toast({
-        title: "Erreur",
-        description: "Impossible de copier le titre.",
+        title: "Erreur copie",
         variant: "destructive",
       });
     }
@@ -203,16 +263,12 @@ const Titles = () => {
     try {
       await toggleTitleFavorite(titleId);
       toast({
-        title: isTitleFavorite(titleId) ? "Retiré des favoris" : "Ajouté à vos favoris !",
-        description: isTitleFavorite(titleId) 
-          ? "Le titre a été retiré de vos favoris."
-          : "Vous verrez ce titre dans vos favoris.",
+        title: isTitleFavorite(titleId) ? "Retiré" : "Ajouté"
       });
     } catch (error) {
       console.error('Erreur lors du like:', error);
       toast({
         title: "Erreur",
-        description: "Impossible de modifier les favoris",
         variant: "destructive"
       });
     }
@@ -222,16 +278,12 @@ const Titles = () => {
     try {
       await toggleAccountFavorite(accountId);
       toast({
-        title: isAccountFavorite(accountId) ? "Retiré des favoris" : "Ajouté à vos favoris !",
-        description: isAccountFavorite(accountId) 
-          ? "Le compte a été retiré de vos favoris."
-          : "Vous verrez ce compte dans vos favoris.",
+        title: isAccountFavorite(accountId) ? "Retiré" : "Ajouté"
       });
     } catch (error) {
       console.error('Erreur lors du like:', error);
       toast({
         title: "Erreur",
-        description: "Impossible de modifier les favoris",
         variant: "destructive"
       });
     }
@@ -241,16 +293,12 @@ const Titles = () => {
     try {
       await toggleSourceFavorite(sourceId);
       toast({
-        title: isSourceFavorite(sourceId) ? "Retiré des favoris" : "Ajouté à vos favoris !",
-        description: isSourceFavorite(sourceId) 
-          ? "La source a été retirée de vos favoris."
-          : "Vous verrez cette source dans vos favoris.",
+        title: isSourceFavorite(sourceId) ? "Retiré" : "Ajouté"
       });
     } catch (error) {
       console.error('Erreur lors du like:', error);
       toast({
         title: "Erreur",
-        description: "Impossible de modifier les favoris",
         variant: "destructive"
       });
     }
@@ -462,11 +510,51 @@ const Titles = () => {
         </div>
 
         {/* Onglets */}
-        <SubcategoryTabs 
-          activeTab={activeTab}
-          onTabChange={handleTabChange}
-          showHooks={isHooksAvailableForNetwork(detectedNetwork)}
-        />
+        <div className="mb-6">
+          <div className="overflow-x-auto scrollbar-hide">
+            <div className="flex gap-2 pb-2 min-w-max">
+              {getAvailableTabs(detectedNetwork).map(tab => {
+                const isActive = activeTab === tab.key;
+                return (
+                  <motion.button
+                    key={tab.key}
+                    onClick={() => handleTabClick(tab.key)}
+                    className={`
+                      px-3 py-2 rounded-lg transition-all duration-300 min-w-[70px] text-center flex items-center justify-center gap-2
+                      ${isActive 
+                        ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-lg scale-105' 
+                        : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                      }
+                    `}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    animate={isActive ? {
+                      scale: [1, 1.1, 1.05],
+                      boxShadow: [
+                        "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+                        "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
+                        "0 4px 6px -1px rgba(0, 0, 0, 0.1)"
+                      ]
+                    } : {}}
+                    transition={isActive ? {
+                      duration: 0.6,
+                      ease: "easeInOut"
+                    } : {
+                      duration: 0.2
+                    }}
+                  >
+                    <span className={`
+                      text-xs font-medium leading-tight
+                      ${isActive ? 'text-white' : 'text-gray-700 dark:text-gray-300'}
+                    `}>
+                      {tab.label}
+                    </span>
+                  </motion.button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
 
         {/* Contenu des onglets */}
         <div className="mt-6">

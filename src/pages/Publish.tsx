@@ -98,7 +98,6 @@ const Publish = () => {
     if (!user) {
       toast({
         title: "Connexion requise",
-        description: "Vous devez être connecté pour publier du contenu",
         variant: "destructive"
       });
       return;
@@ -106,8 +105,7 @@ const Publish = () => {
 
     if (!formData.title || !formData.content_type) {
       toast({
-        title: "Informations manquantes",
-        description: "Veuillez remplir tous les champs obligatoires",
+        title: "Champs manquants",
         variant: "destructive"
       });
       return;
@@ -117,8 +115,7 @@ const Publish = () => {
     const needsNetwork = ['title', 'hooks'].includes(formData.content_type);
     if (needsNetwork && (!selectedNetwork || selectedNetwork === '')) {
       toast({
-        title: "Réseau social requis",
-        description: "Veuillez sélectionner un réseau social",
+        title: "Réseau requis",
         variant: "destructive"
       });
       return;
@@ -128,7 +125,6 @@ const Publish = () => {
     if (formData.content_type === 'subcategory' && !formData.category_id) {
       toast({
         title: "Catégorie requise",
-        description: "Veuillez sélectionner une catégorie pour une sous-catégorie",
         variant: "destructive"
       });
       return;
@@ -137,7 +133,6 @@ const Publish = () => {
     if ((formData.content_type === 'title' || formData.content_type === 'account') && !formData.subcategory_id) {
       toast({
         title: "Sous-catégorie requise",
-        description: "Veuillez sélectionner une sous-catégorie",
         variant: "destructive"
       });
       return;
@@ -146,7 +141,6 @@ const Publish = () => {
     if (formData.content_type === 'challenge' && !formData.description) {
       toast({
         title: "Description requise",
-        description: "Veuillez ajouter une description pour le challenge",
         variant: "destructive"
       });
       return;
@@ -155,7 +149,6 @@ const Publish = () => {
     if (formData.content_type === 'source' && !formData.url) {
       toast({
         title: "URL requise",
-        description: "Veuillez entrer l'URL de la source",
         variant: "destructive"
       });
       return;
@@ -163,8 +156,7 @@ const Publish = () => {
 
     if (formData.content_type === 'account' && (!formData.platform || !formData.url)) {
       toast({
-        title: "Informations manquantes",
-        description: "Veuillez entrer la plateforme et l'URL du compte",
+        title: "Infos manquantes",
         variant: "destructive"
       });
       return;
@@ -173,8 +165,7 @@ const Publish = () => {
     // Validation du thème de contenu pour les catégories
     if (formData.content_type === 'category' && !formData.theme) {
       toast({
-        title: "Thème de contenu requis",
-        description: "Veuillez sélectionner un thème de contenu",
+        title: "Thème requis",
         variant: "destructive"
       });
       return;
@@ -213,8 +204,7 @@ const Publish = () => {
         
         console.log('Catégorie publiée avec succès');
         toast({
-          title: "Catégorie publiée",
-          description: `La catégorie "${formData.title}" a été publiée avec succès`
+          title: "Catégorie publiée"
         });
       } else if (formData.content_type === 'subcategory') {
         console.log('Publication sous-catégorie...');
@@ -233,8 +223,7 @@ const Publish = () => {
         
         console.log('Sous-catégorie publiée avec succès');
         toast({
-          title: "Sous-catégorie publiée",
-          description: `La sous-catégorie "${formData.title}" a été publiée avec succès`
+          title: "Sous-catégorie publiée"
         });
       } else if (formData.content_type === 'title') {
         console.log('Publication titre...');
@@ -254,8 +243,7 @@ const Publish = () => {
         
         console.log('Titre publié avec succès');
         toast({
-          title: "Titre publié",
-          description: `Le titre "${formData.title}" a été publié avec succès`
+          title: "Titre publié"
         });
       } else if (formData.content_type === 'challenge') {
         console.log('Publication challenge...');
@@ -279,8 +267,7 @@ const Publish = () => {
         
         console.log('Challenge publié avec succès');
         toast({
-          title: "Challenge publié",
-          description: `Le challenge "${formData.title}" a été publié avec succès`
+          title: "Challenge publié"
         });
       } else if (formData.content_type === 'source') {
         console.log('Publication source...');
@@ -299,8 +286,7 @@ const Publish = () => {
         
         console.log('Source publiée avec succès');
         toast({
-          title: "Source publiée",
-          description: `La source "${formData.title}" a été publiée avec succès`
+          title: "Source publiée"
         });
       } else if (formData.content_type === 'account') {
         console.log('Publication compte...');
@@ -321,8 +307,7 @@ const Publish = () => {
         
         console.log('Compte publié avec succès');
         toast({
-          title: "Compte publié",
-          description: `Le compte "${formData.title}" a été publié avec succès`
+          title: "Compte publié"
         });
       } else if (formData.content_type === 'hooks') {
         console.log('Publication hook...');
@@ -341,8 +326,7 @@ const Publish = () => {
         
         console.log('Hook publié avec succès');
         toast({
-          title: "Hook publié",
-          description: `Le hook "${formData.title}" a été publié avec succès`
+          title: "Hook publié"
         });
       }
 

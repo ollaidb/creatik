@@ -65,13 +65,11 @@ const Hooks = () => {
     try {
       await navigator.clipboard.writeText(text);
       toast({
-        title: "Copié !",
-        description: "Le hook a été copié dans le presse-papiers",
+        title: "Copié"
       });
     } catch (error) {
       toast({
         title: "Erreur",
-        description: "Impossible de copier le hook",
         variant: "destructive",
       });
     }
@@ -80,16 +78,14 @@ const Hooks = () => {
   const handleLikeHook = (hookId: string) => {
     // TODO: Implémenter la fonctionnalité de like
     toast({
-      title: "Hook liké !",
-      description: "Ce hook a été ajouté à tes favoris",
+      title: "Ajouté"
     });
   };
 
   const handleAddToChallenge = (hookId: string) => {
     // TODO: Implémenter l'ajout aux défis
     toast({
-      title: "Hook ajouté !",
-      description: "Ce hook a été ajouté à vos défis",
+      title: "Ajouté"
     });
   };
 

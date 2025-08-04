@@ -36,17 +36,13 @@ const Sources = () => {
   const handleFavorite = (sourceId: string) => {
     if (!user) {
       toast({
-        title: "Connexion requise",
-        description: "Connectez-vous pour ajouter des sources à vos favoris.",
+        title: "Connexion requise"
       });
       return;
     }
     toggleFavorite(sourceId);
     toast({
-      title: isFavorite(sourceId) ? "Retiré des favoris" : "Ajouté à vos favoris !",
-      description: isFavorite(sourceId)
-        ? "La source a été retirée de vos favoris."
-        : "Vous verrez cette source dans votre page de favoris.",
+      title: isFavorite(sourceId) ? "Retiré" : "Ajouté"
     });
   };
   const handleVisitSource = (url: string) => {
