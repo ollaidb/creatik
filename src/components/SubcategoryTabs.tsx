@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 
-type TabType = 'titres' | 'comptes' | 'sources' | 'hashtags' | 'hooks' | 'blog' | 'article' | 'mots-cles' | 'exemple' | 'idees';
+type TabType = 'titres' | 'comptes' | 'sources' | 'hashtags' | 'hooks' | 'blog' | 'article' | 'mots-cles' | 'exemple' | 'idees' | 'podcast';
 
 interface SubcategoryTabsProps {
   activeTab: TabType;
@@ -25,6 +25,8 @@ const SubcategoryTabs: React.FC<SubcategoryTabsProps> = ({
         return ['titres', 'sources', 'blog', 'mots-cles'];
       case 'article':
         return ['titres', 'sources', 'article', 'mots-cles'];
+      case 'podcast':
+        return ['titres', 'sources', 'podcast', 'mots-cles'];
       case 'twitter':
         return ['exemple', 'comptes', 'sources', 'hashtags'];
       case 'instagram':
@@ -47,6 +49,7 @@ const SubcategoryTabs: React.FC<SubcategoryTabsProps> = ({
       case 'hooks': return 'Hooks';
       case 'blog': return 'Blog';
       case 'article': return 'Article';
+      case 'podcast': return 'Podcast';
       case 'mots-cles': return 'Mots-clés';
       case 'exemple': return 'Exemple';
       case 'idees': return 'Idées';

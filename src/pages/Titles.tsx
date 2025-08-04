@@ -14,6 +14,7 @@ import { useArticles } from '@/hooks/useArticles';
 import { useMotsCles } from '@/hooks/useMotsCles';
 import { useExemples } from '@/hooks/useExemples';
 import { useIdees } from '@/hooks/useIdees';
+import { usePodcasts } from '@/hooks/usePodcasts';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useFavorites } from '@/hooks/useFavorites';
@@ -22,7 +23,7 @@ import SubcategoryTabs from '@/components/SubcategoryTabs';
 import HashtagsSection from '@/components/HashtagsSection';
 import Navigation from '@/components/Navigation';
 
-type TabType = 'titres' | 'comptes' | 'sources' | 'hashtags' | 'hooks' | 'blog' | 'article' | 'mots-cles' | 'exemple' | 'idees';
+type TabType = 'titres' | 'comptes' | 'sources' | 'hashtags' | 'hooks' | 'blog' | 'article' | 'mots-cles' | 'exemple' | 'idees' | 'podcast';
 
 const Titles = () => {
   const { subcategoryId, categoryId, subcategoryLevel2Id } = useParams();
@@ -77,6 +78,7 @@ const Titles = () => {
   const { data: motsCles = [], isLoading: motsClesLoading } = useMotsCles(currentSubcategoryId, detectedNetwork);
   const { data: exemples = [], isLoading: exemplesLoading } = useExemples(currentSubcategoryId, detectedNetwork);
   const { data: idees = [], isLoading: ideesLoading } = useIdees(currentSubcategoryId, detectedNetwork);
+  const { data: podcasts = [], isLoading: podcastsLoading } = usePodcasts(currentSubcategoryId, detectedNetwork);
   
   // Utiliser les données appropriées selon le niveau
   const currentSubcategory = isLevel2 ? subcategoryLevel2 : subcategory;
@@ -93,6 +95,7 @@ const Titles = () => {
   const { favorites: motsClesFavorites, toggleFavorite: toggleMotsClesFavorite, isFavorite: isMotsClesFavorite } = useFavorites('mots-cles');
   const { favorites: exempleFavorites, toggleFavorite: toggleExempleFavorite, isFavorite: isExempleFavorite } = useFavorites('exemple');
   const { favorites: ideeFavorites, toggleFavorite: toggleIdeeFavorite, isFavorite: isIdeeFavorite } = useFavorites('idee');
+  const { favorites: podcastFavorites, toggleFavorite: togglePodcastFavorite, isFavorite: isPodcastFavorite } = useFavorites('podcast');
   
   // Combiner tous les types de titres
   const allTitles = [
@@ -147,6 +150,7 @@ const Titles = () => {
       case 'twitch': return 'Twitch';
       case 'blog': return 'Blog';
       case 'article': return 'Article';
+      case 'podcast': return 'Podcast';
       default: return 'Toutes les plateformes';
     }
   };
@@ -202,6 +206,7 @@ const Titles = () => {
     motsCles: motsCles.length,
     exemples: exemples.length,
     idees: idees.length,
+    podcasts: podcasts.length,
     showHooksValue: isHooksAvailableForNetwork(detectedNetwork),
     urlParams: searchParams.toString(),
     currentUrl: window.location.href
@@ -332,6 +337,21 @@ const Titles = () => {
       await toggleIdeeFavorite(ideeId);
       toast({
         title: isIdeeFavorite(ideeId) ? "Retiré" : "Ajouté"
+      });
+    } catch (error) {
+      console.error('Erreur lors du like:', error);
+      toast({
+        title: "Erreur",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleLikePodcast = async (podcastId: string) => {
+    try {
+      await togglePodcastFavorite(podcastId);
+      toast({
+        title: isPodcastFavorite(podcastId) ? "Retiré" : "Ajouté"
       });
     } catch (error) {
       console.error('Erreur lors du like:', error);
