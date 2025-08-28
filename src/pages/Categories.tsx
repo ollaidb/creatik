@@ -9,7 +9,7 @@ import { useFavorites } from '@/hooks/useFavorites';
 import CategoryCard from '@/components/CategoryCard';
 import { Button } from '@/components/ui/button';
 import LocalSearchBar from '@/components/LocalSearchBar';
-import ChallengeButton from '@/components/ChallengeButton';
+import CreatorsButton from '@/components/CreatorsButton';
 import Navigation from '@/components/Navigation';
 
 const Categories = () => {
@@ -329,10 +329,10 @@ const Categories = () => {
               />
             </div>
             <div className="flex justify-center">
-              <ChallengeButton 
+              <CreatorsButton 
                 variant="outline"
                 size="sm"
-                className="rounded-full bg-red-600 hover:bg-red-700 text-white"
+                className="rounded-full"
               />
             </div>
           </div>

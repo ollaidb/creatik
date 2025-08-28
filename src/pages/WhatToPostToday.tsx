@@ -175,7 +175,10 @@ const WhatToPostToday: React.FC = () => {
               ))}
             </SelectContent>
           </Select>
+        </div>
 
+        {/* Bouton Actualiser en haut */}
+        <div className="flex justify-end mb-6">
           <Button
             onClick={fetchTodayEvents}
             variant="outline"

@@ -21,7 +21,7 @@ const Navigation: React.FC<NavigationProps> = ({ className }) => {
     currentPath.startsWith("/profile") ? "profile" : "home";
 
   const tabs = [
-    { id: "home", label: "Accueil", icon: "home", path: "/" },
+    { id: "home", label: "", icon: "home", path: "/" },
     { id: "categories", label: "Catégories", icon: "categories", path: "/categories" },
     { id: "publish", label: "Publier", icon: "publish", path: "/publish" },
     { id: "challenges", label: "Défis", icon: "challenges", path: "/challenges" },
