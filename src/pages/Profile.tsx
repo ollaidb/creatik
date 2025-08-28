@@ -138,11 +138,11 @@ const Profile = () => {
       requiresAuth: true
     },
     {
-      title: 'Challenges Publics',
-      description: 'Découvrez et participez aux challenges de la communauté',
-      icon: Target,
-      path: '/public-challenges',
-      color: 'text-blue-500',
+      title: 'Notes',
+      description: 'Gérez votre compte et votre contenu créatif',
+      icon: BookOpen,
+      path: '/notes',
+      color: 'text-indigo-500',
       requiresAuth: true
     },
     {

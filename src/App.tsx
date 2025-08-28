@@ -36,6 +36,9 @@ import Events from "./pages/Events";
 import Creators from "./pages/Creators";
 import CreatorDetail from "./pages/CreatorDetail";
 import AuthCallback from "./pages/AuthCallback";
+import Notes from "./pages/Notes";
+import Compte from "./pages/Compte";
+import Contenu from "./pages/Contenu";
 
 // Configuration optimisée du QueryClient pour de meilleures performances
 const queryClient = new QueryClient({
@@ -101,6 +104,10 @@ const AppContent = () => {
             {/* Publish Route */}
             <Route path="/publish" element={<Publish />} />
             <Route path="/search" element={<SearchResults />} />
+            {/* Notes Route */}
+            <Route path="/notes" element={<Notes />} />
+        <Route path="/compte" element={<Compte />} />
+        <Route path="/contenu" element={<Contenu />} />
             {/* Inspiration Card Routes */}
             <Route path="/ideas/trending" element={<NotFound />} />
             <Route path="/categories/explore" element={<Categories />} />
