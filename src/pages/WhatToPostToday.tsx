@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useTodayEvents } from '@/hooks/useTodayEvents';
-import StickyHeader from '@/components/StickyHeader';
+
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -65,7 +65,6 @@ const WhatToPostToday: React.FC = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-creatik-primary">
-        <StickyHeader />
         <div className="container mx-auto px-4 py-8">
           <div className="flex items-center justify-center h-64">
             <div className="flex items-center space-x-2 text-creatik-primary">
@@ -81,7 +80,6 @@ const WhatToPostToday: React.FC = () => {
   if (error) {
     return (
       <div className="min-h-screen bg-creatik-primary">
-        <StickyHeader />
         <div className="container mx-auto px-4 py-8">
           <div className="text-center">
             <p className="text-creatik-error mb-4">{error}</p>
@@ -99,8 +97,6 @@ const WhatToPostToday: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-creatik-primary">
-      <StickyHeader />
-      
       <div className="container mx-auto px-4 py-6">
         {/* En-tête avec date */}
         <div className="mb-6">

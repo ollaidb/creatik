@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ArrowLeft, User, Heart, History, Settings, Shield, HelpCircle, Mail, FileText, Plus, LogOut, Camera, BookOpen, Target } from 'lucide-react';
 import Navigation from '@/components/Navigation';
-import StickyHeader from '@/components/StickyHeader';
+
 import AuthModal from '@/components/AuthModal';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/hooks/useAuth';

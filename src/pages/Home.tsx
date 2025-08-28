@@ -8,7 +8,7 @@ import { useSearchHistory } from '@/hooks/useSearchHistory';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import Navigation from '@/components/Navigation';
-import StickyHeader from '@/components/StickyHeader';
+
 interface SearchResult {
   id: string;
   title: string;
@@ -77,7 +77,7 @@ const Home = () => {
   };
   return (
     <div className="min-h-screen pb-20">
-      <StickyHeader onSearch={handleSearchFromHeader} />
+
       <main className="max-w-4xl mx-auto p-4">
         {/* Affichage conditionnel : soit la page d'accueil, soit les résultats */}
         {!hasSearched ? (

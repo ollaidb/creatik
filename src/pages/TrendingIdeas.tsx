@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useSocialTrends, type TrendingTopic } from '@/hooks/useSocialTrends';
 import TrendingCard from '@/components/TrendingCard';
-import StickyHeader from '@/components/StickyHeader';
+
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -38,7 +38,6 @@ const TrendingIdeas: React.FC = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-creatik-primary">
-        <StickyHeader title="Tendances" />
         <div className="container mx-auto px-4 py-8">
           <div className="flex items-center justify-center h-64">
             <div className="flex items-center space-x-2 text-creatik-primary">
@@ -54,7 +53,6 @@ const TrendingIdeas: React.FC = () => {
   if (error) {
     return (
       <div className="min-h-screen bg-creatik-primary">
-        <StickyHeader title="Tendances" />
         <div className="container mx-auto px-4 py-8">
           <div className="text-center">
             <p className="text-creatik-error mb-4">{error}</p>
@@ -72,8 +70,6 @@ const TrendingIdeas: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-creatik-primary">
-      <StickyHeader title="Tendances" />
-      
       <div className="container mx-auto px-4 py-6">
         {/* En-tête avec statistiques */}
         <div className="mb-6">
