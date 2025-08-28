@@ -130,11 +130,19 @@ const Profile = () => {
       requiresAuth: true
     },
     {
+      title: 'Mes Défis',
+      description: 'Gérez vos défis personnels et suivez votre progression',
+      icon: Target,
+      path: '/challenges',
+      color: 'text-orange-500',
+      requiresAuth: true
+    },
+    {
       title: 'Challenges Publics',
       description: 'Découvrez et participez aux challenges de la communauté',
       icon: Target,
       path: '/public-challenges',
-      color: 'text-orange-500',
+      color: 'text-blue-500',
       requiresAuth: true
     },
     {

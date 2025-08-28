@@ -95,9 +95,9 @@ const AppContent = () => {
             <Route path="/profile/preferences" element={<Preferences />} />
             <Route path="/profile/legal" element={<Legal />} />
             <Route path="/profile/contact" element={<Contact />} />
-            <Route path="/profile/publications" element={<Publications />} />
-
-              <Route path="/profile/settings" element={<Settings />} />
+                        <Route path="/profile/publications" element={<Publications />} />
+            <Route path="/profile/challenges" element={<Challenges />} />
+            <Route path="/profile/settings" element={<Settings />} />
             {/* Publish Route */}
             <Route path="/publish" element={<Publish />} />
             <Route path="/search" element={<SearchResults />} />
