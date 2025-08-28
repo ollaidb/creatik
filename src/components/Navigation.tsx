@@ -17,14 +17,14 @@ const Navigation: React.FC<NavigationProps> = ({ className }) => {
     currentPath === "/" ? "home" :
     currentPath.startsWith("/categories") ? "categories" :
     currentPath.startsWith("/publish") ? "publish" :
-    currentPath.startsWith("/challenges") ? "challenges" :
+    (currentPath.startsWith("/challenges") || currentPath.startsWith("/public-challenges")) ? "challenges" :
     currentPath.startsWith("/profile") ? "profile" : "home";
 
   const tabs = [
     { id: "home", label: "", icon: "home", path: "/" },
     { id: "categories", label: "Catégories", icon: "categories", path: "/categories" },
     { id: "publish", label: "Publier", icon: "publish", path: "/publish" },
-    { id: "challenges", label: "Défis", icon: "challenges", path: "/challenges" },
+    { id: "challenges", label: "Challenges", icon: "challenges", path: "/public-challenges" },
     { id: "profile", label: "Profil", icon: "profile", path: "/profile" },
   ];
 

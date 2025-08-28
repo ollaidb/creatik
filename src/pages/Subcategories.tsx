@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Plus, Heart, Filter } from 'lucide-react';
+import { ArrowLeft, Plus, Heart, Filter, Info } from 'lucide-react';
 import { useSubcategories } from '@/hooks/useSubcategories';
 import { useCategories } from '@/hooks/useCategories';
 import { useFavorites } from '@/hooks/useFavorites';
@@ -215,6 +215,17 @@ const Subcategories = () => {
                 placeholder="Rechercher une sous-catégorie..."
                 className="flex-1"
               />
+            </div>
+            {/* Bouton Guide sous la barre de recherche */}
+            <div className="flex justify-center mt-4">
+              <Button 
+                variant="outline"
+                onClick={() => navigate(`/category/${categoryId}/info`)}
+                className="px-6 py-2 rounded-full"
+              >
+                <Info className="h-4 w-4 mr-2" />
+                Guide
+              </Button>
             </div>
           </div>
         </div>

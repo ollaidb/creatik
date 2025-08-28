@@ -30,6 +30,8 @@ import Accounts from "./pages/Accounts";
 import Sources from "./pages/Sources";
 import TrendingIdeas from "./pages/TrendingIdeas";
 import WhatToPostToday from "./pages/WhatToPostToday";
+import ChallengeDetail from "./pages/ChallengeDetail";
+import CategoryInfo from "./pages/Info";
 import Events from "./pages/Events";
 import Creators from "./pages/Creators";
 import CreatorDetail from "./pages/CreatorDetail";
@@ -67,13 +69,17 @@ const AppContent = () => {
             <Route path="/category/:categoryId/subcategory/:subcategoryId/subcategories-level2" element={<SubcategoriesLevel2 />} />
             <Route path="/category/:categoryId/subcategory/:subcategoryId/subcategory-level2/:subcategoryLevel2Id" element={<Titles />} />
             <Route path="/category/:categoryId/subcategory/:subcategoryId" element={<Titles />} />
+            <Route path="/category/:categoryId/info" element={<CategoryInfo />} />
             <Route path="/category/:categoryId/subcategory/:subcategoryId/hooks" element={<Hooks />} />
             {/* Challenges Routes */}
-            <Route path="/challenges" element={<PublicChallenges />} />
+            <Route path="/challenges" element={<Challenges />} />
+            <Route path="/public-challenges" element={<PublicChallenges />} />
             {/* Trending Ideas Route */}
             <Route path="/trending" element={<TrendingIdeas />} />
             {/* What to Post Today Route */}
             <Route path="/what-to-post" element={<WhatToPostToday />} />
+            <Route path="/challenge/:id" element={<ChallengeDetail />} />
+
             {/* Events Route */}
             <Route path="/events" element={<Events />} />
             {/* Creators Route */}
@@ -90,7 +96,7 @@ const AppContent = () => {
             <Route path="/profile/legal" element={<Legal />} />
             <Route path="/profile/contact" element={<Contact />} />
             <Route path="/profile/publications" element={<Publications />} />
-            <Route path="/profile/challenges" element={<Challenges />} />
+
               <Route path="/profile/settings" element={<Settings />} />
             {/* Publish Route */}
             <Route path="/publish" element={<Publish />} />

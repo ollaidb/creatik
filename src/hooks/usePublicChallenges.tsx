@@ -17,6 +17,10 @@ interface PublicChallenge {
   likes_count: number;
   category_id?: string;
   subcategory_id?: string;
+  challenge_type?: string;
+  status?: string;
+  platform?: string;
+  tags?: string[];
   created_at: string;
   updated_at: string;
   creator?: {
