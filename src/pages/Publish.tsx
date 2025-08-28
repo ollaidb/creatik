@@ -1,916 +1,903 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Target, User, Plus, Hash, Calendar, Star, Lightbulb, Users, Globe, Camera, Video, FileText, MessageSquare } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
+import { Send, Loader2, ArrowLeft, Search, X, Check, AlertTriangle, Eye, FileText, Link, User } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useCategories } from '@/hooks/useCategories';
 import { useSubcategories } from '@/hooks/useSubcategories';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import Navigation from '@/components/Navigation';
+import { useSocialNetworks } from '@/hooks/useSocialNetworks';
+import { useThemes } from '@/hooks/useThemes';
 
-interface ChallengeFormData {
-  title: string;
+interface Category {
+  id: string;
+  name: string;
+  color: string;
+}
+
+interface Subcategory {
+  id: string;
+  name: string;
   description: string;
-  category: string;
-  subcategory: string;
-  difficulty: string;
-  duration_days: number;
-  points: number;
-  platform: string;
-  tags: string[];
-}
-
-interface ContentChallengeData extends ChallengeFormData {
-  content_type: string;
-  requirements: string;
-}
-
-interface AccountChallengeData extends ChallengeFormData {
-  account_name: string;
-  account_description: string;
-  content_ideas: string[];
-  target_audience: string;
-  content_style: string;
+  category_id: string;
 }
 
 const Publish = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
   const { toast } = useToast();
-  const { data: categories = [] } = useCategories();
-  const { data: subcategories = [] } = useSubcategories();
-  
-  // Fonction pour filtrer les sous-catégories par catégorie
-  const getSubcategoriesByCategory = (categoryId: string) => {
-    return subcategories.filter(sub => sub.category_id === categoryId);
-  };
-  
-  const [activeTab, setActiveTab] = useState('content');
-  const [loading, setLoading] = useState(false);
-  
-  // États pour les formulaires
-  const [contentChallenge, setContentChallenge] = useState<ContentChallengeData>({
+  const { user } = useAuth();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState({
     title: '',
-    description: '',
-    category: '',
-    subcategory: '',
-    difficulty: 'medium',
-    duration_days: 1,
-    points: 50,
-    platform: '',
-    tags: [],
-    content_type: 'post',
-    requirements: ''
+    content_type: 'title' as 'category' | 'subcategory' | 'title' | 'challenge' | 'source' | 'account' | 'hooks',
+    category_id: '',
+    subcategory_id: '',
+    description: '', // Added for challenges
+    url: '', // Added for sources and accounts
+    platform: '', // Added for accounts
+    theme: '' // Added for content theme
   });
 
-  const [accountChallenge, setAccountChallenge] = useState<AccountChallengeData>({
-    title: '',
-    description: '',
-    category: '',
-    subcategory: '',
-    difficulty: 'medium',
-    duration_days: 1,
-    points: 50,
-    platform: '',
-    tags: [],
-    account_name: '',
-    account_description: '',
-    content_ideas: [''],
-    target_audience: '',
-    content_style: ''
-  });
+  // États pour les barres de recherche
+  const [categorySearch, setCategorySearch] = useState('');
+  const [subcategorySearch, setSubcategorySearch] = useState('');
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+  const [showSubcategoryDropdown, setShowSubcategoryDropdown] = useState(false);
+  const [selectedNetwork, setSelectedNetwork] = useState('');
+  const { data: socialNetworks } = useSocialNetworks();
+  const { data: themes } = useThemes();
 
-  const [newTag, setNewTag] = useState('');
-  const [newContentIdea, setNewContentIdea] = useState('');
+  // Refs pour les dropdowns
+  const categoryDropdownRef = useRef<HTMLDivElement>(null);
+  const subcategoryDropdownRef = useRef<HTMLDivElement>(null);
 
-  // Options pour les sélecteurs
-  const difficultyOptions = [
-    { value: 'easy', label: 'Facile', points: 25 },
-    { value: 'medium', label: 'Moyen', points: 50 },
-    { value: 'hard', label: 'Difficile', points: 100 }
-  ];
+  // Récupérer les données
+  const { data: categories } = useCategories();
+  const { data: subcategories } = useSubcategories(formData.category_id);
 
-  const contentTypes = [
-    { value: 'post', label: 'Post', icon: FileText },
-    { value: 'video', label: 'Vidéo', icon: Video },
-    { value: 'story', label: 'Story', icon: Camera },
-    { value: 'reel', label: 'Reel', icon: Video },
-    { value: 'carousel', label: 'Carousel', icon: FileText },
-    { value: 'thread', label: 'Thread', icon: MessageSquare }
-  ];
+  // Filtrer les catégories selon la recherche
+  const filteredCategories = categories?.filter(category =>
+    category.name.toLowerCase().includes(categorySearch.toLowerCase())
+  ) || [];
 
-  const platforms = [
-    { value: 'instagram', label: 'Instagram' },
-    { value: 'tiktok', label: 'TikTok' },
-    { value: 'linkedin', label: 'LinkedIn' },
-    { value: 'twitter', label: 'Twitter' },
-    { value: 'youtube', label: 'YouTube' },
-    { value: 'facebook', label: 'Facebook' },
-    { value: 'multi', label: 'Multi-plateforme' }
-  ];
+  // Filtrer les sous-catégories selon la recherche
+  const filteredSubcategories = subcategories?.filter(subcategory =>
+    subcategory.name.toLowerCase().includes(subcategorySearch.toLowerCase())
+  ) || [];
 
-  const contentStyles = [
-    { value: 'professional', label: 'Professionnel' },
-    { value: 'casual', label: 'Décontracté' },
-    { value: 'humorous', label: 'Humoristique' },
-    { value: 'educational', label: 'Éducatif' },
-    { value: 'inspirational', label: 'Inspirant' },
-    { value: 'trendy', label: 'Tendance' }
-  ];
+  // Fermer les dropdowns quand on clique à l'extérieur
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (categoryDropdownRef.current && !categoryDropdownRef.current.contains(event.target as Node)) {
+        setShowCategoryDropdown(false);
+      }
+      if (subcategoryDropdownRef.current && !subcategoryDropdownRef.current.contains(event.target as Node)) {
+        setShowSubcategoryDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
-  // Gestion des tags
-  const addTag = (tags: string[], setTags: (tags: string[]) => void) => {
-    if (newTag.trim() && !tags.includes(newTag.trim())) {
-      setTags([...tags, newTag.trim()]);
-      setNewTag('');
-    }
-  };
-
-  const removeTag = (tagToRemove: string, tags: string[], setTags: (tags: string[]) => void) => {
-    setTags(tags.filter(tag => tag !== tagToRemove));
-  };
-
-  // Gestion des idées de contenu
-  const addContentIdea = () => {
-    if (newContentIdea.trim()) {
-      setAccountChallenge({
-        ...accountChallenge,
-        content_ideas: [...accountChallenge.content_ideas, newContentIdea.trim()]
-      });
-      setNewContentIdea('');
-    }
-  };
-
-  const removeContentIdea = (index: number) => {
-    setAccountChallenge({
-      ...accountChallenge,
-      content_ideas: accountChallenge.content_ideas.filter((_, i) => i !== index)
-    });
-  };
-
-  const updateContentIdea = (index: number, value: string) => {
-    const newIdeas = [...accountChallenge.content_ideas];
-    newIdeas[index] = value;
-    setAccountChallenge({
-      ...accountChallenge,
-      content_ideas: newIdeas
-    });
-  };
-
-  // Mise à jour automatique des points selon la difficulté
-  const updateDifficulty = (difficulty: string, setChallenge: any, challenge: any) => {
-    const difficultyOption = difficultyOptions.find(d => d.value === difficulty);
-    setChallenge({
-      ...challenge,
-      difficulty,
-      points: difficultyOption?.points || 50
-    });
-  };
-
-  // Validation des formulaires
-  const validateContentChallenge = (): boolean => {
-    return !!(
-      contentChallenge.title &&
-      contentChallenge.description &&
-      contentChallenge.category &&
-      contentChallenge.content_type &&
-      contentChallenge.platform
-    );
-  };
-
-  const validateAccountChallenge = (): boolean => {
-    return !!(
-      accountChallenge.title &&
-      accountChallenge.description &&
-      accountChallenge.account_name &&
-      accountChallenge.account_description &&
-      accountChallenge.platform &&
-      accountChallenge.content_ideas.some(idea => idea.trim())
-    );
-  };
-
-  // Publication des challenges
-  const publishChallenge = async () => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    console.log('=== DÉBUT PUBLICATION ===');
+    console.log('User:', user);
+    console.log('FormData:', formData);
+    console.log('Content Type:', formData.content_type);
+    console.log('Selected Network:', selectedNetwork);
+    
     if (!user) {
       toast({
-        title: "Erreur",
-        description: "Vous devez être connecté pour publier un challenge",
+        title: "Connexion requise",
         variant: "destructive"
       });
       return;
     }
 
-    const isContentTab = activeTab === 'content';
-    const isValid = isContentTab ? validateContentChallenge() : validateAccountChallenge();
-
-    if (!isValid) {
+    if (!formData.title || !formData.content_type) {
       toast({
-        title: "Formulaire incomplet",
-        description: "Veuillez remplir tous les champs obligatoires",
+        title: "Champs manquants",
         variant: "destructive"
       });
       return;
     }
 
-    setLoading(true);
+    // Validation du réseau social seulement pour les types qui en ont besoin
+    const needsNetwork = ['title', 'hooks'].includes(formData.content_type);
+    if (needsNetwork && (!selectedNetwork || selectedNetwork === '')) {
+      toast({
+        title: "Réseau requis",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Validations spécifiques selon le type de contenu
+    if (formData.content_type === 'subcategory' && !formData.category_id) {
+      toast({
+        title: "Catégorie requise",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if ((formData.content_type === 'title' || formData.content_type === 'account') && !formData.subcategory_id) {
+      toast({
+        title: "Sous-catégorie requise",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (formData.content_type === 'challenge' && !formData.description) {
+      toast({
+        title: "Description requise",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (formData.content_type === 'source' && !formData.url) {
+      toast({
+        title: "URL requise",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (formData.content_type === 'account' && (!formData.platform || !formData.url)) {
+      toast({
+        title: "Infos manquantes",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Validation du thème de contenu pour les catégories
+    if (formData.content_type === 'category' && !formData.theme) {
+      toast({
+        title: "Thème requis",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
 
     try {
-      // Ici tu ajouteras la logique pour insérer dans la base de données
-      // Pour l'instant, on simule la publication
+      console.log('=== TENTATIVE DE PUBLICATION ===');
+      console.log('Type de contenu:', formData.content_type);
       
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
+      // Publication directe selon le type de contenu
+      if (formData.content_type === 'category') {
+        console.log('Publication catégorie...');
+        // Couleurs valides pour les catégories (mises à jour)
+        const colors = ['primary', 'orange', 'green', 'pink', 'blue', 'purple', 'red', 'yellow', 'gray', 'indigo', 'teal', 'cyan', 'emerald', 'violet', 'amber', 'lime', 'rose', 'slate'];
+        const randomColor = colors[Math.floor(Math.random() * colors.length)];
+        
+        console.log('Couleur sélectionnée:', randomColor);
+        
+        const { error } = await supabase
+          .from('categories')
+          .insert({
+            name: formData.title,
+            description: formData.description || 'Catégorie publiée',
+            color: randomColor
+          });
+        
+        if (error) {
+          console.error('Erreur catégorie:', error);
+          console.error('Code d\'erreur:', error.code);
+          console.error('Message d\'erreur:', error.message);
+          console.error('Détails:', error.details);
+          throw error;
+        }
+        
+        console.log('Catégorie publiée avec succès');
         toast({
-        title: "Succès !",
-        description: `Challenge ${isContentTab ? 'de contenu' : 'de compte'} publié avec succès`,
-      });
+          title: "Catégorie publiée"
+        });
+      } else if (formData.content_type === 'subcategory') {
+        console.log('Publication sous-catégorie...');
+        const { error } = await supabase
+          .from('subcategories')
+          .insert({
+            name: formData.title,
+            description: formData.description || 'Sous-catégorie publiée',
+            category_id: formData.category_id
+          });
+        
+        if (error) {
+          console.error('Erreur sous-catégorie:', error);
+          throw error;
+        }
+        
+        console.log('Sous-catégorie publiée avec succès');
+        toast({
+          title: "Sous-catégorie publiée"
+        });
+      } else if (formData.content_type === 'title') {
+        console.log('Publication titre...');
+        const { error } = await supabase
+          .from('content_titles')
+          .insert({
+            title: formData.title,
+            subcategory_id: formData.subcategory_id,
+            platform: selectedNetwork,
+            type: 'title'
+          });
+        
+        if (error) {
+          console.error('Erreur titre:', error);
+          throw error;
+        }
+        
+        console.log('Titre publié avec succès');
+        toast({
+          title: "Titre publié"
+        });
+      } else if (formData.content_type === 'challenge') {
+        console.log('Publication challenge...');
+        const { error } = await supabase
+          .from('challenges')
+          .insert({
+            title: formData.title,
+            description: formData.description,
+            category: 'Challenge',
+            points: 50,
+            difficulty: 'medium',
+            duration_days: 1,
+            is_daily: false,
+            is_active: true
+          });
+        
+        if (error) {
+          console.error('Erreur challenge:', error);
+          throw error;
+        }
+        
+        console.log('Challenge publié avec succès');
+        toast({
+          title: "Challenge publié"
+        });
+      } else if (formData.content_type === 'source') {
+        console.log('Publication source...');
+        const { error } = await supabase
+          .from('sources')
+          .insert({
+            name: formData.title,
+            description: formData.description || 'Source publiée',
+            url: formData.url
+          });
+        
+        if (error) {
+          console.error('Erreur source:', error);
+          throw error;
+        }
+        
+        console.log('Source publiée avec succès');
+        toast({
+          title: "Source publiée"
+        });
+      } else if (formData.content_type === 'account') {
+        console.log('Publication compte...');
+        const { error } = await supabase
+          .from('exemplary_accounts')
+          .insert({
+            account_name: formData.title,
+            description: formData.description || 'Compte publié',
+            platform: formData.platform,
+            account_url: formData.url,
+            subcategory_id: formData.subcategory_id
+          });
+        
+        if (error) {
+          console.error('Erreur compte:', error);
+          throw error;
+        }
+        
+        console.log('Compte publié avec succès');
+        toast({
+          title: "Compte publié"
+        });
+      } else if (formData.content_type === 'hooks') {
+        console.log('Publication hook...');
+        const { error } = await supabase
+          .from('content_titles')
+          .insert({
+            title: formData.title,
+            platform: selectedNetwork,
+            type: 'hook'
+          });
+        
+        if (error) {
+          console.error('Erreur hook:', error);
+          throw error;
+        }
+        
+        console.log('Hook publié avec succès');
+        toast({
+          title: "Hook publié"
+        });
+      }
 
-      // Rediriger vers la page des challenges publics
-      navigate('/public-challenges');
+      console.log('=== PUBLICATION RÉUSSIE ===');
+
+      // AJOUTER LA PUBLICATION DANS USER_PUBLICATIONS
+      try {
+        console.log('=== AJOUT DANS USER_PUBLICATIONS ===');
+        console.log('User ID:', user.id);
+        console.log('Content Type:', formData.content_type);
+        console.log('Title:', formData.title);
+        console.log('Description:', formData.description);
+        console.log('Category ID:', formData.category_id);
+        console.log('Subcategory ID:', formData.subcategory_id);
+        console.log('Platform:', selectedNetwork || formData.platform);
+        console.log('URL:', formData.url);
+        
+        const publicationData = {
+          user_id: user.id,
+          content_type: formData.content_type,
+          title: formData.title,
+          description: formData.description,
+          category_id: formData.category_id || null,
+          subcategory_id: formData.subcategory_id || null,
+          platform: selectedNetwork || formData.platform || null,
+          url: formData.url || null,
+          status: 'approved'
+        };
+        
+        console.log('Données à insérer:', publicationData);
+        
+        const { data: insertedData, error: userPubError } = await supabase
+          .from('user_publications')
+          .insert(publicationData)
+          .select();
+
+        if (userPubError) {
+          console.error('❌ Erreur lors de l\'ajout dans user_publications:', userPubError);
+          console.error('Code d\'erreur:', userPubError.code);
+          console.error('Message d\'erreur:', userPubError.message);
+          console.error('Détails:', userPubError.details);
+          console.error('Hint:', userPubError.hint);
+          
+          // Afficher l'erreur à l'utilisateur
+          toast({
+            title: "Attention",
+            description: `Publication réussie mais problème d'enregistrement personnel: ${userPubError.message}`,
+            variant: "destructive"
+          });
+        } else {
+          console.log('✅ Publication ajoutée dans user_publications avec succès');
+          console.log('Données insérées:', insertedData);
+          
+          toast({
+            title: "Publication enregistrée",
+            description: "Votre publication a été ajoutée à votre liste personnelle",
+          });
+        }
+      } catch (userPubErr) {
+        console.error('❌ Exception lors de l\'ajout dans user_publications:', userPubErr);
+        console.error('Type d\'erreur:', typeof userPubErr);
+        console.error('Message:', userPubErr instanceof Error ? userPubErr.message : 'Erreur inconnue');
+        
+        // Afficher l'erreur à l'utilisateur
+        toast({
+          title: "Attention",
+          description: `Publication réussie mais problème d'enregistrement personnel: ${userPubErr instanceof Error ? userPubErr.message : 'Erreur inconnue'}`,
+          variant: "destructive"
+        });
+      }
+
+      // Réinitialiser le formulaire
+      setFormData({
+        title: '',
+        content_type: 'title',
+        category_id: '',
+        subcategory_id: '',
+        description: '',
+        url: '',
+        platform: '',
+        theme: ''
+      });
+      setSelectedNetwork('');
+
+      // REDIRIGER VERS MES PUBLICATIONS AU LIEU DE LA PAGE D'ACCUEIL
+      toast({
+        title: "Publication réussie !",
+        description: "Votre publication a été ajoutée. Redirection vers vos publications...",
+      });
       
-    } catch (error) {
+      // Rediriger vers la page "Mes publications" après un délai
+      setTimeout(() => {
+        navigate('/profile/publications');
+      }, 1500);
+
+    } catch (error: unknown) {
+      console.error('=== ERREUR DE PUBLICATION ===');
+      console.error('Erreur complète:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
+      console.error('Message d\'erreur:', errorMessage);
       toast({
         title: "Erreur",
-        description: "Impossible de publier le challenge. Veuillez réessayer.",
+        description: `Une erreur est survenue lors de la publication: ${errorMessage}`,
         variant: "destructive"
       });
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
-  if (!user) {
+  const handleCategorySelect = (category: Category) => {
+    setFormData(prev => ({
+      ...prev,
+      category_id: category.id,
+      subcategory_id: '' // Reset subcategory when category changes
+    }));
+    setCategorySearch(category.name);
+    setShowCategoryDropdown(false);
+    setSubcategorySearch(''); // Reset subcategory search
+  };
+
+  const handleSubcategorySelect = (subcategory: Subcategory) => {
+    setFormData(prev => ({
+      ...prev,
+      subcategory_id: subcategory.id
+    }));
+    setSubcategorySearch(subcategory.name);
+    setShowSubcategoryDropdown(false);
+  };
+
+  // Fonction pour obtenir le label du titre selon le type ET le réseau
+  const getTitleLabel = () => {
+    switch (formData.content_type) {
+      case 'category': return 'Nom de la catégorie';
+      case 'subcategory': return 'Nom de la sous-catégorie';
+      case 'challenge': return 'Nom du challenge';
+      case 'source': return 'Titre de la source';
+      case 'account': return 'Pseudo de la personne';
+      case 'hooks': return 'Hook vidéo';
+      default: return 'Titre';
+    }
+  };
+
+  // Fonction pour obtenir le placeholder du titre selon le type ET le réseau
+  const getTitlePlaceholder = () => {
+    switch (formData.content_type) {
+      case 'category': return 'Entrez le nom de la catégorie';
+      case 'subcategory': return 'Entrez le nom de la sous-catégorie';
+      case 'challenge': return 'Entrez le nom de votre challenge';
+      case 'source': return 'Entrez le titre de la source (ex: "TikTok", "Instagram", "YouTube")';
+      case 'account': return 'Entrez le pseudo de la personne (ex: "@username")';
+      case 'hooks': return 'Entrez votre hook pour captiver l\'audience';
+      default: return 'Entrez le titre de votre contenu';
+    }
+  };
+
+  // Fonction pour déterminer si on doit afficher la sélection de catégorie
+  const shouldShowCategorySelection = () => {
+    return ['subcategory', 'title', 'source', 'account', 'hooks'].includes(formData.content_type);
+  };
+
+  // Fonction pour déterminer si on doit afficher la sélection de sous-catégorie
+  const shouldShowSubcategorySelection = () => {
+    return ['title', 'source', 'account', 'hooks'].includes(formData.content_type) && formData.category_id;
+  };
+
+  // Fonction pour déterminer si le réseau social est requis
+  const needsNetwork = ['title', 'hooks'].includes(formData.content_type);
+
   return (
-      <div className="min-h-screen pb-20">
-        <header className="bg-background border-b p-4 flex items-center">
+    <div className="min-h-screen pb-32" style={{ backgroundColor: '#0f0f10' }}>
+      <header className="border-b border-gray-800 p-4" style={{ backgroundColor: '#0f0f10' }}>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
         <Button 
           variant="ghost" 
           size="icon" 
           onClick={() => navigate('/')} 
-            className="mr-2"
+              className="p-2 h-10 w-10 rounded-full text-white hover:bg-gray-800"
             >
-            <ArrowLeft className="h-5 w-5" />
+              <ArrowLeft size={20} />
             </Button>
-          <h1 className="text-xl font-semibold">Publier un Challenge</h1>
-        </header>
-        <main className="max-w-2xl mx-auto p-4">
-          <Card className="text-center py-12">
-            <CardContent>
-              <Target className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-              <h3 className="text-lg font-medium mb-2">Connexion requise</h3>
-              <p className="text-muted-foreground mb-4">
-                Vous devez être connecté pour publier un challenge
-              </p>
-              <Button onClick={() => navigate('/auth')}>
-                Se connecter
-              </Button>
-            </CardContent>
-          </Card>
-        </main>
-        <Navigation />
+            <h1 className="text-xl font-semibold text-white">Publier du contenu</h1>
           </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen pb-20">
-      <header className="bg-background border-b p-4 flex items-center">
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={() => navigate('/public-challenges')} 
-          className="mr-2"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <h1 className="text-xl font-semibold">Publier un Challenge</h1>
+        </div>
       </header>
 
       <main className="max-w-4xl mx-auto p-4">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-6">
-            <TabsTrigger value="content" className="flex items-center gap-2">
-              <Target className="w-4 h-4" />
-              Challenge de Contenu
-            </TabsTrigger>
-            <TabsTrigger value="accounts" className="flex items-center gap-2">
-              <User className="w-4 h-4" />
-              Challenge de Compte
-            </TabsTrigger>
-          </TabsList>
-
-          {/* Onglet Challenge de Contenu */}
-          <TabsContent value="content" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Target className="w-5 h-5" />
-                  Challenge de Contenu
-                </CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  Créez un défi pour la création de contenu créatif
-                </p>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Titre */}
-                <div className="space-y-2">
-                  <Label htmlFor="content-title">Titre du challenge *</Label>
-                  <Input
-                    id="content-title"
-                    placeholder="Ex: Créer un titre viral sur la mode"
-                    value={contentChallenge.title}
-                    onChange={(e) => setContentChallenge({
-                      ...contentChallenge,
-                      title: e.target.value
-                    })}
-                  />
+        <div className="max-w-2xl mx-auto">
+          <form onSubmit={handleSubmit}>
+          
+          {/* Section 1 : Réseau social */}
+          {needsNetwork && (
+          <div className="mb-3">
+            <div className="rounded-lg border border-gray-700 p-3" style={{ backgroundColor: '#0f0f10' }}>
+              <div className="space-y-1">
+                <Label htmlFor="network" className="text-sm text-white">Réseau social *</Label>
+                <div className="relative group">
+                  <div className="flex items-center justify-between p-3 border border-gray-600 rounded-lg text-white text-sm cursor-pointer hover:bg-gray-800/50 transition-all duration-200" style={{ backgroundColor: '#0f0f10' }}>
+                    <span className="font-medium">
+                      {selectedNetwork && selectedNetwork !== '' ? 
+                        socialNetworks?.find(n => n.name === selectedNetwork)?.display_name || 'Sélectionner un réseau' :
+                        'Sélectionner un réseau'
+                      }
+                    </span>
+                    <div className="w-2 h-2 border-r-2 border-b-2 border-gray-400 transform rotate-45 transition-transform duration-200 group-hover:rotate-[-135deg]"></div>
                   </div>
-
-                {/* Description */}
-                <div className="space-y-2">
-                  <Label htmlFor="content-description">Description *</Label>
-                  <Textarea
-                    id="content-description"
-                    placeholder="Décrivez en détail ce que vous attendez des participants"
-                    rows={4}
-                    value={contentChallenge.description}
-                    onChange={(e) => setContentChallenge({
-                      ...contentChallenge,
-                      description: e.target.value
-                    })}
-                  />
+                  <select
+                    id="network"
+                    value={selectedNetwork}
+                    onChange={(e) => setSelectedNetwork(e.target.value)}
+                    className="absolute inset-0 opacity-0 cursor-pointer"
+                    required
+                  >
+                    <option value="">Sélectionner un réseau</option>
+                    {socialNetworks?.map((network) => (
+                      <option key={network.id} value={network.name}>
+                        {network.display_name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
-
-                {/* Type de contenu et plateforme */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="content-type">Type de contenu *</Label>
-                    <Select
-                      value={contentChallenge.content_type}
-                      onValueChange={(value) => setContentChallenge({
-                        ...contentChallenge,
-                        content_type: value
-                      })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Sélectionner un type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {contentTypes.map((type) => {
-                          const Icon = type.icon;
-                          return (
-                            <SelectItem key={type.value} value={type.value}>
-                              <div className="flex items-center gap-2">
-                                <Icon className="w-4 h-4" />
-                                {type.label}
-                </div>
-                            </SelectItem>
-                          );
-                        })}
-                      </SelectContent>
-                    </Select>
               </div>
+            </div>
+          </div>
+          )}
 
-                  <div className="space-y-2">
-                    <Label htmlFor="content-platform">Plateforme *</Label>
-                    <Select
-                      value={contentChallenge.platform}
-                      onValueChange={(value) => setContentChallenge({
-                        ...contentChallenge,
-                        platform: value
-                      })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Sélectionner une plateforme" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {platforms.map((platform) => (
-                          <SelectItem key={platform.value} value={platform.value}>
-                            {platform.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+          {/* Section 2 : Type de contenu */}
+          <div className="mb-3">
+            <div className="rounded-lg border border-gray-700 p-3" style={{ backgroundColor: '#0f0f10' }}>
+              <div className="space-y-1">
+                <Label htmlFor="content_type" className="text-sm text-white">Type de contenu *</Label>
+                <div className="relative group">
+                  <div className="flex items-center justify-between p-3 border border-gray-600 rounded-lg text-white text-sm cursor-pointer hover:bg-gray-800/50 transition-all duration-200" style={{ backgroundColor: '#0f0f10' }}>
+                    <span className="font-medium">
+                      {formData.content_type === 'title' ? 'Titre' :
+                       formData.content_type === 'subcategory' ? 'Sous-catégorie' :
+                       formData.content_type === 'category' ? 'Catégorie' :
+                       formData.content_type === 'challenge' ? 'Challenge' :
+                       formData.content_type === 'source' ? 'Source' :
+                       formData.content_type === 'account' ? 'Compte' :
+                       formData.content_type === 'hooks' ? 'Hooks' : 'Sélectionner un type'}
+                    </span>
+                    <div className="w-2 h-2 border-r-2 border-b-2 border-gray-400 transform rotate-45 transition-transform duration-200 group-hover:rotate-[-135deg]"></div>
+                  </div>
+                  <select
+                    id="content_type"
+                    value={formData.content_type}
+                    onChange={(e) => {
+                      setFormData(prev => ({
+                        ...prev,
+                          content_type: e.target.value as 'category' | 'subcategory' | 'title' | 'challenge' | 'source' | 'account' | 'hooks',
+                          category_id: '',
+                          subcategory_id: '',
+                          description: '',
+                          url: '',
+                          platform: '',
+                          theme: ''
+                        }));
+                        setCategorySearch('');
+                        setSubcategorySearch('');
+                    }}
+                    className="absolute inset-0 opacity-0 cursor-pointer"
+                    required
+                  >
+                    <option value="title">Titre</option>
+                    <option value="subcategory">Sous-catégorie</option>
+                    <option value="category">Catégorie</option>
+                    <option value="challenge">Challenge</option>
+                    <option value="source">Source</option>
+                    <option value="account">Compte</option>
+                    <option value="hooks">Hooks</option>
+                  </select>
+                </div>
+              </div>
             </div>
           </div>
 
-                {/* Catégorie et sous-catégorie */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="content-category">Catégorie</Label>
-                    <Select
-                      value={contentChallenge.category}
-                      onValueChange={(value) => setContentChallenge({
-                        ...contentChallenge,
-                        category: value,
-                        subcategory: ''
-                      })}
+          {/* Section 3 : Thème de contenu */}
+          {formData.content_type === 'category' && (
+            <div className="mb-3">
+              <div className="rounded-lg border border-gray-700 p-3" style={{ backgroundColor: '#0f0f10' }}>
+                <div className="space-y-1">
+                  <Label htmlFor="theme" className="text-sm text-white">Thème de contenu *</Label>
+                  <div className="relative group">
+                    <div className="flex items-center justify-between p-3 border border-gray-600 rounded-lg text-white text-sm cursor-pointer hover:bg-gray-800/50 transition-all duration-200" style={{ backgroundColor: '#0f0f10' }}>
+                      <span className="font-medium">
+                        {formData.theme ? themes?.find(t => t.name === formData.theme)?.name : 'Sélectionnez un thème'}
+                      </span>
+                      <div className="w-2 h-2 border-r-2 border-b-2 border-gray-400 transform rotate-45 transition-transform duration-200 group-hover:rotate-[-135deg]"></div>
+                    </div>
+                    <select
+                      id="theme"
+                      value={formData.theme}
+                      onChange={(e) => setFormData(prev => ({ ...prev, theme: e.target.value }))}
+                      className="absolute inset-0 opacity-0 cursor-pointer"
+                      required
                     >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Sélectionner une catégorie" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {categories.map((category) => (
-                          <SelectItem key={category.id} value={category.id}>
-                            {category.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      <option value="">Sélectionnez un thème</option>
+                      {themes?.map((theme) => (
+                        <option key={theme.id} value={theme.name}>
+                          {theme.name}
+                        </option>
+                      ))}
+                    </select>
                   </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="content-subcategory">Sous-catégorie</Label>
-                    <Select
-                      value={contentChallenge.subcategory}
-                      onValueChange={(value) => setContentChallenge({
-                        ...contentChallenge,
-                        subcategory: value
-                      })}
-                      disabled={!contentChallenge.category}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Sélectionner une sous-catégorie" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {contentChallenge.category && getSubcategoriesByCategory(contentChallenge.category).map((subcategory) => (
-                          <SelectItem key={subcategory.id} value={subcategory.id}>
-                            {subcategory.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-            </div>
-          </div>
-
-                {/* Difficulté et durée */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="content-difficulty">Difficulté</Label>
-                    <Select
-                      value={contentChallenge.difficulty}
-                      onValueChange={(value) => updateDifficulty(value, setContentChallenge, contentChallenge)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {difficultyOptions.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            <div className="flex items-center justify-between w-full">
-                              <span>{option.label}</span>
-                              <Badge variant="secondary" className="ml-2">
-                                {option.points} pts
-                              </Badge>
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="content-duration">Durée (jours)</Label>
-                    <Input
-                      id="content-duration"
-                      type="number"
-                      min="1"
-                      max="30"
-                      value={contentChallenge.duration_days}
-                      onChange={(e) => setContentChallenge({
-                        ...contentChallenge,
-                        duration_days: parseInt(e.target.value) || 1
-                      })}
-                    />
                 </div>
               </div>
+            </div>
+          )}
 
-                {/* Points */}
-                <div className="space-y-2">
-                  <Label htmlFor="content-points">Points à gagner</Label>
-                  <div className="flex items-center gap-2">
+          {/* Section 4 : Titre */}
+          <div className="mb-3">
+            <div className="rounded-lg border border-gray-700 p-3" style={{ backgroundColor: '#0f0f10' }}>
+              <div className="space-y-1">
+                <Label htmlFor="title" className="text-sm text-white">{getTitleLabel()} *</Label>
                 <Input
-                      id="content-points"
-                      type="number"
-                      min="25"
-                      max="200"
-                      value={contentChallenge.points}
-                      onChange={(e) => setContentChallenge({
-                        ...contentChallenge,
-                        points: parseInt(e.target.value) || 50
-                      })}
-                    />
-                    <Badge variant="outline" className="flex items-center gap-1">
-                      <Star className="w-3 h-3" />
-                      {contentChallenge.points} points
-                    </Badge>
+                  id="title"
+                  value={formData.title}
+                  onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                  placeholder={getTitlePlaceholder()}
+                  className="text-sm border-gray-600 text-white placeholder-gray-400"
+                  style={{ backgroundColor: '#0f0f10' }}
+                  required
+                />
               </div>
             </div>
-
-                {/* Exigences */}
-                <div className="space-y-2">
-                  <Label htmlFor="content-requirements">Exigences spécifiques</Label>
-                  <Textarea
-                    id="content-requirements"
-                    placeholder="Détaillez les exigences techniques, créatives ou autres..."
-                    rows={3}
-                    value={contentChallenge.requirements}
-                    onChange={(e) => setContentChallenge({
-                      ...contentChallenge,
-                      requirements: e.target.value
-                    })}
-                  />
           </div>
 
-                {/* Tags */}
-                <div className="space-y-2">
-                  <Label>Tags</Label>
-                  <div className="flex gap-2">
+          {/* Section 5 : Catégorie (si nécessaire) */}
+          {shouldShowCategorySelection() && (
+            <div className="mb-3">
+              <div className="rounded-lg border border-gray-700 p-3" style={{ backgroundColor: '#0f0f10' }}>
+                <div className="space-y-1">
+                  <Label htmlFor="category" className="text-sm text-white">Catégorie *</Label>
+                  <div className="relative" ref={categoryDropdownRef}>
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-3 w-3 text-gray-400" />
                       <Input
-                      placeholder="Ajouter un tag"
-                      value={newTag}
-                      onChange={(e) => setNewTag(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && addTag(contentChallenge.tags, (tags) => setContentChallenge({...contentChallenge, tags}))}
-                    />
+                        type="text"
+                        placeholder="Rechercher une catégorie..."
+                        value={categorySearch}
+                        onChange={(e) => {
+                          setCategorySearch(e.target.value);
+                          setShowCategoryDropdown(true);
+                        }}
+                        onFocus={() => setShowCategoryDropdown(true)}
+                        className="pl-8 pr-8 text-sm border-gray-600 text-white placeholder-gray-400"
+                        style={{ backgroundColor: '#0f0f10' }}
+                      />
+                      {categorySearch && (
                         <Button
                           type="button"
-                      variant="outline"
-                      onClick={() => addTag(contentChallenge.tags, (tags) => setContentChallenge({...contentChallenge, tags}))}
-                    >
-                      <Plus className="w-4 h-4" />
-                        </Button>
-                    </div>
-                  {contentChallenge.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {contentChallenge.tags.map((tag, index) => (
-                        <Badge
-                          key={index}
-                          variant="secondary"
-                          className="cursor-pointer hover:bg-destructive hover:text-destructive-foreground"
-                          onClick={() => removeTag(tag, contentChallenge.tags, (tags) => setContentChallenge({...contentChallenge, tags}))}
+                          variant="ghost"
+                          size="icon"
+                          className="absolute right-1 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 hover:text-white"
+                          onClick={() => {
+                            setCategorySearch('');
+                            setFormData(prev => ({ ...prev, category_id: '', subcategory_id: '' }));
+                            setSubcategorySearch('');
+                          }}
                         >
-                          #{tag} ×
-                        </Badge>
+                          <X className="h-3 w-3" />
+                        </Button>
+                      )}
+                    </div>
+                    {showCategoryDropdown && filteredCategories.length > 0 && (
+                      <div className="absolute z-10 w-full mt-1 bg-gray-800 border border-gray-600 rounded-md shadow-lg max-h-40 overflow-y-auto">
+                        {filteredCategories.map((category) => (
+                          <button
+                            key={category.id}
+                            type="button"
+                            className="w-full px-3 py-2 text-left hover:bg-gray-700 focus:bg-gray-700 focus:outline-none text-white text-sm"
+                            onClick={() => handleCategorySelect(category)}
+                          >
+                            <div className="flex items-center gap-2">
+                              <div 
+                                className="w-2 h-2 rounded-full" 
+                                style={{ backgroundColor: category.color }}
+                              />
+                              <span className="text-white">{category.name}</span>
+                            </div>
+                          </button>
                         ))}
                       </div>
                     )}
                   </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Onglet Challenge de Compte */}
-          <TabsContent value="accounts" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <User className="w-5 h-5" />
-                  Challenge de Compte
-                </CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  Créez un défi pour la création ou le développement de comptes
-                </p>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Titre */}
-                <div className="space-y-2">
-                  <Label htmlFor="account-title">Titre du challenge *</Label>
-                  <Input
-                    id="account-title"
-                    placeholder="Ex: Créer un compte Instagram de cuisine"
-                    value={accountChallenge.title}
-                    onChange={(e) => setAccountChallenge({
-                      ...accountChallenge,
-                      title: e.target.value
-                    })}
-                  />
-                </div>
-
-                {/* Description */}
-                <div className="space-y-2">
-                  <Label htmlFor="account-description">Description *</Label>
-                  <Textarea
-                    id="account-description"
-                    placeholder="Décrivez ce que vous attendez des participants pour ce challenge de compte"
-                    rows={4}
-                    value={accountChallenge.description}
-                    onChange={(e) => setAccountChallenge({
-                      ...accountChallenge,
-                      description: e.target.value
-                    })}
-                  />
-              </div>
-
-                {/* Nom et description du compte */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="account-name">Nom du compte *</Label>
-                    <Input
-                      id="account-name"
-                      placeholder="Ex: Cuisine_Creative"
-                      value={accountChallenge.account_name}
-                      onChange={(e) => setAccountChallenge({
-                        ...accountChallenge,
-                        account_name: e.target.value
-                      })}
-                    />
-            </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="account-platform">Plateforme *</Label>
-                    <Select
-                      value={accountChallenge.platform}
-                      onValueChange={(value) => setAccountChallenge({
-                        ...accountChallenge,
-                        platform: value
-                      })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Sélectionner une plateforme" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {platforms.map((platform) => (
-                          <SelectItem key={platform.value} value={platform.value}>
-                            {platform.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                {/* Description du compte */}
-                <div className="space-y-2">
-                  <Label htmlFor="account-account-description">Description du compte *</Label>
-                  <Textarea
-                    id="account-account-description"
-                    placeholder="Décrivez le concept, le style et l'objectif du compte"
-                    rows={3}
-                    value={accountChallenge.account_description}
-                    onChange={(e) => setAccountChallenge({
-                      ...accountChallenge,
-                      account_description: e.target.value
-                    })}
-                  />
-                </div>
-
-                {/* Idées de contenu */}
-                <div className="space-y-2">
-                  <Label>Idées de contenu *</Label>
-                  <div className="space-y-2">
-                    {accountChallenge.content_ideas.map((idea, index) => (
-                      <div key={index} className="flex gap-2">
-                      <Input
-                          placeholder={`Idée ${index + 1}`}
-                          value={idea}
-                          onChange={(e) => updateContentIdea(index, e.target.value)}
-                        />
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="icon"
-                          onClick={() => removeContentIdea(index)}
-                          disabled={accountChallenge.content_ideas.length === 1}
-                        >
-                          ×
-                        </Button>
-                    </div>
-                    ))}
-                    <div className="flex gap-2">
-                      <Input
-                        placeholder="Ajouter une nouvelle idée"
-                        value={newContentIdea}
-                        onChange={(e) => setNewContentIdea(e.target.value)}
-                        onKeyPress={(e) => e.key === 'Enter' && addContentIdea()}
-                      />
-                      <Button
-                            type="button"
-                        variant="outline"
-                        onClick={addContentIdea}
-                      >
-                        <Plus className="w-4 h-4" />
-                      </Button>
-                                </div>
-                            </div>
-                      </div>
-
-                {/* Audience cible et style de contenu */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="account-audience">Audience cible</Label>
-                    <Input
-                      id="account-audience"
-                      placeholder="Ex: 25-35 ans, passionnés de cuisine"
-                      value={accountChallenge.target_audience}
-                      onChange={(e) => setAccountChallenge({
-                        ...accountChallenge,
-                        target_audience: e.target.value
-                      })}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="account-style">Style de contenu</Label>
-                    <Select
-                      value={accountChallenge.content_style}
-                      onValueChange={(value) => setAccountChallenge({
-                        ...accountChallenge,
-                        content_style: value
-                      })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Sélectionner un style" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {contentStyles.map((style) => (
-                          <SelectItem key={style.value} value={style.value}>
-                            {style.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
                 </div>
               </div>
-
-                {/* Catégorie et sous-catégorie */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="account-category">Catégorie</Label>
-                    <Select
-                      value={accountChallenge.category}
-                      onValueChange={(value) => setAccountChallenge({
-                        ...accountChallenge,
-                        category: value,
-                        subcategory: ''
-                      })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Sélectionner une catégorie" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {categories.map((category) => (
-                          <SelectItem key={category.id} value={category.id}>
-                            {category.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="account-subcategory">Sous-catégorie</Label>
-                    <Select
-                      value={accountChallenge.subcategory}
-                      onValueChange={(value) => setAccountChallenge({
-                        ...accountChallenge,
-                        subcategory: value
-                      })}
-                      disabled={!accountChallenge.category}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Sélectionner une sous-catégorie" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {accountChallenge.category && getSubcategoriesByCategory(accountChallenge.category).map((subcategory) => (
-                          <SelectItem key={subcategory.id} value={subcategory.id}>
-                            {subcategory.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                {/* Difficulté et durée */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="account-difficulty">Difficulté</Label>
-                    <Select
-                      value={accountChallenge.difficulty}
-                      onValueChange={(value) => updateDifficulty(value, setAccountChallenge, accountChallenge)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {difficultyOptions.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            <div className="flex items-center justify-between w-full">
-                              <span>{option.label}</span>
-                              <Badge variant="secondary" className="ml-2">
-                                {option.points} pts
-                              </Badge>
-              </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-            </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="account-duration">Durée (jours)</Label>
-                    <Input
-                      id="account-duration"
-                      type="number"
-                      min="1"
-                      max="30"
-                      value={accountChallenge.duration_days}
-                      onChange={(e) => setAccountChallenge({
-                        ...accountChallenge,
-                        duration_days: parseInt(e.target.value) || 1
-                      })}
-                  />
-                </div>
-              </div>
-
-                {/* Points */}
-                <div className="space-y-2">
-                  <Label htmlFor="account-points">Points à gagner</Label>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      id="account-points"
-                      type="number"
-                      min="25"
-                      max="200"
-                      value={accountChallenge.points}
-                      onChange={(e) => setAccountChallenge({
-                        ...accountChallenge,
-                        points: parseInt(e.target.value) || 50
-                      })}
-                    />
-                    <Badge variant="outline" className="flex items-center gap-1">
-                      <Star className="w-3 h-3" />
-                      {accountChallenge.points} points
-                    </Badge>
-                  </div>
-                </div>
-
-                {/* Tags */}
-                <div className="space-y-2">
-                  <Label>Tags</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder="Ajouter un tag"
-                      value={newTag}
-                      onChange={(e) => setNewTag(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && addTag(accountChallenge.tags, (tags) => setAccountChallenge({...accountChallenge, tags}))}
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => addTag(accountChallenge.tags, (tags) => setAccountChallenge({...accountChallenge, tags}))}
-                    >
-                      <Plus className="w-4 h-4" />
-                    </Button>
-              </div>
-                  {accountChallenge.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {accountChallenge.tags.map((tag, index) => (
-                        <Badge
-                          key={index}
-                          variant="secondary"
-                          className="cursor-pointer hover:bg-destructive hover:text-destructive-foreground"
-                          onClick={() => removeTag(tag, accountChallenge.tags, (tags) => setAccountChallenge({...accountChallenge, tags}))}
-                        >
-                          #{tag} ×
-                        </Badge>
-                      ))}
             </div>
           )}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
 
-        {/* Bouton de publication */}
-        <div className="mt-8 flex justify-center">
+          {/* Section 6 : Sous-catégorie (si nécessaire) */}
+          {shouldShowSubcategorySelection() && (
+            <div className="mb-3">
+              <div className="rounded-lg border border-gray-700 p-3" style={{ backgroundColor: '#0f0f10' }}>
+                <div className="space-y-1">
+                  <Label htmlFor="subcategory" className="text-sm text-white">Sous-catégorie *</Label>
+                  <div className="relative" ref={subcategoryDropdownRef}>
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-3 w-3 text-gray-400" />
+                      <Input
+                        type="text"
+                        placeholder="Rechercher une sous-catégorie..."
+                        value={subcategorySearch}
+                        onChange={(e) => {
+                          setSubcategorySearch(e.target.value);
+                          setShowSubcategoryDropdown(true);
+                        }}
+                        onFocus={() => setShowSubcategoryDropdown(true)}
+                        className="pl-8 pr-8 text-sm border-gray-600 text-white placeholder-gray-400"
+                        style={{ backgroundColor: '#0f0f10' }}
+                      />
+                      {subcategorySearch && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="absolute right-1 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 hover:text-white"
+                          onClick={() => {
+                            setSubcategorySearch('');
+                            setFormData(prev => ({ ...prev, subcategory_id: '' }));
+                          }}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      )}
+                    </div>
+                    {showSubcategoryDropdown && filteredSubcategories.length > 0 && (
+                      <div className="absolute z-10 w-full mt-1 bg-gray-800 border border-gray-600 rounded-md shadow-lg max-h-40 overflow-y-auto">
+                        {filteredSubcategories.map((subcategory) => (
+                          <button
+                            key={subcategory.id}
+                            type="button"
+                            className="w-full px-3 py-2 text-left hover:bg-gray-700 focus:bg-gray-700 focus:outline-none text-white text-sm"
+                            onClick={() => handleSubcategorySelect(subcategory)}
+                          >
+                            <div>
+                              <div className="font-medium text-white">{subcategory.name}</div>
+                              {subcategory.description && (
+                                <div className="text-xs text-gray-400 truncate">
+                                  {subcategory.description}
+                                </div>
+                              )}
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Section 7 : Plateforme (pour les comptes) */}
+          {formData.content_type === 'account' && (
+            <div className="mb-3">
+              <div className="rounded-lg border border-gray-700 p-3" style={{ backgroundColor: '#0f0f10' }}>
+                <div className="space-y-1">
+                  <Label htmlFor="platform" className="text-sm text-white">Plateforme *</Label>
+                  <div className="relative group">
+                    <div className="flex items-center justify-between p-3 border border-gray-600 rounded-lg text-white text-sm cursor-pointer hover:bg-gray-800/50 transition-all duration-200" style={{ backgroundColor: '#0f0f10' }}>
+                      <span className="font-medium">
+                        {formData.platform ? 
+                          formData.platform.charAt(0).toUpperCase() + formData.platform.slice(1) : 
+                          'Sélectionnez une plateforme'}
+                      </span>
+                      <div className="w-2 h-2 border-r-2 border-b-2 border-gray-400 transform rotate-45 transition-transform duration-200 group-hover:rotate-[-135deg]"></div>
+                    </div>
+                    <select
+                      id="platform"
+                      value={formData.platform}
+                      onChange={(e) => setFormData(prev => ({ ...prev, platform: e.target.value }))}
+                      className="absolute inset-0 opacity-0 cursor-pointer"
+                      required
+                    >
+                      <option value="">Sélectionnez une plateforme</option>
+                      <option value="tiktok">TikTok</option>
+                      <option value="instagram">Instagram</option>
+                      <option value="youtube">YouTube</option>
+                      <option value="twitter">Twitter/X</option>
+                      <option value="facebook">Facebook</option>
+                      <option value="linkedin">LinkedIn</option>
+                      <option value="twitch">Twitch</option>
+                      <option value="blog">Blog</option>
+                      <option value="article">Article</option>
+                      <option value="other">Autre</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Section 8 : Description (pour les challenges) */}
+          {formData.content_type === 'challenge' && (
+            <div className="mb-3">
+              <div className="rounded-lg border border-gray-700 p-3" style={{ backgroundColor: '#0f0f10' }}>
+                <div className="space-y-1">
+                  <Label htmlFor="description" className="text-sm text-white">Description du challenge *</Label>
+                  <textarea
+                    id="description"
+                    value={formData.description || ''}
+                    onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                    placeholder="Décrivez votre challenge en détail..."
+                    className="w-full p-2 border border-gray-600 rounded-md text-white min-h-[80px] resize-vertical text-sm placeholder-gray-400"
+                    style={{ backgroundColor: '#0f0f10' }}
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Section 9 : URL (pour les sources et comptes) */}
+          {(formData.content_type === 'source' || formData.content_type === 'account') && (
+            <div className="mb-3">
+              <div className="rounded-lg border border-gray-700 p-3" style={{ backgroundColor: '#0f0f10' }}>
+                <div className="space-y-1">
+                  <Label htmlFor="url" className="text-sm text-white">
+                    {formData.content_type === 'source' ? 'URL de la source' : 'URL du compte'} *
+                  </Label>
+                  <div className="relative">
+                    <Link className="absolute left-3 top-1/2 transform -translate-y-1/2 h-3 w-3 text-gray-400" />
+                    <Input
+                      id="url"
+                      type="url"
+                      value={formData.url || ''}
+                      onChange={(e) => setFormData(prev => ({ ...prev, url: e.target.value }))}
+                      placeholder={formData.content_type === 'source' ? 'https://example.com' : 'https://tiktok.com/@username'}
+                      className="pl-8 text-sm border-gray-600 text-white placeholder-gray-400"
+                      style={{ backgroundColor: '#0f0f10' }}
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Section 10 : Soumission */}
+          <div className="rounded-lg border border-gray-700 p-3" style={{ backgroundColor: '#0f0f10' }}>
               <Button 
-            onClick={publishChallenge}
-            disabled={loading || (activeTab === 'content' ? !validateContentChallenge() : !validateAccountChallenge())}
-            size="lg"
-            className="px-8"
-          >
-            {loading ? (
-              <div className="flex items-center gap-2">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                Publication...
-              </div>
-            ) : (
-              <div className="flex items-center gap-2">
-                <Plus className="w-5 h-5" />
-                Publier le Challenge
-              </div>
+                type="submit" 
+                className="w-full" 
+                disabled={isSubmitting || 
+                         !formData.title ||
+                         !formData.content_type ||
+                         (needsNetwork && !selectedNetwork) ||
+                         (formData.content_type === 'subcategory' && !formData.category_id) ||
+                         ((formData.content_type === 'title' || formData.content_type === 'account') && (!formData.category_id || !formData.subcategory_id)) ||
+                         (formData.content_type === 'challenge' && !formData.description) ||
+                         (formData.content_type === 'source' && !formData.url) ||
+                         (formData.content_type === 'account' && (!formData.platform || !formData.url)) ||
+                         (formData.content_type === 'category' && !formData.theme)}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Publication en cours...
+                  </>
+                ) : (
+                  <>
+                    <Send className="mr-2 h-4 w-4" />
+                    Publier le contenu
+                  </>
                 )}
               </Button>
+          </div>
+        </form>
         </div>
       </main>
       <Navigation />
