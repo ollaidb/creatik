@@ -116,7 +116,7 @@ const Subcategories = () => {
     return (
       <div className="min-h-screen">
         {/* Header fixe pour mobile */}
-        <div className="sticky top-0 z-50 bg-background border-b border-border px-4 py-3">
+        <div className="sticky top-0 z-50 bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border px-4 py-3">
           <div className="flex items-center gap-3">
             <Button 
               variant="ghost" 
@@ -150,7 +150,7 @@ const Subcategories = () => {
   return (
     <div className="min-h-screen pb-20">
       {/* Header fixe pour mobile */}
-      <div className="sticky top-0 z-50 bg-background border-b border-border px-4 py-3">
+              <div className="sticky top-0 z-50 bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border px-4 py-3">
         <div className="flex items-center gap-3">
           <Button 
             variant="ghost" 

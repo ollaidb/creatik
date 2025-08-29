@@ -602,12 +602,7 @@ const Challenges = () => {
   if (!user) {
     return (
       <div className="min-h-screen pb-20">
-        <header className="bg-white border-b p-4 flex items-center"
-                 style={{
-                   ...(window.matchMedia('(prefers-color-scheme: dark)').matches && {
-                     backgroundColor: '#0f0f10'
-                   })
-                 }}>
+        <header className="bg-background border-b border-border p-4 flex items-center">
           <Button 
             variant="ghost" 
             size="icon" 
@@ -616,14 +611,10 @@ const Challenges = () => {
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h1 className="text-xl font-semibold">Défis</h1>
+          <h1 className="text-xl font-semibold text-foreground">Défis</h1>
         </header>
         <main className="max-w-4xl mx-auto p-4">
-          <Card className="text-center py-12" style={{
-            ...(window.matchMedia('(prefers-color-scheme: dark)').matches && {
-              backgroundColor: '#0f0f10'
-            })
-          }}>
+          <Card className="text-center py-12">
             <CardContent>
               <h3 className="text-lg font-medium mb-2">Connexion requise</h3>
               <p className="text-muted-foreground mb-4">
@@ -642,12 +633,7 @@ const Challenges = () => {
   if (loading) {
     return (
       <div className="min-h-screen pb-20">
-        <header className="bg-white border-b p-4 flex items-center"
-                 style={{
-                   ...(window.matchMedia('(prefers-color-scheme: dark)').matches && {
-                     backgroundColor: '#0f0f10'
-                   })
-                 }}>
+        <header className="bg-background border-b border-border p-4 flex items-center">
           <Button 
             variant="ghost" 
             size="icon" 
@@ -656,7 +642,7 @@ const Challenges = () => {
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h1 className="text-xl font-semibold">Défis</h1>
+          <h1 className="text-xl font-semibold text-foreground">Défis</h1>
         </header>
         <main className="max-w-4xl mx-auto p-4">
           <div className="flex items-center justify-center h-60">
@@ -673,12 +659,7 @@ const Challenges = () => {
   if (error) {
     return (
       <div className="min-h-screen pb-20">
-        <header className="bg-white border-b p-4 flex items-center"
-                 style={{
-                   ...(window.matchMedia('(prefers-color-scheme: dark)').matches && {
-                     backgroundColor: '#0f0f10'
-                   })
-                 }}>
+        <header className="bg-background border-b border-border p-4 flex items-center">
           <Button 
             variant="ghost" 
             size="icon" 
@@ -687,14 +668,10 @@ const Challenges = () => {
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h1 className="text-xl font-semibold">Défis</h1>
+          <h1 className="text-xl font-semibold text-foreground">Défis</h1>
         </header>
         <main className="max-w-4xl mx-auto p-4">
-          <Card className="text-center py-12" style={{
-            ...(window.matchMedia('(prefers-color-scheme: dark)').matches && {
-              backgroundColor: '#0f0f10'
-            })
-          }}>
+          <Card className="text-center py-12">
             <CardContent>
               <h3 className="text-lg font-medium mb-2">Erreur</h3>
               <p className="text-muted-foreground mb-4">
@@ -712,12 +689,7 @@ const Challenges = () => {
 
   return (
     <div className="min-h-screen pb-20">
-      <header className="bg-white border-b p-4 flex items-center justify-between"
-               style={{
-                 ...(window.matchMedia('(prefers-color-scheme: dark)').matches && {
-                   backgroundColor: '#0f0f10'
-                 })
-               }}>
+      <header className="bg-background border-b border-border p-4 flex items-center justify-between">
         <div className="flex items-center">
           <Button 
             variant="ghost" 
@@ -727,7 +699,7 @@ const Challenges = () => {
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h1 className="text-xl font-semibold">Défis</h1>
+          <h1 className="text-xl font-semibold text-foreground">Défis</h1>
         </div>
         <div className="flex items-center gap-2">
           {/* Bouton Éditer unique qui fonctionne pour tous les onglets sauf la corbeille */}
@@ -940,12 +912,7 @@ const Challenges = () => {
                       value={challenge}
                       className="cursor-grab active:cursor-grabbing"
                     >
-                      <Card className="hover:shadow-md transition-shadow"
-                            style={{
-                              ...(window.matchMedia('(prefers-color-scheme: dark)').matches && {
-                                backgroundColor: '#0f0f10'
-                              })
-                            }}>
+                      <Card className="hover:shadow-md transition-shadow">
                         <CardContent className="p-4">
                           <div className="flex items-center justify-between">
                             <div className="flex-1 flex items-center gap-3">
@@ -980,7 +947,7 @@ const Challenges = () => {
                               ) : (
                                 <div className="flex-1">
                                   <h3 className="font-semibold text-lg">{challenge.title}</h3>
-                                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                                  <p className="text-sm text-muted-foreground">
                                     Jour {currentDay}
                                   </p>
                                 </div>
@@ -1046,7 +1013,7 @@ const Challenges = () => {
                         <div className="flex items-center justify-between">
                           <div className="flex-1">
                             <h3 className="font-semibold text-lg">{challenge.title}</h3>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                            <p className="text-sm text-muted-foreground">
                               Jour {currentDay}
                             </p>
                           </div>
@@ -1143,11 +1110,7 @@ const Challenges = () => {
                 
                 <div className="space-y-3">
                   {accomplis.length === 0 ? (
-                    <Card className="text-center py-12" style={{
-                      ...(window.matchMedia('(prefers-color-scheme: dark)').matches && {
-                        backgroundColor: '#0f0f10'
-                      })
-                    }}>
+                    <Card className="text-center py-12">
                       <CardContent>
                         <CheckCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                         <h3 className="text-lg font-medium mb-2">Aucun défi accompli</h3>
@@ -1176,7 +1139,7 @@ const Challenges = () => {
                               
                               <div className="flex-1">
                                 <h3 className="font-semibold text-lg">{challenge.title}</h3>
-                                <p className="text-sm text-gray-600 dark:text-gray-400">
+                                <p className="text-sm text-muted-foreground">
                                   Accompli le {new Date(challenge.completed_at).toLocaleDateString()}
                                 </p>
                               </div>
@@ -1221,11 +1184,7 @@ const Challenges = () => {
               // Mode normal pour les accomplis
               <div className="space-y-3">
                 {accomplis.length === 0 ? (
-                  <Card className="text-center py-12" style={{
-                    ...(window.matchMedia('(prefers-color-scheme: dark)').matches && {
-                      backgroundColor: '#0f0f10'
-                    })
-                  }}>
+                  <Card className="text-center py-12">
                     <CardContent>
                       <CheckCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                       <h3 className="text-lg font-medium mb-2">Aucun défi accompli</h3>
@@ -1241,7 +1200,7 @@ const Challenges = () => {
                         <div className="flex items-center justify-between">
                           <div className="flex-1">
                             <h3 className="font-semibold text-lg">{challenge.title}</h3>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                            <p className="text-sm text-muted-foreground">
                               Accompli le {new Date(challenge.completed_at).toLocaleDateString()}
                             </p>
                           </div>
@@ -1336,11 +1295,7 @@ const Challenges = () => {
             
             <div className="space-y-3">
               {deletedChallenges.filter(challenge => challenge.title && challenge.user_id).length === 0 ? (
-                <Card className="text-center py-12" style={{
-                  ...(window.matchMedia('(prefers-color-scheme: dark)').matches && {
-                    backgroundColor: '#0f0f10'
-                  })
-                }}>
+                <Card className="text-center py-12">
                   <CardContent>
                     <Trash2 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                     <h3 className="text-lg font-medium mb-2">Corbeille vide</h3>
@@ -1351,11 +1306,7 @@ const Challenges = () => {
                 </Card>
               ) : (
                 deletedChallenges.filter(challenge => challenge.title && challenge.user_id).map((challenge) => (
-                  <Card key={challenge.id} className="hover:shadow-md transition-shadow border-red-200 dark:border-red-800" style={{
-                    ...(window.matchMedia('(prefers-color-scheme: dark)').matches && {
-                      backgroundColor: '#0f0f10'
-                    })
-                  }}>
+                  <Card key={challenge.id} className="hover:shadow-md transition-shadow border-red-200">
                     <CardContent className="p-4">
                       <div className="flex items-center justify-between">
                         <div className="flex-1 flex items-center gap-3">
@@ -1372,8 +1323,8 @@ const Challenges = () => {
                           </button>
                           
                           <div className="flex-1">
-                            <h3 className="font-semibold text-lg text-gray-600 dark:text-gray-400">{challenge.title}</h3>
-                            <p className="text-sm text-gray-500 dark:text-gray-500">
+                            <h3 className="font-semibold text-lg text-foreground">{challenge.title}</h3>
+                            <p className="text-sm text-muted-foreground">
                               Supprimé le {new Date(challenge.updated_at || challenge.created_at || Date.now()).toLocaleDateString()}
                             </p>
                           </div>
@@ -1450,7 +1401,7 @@ const Challenges = () => {
                         <div className="text-sm text-muted-foreground">Jours restants</div>
                       </div>
                     </div>
-                    <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
+                    <div className="bg-muted rounded-lg p-3">
                       <div className="text-sm text-muted-foreground mb-1">Configuration actuelle</div>
                       <div className="text-xs text-muted-foreground">
                         {getDurationText(selectedDuration)} • {contentsPerDay} contenu(s) par jour • {getDurationDays(selectedDuration)} jours
@@ -1467,7 +1418,7 @@ const Challenges = () => {
       {/* Modal de confirmation pour la durée */}
       {showDurationConfirm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={cancelDurationChange}>
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-sm w-full mx-4" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-background rounded-lg p-6 max-w-sm w-full mx-4" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-lg font-semibold mb-4">Confirmer le changement</h3>
             <p className="text-muted-foreground mb-4">
               Changer la durée de {getDurationText(selectedDuration)} à {getDurationText(pendingDuration)} ?
@@ -1487,7 +1438,7 @@ const Challenges = () => {
       {/* Modal de confirmation pour les contenus par jour */}
       {showContentsConfirm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={cancelContentsChange}>
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-sm w-full mx-4" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-background rounded-lg p-6 max-w-sm w-full mx-4" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-lg font-semibold mb-4">Confirmer le changement</h3>
             <p className="text-muted-foreground mb-4">
               Changer de {contentsPerDay} à {pendingContents} contenu(s) par jour ?
@@ -1507,7 +1458,7 @@ const Challenges = () => {
       {/* Modal de confirmation pour la suppression */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowDeleteConfirm(false)}>
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-sm w-full mx-4" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-background rounded-lg p-6 max-w-sm w-full mx-4" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-lg font-semibold mb-4">Confirmer la suppression</h3>
             <p className="text-muted-foreground mb-4">
               {challengeToDelete === 'bulk' 
@@ -1532,7 +1483,7 @@ const Challenges = () => {
       {/* Modal de confirmation pour la restauration */}
       {showRestoreConfirm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowRestoreConfirm(false)}>
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-sm w-full mx-4" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-background rounded-lg p-6 max-w-sm w-full mx-4" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-lg font-semibold mb-4">Confirmer la restauration</h3>
             <p className="text-muted-foreground mb-4">
               {challengeToRestore === 'bulk'
@@ -1555,7 +1506,7 @@ const Challenges = () => {
       {/* Modal pour choisir où restaurer */}
       {showRestoreOptions && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowRestoreOptions(false)}>
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-sm w-full mx-4" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-background rounded-lg p-6 max-w-sm w-full mx-4" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-lg font-semibold mb-4">
               {challengeToRestoreOptions === 'bulk' 
                 ? `Restaurer ${challengesToDelete.size} élément(s) ?`
