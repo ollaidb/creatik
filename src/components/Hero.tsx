@@ -11,7 +11,7 @@ import {
   CarouselNext, 
   CarouselPrevious 
 } from "@/components/ui/carousel";
-import { Heart, Target } from "lucide-react";
+import { Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const Hero: React.FC = () => {
@@ -29,11 +29,7 @@ const Hero: React.FC = () => {
     navigate(`/profile/favorites?returnTo=${returnTo}`);
   };
 
-  const handleChallengesClick = () => {
-    // Si on vient de la page d'accueil, on passe l'information
-    const returnTo = location.pathname === '/' ? 'home' : 'profile';
-    navigate(`/profile/challenges?returnTo=${returnTo}`);
-  };
+
 
   if (isLoading) {
     return (
@@ -73,13 +69,17 @@ const Hero: React.FC = () => {
               >
                 <Heart className="h-5 w-5" />
               </Button>
+
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={handleChallengesClick}
+                onClick={() => navigate('/profile')}
                 className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-accent"
+                title="Mon Profil"
               >
-                <Target className="h-5 w-5" />
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                </svg>
               </Button>
             </div>
           </div>
@@ -98,13 +98,17 @@ const Hero: React.FC = () => {
                 >
                   <Heart className="h-5 w-5" />
                 </Button>
+
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={handleChallengesClick}
+                  onClick={() => navigate('/profile')}
                   className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-accent"
+                  title="Mon Profil"
                 >
-                  <Target className="h-5 w-5" />
+                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                  </svg>
                 </Button>
               </div>
             </div>

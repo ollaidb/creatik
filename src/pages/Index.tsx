@@ -170,7 +170,35 @@ const Index: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background">
+
       <Hero />
+      
+      {/* Menu principal */}
+      <section className="container mx-auto px-4 py-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="flex justify-center"
+        >
+          <nav className="flex items-center gap-8">
+            <Button
+              variant="ghost"
+              className="text-lg font-medium text-foreground hover:text-primary hover:bg-accent px-4 py-2"
+              onClick={() => navigate('/notes')}
+            >
+              Notes
+            </Button>
+            <Button
+              variant="ghost"
+              className="text-lg font-medium text-foreground hover:text-primary hover:bg-accent px-4 py-2"
+              onClick={() => navigate('/profile/challenges')}
+            >
+              Mes Défis
+            </Button>
+          </nav>
+        </motion.div>
+      </section>
       
       {/* Section Défi du jour */}
       {user && (
@@ -194,18 +222,8 @@ const Index: React.FC = () => {
                     </div>
                   </div>
                   
-                  {/* Icône des notes */}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 rounded-lg hover:bg-accent"
-                    onClick={() => navigate('/notes')}
-                    title="Mes Notes"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                  </Button>
+
+
                 </div>
               </CardHeader>
               <CardContent className="pt-0">

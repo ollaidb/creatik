@@ -16,7 +16,7 @@ import { useAuth } from '@/hooks/useAuth';
 import CategoryCard from '@/components/CategoryCard';
 import SubcategoryCard from '@/components/SubcategoryCard';
 import Navigation from '@/components/Navigation';
-import StickyHeader from '@/components/StickyHeader';
+
 import ChallengeButton from '@/components/ChallengeButton';
 import { useToast } from '@/hooks/use-toast';
 import IntelligentSearchBar from '@/components/IntelligentSearchBar';

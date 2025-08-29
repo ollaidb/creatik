@@ -1,6 +1,6 @@
 import React from 'react';
 import { useVisitHistory } from '@/hooks/useVisitHistory';
-import StickyHeader from '@/components/StickyHeader';
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -60,7 +60,6 @@ const History: React.FC = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-white dark:bg-slate-900">
-        <StickyHeader />
         <div className="container mx-auto px-4 py-8">
           <div className="flex items-center justify-center h-64">
             <div className="flex items-center space-x-2 text-gray-900 dark:text-white">
@@ -75,8 +74,6 @@ const History: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-white dark:bg-slate-900">
-      <StickyHeader />
-      
       <div className="container mx-auto px-4 py-6">
         {/* En-tête */}
         <div className="flex items-center justify-between mb-6">
