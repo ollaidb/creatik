@@ -24,8 +24,8 @@ const Navigation: React.FC<NavigationProps> = ({ className }) => {
     { id: "home", label: "Accueil", icon: "home", path: "/" },
     { id: "categories", label: "Catégories", icon: "categories", path: "/categories" },
     { id: "publish", label: "Publier", icon: "publish", path: "/publish" },
-    { id: "challenges", label: "Challenges", icon: "challenges", path: "/public-challenges" },
     { id: "profile", label: "Créateurs", icon: "creators", path: "/creators" },
+    { id: "challenges", label: "Challenges", icon: "challenges", path: "/public-challenges" },
   ];
 
   const handleTabClick = (path: string) => {
@@ -88,7 +88,7 @@ const Navigation: React.FC<NavigationProps> = ({ className }) => {
 
             {/* Nom de la page en-dessous de l'icône */}
             <span className={cn(
-              "text-xs sm:text-sm mt-0.5 truncate leading-tight font-medium drop-shadow-sm",
+              "text-[10px] sm:text-xs mt-0.5 truncate leading-tight font-medium drop-shadow-sm",
               activeTab === tab.id 
                 ? "text-primary font-semibold" 
                 : "text-muted-foreground/80"

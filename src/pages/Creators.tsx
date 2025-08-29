@@ -247,7 +247,7 @@ const Creators = () => {
                 onClick={() => navigate('/categories')}
                 variant="outline"
                 size="sm"
-                className="rounded-full bg-blue-600 hover:bg-blue-700 text-white border-0"
+                className="rounded-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white border-0"
               >
                 <FolderOpen className="h-4 w-4 mr-2" />
                 Catégories
