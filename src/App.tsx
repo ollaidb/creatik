@@ -39,6 +39,8 @@ import AuthCallback from "./pages/AuthCallback";
 import Notes from "./pages/Notes";
 import Compte from "./pages/Compte";
 import Contenu from "./pages/Contenu";
+import Notifications from "./pages/profile/Notifications";
+import Resources from "./pages/profile/Resources";
 
 // Configuration optimisée du QueryClient pour de meilleures performances
 const queryClient = new QueryClient({
@@ -100,7 +102,9 @@ const AppContent = () => {
             <Route path="/profile/contact" element={<Contact />} />
                         <Route path="/profile/publications" element={<Publications />} />
             <Route path="/profile/challenges" element={<Challenges />} />
+            <Route path="/profile/notifications" element={<Notifications />} />
             <Route path="/profile/settings" element={<Settings />} />
+            <Route path="/profile/resources" element={<Resources />} />
             {/* Publish Route */}
             <Route path="/publish" element={<Publish />} />
             <Route path="/search" element={<SearchResults />} />

@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ArrowLeft, User, Heart, History, Settings, Shield, HelpCircle, Mail, FileText, Plus, LogOut, Camera, BookOpen, Target } from 'lucide-react';
+import { ArrowLeft, User, Heart, History, Settings, Shield, HelpCircle, Mail, FileText, Plus, LogOut, Camera, BookOpen, Target, Bell, Receipt } from 'lucide-react';
 import Navigation from '@/components/Navigation';
 
 import AuthModal from '@/components/AuthModal';
@@ -35,18 +35,19 @@ const Profile = () => {
     const loadProfile = async () => {
       if (!user) return;
       try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('avatar_url')
-          .eq('id', user.id)
-          .single();
-        if (error && error.code !== 'PGRST116') {
-          console.error('Error loading profile:', error);
-          return;
-        }
-        if (data?.avatar_url) {
-          setProfileImage(data.avatar_url);
-        }
+        // Temporairement commenté à cause des problèmes de permissions
+        // const { data, error } = await supabase
+        //   .from('profiles')
+        //   .select('avatar_url')
+        //   .eq('id', user.id)
+        //   .single();
+        // if (error && error.code !== 'PGRST116') {
+        //   console.error('Error loading profile:', error);
+        //   return;
+        // }
+        // if (data?.avatar_url) {
+        //   setProfileImage(data.avatar_url);
+        // }
       } catch (error) {
         console.error('Error loading profile:', error);
       }
@@ -143,6 +144,22 @@ const Profile = () => {
       icon: BookOpen,
       path: '/notes',
       color: 'text-indigo-500',
+      requiresAuth: true
+    },
+    {
+      title: 'Ressources',
+      description: 'Reçus et contrats d\'influenceur',
+      icon: Receipt,
+      path: '/profile/resources',
+      color: 'text-emerald-500',
+      requiresAuth: true
+    },
+    {
+      title: 'Notifications',
+      description: 'Rappels de défis, réactions et réponses',
+      icon: Bell,
+      path: '/profile/notifications',
+      color: 'text-yellow-500',
       requiresAuth: true
     },
     {
