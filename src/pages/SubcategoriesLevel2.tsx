@@ -87,23 +87,18 @@ const SubcategoriesLevel2 = () => {
     return (
       <div className="min-h-screen">
         {/* Header fixe pour mobile */}
-        <div className="sticky top-0 z-50 bg-white border-b border-gray-200 dark:border-gray-700 px-4 py-3"
-             style={{
-               ...(window.matchMedia('(prefers-color-scheme: dark)').matches && {
-                 backgroundColor: '#0f0f10'
-               })
-             }}>
+        <div className="sticky top-0 z-50 bg-background border-b border-border px-4 py-3">
           <div className="flex items-center gap-3">
             <Button 
               variant="ghost" 
               size="sm"
               onClick={handleBackClick} 
-              className="p-2 h-10 w-10 rounded-full text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800"
+              className="p-2 h-10 w-10 rounded-full text-foreground hover:bg-accent"
             >
               <ArrowLeft size={20} />
             </Button>
             <div className="flex-1 min-w-0">
-              <h1 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
+              <h1 className="text-lg font-semibold text-foreground truncate">
                 Chargement...
               </h1>
             </div>
@@ -126,31 +121,26 @@ const SubcategoriesLevel2 = () => {
   return (
     <div className="min-h-screen pb-20">
       {/* Header fixe pour mobile */}
-      <div className="sticky top-0 z-50 bg-white border-b border-gray-200 dark:border-gray-700 px-4 py-3"
-           style={{
-             ...(window.matchMedia('(prefers-color-scheme: dark)').matches && {
-               backgroundColor: '#0f0f10'
-             })
-           }}>
+      <div className="sticky top-0 z-50 bg-background border-b border-border px-4 py-3">
         <div className="flex items-center gap-3">
           <Button 
             variant="ghost" 
             size="sm"
             onClick={handleBackClick} 
-            className="p-2 h-10 w-10 rounded-full text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800"
+            className="p-2 h-10 w-10 rounded-full text-foreground hover:bg-accent"
           >
             <ArrowLeft size={20} />
           </Button>
           <div className="flex-1 min-w-0">
-            <h1 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
+            <h1 className="text-lg font-semibold text-foreground truncate">
               Sous-catégories 2
             </h1>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
+            <p className="text-sm text-muted-foreground">
               {filteredSubcategories.length} sous-catégories
             </p>
             {/* Indicateur du réseau social sélectionné */}
             {selectedNetwork !== 'all' && (
-              <p className="text-xs text-blue-600 dark:text-blue-400 font-medium">
+              <p className="text-xs text-primary font-medium">
                 {getNetworkDisplayName(selectedNetwork)}
               </p>
             )}
