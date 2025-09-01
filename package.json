@@ -8,7 +8,10 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "enrich-events": "node scripts/enrich-events.mjs",
+    "test-apis": "node scripts/quick-start.mjs",
+    "setup-apis": "./scripts/setup-api-integration.sh"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
@@ -42,11 +45,13 @@
     "@supabase/supabase-js": "^2.49.8",
     "@tanstack/react-query": "^5.56.2",
     "@vitejs/plugin-react": "^4.7.0",
+    "axios": "^1.11.0",
     "caniuse-lite": "^1.0.30001727",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.0.0",
     "date-fns": "^3.6.0",
+    "dotenv": "^17.2.1",
     "embla-carousel-react": "^8.3.0",
     "framer-motion": "^10.18.0",
     "input-otp": "^1.2.4",

@@ -77,6 +77,11 @@ const ChallengeDetail = () => {
     }
   }, [id]);
 
+  // Changer le titre de la page
+  useEffect(() => {
+    document.title = 'Challenge';
+  }, []);
+
   // Fermer le menu contextuel quand on clique ailleurs
   useEffect(() => {
     const handleClickOutside = () => {
@@ -448,7 +453,7 @@ const ChallengeDetail = () => {
           </Button>
         </div>
         
-        {/* Afficher/masquer les réponses */}
+                {/* Afficher/masquer les réponses */}
         {comment.replies && comment.replies.length > 0 && (
           <div className="mt-2">
             <Button
@@ -474,33 +479,6 @@ const ChallengeDetail = () => {
             </Button>
           </div>
         )}
-          
-          {/* Afficher/masquer les réponses */}
-          {comment.replies && comment.replies.length > 0 && (
-            <div className="mt-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  toggleCommentExpanded(comment.id);
-                }}
-                className="text-xs text-muted-foreground p-1 h-auto"
-              >
-                {expandedComments.has(comment.id) ? (
-                  <>
-                    <ChevronUp className="w-3 h-3 mr-1" />
-                    Masquer {comment.replies.length} réponse{comment.replies.length > 1 ? 's' : ''}
-                  </>
-                ) : (
-                  <>
-                    <ChevronDown className="w-3 h-3 mr-1" />
-                    Voir {comment.replies.length} réponse{comment.replies.length > 1 ? 's' : ''}
-                  </>
-                )}
-              </Button>
-            </div>
-          )}
           
           {/* Formulaire de réponse compact */}
           {replyingTo === comment.id && level < 5 && (
@@ -641,7 +619,7 @@ const ChallengeDetail = () => {
         >
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        <h1 className="text-xl font-semibold">Détails du Challenge</h1>
+        <h1 className="text-xl font-semibold">Challenge</h1>
       </header>
 
       <main className="max-w-4xl mx-auto p-4 space-y-6">
@@ -699,13 +677,13 @@ const ChallengeDetail = () => {
             {user && (
               <div className="mb-6 p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
                 <div className="flex gap-2">
-                  <Textarea
-                    placeholder="Partagez vos pensées sur ce challenge..."
-                    value={commentContent}
-                    onChange={(e) => setCommentContent(e.target.value)}
-                    rows={3}
-                    className="flex-1"
-                  />
+                                  <Textarea
+                  placeholder="Ajouter un commentaire"
+                  value={commentContent}
+                  onChange={(e) => setCommentContent(e.target.value)}
+                  rows={1}
+                  className="flex-1"
+                />
                   <Button
                     onClick={addComment}
                     disabled={!commentContent.trim()}

@@ -17,6 +17,16 @@ import CategoryCard from '@/components/CategoryCard';
 import SubcategoryCard from '@/components/SubcategoryCard';
 import Navigation from '@/components/Navigation';
 
+// Interface pour les éléments navigables
+interface NavigableItem {
+  id: string;
+  category_id?: string;
+  subcategory_id?: string;
+  source?: string;
+  account_url?: string;
+  url?: string;
+}
+
 import ChallengeButton from '@/components/ChallengeButton';
 import { useToast } from '@/hooks/use-toast';
 import IntelligentSearchBar from '@/components/IntelligentSearchBar';
@@ -164,6 +174,60 @@ const Favorites = () => {
     setSearchTerm(query);
   };
 
+  // Fonction pour déterminer le chemin de navigation intelligent
+  const getNavigationPath = (item: NavigableItem, type: string) => {
+    switch (type) {
+      case 'category':
+        return `/category/${item.id}/subcategories`;
+      
+      case 'subcategory':
+        return `/category/${item.category_id}/subcategory/${item.id}`;
+      
+      case 'subcategory_level2':
+        // Pour les sous-catégories de niveau 2, on a besoin de récupérer la catégorie parent
+        // On va naviguer vers la page des titres avec le bon contexte
+        return `/category/${item.category_id}/subcategory/${item.subcategory_id}`;
+      
+      case 'title':
+        // Pour les titres, on doit déterminer s'ils viennent de content_titles ou word_blocks
+        if (item.source === 'content_titles') {
+          // Titre publié - naviguer vers la page des titres avec le bon contexte
+          return `/category/${item.category_id}/subcategory/${item.subcategory_id}`;
+        } else if (item.source === 'word_blocks') {
+          // Titre généré - naviguer vers la page des titres avec le bon contexte
+          return `/category/${item.category_id}/subcategory/${item.subcategory_id}`;
+        }
+        // Fallback
+        return `/category/${item.category_id}/subcategory/${item.subcategory_id}`;
+      
+      case 'challenge':
+        return `/challenge/${item.id}`;
+      
+      case 'account':
+        // Pour les comptes, ouvrir l'URL si disponible, sinon naviguer vers la page des comptes
+        if (item.account_url) {
+          window.open(item.account_url, '_blank');
+          return null; // Pas de navigation interne
+        }
+        return `/accounts`;
+      
+      case 'source':
+        // Pour les sources, ouvrir l'URL si disponible, sinon naviguer vers la page des sources
+        if (item.url) {
+          window.open(item.url, '_blank');
+          return null; // Pas de navigation interne
+        }
+        return `/sources`;
+      
+      case 'hook':
+        // Pour les hooks, naviguer vers la page des hooks avec le bon contexte
+        return `/category/${item.category_id}/subcategory/${item.subcategory_id}/hooks`;
+      
+      default:
+        return '/';
+    }
+  };
+
   const handleProfileClick = (account: {
     id: string;
     account_name: string;
@@ -174,13 +238,9 @@ const Favorites = () => {
     category?: string;
     subcategory?: string;
   }) => {
-    if (account.account_url) {
-      window.open(account.account_url, '_blank');
-    } else {
-      toast({
-        title: "Lien manquant",
-        variant: "destructive"
-      });
+    const path = getNavigationPath(account, 'account');
+    if (path) {
+      navigate(path);
     }
   };
 
@@ -192,13 +252,9 @@ const Favorites = () => {
     category?: string;
     subcategory?: string;
   }) => {
-    if (source.url) {
-      window.open(source.url, '_blank');
-    } else {
-      toast({
-        title: "Lien manquant",
-        variant: "destructive"
-      });
+    const path = getNavigationPath(source, 'source');
+    if (path) {
+      navigate(path);
     }
   };
 
@@ -400,7 +456,10 @@ const Favorites = () => {
                         }}
                         index={index}
                         className="w-full h-20 sm:h-24"
-                        onClick={() => navigate(`/category/${category.id}/subcategories`)}
+                        onClick={() => {
+                          const path = getNavigationPath(category, 'category');
+                          if (path) navigate(path);
+                        }}
                       />
                       <div
                         className="absolute top-1 right-1 sm:top-2 sm:right-2 z-10"
@@ -452,7 +511,10 @@ const Favorites = () => {
                 {subcategoriesToShow.map((subcategory) => (
                   <motion.div key={`level1-${subcategory.id}`} variants={itemVariants}>
                     <div 
-                      onClick={() => navigate(`/category/${subcategory.category_id}/subcategory/${subcategory.id}`)}
+                      onClick={() => {
+                        const path = getNavigationPath(subcategory, 'subcategory');
+                        if (path) navigate(path);
+                      }}
                       className="relative overflow-hidden rounded-xl cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-lg group h-20 sm:h-24 md:h-28 bg-white dark:bg-gray-800 border-2"
                       style={{ borderColor: '#270014' }}
                     >
@@ -505,7 +567,10 @@ const Favorites = () => {
                 {subcategoriesLevel2ToShow.map((subcategory) => (
                   <motion.div key={`level2-${subcategory.id}`} variants={itemVariants}>
                     <div 
-                      onClick={() => navigate(`/subcategory/${subcategory.subcategory_id}/subcategory-level2/${subcategory.id}`)}
+                      onClick={() => {
+                        const path = getNavigationPath(subcategory, 'subcategory_level2');
+                        if (path) navigate(path);
+                      }}
                       className="relative overflow-hidden rounded-xl cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-lg group h-20 sm:h-24 md:h-28 bg-white dark:bg-gray-800 border-2"
                       style={{ borderColor: '#270014' }}
                     >
@@ -560,7 +625,11 @@ const Favorites = () => {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.05 }}
-                    className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all duration-200"
+                    className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all duration-200 cursor-pointer"
+                    onClick={() => {
+                      const path = getNavigationPath(title, 'title');
+                      if (path) navigate(path);
+                    }}
                   >
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -808,7 +877,11 @@ const Favorites = () => {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.05 }}
-                    className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all duration-200"
+                    className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all duration-200 cursor-pointer"
+                    onClick={() => {
+                      const path = getNavigationPath(hook, 'hook');
+                      if (path) navigate(path);
+                    }}
                   >
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -868,7 +941,11 @@ const Favorites = () => {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.05 }}
-                    className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all duration-200"
+                    className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all duration-200 cursor-pointer"
+                    onClick={() => {
+                      const path = getNavigationPath(challenge, 'challenge');
+                      if (path) navigate(path);
+                    }}
                   >
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-3 flex-1 min-w-0">

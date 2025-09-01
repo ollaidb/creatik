@@ -387,7 +387,7 @@ const PublicChallenges = () => {
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <h1 className="text-xl font-semibold">
-            {filterLikedOnly ? 'Mes Challenges Likés' : 'Challenges Publics'}
+            {filterLikedOnly ? 'Mes Challenges Likés' : 'Challenge'}
           </h1>
         </div>
         {user && (

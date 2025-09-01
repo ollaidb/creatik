@@ -21,6 +21,8 @@ const Events: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
   const [filteredEvents, setFilteredEvents] = useState<Event[]>([]);
+  const [showCalendar, setShowCalendar] = useState<boolean>(false);
+  const [eventsByDate, setEventsByDate] = useState<Record<string, number>>({});
 
   // Récupérer l'événement depuis l'URL si présent
   const eventId = searchParams.get('event');
@@ -58,6 +60,97 @@ const Events: React.FC = () => {
     });
   };
 
+  // Fonctions pour le calendrier
+  const getDaysInMonth = (date: Date): Date[] => {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const days: Date[] = [];
+
+    // Ajouter les jours du mois précédent pour remplir la première semaine
+    const firstDayOfWeek = firstDay.getDay();
+    for (let i = firstDayOfWeek - 1; i >= 0; i--) {
+      days.push(new Date(year, month, -i));
+    }
+
+    // Ajouter tous les jours du mois
+    for (let day = 1; day <= lastDay.getDate(); day++) {
+      days.push(new Date(year, month, day));
+    }
+
+    // Ajouter les jours du mois suivant pour remplir la dernière semaine
+    const remainingDays = 42 - days.length; // 6 semaines * 7 jours
+    for (let day = 1; day <= remainingDays; day++) {
+      days.push(new Date(year, month + 1, day));
+    }
+
+    return days;
+  };
+
+  const isSameDay = (date1: Date, date2: Date): boolean => {
+    return date1.getDate() === date2.getDate() &&
+           date1.getMonth() === date2.getMonth() &&
+           date1.getFullYear() === date2.getFullYear();
+  };
+
+  const isCurrentMonth = (date: Date): boolean => {
+    return date.getMonth() === currentMonth.getMonth() &&
+           date.getFullYear() === currentMonth.getFullYear();
+  };
+
+  const goToPreviousMonth = () => {
+    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1));
+  };
+
+  const goToNextMonth = () => {
+    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1));
+  };
+
+  const selectDate = async (date: Date) => {
+    setSelectedDate(date);
+    setShowCalendar(false);
+    
+    // Forcer le rechargement des événements pour cette date
+    try {
+      const eventsForDate = await getEventsForDate(date);
+      setFilteredEvents(eventsForDate);
+    } catch (error) {
+      console.error('Erreur lors du chargement des événements pour la date sélectionnée:', error);
+      toast({ title: "Erreur", description: "Impossible de charger les événements pour cette date", variant: "destructive" });
+    }
+  };
+
+  // Fonction pour charger les événements par date pour le calendrier
+  const loadEventsForCalendar = async () => {
+    try {
+      const startDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
+      const endDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0);
+      
+      const eventsMap: Record<string, number> = {};
+      
+      // Charger les événements pour chaque jour du mois
+      for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+        const dateString = d.toISOString().split('T')[0];
+        const eventsForDate = await getEventsForDate(d);
+        if (eventsForDate.length > 0) {
+          eventsMap[dateString] = eventsForDate.length;
+        }
+      }
+      
+      setEventsByDate(eventsMap);
+    } catch (error) {
+      console.error('Erreur lors du chargement des événements pour le calendrier:', error);
+    }
+  };
+
+  // Charger les événements du calendrier quand le mois change
+  useEffect(() => {
+    if (showCalendar) {
+      loadEventsForCalendar();
+    }
+  }, [currentMonth, showCalendar]);
+
   const getCategoryIcon = (categoryName: string) => {
     const iconMap: Record<string, React.ReactNode> = {
       'Personnalités': <Users className="w-4 h-4" />,
@@ -92,17 +185,13 @@ const Events: React.FC = () => {
     return colorMap[categoryName] || 'bg-gray-500';
   };
 
-  const filteredEventsByCategory = selectedCategory === 'all' 
-    ? filteredEvents 
-    : filteredEvents.filter(event => event.category === selectedCategory);
-
   const filteredEventsBySearch = searchTerm 
-    ? filteredEventsByCategory.filter(event => 
+    ? filteredEvents.filter(event => 
         event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         event.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (event.person_name && event.person_name.toLowerCase().includes(searchTerm.toLowerCase()))
       )
-    : filteredEventsByCategory;
+    : filteredEvents;
 
   if (loading) {
     return (
@@ -140,85 +229,58 @@ const Events: React.FC = () => {
   return (
     <div className="min-h-screen pb-20 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-gray-900 dark:to-gray-800">
       {/* Header */}
-      <div className="bg-white dark:bg-gray-800 shadow-sm border-b">
-        <div className="max-w-4xl mx-auto p-4">
+      <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm shadow-sm border-b border-gray-200/50 dark:border-gray-700/50 sticky top-0 z-10">
+        <div className="max-w-4xl mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
             <Button
               variant="ghost"
               onClick={() => navigate('/')}
-              className="text-gray-600 hover:text-gray-900"
+              className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors duration-200 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
+              size="sm"
             >
-              <ChevronLeft className="w-5 h-5 mr-2" />
-              Retour
+              <ChevronLeft className="w-5 h-5" />
             </Button>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              Événements du jour
-            </h1>
+            <div className="text-center">
+              <div className="flex items-center justify-center gap-3">
+                <h1 className="text-lg font-semibold text-gray-900 dark:text-white tracking-tight">
+                  Événements du jour
+                </h1>
+                <span className="text-sm text-gray-500 dark:text-gray-400">
+                  {selectedDate.toLocaleDateString('fr-FR', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric'
+                  })}
+                </span>
+              </div>
+            </div>
             <div className="w-10"></div>
           </div>
         </div>
       </div>
 
       <div className="max-w-4xl mx-auto p-4">
-        {/* Date sélectionnée */}
-        <Card className="mb-6 bg-white dark:bg-gray-800 shadow-lg">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                  {formatDate(selectedDate)}
-                </h2>
-                <p className="text-gray-600 dark:text-gray-400">
-                  {filteredEventsBySearch.length} événement(s) trouvé(s)
-                </p>
-              </div>
-              <Button
-                variant="outline"
-                onClick={() => setSelectedDate(new Date())}
-                className="bg-purple-50 border-purple-200 text-purple-700 hover:bg-purple-100"
-              >
-                Aujourd'hui
-              </Button>
+
+        {/* Barre de recherche et sélecteur de date */}
+        <div className="mb-6">
+          <div className="flex items-center justify-center gap-3 max-w-lg mx-auto">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Input
+                placeholder="Rechercher un événement..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 focus:border-purple-500 dark:focus:border-purple-400"
+              />
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Filtres */}
-        <div className="mb-6 space-y-4">
-          {/* Recherche */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <Input
-              placeholder="Rechercher un événement..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 bg-white dark:bg-gray-800"
-            />
-          </div>
-
-          {/* Catégories */}
-          <div className="flex flex-wrap gap-2">
             <Button
-              variant={selectedCategory === 'all' ? 'default' : 'outline'}
+              variant="outline"
               size="sm"
-              onClick={() => setSelectedCategory('all')}
-              className="bg-purple-600 hover:bg-purple-700"
+              onClick={() => setShowCalendar(true)}
+              className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400"
             >
-              <Filter className="w-4 h-4 mr-2" />
-              Tous
+              <Calendar className="w-4 h-4" />
             </Button>
-            {categories.map((category) => (
-              <Button
-                key={category.id}
-                variant={selectedCategory === category.name ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setSelectedCategory(category.name)}
-                className={selectedCategory === category.name ? 'bg-purple-600 hover:bg-purple-700' : ''}
-              >
-                {getCategoryIcon(category.name)}
-                <span className="ml-2">{category.name}</span>
-              </Button>
-            ))}
           </div>
         </div>
 
@@ -302,6 +364,84 @@ const Events: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Modal Calendrier */}
+      {showCalendar && (
+        <div 
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          onClick={() => setShowCalendar(false)}
+        >
+          <div 
+            className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-[280px] w-full p-3"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header du calendrier */}
+            <div className="flex items-center justify-between mb-3">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={goToPreviousMonth}
+                className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white p-0.5"
+              >
+                <ChevronLeft className="w-3 h-3" />
+              </Button>
+              <h3 className="text-xs font-semibold text-gray-900 dark:text-white">
+                {currentMonth.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}
+              </h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={goToNextMonth}
+                className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white p-0.5"
+              >
+                <ChevronRight className="w-3 h-3" />
+              </Button>
+            </div>
+
+            {/* Jours de la semaine */}
+            <div className="grid grid-cols-7 gap-0 mb-1">
+              {['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'].map((day) => (
+                <div key={day} className="text-center text-[10px] font-medium text-gray-500 dark:text-gray-400 py-0.5">
+                  {day}
+                </div>
+              ))}
+            </div>
+
+            {/* Grille du calendrier */}
+            <div className="grid grid-cols-7 gap-0">
+              {getDaysInMonth(currentMonth).map((date, index) => {
+                const dateString = date.toISOString().split('T')[0];
+                const hasEvents = eventsByDate[dateString] > 0;
+                
+                return (
+                  <button
+                    key={index}
+                    onClick={() => selectDate(date)}
+                    className={`
+                      aspect-square rounded-sm text-[10px] font-medium transition-colors relative
+                      ${isSameDay(date, selectedDate) 
+                        ? 'bg-purple-600 text-white' 
+                        : isCurrentMonth(date)
+                          ? 'text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700'
+                          : 'text-gray-400 dark:text-gray-500'
+                      }
+                    `}
+                  >
+                    <span className="relative">
+                      {date.getDate()}
+                      {hasEvents && (
+                        <span className="absolute -top-1 -right-1 w-1.5 h-1.5 bg-purple-500 rounded-full"></span>
+                      )}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+
+          </div>
+        </div>
+      )}
 
       <Navigation />
     </div>

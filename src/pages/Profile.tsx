@@ -115,59 +115,11 @@ const Profile = () => {
   };
   const menuItems: MenuItem[] = [
     {
-      title: 'Centres d\'intérêt',
-      description: 'Personnalisez vos préférences',
-      icon: Settings,
-      path: '/profile/preferences',
-      color: 'text-blue-500',
-      requiresAuth: true
-    },
-    {
-      title: "Publications",
-      description: "Gérez vos publications et suivez leur statut",
-      icon: FileText,
-      path: '/profile/publications',
-      color: 'text-blue-600',
-      requiresAuth: true
-    },
-    {
-      title: 'Mes Défis',
-      description: 'Gérez vos défis personnels et suivez votre progression',
-      icon: Target,
-      path: '/challenges',
-      color: 'text-orange-500',
-      requiresAuth: true
-    },
-    {
       title: 'Notes',
       description: 'Gérez votre compte et votre contenu créatif',
       icon: BookOpen,
       path: '/notes',
       color: 'text-indigo-500',
-      requiresAuth: true
-    },
-    {
-      title: 'Ressources',
-      description: 'Reçus et contrats d\'influenceur',
-      icon: Receipt,
-      path: '/profile/resources',
-      color: 'text-emerald-500',
-      requiresAuth: true
-    },
-    {
-      title: 'Notifications',
-      description: 'Rappels de défis, réactions et réponses',
-      icon: Bell,
-      path: '/profile/notifications',
-      color: 'text-yellow-500',
-      requiresAuth: true
-    },
-    {
-      title: 'Historique',
-      description: 'Consultez votre historique de navigation',
-      icon: History,
-      path: '/profile/history',
-      color: 'text-purple-500',
       requiresAuth: true
     },
     {
@@ -238,56 +190,53 @@ const Profile = () => {
           transition={{ duration: 0.5 }}
           className="mb-6"
         >
-          <Card>
-            <CardHeader className="text-center p-4">
-              <div className="relative mx-auto mb-3">
-                <Avatar className="w-16 h-16 mx-auto">
-                  <AvatarImage src={profileImage || undefined} />
-                  <AvatarFallback className="bg-gradient-to-r from-primary to-secondary">
-                    <User className="w-8 h-8 text-white" />
-                  </AvatarFallback>
-                </Avatar>
-                <label htmlFor="profile-image" className="absolute -bottom-1 -right-1 cursor-pointer">
-                  <div className="bg-white dark:bg-gray-800 rounded-full p-1.5 shadow-lg border hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                    {uploading ? (
-                      <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-gray-600"></div>
-                    ) : (
-                      <Camera className="w-3 h-3 text-gray-600 dark:text-gray-300" />
-                    )}
-                  </div>
-                  <input
-                    id="profile-image"
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                    disabled={uploading}
-                    className="hidden"
-                  />
-                </label>
+          <Card 
+            className="cursor-pointer hover:shadow-lg transition-shadow duration-300"
+            onClick={() => navigate('/profile/details')}
+          >
+            <CardHeader className="p-4">
+              <div className="flex items-center gap-4">
+                {/* Avatar avec bouton de modification */}
+                <div className="relative" onClick={(e) => e.stopPropagation()}>
+                  <Avatar className="w-16 h-16">
+                    <AvatarImage src={profileImage || undefined} />
+                    <AvatarFallback className="bg-gradient-to-r from-primary to-secondary">
+                      <User className="w-8 h-8 text-white" />
+                    </AvatarFallback>
+                  </Avatar>
+                  <label htmlFor="profile-image" className="absolute -bottom-1 -right-1 cursor-pointer">
+                    <div className="bg-white dark:bg-gray-800 rounded-full p-1.5 shadow-lg border hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                      {uploading ? (
+                        <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-gray-600"></div>
+                      ) : (
+                        <Camera className="w-3 h-3 text-gray-600 dark:text-gray-300" />
+                      )}
+                    </div>
+                    <input
+                      id="profile-image"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      disabled={uploading}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
+                
+                {/* Nom de l'utilisateur */}
+                <div className="flex-1">
+                  <CardTitle className="text-xl text-left">
+                    {user ? `${user.user_metadata?.first_name || 'Utilisateur'}` : 'Utilisateur'}
+                  </CardTitle>
+                </div>
+                
+                {/* Icône de flèche */}
+                <div className="text-gray-500">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
               </div>
-              <CardTitle className="text-xl">
-                {user ? `${user.user_metadata?.first_name || 'Utilisateur'}` : 'Utilisateur'}
-              </CardTitle>
-              {!user ? (
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => setShowAuthModal(true)}
-                  className="mt-2 mx-auto"
-                >
-                  Se connecter
-                </Button>
-              ) : (
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={handleSignOut}
-                  className="mt-2 mx-auto flex items-center gap-2"
-                >
-                  <LogOut className="w-4 h-4" />
-                  Se déconnecter
-                </Button>
-              )}
             </CardHeader>
           </Card>
         </motion.div>
@@ -317,6 +266,39 @@ const Profile = () => {
               </Card>
             </motion.div>
           ))}
+        </motion.div>
+        
+        {/* Bouton de connexion/déconnexion à la fin de la page */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+          className="mt-8"
+        >
+          <Card>
+            <CardContent className="p-4">
+              {!user ? (
+                <Button 
+                  variant="outline" 
+                  size="lg"
+                  onClick={() => setShowAuthModal(true)}
+                  className="w-full"
+                >
+                  Se connecter
+                </Button>
+              ) : (
+                <Button 
+                  variant="outline" 
+                  size="lg" 
+                  onClick={handleSignOut}
+                  className="w-full flex items-center justify-center gap-2"
+                >
+                  <LogOut className="w-5 h-5" />
+                  Se déconnecter
+                </Button>
+              )}
+            </CardContent>
+          </Card>
         </motion.div>
       </main>
       <AuthModal 

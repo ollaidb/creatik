@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Info, Target, Settings, BookOpen, Lightbulb, Users, Star, TrendingUp, Calendar, Hash } from 'lucide-react';

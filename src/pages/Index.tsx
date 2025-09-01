@@ -173,36 +173,39 @@ const Index: React.FC = () => {
 
       <Hero />
       
-      {/* Menu principal */}
-      <section className="container mx-auto px-4 py-4">
+      {/* Menu principal avec boutons identiques et centrés */}
+      <section className="container mx-auto px-4 py-1">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="flex justify-center"
+          className="flex justify-center gap-4"
         >
-          <nav className="flex items-center gap-8">
-            <Button
-              variant="ghost"
-              className="text-lg font-medium text-foreground hover:text-primary hover:bg-accent px-4 py-2"
-              onClick={() => navigate('/notes')}
-            >
-              Notes
-            </Button>
-            <Button
-              variant="ghost"
-              className="text-lg font-medium text-foreground hover:text-primary hover:bg-accent px-4 py-2"
-              onClick={() => navigate('/profile/challenges')}
-            >
-              Mes Défis
-            </Button>
-          </nav>
+          <Button
+            variant="ghost"
+            className="w-32 h-12 text-sm font-medium text-primary dark:text-primary-foreground hover:text-primary-foreground dark:hover:text-primary rounded-2xl transition-all duration-500 ease-out hover:scale-105 group bg-white dark:bg-gray-800 shadow-lg border border-primary/20 dark:border-primary/10 flex items-center justify-center"
+            onClick={() => navigate('/notes')}
+          >
+            <svg className="w-4 h-4 mr-2 transition-transform duration-300 group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+            Notes
+          </Button>
+          
+          <Button
+            variant="ghost"
+            className="w-32 h-12 text-sm font-medium text-primary dark:text-primary-foreground hover:text-primary-foreground dark:hover:text-primary rounded-2xl transition-all duration-500 ease-out hover:scale-105 group bg-white dark:bg-gray-800 shadow-lg border border-primary/20 dark:border-primary/10 flex items-center justify-center"
+            onClick={() => navigate('/profile/challenges')}
+          >
+            <Target className="w-4 h-4 mr-2 transition-transform duration-300 group-hover:scale-110" />
+            Mes Défis
+          </Button>
         </motion.div>
       </section>
       
       {/* Section Défi du jour */}
       {user && (
-        <section className="container mx-auto px-4 py-4">
+        <section className="container mx-auto px-4 py-2">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -307,7 +310,7 @@ const Index: React.FC = () => {
       )}
       
       {/* Section Quoi poster aujourd'hui */}
-      <section className="container mx-auto px-4 py-4">
+      <section className="container mx-auto px-4 py-2">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -371,363 +374,13 @@ const Index: React.FC = () => {
         </motion.div>
       </section>
 
-      {/* Section Tendances */}
-      {trends.length > 0 && (
-        <section className="container mx-auto px-4 py-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-6"
-          >
-            <div className="flex items-center space-x-2 mb-4">
-              <Star className="w-6 h-6 text-primary" />
-              <h2 className="text-2xl font-bold text-foreground">
-                Tendances du moment
-              </h2>
-            </div>
-            <p className="text-muted-foreground">
-              Découvrez ce qui fait le buzz sur les réseaux sociaux
-            </p>
-          </motion.div>
-          
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-          >
-            {getTopTrends(3).map((trend, index) => (
-              <motion.div key={trend.id} variants={itemVariants}>
-                <Card className="bg-card hover:shadow-lg transition-shadow">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg font-semibold text-foreground line-clamp-2">
-                        {trend.title}
-                      </CardTitle>
-                      <Badge className="bg-secondary text-foreground">
-                        {trend.platform}
-                      </Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <p className="text-muted-foreground text-sm mb-4 line-clamp-3">
-                      {trend.description}
-                    </p>
-                    <div className="flex flex-wrap gap-1 mb-4">
-                      {trend.hashtags.slice(0, 2).map((hashtag, idx) => (
-                        <Badge key={idx} variant="outline" className="text-xs border-border text-foreground">
-                          {hashtag}
-                        </Badge>
-                      ))}
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">
-                        {trend.engagement.toLocaleString()} engagements
-                      </span>
-                      <Button
-                        size="sm"
-                        className="bg-primary hover:bg-primary/90 text-primary-foreground"
-                        onClick={() => navigate('/trending')}
-                      >
-                        Voir plus
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </motion.div>
-        </section>
-      )}
-      {/* <TrendingSection /> */}
-      {/* Section Challenge */}
-      <section className="container mx-auto px-4 py-4">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <div className="flex justify-between items-center mb-3">
-            <h2 className="text-lg font-semibold text-foreground">
-              Challenge
-            </h2>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => navigate('/challenges?returnTo=home')}
-              className="flex items-center gap-1 text-xs px-2 py-1 border-border text-foreground hover:bg-accent"
-            >
-              <Target className="w-3 h-3" />
-              Voir tous
-            </Button>
-          </div>
-          {publicChallenges.length === 0 ? (
-            <Card className="text-center py-6">
-              <CardContent>
-                <Target className="h-8 w-8 mx-auto mb-3 text-muted-foreground" />
-                <h3 className="text-base font-medium mb-2 text-foreground">Aucun challenge public</h3>
-                <p className="text-sm text-muted-foreground mb-3">
-                  Soyez le premier à publier un challenge !
-                </p>
-                {user && (
-                  <Button onClick={() => navigate('/publish')} size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground">
-                    Publier
-                  </Button>
-                )}
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="space-y-3">
-              {publicChallenges.slice(0, 3).map((challenge) => (
-                <motion.div
-                  key={challenge.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <Card className="hover:shadow-md transition-shadow bg-card">
-                    <CardContent className="p-3">
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <Avatar className="w-6 h-6">
-                              <AvatarImage src={(challenge.creator?.user_metadata as UserMeta)?.avatar_url || ''} />
-                              <AvatarFallback className="bg-secondary text-foreground">
-                              <User className="w-3 h-3" />
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="text-xs text-muted-foreground">
-                              {getCreatorName(challenge.creator)}
-                            </div>
-                          </div>
-                      </div>
-                      
-                      <h3 className="font-semibold text-sm mb-2 text-foreground">{challenge.title}</h3>
-                      
-                      <p className="text-xs text-muted-foreground mb-3 line-clamp-2">
-                        {challenge.description.length > 80 
-                          ? challenge.description.substring(0, 80) + '...'
-                          : challenge.description
-                        }
-                          </p>
-                      
-                      <div className="flex items-center justify-between pt-2 border-t border-border">
-                        <div className="flex items-center gap-1">
-                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                            <Heart className="w-3 h-3" />
-                            <span>{challenge.likes_count}</span>
-                          </div>
-                        </div>
-                        
-                        {user && (
-                          <Button
-                            size="sm"
-                            onClick={() => addToPersonalChallenges(challenge.id)}
-                            className="flex items-center gap-1 p-1 h-6 text-xs bg-primary text-primary-foreground"
-                            >
-                            <Plus className="w-3 h-3" />
-                            <span className="text-xs">Défi</span>
-                            </Button>
-                          )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              ))}
-            </div>
-          )}
-        </motion.div>
-      </section>
-      
-      {/* Section Notes */}
-      <section className="container mx-auto px-4 py-4">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <div className="flex justify-between items-center mb-3">
-                             <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
-                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                   </svg>
-                   Notes
-                 </h2>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => navigate('/notes')}
-              className="flex items-center gap-1 text-xs px-2 py-1 border-border text-foreground hover:bg-accent"
-            >
-              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              Voir toutes
-            </Button>
-          </div>
-          
-          {/* Interface de prise de notes rapide */}
-          <Card className="bg-card border-border">
-            <CardContent className="p-4">
-              <div className="space-y-3">
-                {/* Barre de recherche des notes */}
-                <div className="relative">
-                  <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                  <input
-                    type="text"
-                    placeholder="Rechercher dans mes notes..."
-                    className="w-full pl-10 pr-4 py-2 text-sm bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-foreground placeholder:text-muted-foreground"
-                  />
-                </div>
-                
-                {/* Prise de note rapide */}
-                <div className="space-y-2">
-                  <textarea
-                    placeholder="Prendre une note rapide..."
-                    className="w-full p-3 text-sm bg-background border border-border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-foreground placeholder:text-muted-foreground"
-                    rows={3}
-                  />
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="text-xs px-2 py-1 border-border text-foreground hover:bg-accent"
-                      >
-                        <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                        </svg>
-                        Catégorie
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="text-xs px-2 py-1 border-border text-foreground hover:bg-accent"
-                      >
-                        <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                        </svg>
-                        Tags
-                      </Button>
-                    </div>
-                    <Button
-                      size="sm"
-                      className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs px-3 py-1"
-                    >
-                      Sauvegarder
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          {/* Notes récentes */}
-          <div className="mt-4">
-            <h3 className="text-sm font-medium text-foreground mb-2">Notes récentes</h3>
-            <div className="space-y-2">
-              {/* Note exemple 1 */}
-              <Card className="hover:shadow-md transition-shadow bg-card border-border">
-                <CardContent className="p-3">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <h4 className="font-medium text-sm text-foreground mb-1">Idée pour vidéo TikTok</h4>
-                      <p className="text-xs text-muted-foreground line-clamp-2">
-                        Tutoriel rapide sur la préparation du petit-déjeuner en 60 secondes...
-                      </p>
-                      <div className="flex items-center gap-2 mt-2">
-                        <Badge variant="outline" className="text-xs border-border text-foreground">
-                          #food
-                        </Badge>
-                        <Badge variant="outline" className="text-xs border-border text-foreground">
-                          #tutorial
-                        </Badge>
-                        <span className="text-xs text-muted-foreground">
-                          Il y a 2h
-                        </span>
-                      </div>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-muted-foreground hover:text-foreground"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                      </svg>
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-              
-              {/* Note exemple 2 */}
-              <Card className="hover:shadow-md transition-shadow bg-card border-border">
-                <CardContent className="p-3">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <h4 className="font-medium text-sm text-foreground mb-1">Inspiration pour post Instagram</h4>
-                      <p className="text-xs text-muted-foreground line-clamp-2">
-                        Photo de coucher de soleil avec citation motivante sur la persévérance...
-                      </p>
-                      <div className="flex items-center gap-2 mt-2">
-                        <Badge variant="outline" className="text-xs border-border text-foreground">
-                          #inspiration
-                        </Badge>
-                        <Badge variant="outline" className="text-xs border-border text-foreground">
-                          #motivation
-                        </Badge>
-                        <span className="text-xs text-muted-foreground">
-                          Hier
-                        </span>
-                      </div>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-muted-foreground hover:text-foreground"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                      </svg>
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </motion.div>
-      </section>
-      
-      <div className="container mx-auto px-4 py-4">
-        {/* Section: Recommandations personnalisées */}
-        <section className="mb-6">
-          <motion.h2 
-            className="text-lg font-semibold text-foreground mb-3"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            Recommandations pour vous
-          </motion.h2>
-          <motion.div 
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3"
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-          >
-              {personalizedIdeas.map((idea) => (
-              <motion.div key={idea.id} variants={itemVariants}>
-                  <ContentCard 
-                    idea={idea} 
-                    onFavorite={handleToggleFavorite}
-                  />
-              </motion.div>
-            ))}
-          </motion.div>
-        </section>
 
-      </div>
+      {/* <TrendingSection /> */}
+
+      
+
+      
+
       <Navigation />
     </div>
   );

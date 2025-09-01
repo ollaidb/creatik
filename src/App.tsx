@@ -41,6 +41,7 @@ import Compte from "./pages/Compte";
 import Contenu from "./pages/Contenu";
 import Notifications from "./pages/profile/Notifications";
 import Resources from "./pages/profile/Resources";
+import ProfileDetails from "./pages/profile/ProfileDetails";
 
 // Configuration optimisée du QueryClient pour de meilleures performances
 const queryClient = new QueryClient({
@@ -95,6 +96,7 @@ const AppContent = () => {
             <Route path="/sources" element={<Sources />} />
             {/* Profile Routes */}
             <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/profile/details" element={<ProfileDetails />} />
             <Route path="/profile/favorites" element={<Favorites />} />
             <Route path="/profile/history" element={<History />} />
             <Route path="/profile/preferences" element={<Preferences />} />
