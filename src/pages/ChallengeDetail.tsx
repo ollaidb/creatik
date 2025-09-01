@@ -427,13 +427,13 @@ const ChallengeDetail = () => {
             </span>
           </div>
           
-                  {/* Contenu du commentaire */}
-        <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed mb-2">
-          {comment.content}
-        </p>
-        
-        {/* Actions compactes */}
-        <div className="flex items-center gap-4">
+                  {/* Contenu du commentaire et like sur la même ligne */}
+        <div className="flex items-start justify-between gap-4">
+          <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed flex-1">
+            {comment.content}
+          </p>
+          
+          {/* Like sur la droite */}
           <Button
             variant="ghost"
             size="sm"
@@ -441,14 +441,16 @@ const ChallengeDetail = () => {
               e.stopPropagation();
               likeComment(comment.id);
             }}
-            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-blue-600 p-1 h-auto"
+            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-blue-600 p-1 h-auto flex-shrink-0"
           >
             <ThumbsUp className="w-3 h-3" />
             <span className="ml-1">{comment.likes_count || 0}</span>
           </Button>
-          
-          {/* Afficher/masquer les réponses */}
-          {comment.replies && comment.replies.length > 0 && (
+        </div>
+        
+        {/* Afficher/masquer les réponses */}
+        {comment.replies && comment.replies.length > 0 && (
+          <div className="mt-2">
             <Button
               variant="ghost"
               size="sm"
@@ -470,8 +472,8 @@ const ChallengeDetail = () => {
                 </>
               )}
             </Button>
-          )}
-        </div>
+          </div>
+        )}
           
           {/* Afficher/masquer les réponses */}
           {comment.replies && comment.replies.length > 0 && (
