@@ -375,13 +375,29 @@ const ChallengeDetail = () => {
     >
       {/* Design compact style TikTok */}
       <div 
-        className="flex gap-3 cursor-pointer"
-        onContextMenu={(e) => handleCommentLongPress(e, comment.id)}
+        className="flex gap-3"
+        onContextMenu={(e) => {
+          e.preventDefault();
+          handleCommentLongPress(e, comment.id);
+        }}
+        onTouchStart={(e) => {
+          // Appui long sur mobile (300ms)
+          const timer = setTimeout(() => {
+            handleCommentLongPress(e as any, comment.id);
+          }, 300);
+          
+          const handleTouchEnd = () => {
+            clearTimeout(timer);
+            document.removeEventListener('touchend', handleTouchEnd);
+          };
+          
+          document.addEventListener('touchend', handleTouchEnd);
+        }}
         onMouseDown={(e) => {
-          // Simuler un appui long sur mobile
+          // Appui long sur desktop (300ms)
           const timer = setTimeout(() => {
             handleCommentLongPress(e, comment.id);
-          }, 500);
+          }, 300);
           
           const handleMouseUp = () => {
             clearTimeout(timer);
@@ -411,26 +427,51 @@ const ChallengeDetail = () => {
             </span>
           </div>
           
-          {/* Contenu du commentaire et like sur la même ligne */}
-          <div className="flex items-start justify-between gap-4">
-            <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed flex-1">
-              {comment.content}
-            </p>
-            
-            {/* Like sur la droite */}
+                  {/* Contenu du commentaire */}
+        <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed mb-2">
+          {comment.content}
+        </p>
+        
+        {/* Actions compactes */}
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              likeComment(comment.id);
+            }}
+            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-blue-600 p-1 h-auto"
+          >
+            <ThumbsUp className="w-3 h-3" />
+            <span className="ml-1">{comment.likes_count || 0}</span>
+          </Button>
+          
+          {/* Afficher/masquer les réponses */}
+          {comment.replies && comment.replies.length > 0 && (
             <Button
               variant="ghost"
               size="sm"
               onClick={(e) => {
                 e.stopPropagation();
-                likeComment(comment.id);
+                toggleCommentExpanded(comment.id);
               }}
-              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-blue-600 p-1 h-auto flex-shrink-0"
+              className="text-xs text-muted-foreground p-1 h-auto"
             >
-              <ThumbsUp className="w-3 h-3" />
-              <span className="ml-1">{comment.likes_count || 0}</span>
+              {expandedComments.has(comment.id) ? (
+                <>
+                  <ChevronUp className="w-3 h-3 mr-1" />
+                  Masquer {comment.replies.length} réponse{comment.replies.length > 1 ? 's' : ''}
+                </>
+              ) : (
+                <>
+                  <ChevronDown className="w-3 h-3 mr-1" />
+                  Voir {comment.replies.length} réponse{comment.replies.length > 1 ? 's' : ''}
+                </>
+              )}
             </Button>
-          </div>
+          )}
+        </div>
           
           {/* Afficher/masquer les réponses */}
           {comment.replies && comment.replies.length > 0 && (
