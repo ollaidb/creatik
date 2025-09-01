@@ -1,4 +1,3 @@
-
 export interface DatabaseCategory {
   id: string;
   name: string;
@@ -7,7 +6,6 @@ export interface DatabaseCategory {
   created_at: string;
   updated_at: string;
 }
-
 export interface DatabaseSubcategory {
   id: string;
   category_id: string;
@@ -17,27 +15,24 @@ export interface DatabaseSubcategory {
   updated_at: string;
   category?: DatabaseCategory;
 }
-
 export interface DatabaseContentTitle {
   id: string;
   subcategory_id: string;
   title: string;
   type?: 'title' | 'hashtag' | 'hook';
   format?: 'video-longue' | 'video-courte' | 'image' | 'all';
-  platform?: 'tiktok' | 'instagram' | 'youtube' | 'all';
+  platform?: 'tiktok' | 'instagram' | 'youtube' | 'blog' | 'article' | 'all';
   created_at: string;
 }
-
 export interface DatabaseExemplaryAccount {
   id: string;
   subcategory_id: string;
   account_name: string;
-  platform: 'tiktok' | 'instagram' | 'youtube' | 'twitter' | 'other';
+  platform: 'tiktok' | 'instagram' | 'youtube' | 'twitter' | 'blog' | 'article' | 'other';
   account_url: string;
   description?: string;
   created_at: string;
 }
-
 export interface DatabaseContentExample {
   id: string;
   subcategory_id: string;
@@ -46,10 +41,9 @@ export interface DatabaseContentExample {
   description?: string;
   content_url: string;
   format?: 'video-longue' | 'video-courte' | 'image' | 'story';
-  platform?: 'tiktok' | 'instagram' | 'youtube' | 'other';
+  platform?: 'tiktok' | 'instagram' | 'youtube' | 'blog' | 'article' | 'other';
   created_at: string;
 }
-
 export interface DatabaseInspiringContent {
   id: string;
   subcategory_id: string;
@@ -60,7 +54,7 @@ export interface DatabaseInspiringContent {
   account_url?: string;
   video_url?: string;
   format?: 'storytime' | 'tips' | 'humour' | 'tutorial' | 'challenge' | 'other';
-  platform?: 'tiktok' | 'instagram' | 'youtube' | 'all';
+  platform?: 'tiktok' | 'instagram' | 'youtube' | 'blog' | 'article' | 'all';
   status?: 'idee-brute' | 'brouillon' | 'pret';
   popularity_score?: number;
   created_at: string;

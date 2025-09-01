@@ -1,5 +1,4 @@
 import { Category, ContentIdea, Challenge } from "../types";
-
 export const categories: Category[] = [
   { id: "education", name: "Éducation", color: "primary" },
   { id: "information", name: "Information", color: "orange" },
@@ -62,7 +61,6 @@ export const categories: Category[] = [
   { id: "recommandation", name: "Recommandation", color: "green" },
   { id: "rage-bait", name: "Rage bait", color: "pink" },
 ];
-
 export const contentIdeas: ContentIdea[] = [
   {
     id: "1",
@@ -137,7 +135,6 @@ export const contentIdeas: ContentIdea[] = [
     popularity: 91
   },
 ];
-
 export const challenges: Challenge[] = [
   {
     id: "1",
@@ -161,14 +158,12 @@ export const challenges: Challenge[] = [
     category: "trending"
   }
 ];
-
 // Fonction pour simuler des recommandations personnalisées basées sur les catégories visitées
 export const getPersonalizedRecommendations = (visitedCategories: string[]): ContentIdea[] => {
   if (visitedCategories.length === 0) {
     // Si aucune catégorie visitée, retourner quelques idées populaires
     return contentIdeas.filter(idea => idea.popularity > 85).slice(0, 4);
   }
-
   // Sinon, filtrer les idées basées sur les catégories visitées
   return contentIdeas
     .filter(idea => visitedCategories.includes(idea.category))

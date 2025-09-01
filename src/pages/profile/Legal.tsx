@@ -1,20 +1,15 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { ArrowLeft, Plus } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import Navigation from '@/components/Navigation';
-import StickyHeader from '@/components/StickyHeader';
 
 const Legal = () => {
   const navigate = useNavigate();
-
   return (
     <div className="min-h-screen pb-20">
-      <StickyHeader showSearchBar={false} />
-      
       <header className="bg-background border-b p-4 flex items-center justify-between">
         <div className="flex items-center">
           <Button 
@@ -27,16 +22,7 @@ const Legal = () => {
           </Button>
           <h1 className="text-xl font-semibold">Mentions légales</h1>
         </div>
-        <Button 
-          size="sm"
-          onClick={() => navigate('/publish')}
-          className="flex items-center gap-2"
-        >
-          <Plus className="h-4 w-4" />
-          Publier
-        </Button>
       </header>
-
       <main className="max-w-4xl mx-auto p-4 space-y-6">
         <Card>
           <CardHeader>
@@ -50,9 +36,7 @@ const Legal = () => {
                 Si vous n'acceptez pas ces conditions, veuillez ne pas utiliser notre service.
               </p>
             </div>
-            
             <Separator />
-            
             <div>
               <h3 className="font-semibold mb-2">2. Description du service</h3>
               <p className="text-muted-foreground">
@@ -60,9 +44,7 @@ const Legal = () => {
                 des catégories et des outils pour stimuler la créativité.
               </p>
             </div>
-            
             <Separator />
-            
             <div>
               <h3 className="font-semibold mb-2">3. Utilisation appropriée</h3>
               <p className="text-muted-foreground">
@@ -72,7 +54,6 @@ const Legal = () => {
             </div>
           </CardContent>
         </Card>
-
         <Card>
           <CardHeader>
             <CardTitle>Politique de confidentialité</CardTitle>
@@ -85,9 +66,7 @@ const Legal = () => {
                 email, préférences de contenu et données d'utilisation anonymisées.
               </p>
             </div>
-            
             <Separator />
-            
             <div>
               <h3 className="font-semibold mb-2">Utilisation des données</h3>
               <p className="text-muted-foreground">
@@ -95,9 +74,7 @@ const Legal = () => {
                 Nous ne vendons ni ne partageons vos informations personnelles avec des tiers.
               </p>
             </div>
-            
             <Separator />
-            
             <div>
               <h3 className="font-semibold mb-2">Vos droits</h3>
               <p className="text-muted-foreground">
@@ -107,7 +84,6 @@ const Legal = () => {
             </div>
           </CardContent>
         </Card>
-
         <Card>
           <CardHeader>
             <CardTitle>Informations légales</CardTitle>
@@ -120,9 +96,7 @@ const Legal = () => {
                 Plateforme d'inspiration créative
               </p>
             </div>
-            
             <Separator />
-            
             <div>
               <h3 className="font-semibold mb-2">Hébergement</h3>
               <p className="text-muted-foreground">
@@ -133,10 +107,8 @@ const Legal = () => {
           </CardContent>
         </Card>
       </main>
-
       <Navigation />
     </div>
   );
 };
-
 export default Legal;

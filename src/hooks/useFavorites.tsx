@@ -1,99 +1,104 @@
-
-import { useState, useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
-import { useToast } from './use-toast';
-import { useQueryClient, useQuery } from '@tanstack/react-query';
 
-export const useFavorites = () => {
-  const [loading, setLoading] = useState(false);
+export function useFavorites(type: string) {
   const { user } = useAuth();
-  const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [localFavorites, setLocalFavorites] = useState<string[]>([]);
 
-  // Utiliser React Query pour gérer les favoris
-  const { data: favorites = [], isLoading: favoritesLoading } = useQuery({
-    queryKey: ['favorites', user?.id],
+  const { data: favorites = [], isLoading } = useQuery({
+    queryKey: ['favorites', user?.id, type],
     queryFn: async () => {
       if (!user) return [];
       
-      const { data, error } = await supabase
+      console.log(`🔍 Chargement des favoris pour le type: ${type}`);
+      
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase as any)
         .from('user_favorites')
-        .select('category_id')
-        .eq('user_id', user.id);
-
+        .select('item_id')
+        .eq('user_id', user.id)
+        .eq('item_type', type);
+      
       if (error) {
-        console.error('Error fetching favorites:', error);
+        console.error(`❌ Erreur lors du chargement des favoris (${type}):`, error);
         throw error;
       }
       
-      return data.map(fav => fav.category_id);
+      console.log(`✅ Favoris chargés pour ${type}:`, data);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const favoriteIds = data ? data.map((fav: any) => fav.item_id) : [];
+      setLocalFavorites(favoriteIds); // Synchroniser l'état local
+      return favoriteIds;
     },
     enabled: !!user
   });
 
-  const toggleFavorite = async (categoryId: string) => {
-    if (!user) {
-      toast({
-        title: "Connexion requise",
-        description: "Connectez-vous pour gérer vos favoris",
-        variant: "destructive"
-      });
-      return;
+  const toggleFavorite = useCallback(async (itemId: string) => {
+    if (!user) return;
+    
+    console.log(`🔄 Toggle favori - Type: ${type}, ItemId: ${itemId}`);
+    
+    const isCurrentlyFavorite = localFavorites.includes(itemId);
+    
+    // Mise à jour immédiate de l'état local pour un feedback instantané
+    if (isCurrentlyFavorite) {
+      setLocalFavorites(prev => prev.filter(id => id !== itemId));
+    } else {
+      setLocalFavorites(prev => [...prev, itemId]);
     }
-
-    setLoading(true);
-    const isFavorite = favorites.includes(categoryId);
-
+    
     try {
-      if (isFavorite) {
-        const { error } = await supabase
+      if (isCurrentlyFavorite) {
+        console.log(`🗑️ Suppression du favori: ${itemId}`);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { error } = await (supabase as any)
           .from('user_favorites')
           .delete()
           .eq('user_id', user.id)
-          .eq('category_id', categoryId);
-
-        if (error) throw error;
+          .eq('item_id', itemId)
+          .eq('item_type', type);
         
-        toast({
-          title: "Retiré des favoris",
-          description: "La catégorie a été retirée de vos favoris."
-        });
+        if (error) {
+          console.error(`❌ Erreur lors de la suppression du favori:`, error);
+          // Remettre l'état local en cas d'erreur
+          setLocalFavorites(prev => [...prev, itemId]);
+          throw error;
+        }
+        console.log(`✅ Favori supprimé: ${itemId}`);
       } else {
-        const { error } = await supabase
+        console.log(`➕ Ajout du favori: ${itemId}`);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { error } = await (supabase as any)
           .from('user_favorites')
-          .insert({
-            user_id: user.id,
-            category_id: categoryId
-          });
-
-        if (error) throw error;
+          .insert({ user_id: user.id, item_id: itemId, item_type: type });
         
-        toast({
-          title: "Ajouté aux favoris",
-          description: "La catégorie a été ajoutée à vos favoris."
-        });
+        if (error) {
+          console.error(`❌ Erreur lors de l'ajout du favori:`, error);
+          // Remettre l'état local en cas d'erreur
+          setLocalFavorites(prev => prev.filter(id => id !== itemId));
+          throw error;
+        }
+        console.log(`✅ Favori ajouté: ${itemId}`);
       }
-
-      // Invalider les queries pour actualiser les données
-      queryClient.invalidateQueries({ queryKey: ['favorites'] });
       
+      // Invalider le cache pour synchroniser avec la base de données
+      queryClient.invalidateQueries({ queryKey: ['favorites', user?.id, type] });
     } catch (error) {
-      console.error('Error toggling favorite:', error);
-      toast({
-        title: "Erreur",
-        description: "Une erreur est survenue",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
+      console.error(`❌ Erreur lors du toggle favori:`, error);
+      throw error;
     }
-  };
+  }, [user, type, localFavorites, queryClient]);
+
+  // Utiliser l'état local pour le feedback immédiat, sinon les données du cache
+  const currentFavorites = localFavorites.length > 0 ? localFavorites : favorites;
 
   return {
-    favorites,
-    loading: favoritesLoading || loading,
+    favorites: currentFavorites,
+    isLoading,
     toggleFavorite,
-    isFavorite: (categoryId: string) => favorites.includes(categoryId)
+    isFavorite: (itemId: string) => currentFavorites.includes(itemId)
   };
-};
+}

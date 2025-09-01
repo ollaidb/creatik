@@ -1,8 +1,8 @@
-
 import React from "react";
 import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import CategoryCard from "./CategoryCard";
+import IntelligentSearchBar from "./IntelligentSearchBar";
 import { useCategories } from "@/hooks/useCategories";
 import { 
   Carousel, 
@@ -11,74 +11,155 @@ import {
   CarouselNext, 
   CarouselPrevious 
 } from "@/components/ui/carousel";
-import StickyHeader from "./StickyHeader";
+import { Heart } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const Hero: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { data: categories, isLoading } = useCategories();
+  
+  const handleSearch = (query: string) => {
+    navigate(`/search?search=${encodeURIComponent(query)}`);
+  };
+
+  const handleFavoritesClick = () => {
+    // Si on vient de la page d'accueil, on passe l'information
+    const returnTo = location.pathname === '/' ? 'home' : 'profile';
+    navigate(`/profile/favorites?returnTo=${returnTo}`);
+  };
+
+
 
   if (isLoading) {
     return (
-      <>
-        <StickyHeader />
-        <section className="relative py-4 sm:py-8 bg-gradient-to-r from-[#f8f9fa] to-[#e9ecef] dark:from-creatik-dark dark:to-[#2C2C54]/80">
-          <div className="creatik-container">
-            <div className="text-center py-8">
-              <p>Chargement des catégories...</p>
-            </div>
+      <section className="relative py-4 bg-card">
+        <div className="container mx-auto px-4">
+          <div className="text-center py-8">
+            <p className="text-muted-foreground">Chargement des catégories...</p>
           </div>
-        </section>
-      </>
+        </div>
+      </section>
     );
   }
 
   return (
-    <>
-      <StickyHeader />
-      <section className="relative py-4 sm:py-8 bg-gradient-to-r from-[#f8f9fa] to-[#e9ecef] dark:from-creatik-dark dark:to-[#2C2C54]/80">
-        <div className="creatik-container">
-          {/* Categories Carousel with visible background - Responsive */}
-          <div className="relative px-2 sm:px-4 md:px-10 mb-4 sm:mb-8">
-            <div className="bg-white/80 dark:bg-creatik-dark/30 rounded-xl p-2 sm:p-4 shadow-sm">
-              <Carousel
-                opts={{
-                  align: "start",
-                  loop: true,
-                }}
-                className="w-full"
+    <section className="relative py-4 bg-card">
+      <div className="container mx-auto px-4">
+        {/* Titre et barre de recherche */}
+        <div className="mb-8">
+          {/* Version Desktop - Titre et barre sur même ligne */}
+          <div className="hidden md:flex items-center justify-between px-8">
+            <h1 className="text-2xl md:text-3xl font-bold text-foreground">
+              Creatik
+            </h1>
+            <div className="flex items-center gap-3">
+              <div className="w-[600px]">
+                <IntelligentSearchBar 
+                  onSearch={handleSearch}
+                  placeholder="Rechercher des idées de contenu..."
+                  className="w-full"
+                />
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleFavoritesClick}
+                className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-accent"
               >
-                <div className="absolute left-2 sm:left-0 top-1/2 -translate-y-1/2 z-10">
-                  <CarouselPrevious className="relative h-8 w-8 sm:h-10 sm:w-10" />
-                </div>
-                
-                <CarouselContent className="-ml-1 sm:-ml-2 md:-ml-4">
-                  {categories?.map((category) => (
-                    <CarouselItem key={category.id} className="pl-1 sm:pl-2 md:pl-4 basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5">
-                      <div className="p-1">
-                        <CategoryCard 
-                          category={{
-                            id: category.id,
-                            name: category.name,
-                            color: category.color
-                          }}
-                          className="w-full h-24 sm:h-28 md:h-32"
-                          onClick={() => navigate(`/categories/${category.id}`)}
-                        />
-                      </div>
-                    </CarouselItem>
-                  ))}
-                </CarouselContent>
-                
-                <div className="absolute right-2 sm:right-0 top-1/2 -translate-y-1/2 z-10">
-                  <CarouselNext className="relative h-8 w-8 sm:h-10 sm:w-10" />
-                </div>
-              </Carousel>
+                <Heart className="h-5 w-5" />
+              </Button>
+
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigate('/profile')}
+                className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-accent"
+                title="Mon Profil"
+              >
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                </svg>
+              </Button>
+            </div>
+          </div>
+          {/* Version Mobile - Titre en haut, barre en bas */}
+          <div className="md:hidden">
+            <div className="flex items-center justify-between mb-6">
+              <h1 className="text-2xl font-bold text-foreground">
+                Creatik
+              </h1>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleFavoritesClick}
+                  className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-accent"
+                >
+                  <Heart className="h-5 w-5" />
+                </Button>
+
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => navigate('/profile')}
+                  className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-accent"
+                  title="Mon Profil"
+                >
+                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                  </svg>
+                </Button>
+              </div>
+            </div>
+            <div className="w-full">
+              <IntelligentSearchBar 
+                onSearch={handleSearch}
+                placeholder="Rechercher..."
+                className="w-full"
+              />
             </div>
           </div>
         </div>
-      </section>
-    </>
+        {/* Categories Carousel with visible background - Responsive */}
+        <div className="relative px-2 mb-4">
+          <div className="bg-background/80 rounded-xl p-2 shadow-sm">
+            <Carousel
+              opts={{
+                align: "start",
+                loop: true,
+              }}
+              className="w-full"
+            >
+              <div className="absolute left-2 top-1/2 -translate-y-1/2 z-10">
+                <CarouselPrevious className="relative h-8 w-8" />
+              </div>
+              <CarouselContent className="-ml-1">
+                {categories?.map((category, index) => (
+                  <CarouselItem key={category.id} className="pl-1 basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5">
+                    <div className="p-1">
+                      <CategoryCard 
+                        category={{
+                          id: category.id,
+                          name: category.name,
+                          color: category.color
+                        }}
+                        index={index}
+                        className="w-full h-20 sm:h-24 md:h-28"
+                        onClick={() => navigate(`/category/${category.id}/subcategories`)}
+                      />
+                    </div>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <div className="absolute right-2 top-1/2 -translate-y-1/2 z-10">
+                <CarouselNext className="relative h-8 w-8" />
+              </div>
+            </Carousel>
+          </div>
+        </div>
+      </div>
+    </section>
   );
 };
-
 export default Hero;
