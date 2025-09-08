@@ -24,63 +24,7 @@ import Navigation from '@/components/Navigation';
 const Compte = () => {
   const navigate = useNavigate();
 
-  const profileMenuItems = [
-    {
-      title: 'Paramètres',
-      description: 'Gérer vos préférences et paramètres',
-      icon: Settings,
-      path: '/profile/settings',
-      color: 'bg-blue-500',
-      badge: null
-    },
-    {
-      title: 'Notifications',
-      description: 'Gérer vos notifications et alertes',
-      icon: Bell,
-      path: '/profile/notifications',
-      color: 'bg-orange-500',
-      badge: '3'
-    },
-    {
-      title: 'Favoris',
-      description: 'Vos contenus et créateurs favoris',
-      icon: Heart,
-      path: '/profile/favorites',
-      color: 'bg-red-500',
-      badge: '12'
-    },
-    {
-      title: 'Historique',
-      description: 'Votre activité récente',
-      icon: Calendar,
-      path: '/profile/history',
-      color: 'bg-green-500',
-      badge: null
-    },
-    {
-      title: 'Publications',
-      description: 'Gérer vos publications',
-      icon: FileText,
-      path: '/profile/publications',
-      color: 'bg-purple-500',
-      badge: '5'
-    },
-    {
-      title: 'Challenges',
-      description: 'Vos défis et participations',
-      icon: BookOpen,
-      path: '/profile/challenges',
-      color: 'bg-indigo-500',
-      badge: '2'
-    },
-    {
-      title: 'Ressources',
-      description: 'Reçus et contrats d\'influenceur',
-      icon: Receipt,
-      path: '/profile/resources',
-      color: 'bg-emerald-500',
-      badge: 'Nouveau'
-    },
+  const settingsMenuItems = [
     {
       title: 'Contact',
       description: 'Support et assistance',
@@ -90,11 +34,11 @@ const Compte = () => {
       badge: null
     },
     {
-      title: 'Confidentialité',
-      description: 'Gérer votre vie privée',
-      icon: Shield,
-      path: '/profile/privacy',
-      color: 'bg-gray-500',
+      title: 'Paramètres',
+      description: 'Gérer vos préférences et paramètres',
+      icon: Settings,
+      path: '/profile/settings',
+      color: 'bg-blue-500',
       badge: null
     },
     {
@@ -131,9 +75,9 @@ const Compte = () => {
                 <ArrowLeft className="h-4 w-4" />
               </Button>
               <div>
-                <h1 className="text-xl font-semibold text-foreground">Profil</h1>
+                <h1 className="text-xl font-semibold text-foreground">Paramètres et confidentialité</h1>
                 <p className="text-sm text-muted-foreground">
-                  Gérez votre compte et vos préférences
+                  Gérez vos paramètres et confidentialité
                 </p>
               </div>
             </div>
@@ -143,43 +87,14 @@ const Compte = () => {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-6">
-        {/* Profile Summary Card */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="mb-8"
-        >
-          <Card className="bg-gradient-to-r from-primary/5 to-primary/10 border-primary/20">
-            <CardContent className="p-6">
-              <div className="flex items-center gap-4">
-                <div className="p-4 bg-primary/20 rounded-full">
-                  <User className="w-8 h-8 text-primary" />
-                </div>
-                <div className="flex-1">
-                  <h2 className="text-xl font-semibold text-foreground">
-                    Bienvenue sur votre profil
-                  </h2>
-                  <p className="text-muted-foreground">
-                    Accédez à toutes les fonctionnalités de gestion de votre compte
-                  </p>
-                </div>
-                <Badge variant="secondary" className="bg-primary/20 text-primary border-primary/30">
-                  Créateur
-                </Badge>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        {/* Profile Menu Grid */}
+        {/* Settings Menu Grid */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
         >
-          {profileMenuItems.map((item, index) => (
+          {settingsMenuItems.map((item, index) => (
             <motion.div
               key={item.path}
               initial={{ opacity: 0, y: 20 }}
@@ -220,47 +135,6 @@ const Compte = () => {
           ))}
         </motion.div>
 
-        {/* Quick Actions */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-          className="mt-8"
-        >
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Actions rapides</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-wrap gap-3">
-                <Button 
-                  variant="outline" 
-                  onClick={() => navigate('/profile/resources')}
-                  className="border-primary/30 text-primary hover:bg-primary/10"
-                >
-                  <Receipt className="h-4 w-4 mr-2" />
-                  Créer un reçu
-                </Button>
-                <Button 
-                  variant="outline" 
-                  onClick={() => navigate('/profile/resources')}
-                  className="border-primary/30 text-primary hover:bg-primary/10"
-                >
-                  <Users className="h-4 w-4 mr-2" />
-                  Nouveau contrat
-                </Button>
-                <Button 
-                  variant="outline" 
-                  onClick={() => navigate('/profile/settings')}
-                  className="border-primary/30 text-primary hover:bg-primary/10"
-                >
-                  <Settings className="h-4 w-4 mr-2" />
-                  Paramètres
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
       </main>
 
       <Navigation />

@@ -79,10 +79,7 @@ const UserProfile: React.FC = () => {
     { icon: BookOpen, label: "Notes", path: "/notes", color: "text-blue-500" },
     { icon: Calendar, label: "Historique", path: "/profile/history", color: "text-green-500" },
     { icon: FileText, label: "Publications", path: "/profile/publications", color: "text-purple-500" },
-    { icon: Target, label: "Challenges", path: "/profile/challenges", color: "text-orange-500" },
-    { icon: Bell, label: "Notifications", path: "/profile/notifications", color: "text-yellow-500" },
-    { icon: Shield, label: "Sécurité", path: "/profile/settings", color: "text-gray-500" },
-    { icon: Palette, label: "Préférences", path: "/profile/preferences", color: "text-pink-500" }
+    { icon: Target, label: "Challenges", path: "/profile/challenges", color: "text-orange-500" }
   ];
 
   const renderPublications = () => (
