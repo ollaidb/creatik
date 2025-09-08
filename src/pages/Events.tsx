@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { Calendar, ChevronLeft, ChevronRight, Filter, Search, CalendarDays, Users, BookOpen, Music, Film, PenTool, Microscope, Trophy, Building, Palette } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,6 +24,16 @@ const Events: React.FC = () => {
   const [filteredEvents, setFilteredEvents] = useState<Event[]>([]);
   const [showCalendar, setShowCalendar] = useState<boolean>(false);
   const [eventsByDate, setEventsByDate] = useState<Record<string, number>>({});
+  const [selectedEventType, setSelectedEventType] = useState<string>('all');
+
+  // Types d'événements disponibles
+  const eventTypes = [
+    { value: 'birthday', label: 'Anniversaire', icon: '🎂' },
+    { value: 'death', label: 'Décès', icon: '🕯️' },
+    { value: 'historical_event', label: 'Événement historique', icon: '📜' },
+    { value: 'holiday', label: 'Férié', icon: '🎉' },
+    { value: 'international_day', label: 'Journée internationale', icon: '🌍' }
+  ];
 
   // Récupérer l'événement depuis l'URL si présent
   const eventId = searchParams.get('event');
@@ -151,6 +162,16 @@ const Events: React.FC = () => {
     }
   }, [currentMonth, showCalendar]);
 
+  // Réinitialiser le type d'événement quand la catégorie change
+  useEffect(() => {
+    setSelectedEventType('all');
+  }, [selectedCategory]);
+
+  // Réinitialiser la catégorie quand le type d'événement change
+  useEffect(() => {
+    setSelectedCategory('all');
+  }, [selectedEventType]);
+
   const getCategoryIcon = (categoryName: string) => {
     const iconMap: Record<string, React.ReactNode> = {
       'Personnalités': <Users className="w-4 h-4" />,
@@ -185,13 +206,21 @@ const Events: React.FC = () => {
     return colorMap[categoryName] || 'bg-gray-500';
   };
 
+  const filteredEventsByCategory = selectedCategory === 'all' 
+    ? filteredEvents 
+    : filteredEvents.filter(event => event.category === selectedCategory);
+
+  const filteredEventsByType = selectedEventType === 'all'
+    ? filteredEventsByCategory
+    : filteredEventsByCategory.filter(event => event.event_type === selectedEventType);
+
   const filteredEventsBySearch = searchTerm 
-    ? filteredEvents.filter(event => 
+    ? filteredEventsByType.filter(event => 
         event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         event.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (event.person_name && event.person_name.toLowerCase().includes(searchTerm.toLowerCase()))
       )
-    : filteredEvents;
+    : filteredEventsByType;
 
   if (loading) {
     return (
@@ -283,6 +312,146 @@ const Events: React.FC = () => {
             </Button>
           </div>
         </div>
+
+                    {/* Menu des catégories - Style horizontal comme Categories */}
+            <div className="mb-4">
+              <div className="max-w-4xl mx-auto">
+                <div className="overflow-x-auto scrollbar-hide">
+                  <div className="flex gap-2 pb-2 min-w-max">
+                    <motion.button
+                      onClick={() => setSelectedCategory('all')}
+                      className={`
+                        px-3 py-2 rounded-lg transition-all duration-300 min-w-[70px] text-center flex items-center justify-center gap-2
+                        ${selectedCategory === 'all'
+                          ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg scale-105'
+                          : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                        }
+                      `}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      <Filter className="w-3 h-3" />
+                      <span className={`
+                        text-xs font-medium leading-tight
+                        ${selectedCategory === 'all' ? 'text-white' : 'text-gray-700 dark:text-gray-300'}
+                      `}>
+                        Tout
+                      </span>
+                    </motion.button>
+                    {categories.map((category) => {
+                      const isActive = selectedCategory === category.name;
+                      return (
+                        <motion.button
+                          key={category.id}
+                          onClick={() => setSelectedCategory(category.name)}
+                          className={`
+                            px-3 py-2 rounded-lg transition-all duration-300 min-w-[70px] text-center flex items-center justify-center gap-2
+                            ${isActive
+                              ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg scale-105'
+                              : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                            }
+                          `}
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          animate={isActive ? {
+                            scale: [1, 1.1, 1.05],
+                            boxShadow: [
+                              "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+                              "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
+                              "0 4px 6px -1px rgba(0, 0, 0, 0.1)"
+                            ]
+                          } : {}}
+                          transition={isActive ? {
+                            duration: 0.6,
+                            ease: "easeInOut"
+                          } : {
+                            duration: 0.2
+                          }}
+                        >
+                          {getCategoryIcon(category.name)}
+                          <span className={`
+                            text-xs font-medium leading-tight
+                            ${isActive ? 'text-white' : 'text-gray-700 dark:text-gray-300'}
+                          `}>
+                            {category.name}
+                          </span>
+                        </motion.button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Menu des types d'événements - Style horizontal comme Categories */}
+            <div className="mb-4">
+              <div className="max-w-4xl mx-auto">
+                <div className="overflow-x-auto scrollbar-hide">
+                  <div className="flex gap-2 pb-2 min-w-max">
+                    <motion.button
+                      onClick={() => setSelectedEventType('all')}
+                      className={`
+                        px-3 py-2 rounded-lg transition-all duration-300 min-w-[70px] text-center flex items-center justify-center gap-2
+                        ${selectedEventType === 'all'
+                          ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg scale-105'
+                          : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                        }
+                      `}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      <Filter className="w-3 h-3" />
+                      <span className={`
+                        text-xs font-medium leading-tight
+                        ${selectedEventType === 'all' ? 'text-white' : 'text-gray-700 dark:text-gray-300'}
+                      `}>
+                        Tous types
+                      </span>
+                    </motion.button>
+                    {eventTypes.map((eventType) => {
+                      const isActive = selectedEventType === eventType.value;
+                      return (
+                        <motion.button
+                          key={eventType.value}
+                          onClick={() => setSelectedEventType(eventType.value)}
+                          className={`
+                            px-3 py-2 rounded-lg transition-all duration-300 min-w-[70px] text-center flex items-center justify-center gap-2
+                            ${isActive
+                              ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg scale-105'
+                              : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                            }
+                          `}
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          animate={isActive ? {
+                            scale: [1, 1.1, 1.05],
+                            boxShadow: [
+                              "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+                              "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
+                              "0 4px 6px -1px rgba(0, 0, 0, 0.1)"
+                            ]
+                          } : {}}
+                          transition={isActive ? {
+                            duration: 0.6,
+                            ease: "easeInOut"
+                          } : {
+                            duration: 0.2
+                          }}
+                        >
+                          <span className="text-sm">{eventType.icon}</span>
+                          <span className={`
+                            text-xs font-medium leading-tight
+                            ${isActive ? 'text-white' : 'text-gray-700 dark:text-gray-300'}
+                          `}>
+                            {eventType.label}
+                          </span>
+                        </motion.button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            </div>
 
         {/* Événements */}
         <div className="space-y-4">

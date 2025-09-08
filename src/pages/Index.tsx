@@ -174,31 +174,43 @@ const Index: React.FC = () => {
       <Hero />
       
       {/* Menu principal avec boutons identiques et centrés */}
-      <section className="container mx-auto px-4 py-1">
+      <section className="container mx-auto px-4 py-2">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="flex justify-center gap-4"
+          className="flex flex-wrap justify-center gap-2 sm:gap-4"
         >
           <Button
             variant="ghost"
-            className="w-32 h-12 text-sm font-medium text-primary dark:text-primary-foreground hover:text-primary-foreground dark:hover:text-primary rounded-2xl transition-all duration-500 ease-out hover:scale-105 group bg-white dark:bg-gray-800 shadow-lg border border-primary/20 dark:border-primary/10 flex items-center justify-center"
+            className="w-24 h-10 sm:w-32 sm:h-12 text-xs sm:text-sm font-medium text-primary hover:text-primary-foreground rounded-xl sm:rounded-2xl transition-all duration-500 ease-out hover:scale-105 group bg-card hover:bg-primary/10 shadow-md border border-border flex items-center justify-center"
             onClick={() => navigate('/notes')}
           >
-            <svg className="w-4 h-4 mr-2 transition-transform duration-300 group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-            </svg>
             Notes
           </Button>
           
           <Button
             variant="ghost"
-            className="w-32 h-12 text-sm font-medium text-primary dark:text-primary-foreground hover:text-primary-foreground dark:hover:text-primary rounded-2xl transition-all duration-500 ease-out hover:scale-105 group bg-white dark:bg-gray-800 shadow-lg border border-primary/20 dark:border-primary/10 flex items-center justify-center"
+            className="w-24 h-10 sm:w-32 sm:h-12 text-xs sm:text-sm font-medium text-primary hover:text-primary-foreground rounded-xl sm:rounded-2xl transition-all duration-500 ease-out hover:scale-105 group bg-card hover:bg-primary/10 shadow-md border border-border flex items-center justify-center"
+            onClick={() => navigate('/public-challenges')}
+          >
+            Challenge
+          </Button>
+          
+          <Button
+            variant="ghost"
+            className="w-24 h-10 sm:w-32 sm:h-12 text-xs sm:text-sm font-medium text-primary hover:text-primary-foreground rounded-xl sm:rounded-2xl transition-all duration-500 ease-out hover:scale-105 group bg-card hover:bg-primary/10 shadow-md border border-border flex items-center justify-center"
             onClick={() => navigate('/profile/challenges')}
           >
-            <Target className="w-4 h-4 mr-2 transition-transform duration-300 group-hover:scale-110" />
             Mes Défis
+          </Button>
+          
+          <Button
+            variant="ghost"
+            className="w-24 h-10 sm:w-32 sm:h-12 text-xs sm:text-sm font-medium text-primary hover:text-primary-foreground rounded-xl sm:rounded-2xl transition-all duration-500 ease-out hover:scale-105 group bg-card hover:bg-primary/10 shadow-md border border-border flex items-center justify-center"
+            onClick={() => navigate('/user-profile')}
+          >
+            Profil
           </Button>
         </motion.div>
       </section>

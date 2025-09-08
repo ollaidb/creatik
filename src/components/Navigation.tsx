@@ -17,7 +17,7 @@ const Navigation: React.FC<NavigationProps> = ({ className }) => {
     currentPath === "/" ? "home" :
     currentPath.startsWith("/categories") ? "categories" :
     currentPath.startsWith("/publish") ? "publish" :
-    (currentPath.startsWith("/challenges") || currentPath.startsWith("/public-challenges")) ? "challenges" :
+    currentPath.startsWith("/profile") ? "challenges" :
     currentPath.startsWith("/creators") ? "profile" : "home";
 
   const tabs = [
@@ -25,7 +25,7 @@ const Navigation: React.FC<NavigationProps> = ({ className }) => {
     { id: "categories", label: "Catégories", icon: "categories", path: "/categories" },
     { id: "publish", label: "Publier", icon: "publish", path: "/publish" },
     { id: "profile", label: "Créateurs", icon: "creators", path: "/creators" },
-    { id: "challenges", label: "Challenges", icon: "challenges", path: "/public-challenges" },
+    { id: "challenges", label: "Profil", icon: "challenges", path: "/profile" },
   ];
 
   const handleTabClick = (path: string) => {
@@ -74,7 +74,7 @@ const Navigation: React.FC<NavigationProps> = ({ className }) => {
             {tab.icon === "challenges" && (
               <div className="p-2 rounded-full bg-gradient-to-br from-primary/10 to-transparent hover:from-primary/20 hover:to-primary/5 transition-all duration-300 shadow-sm">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={activeTab === tab.id ? 2.2 : 2} stroke="currentColor" className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0 drop-shadow-sm">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
                 </svg>
               </div>
             )}
