@@ -77,8 +77,6 @@ const UserProfile: React.FC = () => {
   const profileMenuItems = [
     { icon: Heart, label: "Favoris", path: "/profile/favorites", color: "text-red-500" },
     { icon: BookOpen, label: "Notes", path: "/notes", color: "text-blue-500" },
-    { icon: Calendar, label: "Historique", path: "/profile/history", color: "text-green-500" },
-    { icon: FileText, label: "Publications", path: "/profile/publications", color: "text-purple-500" },
     { icon: Target, label: "Challenges", path: "/profile/challenges", color: "text-orange-500" }
   ];
 
