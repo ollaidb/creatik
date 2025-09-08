@@ -43,6 +43,10 @@ import Notifications from "./pages/profile/Notifications";
 import Resources from "./pages/profile/Resources";
 import ProfileDetails from "./pages/profile/ProfileDetails";
 import UserProfile from "./pages/UserProfile";
+import Account from "./pages/profile/Account";
+import PrivacySettings from "./pages/profile/PrivacySettings";
+import ConditionsPolicies from "./pages/profile/ConditionsPolicies";
+import Support from "./pages/profile/Support";
 
 // Configuration optimisée du QueryClient pour de meilleures performances
 const queryClient = new QueryClient({
@@ -108,6 +112,11 @@ const AppContent = () => {
             <Route path="/profile/notifications" element={<Notifications />} />
             <Route path="/profile/settings" element={<Settings />} />
             <Route path="/profile/resources" element={<Resources />} />
+            {/* New Settings Routes */}
+            <Route path="/profile/account" element={<Account />} />
+            <Route path="/profile/privacy-settings" element={<PrivacySettings />} />
+            <Route path="/profile/conditions-policies" element={<ConditionsPolicies />} />
+            <Route path="/profile/support" element={<Support />} />
             {/* Publish Route */}
             <Route path="/publish" element={<Publish />} />
             <Route path="/search" element={<SearchResults />} />
