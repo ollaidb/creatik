@@ -76,10 +76,10 @@ const UserProfile: React.FC = () => {
 
 
   const profileMenuItems = [
-    { icon: Heart, label: "Favoris", path: "/profile/favorites", color: "text-red-500" },
     { icon: BookOpen, label: "Notes", path: "/notes", color: "text-blue-500" },
+    { icon: Trophy, label: "Mes Défis", path: "/profile/challenges", color: "text-purple-500" },
     { icon: Target, label: "Challenges", path: "/public-challenges", color: "text-orange-500" },
-    { icon: Trophy, label: "Mes Défis", path: "/profile/challenges", color: "text-purple-500" }
+    { icon: Heart, label: "Favoris", path: "/profile/favorites", color: "text-red-500" }
   ];
 
   const renderPublications = () => (
