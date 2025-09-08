@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSmartNavigation } from '@/hooks/useNavigation';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -16,6 +17,7 @@ interface MenuItem {
 
 const ProfileDetails = () => {
   const navigate = useNavigate();
+  const { navigateBack } = useSmartNavigation();
 
   const profileMenuItems: MenuItem[] = [
     {
@@ -91,7 +93,7 @@ const ProfileDetails = () => {
         <Button 
           variant="ghost" 
           size="icon" 
-          onClick={() => navigate('/profile')} 
+            onClick={navigateBack}
           className="mr-2"
         >
           <ArrowLeft className="h-5 w-5" />

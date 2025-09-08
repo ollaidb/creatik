@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSmartNavigation } from '@/hooks/useNavigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -12,6 +13,7 @@ import Navigation from '@/components/Navigation';
 
 const Contact = () => {
   const navigate = useNavigate();
+  const { navigateBack } = useSmartNavigation();
   const { toast } = useToast();
   const [formData, setFormData] = useState({
     name: '',
@@ -57,7 +59,7 @@ const Contact = () => {
           <Button 
             variant="ghost" 
             size="icon" 
-            onClick={() => navigate('/profile')} 
+            onClick={navigateBack} 
             className="mr-2"
           >
             <ArrowLeft className="h-5 w-5" />

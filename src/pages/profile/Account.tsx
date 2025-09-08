@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSmartNavigation } from '@/hooks/useNavigation';
 import { motion } from 'framer-motion';
 import { 
   ArrowLeft, 
@@ -21,6 +22,7 @@ import Navigation from '@/components/Navigation';
 
 const Account = () => {
   const navigate = useNavigate();
+  const { navigateBack } = useSmartNavigation();
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -73,7 +75,7 @@ const Account = () => {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => navigate('/compte')}
+                onClick={navigateBack}
                 className="h-8 w-8"
               >
                 <ArrowLeft className="h-4 w-4" />

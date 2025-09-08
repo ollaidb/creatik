@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useSmartNavigation } from '@/hooks/useNavigation';
 import { motion, Reorder, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,6 +18,7 @@ import { Label } from '@/components/ui/label';
 
 const Challenges = () => {
   const navigate = useNavigate();
+  const { navigateBack } = useSmartNavigation();
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const { toast } = useToast();
@@ -77,7 +79,7 @@ const Challenges = () => {
     if (returnTo === 'home') {
       navigate('/');
     } else {
-      navigate('/profile');
+      navigateBack();
     }
   };
 

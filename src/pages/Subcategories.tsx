@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useSmartNavigation } from '@/hooks/useNavigation';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Plus, Heart, Filter, Info } from 'lucide-react';
 import { useSubcategories } from '@/hooks/useSubcategories';
@@ -16,6 +17,7 @@ import { supabase } from '@/integrations/supabase/client';
 const Subcategories = () => {
   const { categoryId } = useParams();
   const navigate = useNavigate();
+  const { navigateBack } = useSmartNavigation();
   const [searchParams] = useSearchParams();
   const selectedNetwork = searchParams.get('network') || 'all';
   const [searchTerm, setSearchTerm] = useState('');

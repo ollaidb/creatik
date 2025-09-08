@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useSmartNavigation } from '@/hooks/useNavigation';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Plus, Heart, Filter, User, ExternalLink } from 'lucide-react';
 import { useAccounts, Account } from '@/hooks/useAccounts';
@@ -14,6 +15,7 @@ import { Badge } from '@/components/ui/badge';
 
 const Accounts = () => {
   const navigate = useNavigate();
+  const { navigateBack } = useSmartNavigation();
   const { user } = useAuth();
   const { toast } = useToast();
   const { data: accounts = [], isLoading } = useAccounts();

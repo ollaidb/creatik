@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSmartNavigation } from '@/hooks/useNavigation';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -24,6 +25,7 @@ interface MenuItem {
 
 const Profile = () => {
   const navigate = useNavigate();
+  const { navigateBack } = useSmartNavigation();
   const { theme, toggleTheme } = useTheme();
   const { user, signOut } = useAuth();
   const { toast } = useToast();

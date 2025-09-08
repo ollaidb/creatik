@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSmartNavigation } from '@/hooks/useNavigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
@@ -10,6 +11,7 @@ import { useTheme } from '@/hooks/use-theme';
 
 const Settings = () => {
   const navigate = useNavigate();
+  const { navigateBack } = useSmartNavigation();
   const { theme, toggleTheme } = useTheme();
   const [dataSharing, setDataSharing] = React.useState(false);
   const [cookieConsent, setCookieConsent] = React.useState(true);
@@ -22,7 +24,7 @@ const Settings = () => {
           <Button 
             variant="ghost" 
             size="icon" 
-            onClick={() => navigate('/profile')} 
+            onClick={navigateBack} 
             className="mr-2"
           >
             <ArrowLeft className="h-5 w-5" />

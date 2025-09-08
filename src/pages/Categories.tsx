@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useSmartNavigation } from '@/hooks/useNavigation';
 import { motion } from 'framer-motion';
 import { Plus, Filter, Globe, Smartphone, Youtube, Instagram, Facebook, Twitter, Twitch, Linkedin, ArrowLeft } from 'lucide-react';
 import { useCategories } from '@/hooks/useCategories';
@@ -14,6 +15,7 @@ import Navigation from '@/components/Navigation';
 
 const Categories = () => {
   const navigate = useNavigate();
+  const { navigateBack } = useSmartNavigation();
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState('');
   

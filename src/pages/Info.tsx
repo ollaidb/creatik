@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 
 import { useParams, useNavigate } from 'react-router-dom';
+import { useSmartNavigation } from '@/hooks/useNavigation';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Info, Target, Settings, BookOpen, Lightbulb, Users, Star, TrendingUp, Calendar, Hash } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -15,6 +16,7 @@ import Navigation from '@/components/Navigation';
 const CategoryInfo = () => {
   const { categoryId, subcategoryId } = useParams();
   const navigate = useNavigate();
+  const { navigateBack } = useSmartNavigation();
   const [activeTab, setActiveTab] = useState('explication');
   
   const { data: categories } = useCategories();

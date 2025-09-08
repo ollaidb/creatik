@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSmartNavigation } from '@/hooks/useNavigation';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Plus } from 'lucide-react';
 import Navigation from '@/components/Navigation';
@@ -7,6 +8,7 @@ import UserPreferencesForm from '@/components/UserPreferencesForm';
 
 const Preferences = () => {
   const navigate = useNavigate();
+  const { navigateBack } = useSmartNavigation();
 
   return (
     <div className="min-h-screen pb-20">
@@ -15,7 +17,7 @@ const Preferences = () => {
           <Button 
             variant="ghost" 
             size="icon" 
-            onClick={() => navigate('/profile')} 
+            onClick={navigateBack} 
             className="mr-2"
           >
             <ArrowLeft className="h-5 w-5" />

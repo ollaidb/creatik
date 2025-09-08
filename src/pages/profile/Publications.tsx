@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSmartNavigation } from '@/hooks/useNavigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -24,6 +25,7 @@ const PUBLICATION_TABS = [
 
 const Publications = () => {
   const navigate = useNavigate();
+  const { navigateBack } = useSmartNavigation();
   const { toast } = useToast();
   const { publications, loading, error, deletePublication } = usePublications();
   
@@ -144,7 +146,7 @@ const Publications = () => {
           <Button 
             variant="ghost" 
             size="icon" 
-            onClick={() => navigate('/profile')} 
+            onClick={navigateBack} 
             className="mr-2"
           >
             <ArrowLeft className="h-5 w-5" />
@@ -168,7 +170,7 @@ const Publications = () => {
           <Button 
             variant="ghost" 
             size="icon" 
-            onClick={() => navigate('/profile')} 
+            onClick={navigateBack} 
             className="mr-2"
           >
             <ArrowLeft className="h-5 w-5" />

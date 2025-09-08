@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useSmartNavigation } from '@/hooks/useNavigation';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Users, Globe, Calendar, ExternalLink, Heart, BookOpen, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -9,6 +10,7 @@ import { useCreator, useCreatorChallenges } from '@/hooks/useCreators';
 const CreatorDetail = () => {
   const { creatorId } = useParams();
   const navigate = useNavigate();
+  const { navigateBack } = useSmartNavigation();
   const [activeSection, setActiveSection] = useState<'wiki' | 'challenges'>('wiki');
 
   // Récupérer les vraies données du créateur
@@ -38,7 +40,7 @@ const CreatorDetail = () => {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => navigate(-1)}
+                onClick={navigateBack}
                 className="p-2 h-10 w-10 rounded-full"
               >
                 <ArrowLeft className="h-5 w-5" />

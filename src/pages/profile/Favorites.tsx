@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useSmartNavigation } from '@/hooks/useNavigation';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Plus, Heart, Search } from 'lucide-react';
@@ -44,6 +45,7 @@ const FAVORITE_TABS = [
 
 const Favorites = () => {
   const navigate = useNavigate();
+  const { navigateBack } = useSmartNavigation();
   const [searchParams] = useSearchParams();
   const [selectedTab, setSelectedTab] = useState('categories');
   const [selectedTheme, setSelectedTheme] = useState<string>('all');
@@ -79,7 +81,7 @@ const Favorites = () => {
     if (returnTo === 'home') {
       navigate('/');
     } else {
-      navigate('/profile');
+      navigateBack();
     }
   };
 
@@ -330,7 +332,7 @@ const Favorites = () => {
           <p className="text-muted-foreground text-center mb-4">
             Connectez-vous pour voir vos catégories favorites
           </p>
-          <Button onClick={() => navigate('/profile')}>
+          <Button onClick={navigateBack}>
             Se connecter
           </Button>
         </main>

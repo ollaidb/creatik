@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useSmartNavigation } from '@/hooks/useNavigation';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Plus, Heart, Filter } from 'lucide-react';
 import { useSubcategoriesLevel2 } from '@/hooks/useSubcategoriesLevel2';
@@ -12,6 +13,7 @@ import Navigation from '@/components/Navigation';
 const SubcategoriesLevel2 = () => {
   const { categoryId, subcategoryId } = useParams();
   const navigate = useNavigate();
+  const { navigateBack } = useSmartNavigation();
   const [searchParams] = useSearchParams();
   const selectedNetwork = searchParams.get('network') || 'all';
   const [searchTerm, setSearchTerm] = useState('');

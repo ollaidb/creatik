@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSmartNavigation } from '@/hooks/useNavigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -8,6 +9,7 @@ import Navigation from '@/components/Navigation';
 
 const Legal = () => {
   const navigate = useNavigate();
+  const { navigateBack } = useSmartNavigation();
   return (
     <div className="min-h-screen pb-20">
       <header className="bg-background border-b p-4 flex items-center justify-between">
@@ -15,7 +17,7 @@ const Legal = () => {
           <Button 
             variant="ghost" 
             size="icon" 
-            onClick={() => navigate('/profile')} 
+            onClick={navigateBack} 
             className="mr-2"
           >
             <ArrowLeft className="h-5 w-5" />

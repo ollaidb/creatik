@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSmartNavigation } from '@/hooks/useNavigation';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
@@ -8,6 +9,7 @@ import { ArrowLeft } from 'lucide-react';
 import Navigation from '@/components/Navigation';
 const Privacy = () => {
   const navigate = useNavigate();
+  const { navigateBack } = useSmartNavigation();
   const [dataSharing, setDataSharing] = React.useState(false);
   const [cookieConsent, setCookieConsent] = React.useState(true);
   const [notificationPermission, setNotificationPermission] = React.useState(false);
@@ -17,7 +19,7 @@ const Privacy = () => {
         <Button 
           variant="ghost" 
           size="icon" 
-          onClick={() => navigate('/profile')} 
+            onClick={navigateBack}
           className="mr-2"
         >
           <ArrowLeft className="h-5 w-5" />

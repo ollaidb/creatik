@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import { useSmartNavigation } from '@/hooks/useNavigation';
 import { ArrowLeft, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -8,6 +9,7 @@ import Navigation from '@/components/Navigation';
 
 const Contenu = () => {
   const navigate = useNavigate();
+  const { navigateBack } = useSmartNavigation();
 
   return (
     <div className="min-h-screen bg-background">
@@ -19,7 +21,7 @@ const Contenu = () => {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => navigate(-1)}
+                onClick={navigateBack}
                 className="h-8 w-8"
               >
                 <ArrowLeft className="h-4 w-4" />
@@ -56,7 +58,7 @@ const Contenu = () => {
               </p>
               <Button 
                 variant="outline" 
-                onClick={() => navigate(-1)}
+                onClick={navigateBack}
                 className="border-border text-foreground hover:bg-accent"
               >
                 Retour

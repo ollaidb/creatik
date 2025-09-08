@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSmartNavigation } from '@/hooks/useNavigation';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Search, Filter, TrendingUp, Clock, Lightbulb, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -21,6 +22,7 @@ interface SearchResult {
 const SearchResults = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { navigateBack } = useSmartNavigation();
   const query = searchParams.get('search') || '';
   const [activeFilter, setActiveFilter] = useState('all');
   const { user } = useAuth();
@@ -92,7 +94,7 @@ const SearchResults = () => {
             <Button 
               variant="ghost" 
               size="icon" 
-              onClick={() => navigate('/')} 
+              onClick={navigateBack} 
               className="flex-shrink-0"
             >
               <ArrowLeft className="h-5 w-5" />

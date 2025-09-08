@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import { useSmartNavigation } from '@/hooks/useNavigation';
 import { ArrowLeft, User, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -9,6 +10,7 @@ import Navigation from '@/components/Navigation';
 
 const Notes = () => {
   const navigate = useNavigate();
+  const { navigateBack } = useSmartNavigation();
 
 
 

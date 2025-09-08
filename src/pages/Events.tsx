@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useSmartNavigation } from '@/hooks/useNavigation';
 import { motion } from 'framer-motion';
 import { Calendar, ChevronLeft, ChevronRight, Filter, Search, CalendarDays, Users, BookOpen, Music, Film, PenTool, Microscope, Trophy, Building, Palette } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -13,6 +14,7 @@ import type { Event, EventCategory } from '@/hooks/useEvents';
 
 const Events: React.FC = () => {
   const navigate = useNavigate();
+  const { navigateBack } = useSmartNavigation();
   const [searchParams, setSearchParams] = useSearchParams();
   const { events, categories, loading, error, getEventsForDate } = useEvents();
   const { toast } = useToast();

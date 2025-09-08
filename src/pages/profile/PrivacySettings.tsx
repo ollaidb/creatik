@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSmartNavigation } from '@/hooks/useNavigation';
 import { motion } from 'framer-motion';
 import { 
   ArrowLeft, 
@@ -23,6 +24,7 @@ import Navigation from '@/components/Navigation';
 
 const PrivacySettings = () => {
   const navigate = useNavigate();
+  const { navigateBack } = useSmartNavigation();
   const [isEditing, setIsEditing] = useState(false);
 
   // État des paramètres de confidentialité
@@ -71,7 +73,7 @@ const PrivacySettings = () => {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => navigate('/compte')}
+                onClick={navigateBack}
                 className="h-8 w-8"
               >
                 <ArrowLeft className="h-4 w-4" />

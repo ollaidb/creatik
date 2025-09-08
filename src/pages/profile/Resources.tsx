@@ -1,11 +1,13 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSmartNavigation } from '@/hooks/useNavigation';
 import { ArrowLeft, Receipt } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Navigation from '@/components/Navigation';
 
 const Resources = () => {
   const navigate = useNavigate();
+  const { navigateBack } = useSmartNavigation();
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -17,7 +19,7 @@ const Resources = () => {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => navigate('/profile')}
+                onClick={navigateBack}
                 className="h-8 w-8"
               >
                 <ArrowLeft className="h-4 w-4" />

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useSmartNavigation } from '@/hooks/useNavigation';
 import { motion } from 'framer-motion';
 import { Plus, Filter, Globe, Users, ArrowLeft, FolderOpen } from 'lucide-react';
 import { useThemes } from '@/hooks/useThemes';
@@ -11,6 +12,7 @@ import Navigation from '@/components/Navigation';
 
 const Creators = () => {
   const navigate = useNavigate();
+  const { navigateBack } = useSmartNavigation();
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState('');
   

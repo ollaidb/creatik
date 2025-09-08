@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSmartNavigation } from '@/hooks/useNavigation';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import Navigation from '@/components/Navigation';
 const Sources = () => {
   const navigate = useNavigate();
+  const { navigateBack } = useSmartNavigation();
   const { user } = useAuth();
   const { toast } = useToast();
   const { data: sources = [], isLoading } = useSources();

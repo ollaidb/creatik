@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSmartNavigation } from '@/hooks/useNavigation';
 import { motion } from 'framer-motion';
 import { 
   ArrowLeft, 
@@ -26,6 +27,7 @@ import Navigation from '@/components/Navigation';
 
 const Support = () => {
   const navigate = useNavigate();
+  const { navigateBack } = useSmartNavigation();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
 
@@ -99,7 +101,7 @@ const Support = () => {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => navigate('/compte')}
+                onClick={navigateBack}
                 className="h-8 w-8"
               >
                 <ArrowLeft className="h-4 w-4" />
@@ -150,7 +152,7 @@ const Support = () => {
                   </Button>
                   <Button 
                     variant="outline" 
-                    onClick={() => navigate('/compte')}
+                    onClick={navigateBack}
                     className="w-full"
                   >
                     Retour aux paramètres

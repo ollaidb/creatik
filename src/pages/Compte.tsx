@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import { useSmartNavigation } from '@/hooks/useNavigation';
 import { 
   ArrowLeft, 
   User, 
@@ -29,6 +30,7 @@ import Navigation from '@/components/Navigation';
 
 const Compte = () => {
   const navigate = useNavigate();
+  const { navigateWithReturn, navigateBack } = useSmartNavigation();
 
   // Section 1: COMPTE
   const accountItems = [
@@ -128,7 +130,7 @@ const Compte = () => {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => navigate(-1)}
+                onClick={navigateBack}
                 className="h-8 w-8"
               >
                 <ArrowLeft className="h-4 w-4" />
@@ -166,7 +168,7 @@ const Compte = () => {
               >
                 <Card 
                   className="hover:shadow-lg transition-all duration-300 cursor-pointer border-border hover:border-primary/30 hover:bg-card/50"
-                  onClick={() => navigate(item.path)}
+                  onClick={() => navigateWithReturn(item.path, '/compte')}
                 >
                   <CardContent className="p-6">
                     <div className="flex items-center gap-4">
@@ -211,7 +213,7 @@ const Compte = () => {
               >
                 <Card 
                   className="hover:shadow-lg transition-all duration-300 cursor-pointer border-border hover:border-primary/30 hover:bg-card/50"
-                  onClick={() => navigate(item.path)}
+                  onClick={() => navigateWithReturn(item.path, '/compte')}
                 >
                   <CardContent className="p-6">
                     <div className="flex items-center gap-4">
@@ -256,7 +258,7 @@ const Compte = () => {
               >
                 <Card 
                   className="hover:shadow-lg transition-all duration-300 cursor-pointer border-border hover:border-primary/30 hover:bg-card/50"
-                  onClick={() => navigate(item.path)}
+                  onClick={() => navigateWithReturn(item.path, '/compte')}
                 >
                   <CardContent className="p-6">
                     <div className="flex items-center gap-4">

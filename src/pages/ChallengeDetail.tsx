@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useSmartNavigation } from '@/hooks/useNavigation';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -52,6 +53,7 @@ interface Comment {
 const ChallengeDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { navigateBack } = useSmartNavigation();
   const { user } = useAuth();
   const { toast } = useToast();
   
@@ -521,7 +523,7 @@ const ChallengeDetail = () => {
           <Button 
             variant="ghost" 
             size="icon" 
-            onClick={() => navigate('/public-challenges')} 
+            onClick={navigateBack} 
             className="mr-2"
           >
             <ArrowLeft className="h-5 w-5" />
@@ -545,7 +547,7 @@ const ChallengeDetail = () => {
           <Button 
             variant="ghost" 
             size="icon" 
-            onClick={() => navigate('/public-challenges')} 
+            onClick={navigateBack} 
             className="mr-2"
           >
             <ArrowLeft className="h-5 w-5" />
@@ -559,7 +561,7 @@ const ChallengeDetail = () => {
               <p className="text-muted-foreground mb-4">
                 Le challenge que vous recherchez n'existe pas ou a été supprimé.
               </p>
-              <Button onClick={() => navigate('/public-challenges')}>
+              <Button onClick={navigateBack}>
                 Retour aux challenges
               </Button>
             </CardContent>

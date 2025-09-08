@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RefreshCw, TrendingUp, Filter } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useSmartNavigation } from '@/hooks/useNavigation';
 import Navigation from '@/components/Navigation';
 
 const TrendingIdeas: React.FC = () => {
@@ -14,6 +15,7 @@ const TrendingIdeas: React.FC = () => {
   const [selectedPlatform, setSelectedPlatform] = useState<string>('all');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const navigate = useNavigate();
+  const { navigateBack } = useSmartNavigation();
 
   const platforms = ['all', 'twitter', 'reddit', 'instagram', 'tiktok', 'blog', 'article'];
   const categories = ['all', 'technology', 'lifestyle', 'entertainment', 'business'];

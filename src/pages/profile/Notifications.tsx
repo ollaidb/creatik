@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSmartNavigation } from '@/hooks/useNavigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -32,6 +33,7 @@ interface Notification {
 
 const Notifications: React.FC = () => {
   const navigate = useNavigate();
+  const { navigateBack } = useSmartNavigation();
   const [filteredNotifications, setFilteredNotifications] = useState<Notification[]>([]);
   const [activeTab, setActiveTab] = useState('all');
 
@@ -64,7 +66,7 @@ const Notifications: React.FC = () => {
   }, [notifications, activeTab]);
 
   const handleBackClick = () => {
-    navigate('/profile');
+    navigateBack();
   };
 
   const handleMarkAsRead = (notificationId: string) => {
