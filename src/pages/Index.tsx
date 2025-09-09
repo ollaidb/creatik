@@ -110,15 +110,15 @@ const Index: React.FC = () => {
   };
 
   // Récupérer le défi actif de l'utilisateur
-  const activeChallenge = userChallenges.find(uc => uc.status === 'active' && uc.challenge);
-  const challenge = activeChallenge?.challenge;
+  const activeChallenge = userChallenges.find(uc => uc.status === 'pending');
+  const challenge = activeChallenge;
 
   // Calculer le temps restant pour le défi
   const getTimeRemaining = () => {
     if (!activeChallenge) return null;
     
     const startDate = new Date(activeChallenge.created_at);
-    const endDate = new Date(startDate.getTime() + (challenge?.duration_days || 1) * 24 * 60 * 60 * 1000);
+    const endDate = new Date(startDate.getTime() + 1 * 24 * 60 * 60 * 1000); // 1 jour par défaut
     const now = new Date();
     const diff = endDate.getTime() - now.getTime();
     
@@ -197,18 +197,11 @@ const Index: React.FC = () => {
             Challenge
           </Button>
           
-          <Button
-            variant="ghost"
-            className="w-24 h-10 sm:w-32 sm:h-12 text-xs sm:text-sm font-medium text-primary hover:text-primary-foreground rounded-xl sm:rounded-2xl transition-all duration-500 ease-out hover:scale-105 group bg-card hover:bg-primary/10 shadow-md border border-border flex items-center justify-center"
-            onClick={() => navigate('/profile/challenges')}
-          >
-            Mes Défis
-          </Button>
           
           <Button
             variant="ghost"
             className="w-24 h-10 sm:w-32 sm:h-12 text-xs sm:text-sm font-medium text-primary hover:text-primary-foreground rounded-xl sm:rounded-2xl transition-all duration-500 ease-out hover:scale-105 group bg-card hover:bg-primary/10 shadow-md border border-border flex items-center justify-center"
-            onClick={() => navigate('/user-profile')}
+            onClick={() => navigate('/profile')}
           >
             Profil
           </Button>
@@ -261,7 +254,7 @@ const Index: React.FC = () => {
                           </div>
                           <div className="flex items-center gap-1">
                             <Trophy className="w-3 h-3" />
-                            <span>{challenge.duration_days} jour{challenge.duration_days > 1 ? 's' : ''}</span>
+                            <span>1 jour</span>
                           </div>
                         </div>
                       </div>
@@ -280,7 +273,7 @@ const Index: React.FC = () => {
                           className="border-border text-foreground hover:bg-accent text-sm px-3 py-1.5"
                           size="sm"
                         >
-                          Voir tous mes défis
+                          Voir mes défis
                         </Button>
                       </div>
                     </>
@@ -309,7 +302,7 @@ const Index: React.FC = () => {
                           className="border-border text-foreground hover:bg-accent text-sm px-3 py-1.5"
                           size="sm"
                         >
-                          Voir tous mes défis
+                          Voir mes défis
                         </Button>
                       </div>
                     </>

@@ -9,7 +9,7 @@ import VisitTracker from "@/components/VisitTracker";
 import CacheManager from "@/components/CacheManager";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
-import ProfilePage from "./pages/Profile";
+import Profile from "./pages/Profile";
 import Favorites from "./pages/profile/Favorites";
 import Preferences from "./pages/profile/Preferences";
 import Settings from "./pages/profile/Settings";
@@ -17,7 +17,6 @@ import History from "./pages/profile/History";
 import Legal from "./pages/profile/Legal";
 import Contact from "./pages/profile/Contact";
 import Publications from "./pages/profile/Publications";
-import Challenges from "./pages/profile/Challenges";
 import Publish from "./pages/Publish";
 import SearchResults from "./pages/SearchResults";
 import Categories from "./pages/Categories";
@@ -41,8 +40,10 @@ import Compte from "./pages/Compte";
 import Contenu from "./pages/Contenu";
 import Notifications from "./pages/profile/Notifications";
 import Resources from "./pages/profile/Resources";
+import Personalization from "./pages/profile/Personalization";
+import Language from "./pages/profile/Language";
+import DisplayMode from "./pages/profile/DisplayMode";
 import ProfileDetails from "./pages/profile/ProfileDetails";
-import UserProfile from "./pages/UserProfile";
 import Account from "./pages/profile/Account";
 import PrivacySettings from "./pages/profile/PrivacySettings";
 import ConditionsPolicies from "./pages/profile/ConditionsPolicies";
@@ -83,7 +84,6 @@ const AppContent = () => {
             <Route path="/category/:categoryId/info" element={<CategoryInfo />} />
             <Route path="/category/:categoryId/subcategory/:subcategoryId/hooks" element={<Hooks />} />
             {/* Challenges Routes */}
-            <Route path="/challenges" element={<Challenges />} />
             <Route path="/public-challenges" element={<PublicChallenges />} />
             {/* Trending Ideas Route */}
             <Route path="/trending" element={<TrendingIdeas />} />
@@ -100,7 +100,7 @@ const AppContent = () => {
             <Route path="/accounts" element={<Accounts />} />
             <Route path="/sources" element={<Sources />} />
             {/* Profile Routes */}
-            <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/profile" element={<Profile />} />
             <Route path="/profile/details" element={<ProfileDetails />} />
             <Route path="/profile/favorites" element={<Favorites />} />
             <Route path="/profile/history" element={<History />} />
@@ -108,10 +108,12 @@ const AppContent = () => {
             <Route path="/profile/legal" element={<Legal />} />
             <Route path="/profile/contact" element={<Contact />} />
                         <Route path="/profile/publications" element={<Publications />} />
-            <Route path="/profile/challenges" element={<Challenges />} />
             <Route path="/profile/notifications" element={<Notifications />} />
             <Route path="/profile/settings" element={<Settings />} />
             <Route path="/profile/resources" element={<Resources />} />
+            <Route path="/profile/personalization" element={<Personalization />} />
+            <Route path="/profile/language" element={<Language />} />
+            <Route path="/profile/display-mode" element={<DisplayMode />} />
             {/* New Settings Routes */}
             <Route path="/profile/account" element={<Account />} />
             <Route path="/profile/privacy-settings" element={<PrivacySettings />} />
@@ -122,8 +124,6 @@ const AppContent = () => {
             <Route path="/search" element={<SearchResults />} />
             {/* Notes Route */}
             <Route path="/notes" element={<Notes />} />
-            {/* User Profile Route */}
-            <Route path="/user-profile" element={<UserProfile />} />
         <Route path="/compte" element={<Compte />} />
         <Route path="/contenu" element={<Contenu />} />
             {/* Inspiration Card Routes */}

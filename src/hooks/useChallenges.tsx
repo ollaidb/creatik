@@ -12,6 +12,11 @@ interface UserChallenge {
   completed_at?: string;
   created_at?: string;
   updated_at?: string;
+  social_account_id?: string;
+  playlist_id?: string | null;
+  is_custom?: boolean;
+  custom_title?: string;
+  custom_description?: string;
 }
 
 interface ChallengeStats {
@@ -81,7 +86,13 @@ export const useChallenges = () => {
   }, [user, userChallenges, stats]);
 
   // Ajouter un défi
-  const addChallenge = async (title: string) => {
+  const addChallenge = async (title: string, additionalData?: {
+    social_account_id?: string;
+    playlist_id?: string | null;
+    is_custom?: boolean;
+    custom_title?: string;
+    custom_description?: string;
+  }) => {
     if (!user) return { error: 'Utilisateur non connecté' };
 
     try {
@@ -90,7 +101,8 @@ export const useChallenges = () => {
         user_id: user.id,
         title,
         status: 'pending',
-        created_at: new Date().toISOString()
+        created_at: new Date().toISOString(),
+        ...additionalData // Inclure les données supplémentaires
       };
 
       setUserChallenges(prev => [...prev, newChallenge]);

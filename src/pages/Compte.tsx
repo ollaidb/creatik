@@ -77,15 +77,29 @@ const Compte = () => {
       title: 'Mode d\'affichage',
       description: 'Light/Dark mode',
       icon: Palette,
-      path: '/profile/preferences',
+      path: '/profile/display-mode',
       color: 'bg-pink-500'
     },
     {
       title: 'Langue',
-      description: 'Sélectionner la langue',
+      description: 'Français ou Anglais',
       icon: Settings,
-      path: '/profile/settings',
+      path: '/profile/language',
       color: 'bg-indigo-500'
+    },
+    {
+      title: 'Personnalisation',
+      description: 'Personnaliser votre interface',
+      icon: Palette,
+      path: '/profile/personalization',
+      color: 'bg-cyan-500'
+    },
+    {
+      title: 'Ressources',
+      description: 'Ressources et guides',
+      icon: BookOpen,
+      path: '/profile/resources',
+      color: 'bg-emerald-500'
     }
   ];
 

@@ -35,13 +35,6 @@ const ProfileDetails = () => {
       color: 'text-blue-600'
     },
     {
-      title: 'Mes Défis',
-      description: 'Gérez vos défis personnels et suivez votre progression',
-      icon: Target,
-      path: '/challenges',
-      color: 'text-orange-500'
-    },
-    {
       title: 'Notifications',
       description: 'Rappels de défis, réactions et réponses',
       icon: Bell,
