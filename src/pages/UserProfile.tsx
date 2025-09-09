@@ -188,6 +188,13 @@ const UserProfile: React.FC = () => {
               variant="outline"
               className="min-w-[80px] flex-shrink-0 text-xs h-8"
             >
+              TikTok
+            </Button>
+            
+            <Button
+              variant="outline"
+              className="min-w-[80px] flex-shrink-0 text-xs h-8"
+            >
               Instagram
             </Button>
             
@@ -195,7 +202,14 @@ const UserProfile: React.FC = () => {
               variant="outline"
               className="min-w-[80px] flex-shrink-0 text-xs h-8"
             >
-              TikTok
+              YouTube
+            </Button>
+            
+            <Button
+              variant="outline"
+              className="min-w-[80px] flex-shrink-0 text-xs h-8"
+            >
+              Twitter
             </Button>
             
             <Button
