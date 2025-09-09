@@ -278,7 +278,7 @@ export const useChallenges = () => {
     } catch (err) {
       console.error('Erreur lors de la mise à jour des stats:', err);
     }
-  }, [user, userChallenges, stats, saveChanges]);
+  }, [user, userChallenges, stats]);
 
   // Remettre un défi accompli en défis
   const restoreChallenge = async (id: string) => {

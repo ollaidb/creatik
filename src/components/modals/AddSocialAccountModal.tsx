@@ -30,6 +30,7 @@ export const AddSocialAccountModal: React.FC<AddSocialAccountModalProps> = ({
   // États pour le workflow en 3 étapes
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedPlatform, setSelectedPlatform] = useState('');
+  const [customName, setCustomName] = useState('');
   const [createPlaylist, setCreatePlaylist] = useState(true);
   const [playlistName, setPlaylistName] = useState('');
   const [programSettings, setProgramSettings] = useState({
@@ -62,6 +63,7 @@ export const AddSocialAccountModal: React.FC<AddSocialAccountModalProps> = ({
     if (isOpen) {
       setCurrentStep(1);
       setSelectedPlatform('');
+      setCustomName('');
       setCreatePlaylist(true);
       setPlaylistName('');
       setProgramSettings({
@@ -79,14 +81,15 @@ export const AddSocialAccountModal: React.FC<AddSocialAccountModalProps> = ({
       const timestamp = Date.now();
       const uniqueUsername = `@${selectedPlatform}_user_${timestamp}`;
       
-      // 1. Créer le compte social
+      // 1. Créer le compte social avec nom personnalisé
       const socialAccount = await UserProfileService.addSocialAccount({
         user_id: userId,
         platform: selectedPlatform,
         username: uniqueUsername,
         display_name: selectedPlatform.charAt(0).toUpperCase() + selectedPlatform.slice(1),
         profile_url: `https://${selectedPlatform}.com/${uniqueUsername}`,
-        is_active: true
+        is_active: true,
+        custom_name: customName || `${selectedPlatform} - Compte principal`
       });
 
       let playlist = null;
@@ -129,17 +132,15 @@ export const AddSocialAccountModal: React.FC<AddSocialAccountModalProps> = ({
     }
   };
 
-  // Filtrer les réseaux disponibles (pas encore ajoutés par l'utilisateur)
-  const availablePlatforms = allSocialNetworks.filter(
-    network => !existingPlatforms.includes(network.name)
-  );
+  // Filtrer les réseaux disponibles (tous les réseaux, on peut en ajouter plusieurs)
+  const availablePlatforms = allSocialNetworks;
 
   const handleClose = () => {
     onClose();
   };
 
   const nextStep = () => {
-    if (currentStep < 3) {
+    if (currentStep < 4) {
       setCurrentStep(currentStep + 1);
     }
   };
@@ -155,8 +156,9 @@ export const AddSocialAccountModal: React.FC<AddSocialAccountModalProps> = ({
   const getStepTitle = () => {
     switch (currentStep) {
       case 1: return "Choisir le réseau social";
-      case 2: return "Créer une playlist";
-      case 3: return "Programmer les défis";
+      case 2: return "Nommer votre compte";
+      case 3: return "Créer une playlist";
+      case 4: return "Programmer les défis";
       default: return "Ajouter un réseau social";
     }
   };
@@ -164,8 +166,9 @@ export const AddSocialAccountModal: React.FC<AddSocialAccountModalProps> = ({
   const getStepDescription = () => {
     switch (currentStep) {
       case 1: return "Sélectionnez le réseau social que vous souhaitez ajouter";
-      case 2: return "Créez une playlist pour organiser vos contenus";
-      case 3: return "Configurez la durée et le nombre de contenus par jour";
+      case 2: return "Donnez un nom personnalisé à votre compte";
+      case 3: return "Créez une playlist pour organiser vos contenus";
+      case 4: return "Configurez la durée et le nombre de contenus par jour";
       default: return "";
     }
   };
@@ -191,7 +194,7 @@ export const AddSocialAccountModal: React.FC<AddSocialAccountModalProps> = ({
         {/* Indicateur de progression */}
         <div className="px-4 py-2 border-b border-border">
           <div className="flex items-center justify-center space-x-2">
-            {[1, 2, 3].map((step) => (
+            {[1, 2, 3, 4].map((step) => (
               <div
                 key={step}
                 className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
@@ -210,17 +213,6 @@ export const AddSocialAccountModal: React.FC<AddSocialAccountModalProps> = ({
           {loadingNetworks ? (
             <div className="text-center py-8 text-muted-foreground">
               <p>Chargement des réseaux sociaux...</p>
-            </div>
-          ) : availablePlatforms.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <p>Tous les réseaux sociaux sont déjà ajoutés</p>
-              <Button
-                variant="outline"
-                onClick={onClose}
-                className="mt-4"
-              >
-                Fermer
-              </Button>
             </div>
           ) : (
             <div className="space-y-4">
@@ -242,8 +234,26 @@ export const AddSocialAccountModal: React.FC<AddSocialAccountModalProps> = ({
                 </div>
               )}
 
-              {/* Étape 2: Création de playlist */}
+              {/* Étape 2: Nom personnalisé */}
               {currentStep === 2 && (
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="custom-name">Nom personnalisé</Label>
+                    <Input
+                      id="custom-name"
+                      value={customName}
+                      onChange={(e) => setCustomName(e.target.value)}
+                      placeholder={`${selectedPlatform} - Mon compte principal`}
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Ce nom apparaîtra dans votre liste de réseaux sociaux
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Étape 3: Création de playlist */}
+              {currentStep === 3 && (
                 <div className="space-y-4">
                   <div className="space-y-3">
                     <Label>Voulez-vous créer une playlist pour ce réseau ?</Label>
@@ -279,8 +289,8 @@ export const AddSocialAccountModal: React.FC<AddSocialAccountModalProps> = ({
                 </div>
               )}
 
-              {/* Étape 3: Programmation des défis (toujours affichée) */}
-              {currentStep === 3 && (
+              {/* Étape 4: Programmation des défis (toujours affichée) */}
+              {currentStep === 4 && (
                 <div className="space-y-4">
                   <div>
                     <Label htmlFor="duration">Durée du programme</Label>
@@ -359,12 +369,13 @@ export const AddSocialAccountModal: React.FC<AddSocialAccountModalProps> = ({
                   Annuler
                 </Button>
 
-                {currentStep < 3 ? (
+                {currentStep < 4 ? (
                   <Button
                     onClick={nextStep}
                     disabled={
                       (currentStep === 1 && !selectedPlatform) ||
-                      (currentStep === 2 && createPlaylist && !playlistName.trim())
+                      (currentStep === 2 && false) ||
+                      (currentStep === 3 && false)
                     }
                     className="flex items-center gap-2"
                   >

@@ -45,6 +45,20 @@ import { UserProfileService, UserSocialAccount, UserSocialPost, UserContentPlayl
 import { ProgramSettingsService, ProgramSettingsInput } from '@/services/programSettingsService';
 import { useAuth } from '@/hooks/useAuth';
 import { useChallenges } from '@/hooks/useChallenges';
+
+// Type pour les défis (importé depuis useChallenges)
+interface UserChallenge {
+  id: string;
+  user_id: string;
+  title: string;
+  status: 'pending' | 'completed' | 'deleted';
+  created_at: string;
+  updated_at: string;
+  completed_at?: string;
+  social_account_id?: string;
+  playlist_id?: string;
+  is_custom?: boolean;
+}
 import { useToast } from '@/hooks/use-toast';
 import { useProfileFiltering } from '@/hooks/useProfileFiltering';
 import { useNetworkStats } from '@/hooks/useNetworkStats';
@@ -88,9 +102,27 @@ const UserProfile: React.FC = () => {
   
   // États pour les modales
   const [isAddSocialModalOpen, setIsAddSocialModalOpen] = useState(false);
+  const [isEditSocialModalOpen, setIsEditSocialModalOpen] = useState(false);
   const [isAddPlaylistModalOpen, setIsAddPlaylistModalOpen] = useState(false);
+  const [isEditPlaylistModalOpen, setIsEditPlaylistModalOpen] = useState(false);
   const [isAddPublicationModalOpen, setIsAddPublicationModalOpen] = useState(false);
+  const [isReorderModalOpen, setIsReorderModalOpen] = useState(false);
+  const [isRenameAllModalOpen, setIsRenameAllModalOpen] = useState(false);
+  const [isReorderPlaylistModalOpen, setIsReorderPlaylistModalOpen] = useState(false);
+  const [isRenameAllPlaylistModalOpen, setIsRenameAllPlaylistModalOpen] = useState(false);
+  const [isDeleteSocialModalOpen, setIsDeleteSocialModalOpen] = useState(false);
+  const [isDeletePlaylistModalOpen, setIsDeletePlaylistModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  
+  // États pour le renommage
+  const [renamingAccountId, setRenamingAccountId] = useState<string | null>(null);
+  const [renamingAccountName, setRenamingAccountName] = useState('');
+  const [renamingPlaylistId, setRenamingPlaylistId] = useState<string | null>(null);
+  const [renamingPlaylistName, setRenamingPlaylistName] = useState('');
+  
+  // États pour la suppression sélective
+  const [selectedSocialAccounts, setSelectedSocialAccounts] = useState<string[]>([]);
+  const [selectedPlaylists, setSelectedPlaylists] = useState<string[]>([]);
   
   // Hook de filtrage pour gérer la sélection et le filtrage des données
   const {
@@ -122,7 +154,7 @@ const UserProfile: React.FC = () => {
   const [editingChallengeId, setEditingChallengeId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState('');
   const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
-  const [reorderedChallenges, setReorderedChallenges] = useState<any[]>([]);
+  const [reorderedChallenges, setReorderedChallenges] = useState<UserChallenge[]>([]);
   const [currentDay, setCurrentDay] = useState(1);
   const [isEditModeCompleted, setIsEditModeCompleted] = useState(false);
   const [challengesToDelete, setChallengesToDelete] = useState<Set<string>>(new Set());
@@ -218,24 +250,29 @@ const UserProfile: React.FC = () => {
     
     try {
       console.log('🔄 Rechargement des données du profil...');
-      setLoading(true); // Activer le loading pendant le rechargement
+      setLoading(true);
       
-      const data = await UserProfileService.getUserProfileData(user.id);
-      setSocialAccounts(data.socialAccounts);
-      setSocialPosts(data.socialPosts);
-      setPlaylists(data.playlists);
+      // Charger les données séparément pour éviter les conflits de jointures
+      const [socialAccounts, socialPosts, playlists] = await Promise.all([
+        UserProfileService.getSocialAccounts(user.id),
+        UserProfileService.getSocialPosts(user.id),
+        UserProfileService.getPlaylists(user.id)
+      ]);
+      
+      setSocialAccounts(socialAccounts);
+      setSocialPosts(socialPosts);
+      setPlaylists(playlists);
       
       // Rafraîchir aussi les statistiques
       refreshStats();
       
       console.log('✅ Données rechargées:', {
-        socialAccounts: data.socialAccounts.length,
-        socialPosts: data.socialPosts.length,
-        playlists: data.playlists.length
+        socialAccounts: socialAccounts.length,
+        socialPosts: socialPosts.length,
+        playlists: playlists.length
       });
       
-      // Forcer un re-render en mettant à jour l'état de loading
-      setTimeout(() => setLoading(false), 100);
+      setLoading(false);
     } catch (error) {
       console.error('❌ Erreur lors du rechargement des données:', error);
       setLoading(false);
@@ -243,14 +280,258 @@ const UserProfile: React.FC = () => {
   };
 
   // Fonctions de suppression
-  const handleDeleteSocialAccount = async (accountId: string, platform: string) => {
-    if (!confirm(`Êtes-vous sûr de vouloir supprimer le compte ${platform} ?`)) return;
+  const handleDeleteSocialAccount = async (accountId: string, platform: string, customName?: string) => {
+    const displayName = customName || platform;
+    
+    if (!confirm(`Êtes-vous sûr de vouloir supprimer le compte "${displayName}" ?`)) {
+      return;
+    }
     
     try {
       await UserProfileService.deleteSocialAccount(accountId);
-      refreshData();
+      await refreshData();
+      toast({
+        title: "Compte supprimé",
+        description: `Le compte "${displayName}" a été supprimé.`,
+      });
     } catch (error) {
       console.error('Erreur lors de la suppression du compte social:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de supprimer le compte social.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteAllSocialAccounts = () => {
+    if (socialAccounts.length === 0) return;
+    
+    const count = socialAccounts.length;
+    if (!confirm(`Êtes-vous sûr de vouloir supprimer tous les ${count} réseaux sociaux ? Cette action est irréversible.`)) return;
+
+    // Supprimer tous les comptes un par un
+    const deletePromises = socialAccounts.map(account => 
+      UserProfileService.deleteSocialAccount(account.id)
+    );
+
+    Promise.all(deletePromises)
+      .then(async () => {
+        await refreshData();
+      toast({
+          title: "Tous les comptes supprimés",
+          description: `${count} réseaux sociaux ont été supprimés.`,
+        });
+      })
+      .catch(error => {
+        console.error('Erreur lors de la suppression:', error);
+        toast({
+          title: "Erreur",
+          description: "Erreur lors de la suppression de certains comptes.",
+          variant: "destructive",
+        });
+      });
+  };
+
+  const handleDeleteAllPlaylists = () => {
+    if (playlists.length === 0) return;
+    
+    const count = playlists.length;
+    if (!confirm(`Êtes-vous sûr de vouloir supprimer toutes les ${count} playlists ? Cette action est irréversible.`)) return;
+
+    // Supprimer toutes les playlists un par un
+    const deletePromises = playlists.map(playlist => 
+      UserProfileService.deletePlaylist(playlist.id)
+    );
+
+    Promise.all(deletePromises)
+      .then(async () => {
+        await refreshData();
+        toast({
+          title: "Toutes les playlists supprimées",
+          description: `${count} playlists ont été supprimées.`,
+        });
+      })
+      .catch(error => {
+        console.error('Erreur lors de la suppression:', error);
+        toast({
+          title: "Erreur",
+          description: "Erreur lors de la suppression de certaines playlists.",
+          variant: "destructive",
+        });
+      });
+  };
+
+  const handleDeleteSelectedSocialAccounts = async () => {
+    if (selectedSocialAccounts.length === 0) return;
+    
+    const count = selectedSocialAccounts.length;
+    if (!confirm(`Êtes-vous sûr de vouloir supprimer les ${count} compte${count > 1 ? 's' : ''} sélectionné${count > 1 ? 's' : ''} ?`)) return;
+
+    try {
+      const deletePromises = selectedSocialAccounts.map(accountId => 
+        UserProfileService.deleteSocialAccount(accountId)
+      );
+
+      await Promise.all(deletePromises);
+      await refreshData();
+      setSelectedSocialAccounts([]);
+      setIsDeleteSocialModalOpen(false);
+      
+      toast({
+        title: "Comptes supprimés",
+        description: `${count} compte${count > 1 ? 's' : ''} supprimé${count > 1 ? 's' : ''}.`,
+      });
+    } catch (error) {
+      console.error('Erreur lors de la suppression:', error);
+      toast({
+        title: "Erreur",
+        description: "Erreur lors de la suppression des comptes.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteSelectedPlaylists = async () => {
+    if (selectedPlaylists.length === 0) return;
+    
+    const count = selectedPlaylists.length;
+    if (!confirm(`Êtes-vous sûr de vouloir supprimer les ${count} playlist${count > 1 ? 's' : ''} sélectionnée${count > 1 ? 's' : ''} ?`)) return;
+
+    try {
+      const deletePromises = selectedPlaylists.map(playlistId => 
+        UserProfileService.deletePlaylist(playlistId)
+      );
+
+      await Promise.all(deletePromises);
+      await refreshData();
+      setSelectedPlaylists([]);
+      setIsDeletePlaylistModalOpen(false);
+      
+      toast({
+        title: "Playlists supprimées",
+        description: `${count} playlist${count > 1 ? 's' : ''} supprimée${count > 1 ? 's' : ''}.`,
+      });
+    } catch (error) {
+      console.error('Erreur lors de la suppression:', error);
+      toast({
+        title: "Erreur",
+        description: "Erreur lors de la suppression des playlists.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleRenameAccount = async () => {
+    if (!renamingAccountId || !renamingAccountName.trim()) return;
+    
+    try {
+      await UserProfileService.updateSocialAccount(renamingAccountId, {
+        custom_name: renamingAccountName.trim()
+      });
+      await refreshData();
+      setRenamingAccountId(null);
+      setRenamingAccountName('');
+      toast({
+        title: "Compte renommé",
+        description: "Le nom du compte a été mis à jour.",
+      });
+    } catch (error) {
+      console.error('Erreur lors du renommage:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de renommer le compte.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleRenamePlaylist = async () => {
+    if (!renamingPlaylistId || !renamingPlaylistName.trim()) return;
+    
+    try {
+      await UserProfileService.updatePlaylist(renamingPlaylistId, {
+        name: renamingPlaylistName.trim(),
+        updated_at: new Date().toISOString()
+      });
+      
+      await refreshData();
+      setRenamingPlaylistId(null);
+      setRenamingPlaylistName('');
+      
+      toast({
+        title: "Playlist renommée",
+        description: "Le nom de la playlist a été mis à jour.",
+      });
+    } catch (error) {
+      console.error('Erreur lors du renommage de la playlist:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de renommer la playlist.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleReorderSocialAccounts = async (newOrder: UserSocialAccount[]) => {
+    try {
+      // Mettre à jour l'état local immédiatement
+      setSocialAccounts(newOrder);
+      
+      // Sauvegarder l'ordre en base de données
+      const updatePromises = newOrder.map((account, index) => 
+        UserProfileService.updateSocialAccount(account.id, { 
+          order: index + 1,
+          updated_at: new Date().toISOString()
+        })
+      );
+      
+      await Promise.all(updatePromises);
+      
+      toast({
+        title: "Ordre mis à jour",
+        description: "L'ordre des réseaux sociaux a été sauvegardé.",
+      });
+    } catch (error) {
+      console.error('Erreur lors de la réorganisation:', error);
+      // Recharger les données en cas d'erreur
+      await refreshData();
+      toast({
+        title: "Erreur",
+        description: "Impossible de sauvegarder l'ordre des réseaux sociaux.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleReorderPlaylists = async (newOrder: UserContentPlaylist[]) => {
+    try {
+      // Mettre à jour l'état local immédiatement
+      setPlaylists(newOrder);
+      
+      // Sauvegarder l'ordre en base de données
+      const updatePromises = newOrder.map((playlist, index) => 
+        UserProfileService.updatePlaylist(playlist.id, { 
+          order: index + 1,
+          updated_at: new Date().toISOString()
+        })
+      );
+      
+      await Promise.all(updatePromises);
+      
+      toast({
+        title: "Ordre mis à jour",
+        description: "L'ordre des playlists a été sauvegardé.",
+      });
+    } catch (error) {
+      console.error('Erreur lors de la réorganisation des playlists:', error);
+      // Recharger les données en cas d'erreur
+      await refreshData();
+      toast({
+        title: "Erreur",
+        description: "Impossible de sauvegarder l'ordre des playlists.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -262,7 +543,7 @@ const UserProfile: React.FC = () => {
       refreshData();
       // Si la playlist supprimée était sélectionnée, désélectionner
       if (selectedPlaylistId === playlistId) {
-        setSelectedPlaylistId('');
+        selectPlaylist('');
       }
     } catch (error) {
       console.error('Erreur lors de la suppression de la playlist:', error);
@@ -341,25 +622,25 @@ const UserProfile: React.FC = () => {
         const result = await completeChallenge(id);
         
         if (result?.error) {
-          toast({
-            title: "Erreur",
+      toast({
+        title: "Erreur",
             description: result.error,
             variant: "destructive",
           });
         } else {
-          toast({
+      toast({
             title: "Défi accompli !",
             description: "",
-          });
+      });
         }
-      } catch (error) {
+    } catch (error) {
         console.error('Erreur lors de la validation:', error);
-        toast({
-          title: "Erreur",
+      toast({
+        title: "Erreur",
           description: "",
           variant: "destructive",
-        });
-      } finally {
+      });
+    } finally {
         setValidatingChallenges(prev => {
           const newSet = new Set(prev);
           newSet.delete(id);
@@ -434,7 +715,7 @@ const UserProfile: React.FC = () => {
 
   const renderPublications = () => {
     if (loading) {
-      return (
+  return (
         <div className="space-y-2">
           {[1, 2, 3].map((i) => (
             <div key={i} className="flex justify-between items-center p-3 bg-card border border-border rounded-lg animate-pulse">
@@ -478,15 +759,15 @@ const UserProfile: React.FC = () => {
                   {date} à {time}
                 </p>
               </div>
-              <Button
-                variant="ghost"
+          <Button 
+            variant="ghost" 
                 size="sm"
                 className="absolute top-2 right-2 h-8 w-8 p-0 bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity rounded-full"
                 onClick={() => handleDeletePublication(post.id, post.title)}
               >
                 <Trash2 className="w-4 h-4" />
-              </Button>
-            </div>
+          </Button>
+        </div>
           );
         })}
       </div>
@@ -499,13 +780,13 @@ const UserProfile: React.FC = () => {
       {/* Header du profil */}
       <div className="bg-card border-b">
         <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center gap-4">
+              <div className="flex items-center gap-4">
             <Avatar className="w-20 h-20">
               <AvatarImage src={userProfile.profilePicture} />
               <AvatarFallback className="text-2xl">
                 {userProfile.name.split(' ').map(n => n[0]).join('')}
-              </AvatarFallback>
-            </Avatar>
+                    </AvatarFallback>
+                  </Avatar>
             <div className="flex-1">
               <h1 className="text-2xl font-bold text-foreground">{userProfile.name}</h1>
             </div>
@@ -558,15 +839,15 @@ const UserProfile: React.FC = () => {
         <div className="container mx-auto px-4 py-2">
           <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
             {profileMenuItems.map((item, index) => (
-              <Button
+          <Button 
                 key={index}
-                variant="ghost"
+            variant="ghost" 
                 className="flex flex-col items-center gap-1 h-auto py-2 min-w-[60px] flex-shrink-0"
                 onClick={() => navigate(item.path)}
-              >
+          >
                 <item.icon className={`w-4 h-4 ${item.color}`} />
                 <span className="text-xs text-center">{item.label}</span>
-              </Button>
+          </Button>
             ))}
           </div>
         </div>
@@ -579,6 +860,17 @@ const UserProfile: React.FC = () => {
             <span className="text-xs text-muted-foreground">
               {socialAccounts.length} réseau{socialAccounts.length > 1 ? 'x' : ''} social{socialAccounts.length > 1 ? 'aux' : ''}
             </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="p-1 h-6 w-6 hover:bg-gray-100 dark:hover:bg-gray-800"
+              onClick={() => setIsEditSocialModalOpen(true)}
+              title="Options d'édition"
+            >
+              <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M3 10a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zM8.5 10a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zM14 10a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0z" />
+              </svg>
+            </Button>
           </div>
           <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
             {loading ? (
@@ -589,40 +881,39 @@ const UserProfile: React.FC = () => {
                 ))}
                 <div className="min-w-[32px] h-8 bg-muted rounded animate-pulse flex-shrink-0"></div>
               </>
-            ) : socialAccounts.length === 0 ? (
-              <div className="text-center py-4 text-muted-foreground text-sm">
-                Aucun réseau social ajouté
-              </div>
             ) : (
               <>
-                {socialAccounts.map((account) => {
-                  const isSelected = selectedSocialNetworkId === account.id;
-                  return (
-                    <div key={account.id} className="group relative min-w-[80px] flex-shrink-0">
-                      <Button
-                        variant={isSelected ? "default" : "outline"}
-                        className={`text-xs h-8 w-full ${
-                          isSelected ? "bg-primary text-primary-foreground" : ""
-                        }`}
-                        onClick={() => selectSocialNetwork(account.id)}
+                <Reorder.Group
+                  axis="x"
+                  values={socialAccounts}
+                  onReorder={handleReorderSocialAccounts}
+                  className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide"
+                >
+                  {socialAccounts.map((account) => {
+                    const isSelected = selectedSocialNetworkId === account.id;
+                    return (
+                      <Reorder.Item
+                        key={account.id}
+                        value={account}
+                        className="min-w-[80px] flex-shrink-0"
                       >
-                        {account.display_name || account.platform}
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="absolute -top-1 -right-1 h-6 w-6 p-0 bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity rounded-full"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteSocialAccount(account.id, account.platform);
-                        }}
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </Button>
-                    </div>
-                  );
-                })}
+                        <Button
+                          variant={isSelected ? "default" : "outline"}
+                          className={`text-xs h-8 w-full ${
+                            isSelected ? "bg-primary text-primary-foreground" : ""
+                          }`}
+                          onClick={() => selectSocialNetwork(account.id)}
+                        >
+                          {account.custom_name || account.platform}
+                        </Button>
+                      </Reorder.Item>
+                    );
+                  })}
+                </Reorder.Group>
                 
+                {/* Bouton d'édition des réseaux */}
+                
+                {/* Bouton d'ajout */}
                 <Button
                   variant="outline"
                   className="min-w-[32px] flex-shrink-0 border-dashed flex items-center justify-center h-8"
@@ -631,8 +922,8 @@ const UserProfile: React.FC = () => {
                   <Plus className="w-3 h-3" />
                 </Button>
               </>
-            )}
-          </div>
+                      )}
+                    </div>
         </div>
       </div>
 
@@ -640,10 +931,20 @@ const UserProfile: React.FC = () => {
       <div className="bg-card border-b">
         <div className="container mx-auto px-4 py-2">
           <div className="flex items-center justify-between mb-2">
-            <h4 className="text-sm font-medium text-muted-foreground">Playlists</h4>
             <span className="text-xs text-muted-foreground">
               {filteredPlaylists.length} playlist{filteredPlaylists.length > 1 ? 's' : ''}
             </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="p-1 h-6 w-6 hover:bg-gray-100 dark:hover:bg-gray-800"
+              onClick={() => setIsEditPlaylistModalOpen(true)}
+              title="Options d'édition des playlists"
+            >
+              <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M3 10a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zM8.5 10a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zM14 10a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0z" />
+              </svg>
+            </Button>
           </div>
           
           <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
@@ -655,10 +956,6 @@ const UserProfile: React.FC = () => {
                 ))}
                 <div className="min-w-[32px] h-8 bg-muted rounded animate-pulse flex-shrink-0"></div>
               </>
-            ) : socialAccounts.length === 0 ? (
-              <div className="text-center py-4 text-muted-foreground text-sm">
-                Ajoutez un réseau social pour créer des playlists
-              </div>
             ) : !selectedSocialNetworkId ? (
               <div className="text-center py-4 text-muted-foreground text-sm">
                 Sélectionnez un réseau social pour voir ses playlists
@@ -704,7 +1001,7 @@ const UserProfile: React.FC = () => {
                                >
                                  <Trash2 className="w-3 h-3" />
                                </Button>
-                             </div>
+                </div>
                            );
                          })}
                 
@@ -834,8 +1131,8 @@ const UserProfile: React.FC = () => {
                     </DialogContent>
                   </Dialog>
                 </div>
-              </div>
-
+                </div>
+                
               {/* Liste des défis */}
               <div className="space-y-3">
                 {defis.length === 0 ? (
@@ -847,18 +1144,18 @@ const UserProfile: React.FC = () => {
                         Créez votre premier défi pour commencer votre programme
                       </p>
                     </CardContent>
-                  </Card>
+          </Card>
                 ) : (
                   defis.map((challenge) => (
                     <Card key={challenge.id} className="hover:shadow-md transition-shadow">
                       <CardContent className="p-4">
                         <div className="flex items-center justify-between">
-                          <div className="flex-1">
+                <div className="flex-1">
                             <h3 className="font-semibold text-lg">{challenge.title}</h3>
                             <p className="text-sm text-muted-foreground">
                               Jour {currentDay}
                             </p>
-                          </div>
+                </div>
                           <div className="flex items-center gap-2">
                             <button 
                               onClick={() => handleCompleteChallenge(challenge.id)}
@@ -897,7 +1194,7 @@ const UserProfile: React.FC = () => {
                   <Edit className="w-4 h-4" />
                   {isEditModeCompleted ? "Terminer" : "Éditer"}
                 </Button>
-              </div>
+                </div>
               
               <div className="space-y-3">
                 {accomplis.length === 0 ? (
@@ -920,7 +1217,7 @@ const UserProfile: React.FC = () => {
                             <p className="text-sm text-muted-foreground">
                               Accompli le {new Date(challenge.completed_at).toLocaleDateString()}
                             </p>
-                          </div>
+              </div>
                           <div className="flex items-center gap-2">
                             <div className="ml-2">
                               <CheckCircle className="w-6 h-6 text-green-600" />
@@ -950,7 +1247,7 @@ const UserProfile: React.FC = () => {
                         <BarChart3 className="w-5 h-5" />
                         Statistiques - {socialAccounts.find(acc => acc.id === selectedSocialNetworkId)?.platform || 'Réseau sélectionné'}
                       </CardTitle>
-                    </CardHeader>
+            </CardHeader>
                     <CardContent>
                       <div className="space-y-4">
                         {/* Barre de progression */}
@@ -999,17 +1296,17 @@ const UserProfile: React.FC = () => {
                         </div>
                       </div>
                     </CardContent>
-                  </Card>
+          </Card>
                 ) : (
                   <Card>
                     <CardContent className="p-6">
                       <div className="text-center text-muted-foreground">
                         Sélectionnez un réseau social pour voir ses statistiques
-                      </div>
+                    </div>
                     </CardContent>
                   </Card>
                 )}
-              </div>
+                    </div>
             </TabsContent>
             
             {/* Onglet Corbeille */}
@@ -1030,15 +1327,15 @@ const UserProfile: React.FC = () => {
                     <Card key={challenge.id} className="hover:shadow-md transition-shadow border-red-200">
                       <CardContent className="p-4">
                         <div className="flex items-center justify-between">
-                          <div className="flex-1">
+                    <div className="flex-1">
                             <h3 className="font-semibold text-lg text-foreground">{challenge.title}</h3>
                             <p className="text-sm text-muted-foreground">
                               Supprimé le {new Date(challenge.updated_at || challenge.created_at || Date.now()).toLocaleDateString()}
                             </p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
                   ))
                 )}
               </div>
@@ -1098,7 +1395,7 @@ const UserProfile: React.FC = () => {
                   <SelectItem value="all">Tous les réseaux</SelectItem>
                   {socialAccounts.map((account) => (
                     <SelectItem key={account.id} value={account.id}>
-                      {account.display_name || account.platform}
+                      {account.custom_name || account.platform}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -1178,7 +1475,7 @@ const UserProfile: React.FC = () => {
                     <SelectItem key={account.id} value={account.id}>
                       <div className="flex items-center gap-2">
                         <span className="capitalize">{account.platform}</span>
-                        <span className="text-muted-foreground">- {account.display_name || account.username}</span>
+                        <span className="text-muted-foreground">- {account.custom_name || account.username}</span>
                       </div>
                     </SelectItem>
                   ))}
@@ -1218,8 +1515,8 @@ const UserProfile: React.FC = () => {
             <div>
               <Label htmlFor="contents-per-day">Contenus par jour</Label>
               <div className="flex items-center gap-3">
-                <Button
-                  variant="outline"
+                <Button 
+                  variant="outline" 
                   size="sm"
                   onClick={() => setLocalProgramSettings(prev => ({ 
                     ...prev, 
@@ -1232,8 +1529,8 @@ const UserProfile: React.FC = () => {
                 <div className="flex-1 text-center">
                   <span className="text-lg font-semibold">{localProgramSettings.contentsPerDay}</span>
                 </div>
-                <Button
-                  variant="outline"
+                <Button 
+                  variant="outline" 
                   size="sm"
                   onClick={() => setLocalProgramSettings(prev => ({ 
                     ...prev, 
@@ -1286,6 +1583,484 @@ const UserProfile: React.FC = () => {
                 className="flex-1"
               >
                 Sauvegarder
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal d'options d'édition des réseaux sociaux */}
+      <Dialog open={isEditSocialModalOpen} onOpenChange={setIsEditSocialModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Options d'édition</DialogTitle>
+            <DialogDescription>
+              Que souhaitez-vous faire avec vos réseaux sociaux ?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <Button
+              variant="outline"
+              className="w-full justify-start"
+              onClick={() => {
+                setIsEditSocialModalOpen(false);
+                setIsReorderModalOpen(true);
+              }}
+            >
+              <GripVertical className="w-4 h-4 mr-2" />
+              Déplacer et réorganiser
+            </Button>
+            <Button
+              variant="outline"
+              className="w-full justify-start"
+              onClick={() => {
+                setIsEditSocialModalOpen(false);
+                setIsRenameAllModalOpen(true);
+              }}
+            >
+              <Edit className="w-4 h-4 mr-2" />
+              Renommer les comptes
+            </Button>
+            <Button
+              variant="outline"
+              className="w-full justify-start text-red-600 hover:text-red-700"
+              onClick={() => {
+                setIsEditSocialModalOpen(false);
+                setIsDeleteSocialModalOpen(true);
+              }}
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Supprimer des comptes
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal d'options d'édition des playlists */}
+      <Dialog open={isEditPlaylistModalOpen} onOpenChange={setIsEditPlaylistModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Options d'édition des playlists</DialogTitle>
+            <DialogDescription>
+              Que souhaitez-vous faire avec vos playlists ?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <Button
+              variant="outline"
+              className="w-full justify-start"
+              onClick={() => {
+                setIsEditPlaylistModalOpen(false);
+                setIsReorderPlaylistModalOpen(true);
+              }}
+            >
+              <GripVertical className="w-4 h-4 mr-2" />
+              Déplacer et réorganiser
+            </Button>
+            <Button
+              variant="outline"
+              className="w-full justify-start"
+              onClick={() => {
+                setIsEditPlaylistModalOpen(false);
+                setIsRenameAllPlaylistModalOpen(true);
+              }}
+            >
+              <Edit className="w-4 h-4 mr-2" />
+              Renommer les playlists
+            </Button>
+            <Button
+              variant="outline"
+              className="w-full justify-start text-red-600 hover:text-red-700"
+              onClick={() => {
+                setIsEditPlaylistModalOpen(false);
+                setIsDeletePlaylistModalOpen(true);
+              }}
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Supprimer des playlists
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de réorganisation */}
+      <Dialog open={isReorderModalOpen} onOpenChange={setIsReorderModalOpen}>
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Réorganiser vos réseaux sociaux</DialogTitle>
+            <DialogDescription>
+              Glissez-déposez pour réorganiser l'ordre de vos comptes sociaux.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="text-sm text-muted-foreground">
+              Maintenez et glissez les comptes pour les réorganiser
+            </div>
+            <div className="max-h-96 overflow-y-auto">
+              <Reorder.Group
+                axis="y"
+                values={socialAccounts}
+                onReorder={handleReorderSocialAccounts}
+                className="space-y-2"
+              >
+                {socialAccounts.map((account) => (
+                  <Reorder.Item
+                    key={account.id}
+                    value={account}
+                    className="flex items-center gap-3 p-3 border rounded-lg bg-card hover:bg-muted/50 transition-colors"
+                  >
+                    <GripVertical className="w-4 h-4 text-muted-foreground cursor-grab" />
+                    <div className="flex-1">
+                      <div className="font-medium">{account.custom_name || account.platform}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {account.platform} • {account.username || 'Aucun nom d\'utilisateur'}
+                      </div>
+                    </div>
+                  </Reorder.Item>
+                ))}
+              </Reorder.Group>
+            </div>
+            <div className="flex justify-end">
+              <Button onClick={() => setIsReorderModalOpen(false)}>
+                Terminé
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de renommage de tous les comptes */}
+      <Dialog open={isRenameAllModalOpen} onOpenChange={setIsRenameAllModalOpen}>
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Renommer vos comptes sociaux</DialogTitle>
+            <DialogDescription>
+              Cliquez sur un compte pour le renommer.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="max-h-96 overflow-y-auto">
+              {socialAccounts.map((account) => (
+                <div
+                  key={account.id}
+                  className="flex items-center gap-3 p-3 border rounded-lg bg-card hover:bg-muted/50 transition-colors"
+                >
+                  <div className="flex-1">
+                    <div className="font-medium">{account.custom_name || account.platform}</div>
+                    <div className="text-sm text-muted-foreground">
+                      {account.platform} • {account.username || 'Aucun nom d\'utilisateur'}
+                    </div>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setRenamingAccountId(account.id);
+                      setRenamingAccountName(account.custom_name || account.platform);
+                      setIsRenameAllModalOpen(false);
+                    }}
+                  >
+                    <Edit className="w-4 h-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+            <div className="flex justify-end">
+              <Button onClick={() => setIsRenameAllModalOpen(false)}>
+                Terminé
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de renommage */}
+      <Dialog open={renamingAccountId !== null} onOpenChange={() => setRenamingAccountId(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Renommer le compte</DialogTitle>
+            <DialogDescription>
+              Donnez un nom personnalisé à ce compte social.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="rename-account">Nom personnalisé</Label>
+              <Input
+                id="rename-account"
+                value={renamingAccountName}
+                onChange={(e) => setRenamingAccountName(e.target.value)}
+                placeholder="Ex: Mon compte principal"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleRenameAccount();
+                  }
+                }}
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setRenamingAccountId(null)}
+                className="flex-1"
+              >
+                Annuler
+              </Button>
+              <Button
+                onClick={handleRenameAccount}
+                disabled={!renamingAccountName.trim()}
+                className="flex-1"
+              >
+                Renommer
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de renommage des playlists */}
+      <Dialog open={renamingPlaylistId !== null} onOpenChange={() => setRenamingPlaylistId(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Renommer la playlist</DialogTitle>
+            <DialogDescription>
+              Donnez un nouveau nom à cette playlist.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="playlist-name">Nom de la playlist</Label>
+              <Input
+                id="playlist-name"
+                value={renamingPlaylistName}
+                onChange={(e) => setRenamingPlaylistName(e.target.value)}
+                placeholder="Entrez le nouveau nom"
+                className="mt-1"
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setRenamingPlaylistId(null)}
+                className="flex-1"
+              >
+                Annuler
+              </Button>
+              <Button
+                onClick={handleRenamePlaylist}
+                disabled={!renamingPlaylistName.trim()}
+                className="flex-1"
+              >
+                Renommer
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de réorganisation des playlists */}
+      <Dialog open={isReorderPlaylistModalOpen} onOpenChange={setIsReorderPlaylistModalOpen}>
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Réorganiser vos playlists</DialogTitle>
+            <DialogDescription>
+              Glissez-déposez pour réorganiser l'ordre de vos playlists.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="text-sm text-muted-foreground">
+              Maintenez et glissez les playlists pour les réorganiser
+            </div>
+            <div className="max-h-96 overflow-y-auto">
+              <Reorder.Group
+                axis="y"
+                values={playlists}
+                onReorder={handleReorderPlaylists}
+                className="space-y-2"
+              >
+                {playlists.map((playlist) => (
+                  <Reorder.Item
+                    key={playlist.id}
+                    value={playlist}
+                    className="flex items-center gap-3 p-3 border rounded-lg bg-card hover:bg-muted/50 transition-colors"
+                  >
+                    <GripVertical className="w-4 h-4 text-muted-foreground cursor-grab" />
+                    <div className="flex-1">
+                      <div className="font-medium">{playlist.name}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {playlist.description || 'Aucune description'}
+                      </div>
+                    </div>
+                  </Reorder.Item>
+                ))}
+              </Reorder.Group>
+            </div>
+            <div className="flex justify-end">
+              <Button onClick={() => setIsReorderPlaylistModalOpen(false)}>
+                Terminé
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de renommage de toutes les playlists */}
+      <Dialog open={isRenameAllPlaylistModalOpen} onOpenChange={setIsRenameAllPlaylistModalOpen}>
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Renommer vos playlists</DialogTitle>
+            <DialogDescription>
+              Cliquez sur une playlist pour la renommer.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="max-h-96 overflow-y-auto">
+              {playlists.map((playlist) => (
+                <div
+                  key={playlist.id}
+                  className="flex items-center gap-3 p-3 border rounded-lg bg-card hover:bg-muted/50 transition-colors"
+                >
+                  <div className="flex-1">
+                    <div className="font-medium">{playlist.name}</div>
+                    <div className="text-sm text-muted-foreground">
+                      {playlist.description || 'Aucune description'}
+                    </div>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setRenamingPlaylistId(playlist.id);
+                      setRenamingPlaylistName(playlist.name);
+                      setIsRenameAllPlaylistModalOpen(false);
+                    }}
+                  >
+                    <Edit className="w-4 h-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+            <div className="flex justify-end">
+              <Button onClick={() => setIsRenameAllPlaylistModalOpen(false)}>
+                Terminé
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de suppression sélective des réseaux sociaux */}
+      <Dialog open={isDeleteSocialModalOpen} onOpenChange={setIsDeleteSocialModalOpen}>
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Supprimer des comptes sociaux</DialogTitle>
+            <DialogDescription>
+              Sélectionnez les comptes que vous souhaitez supprimer.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="max-h-96 overflow-y-auto">
+              {socialAccounts.map((account) => (
+                <div
+                  key={account.id}
+                  className="flex items-center gap-3 p-3 border rounded-lg bg-card hover:bg-muted/50 transition-colors"
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedSocialAccounts.includes(account.id)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedSocialAccounts(prev => [...prev, account.id]);
+                      } else {
+                        setSelectedSocialAccounts(prev => prev.filter(id => id !== account.id));
+                      }
+                    }}
+                    className="w-4 h-4"
+                  />
+                  <div className="flex-1">
+                    <div className="font-medium">{account.custom_name || account.platform}</div>
+                    <div className="text-sm text-muted-foreground">
+                      {account.platform} • {account.username || 'Aucun nom d\'utilisateur'}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="flex justify-between">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setSelectedSocialAccounts([]);
+                  setIsDeleteSocialModalOpen(false);
+                }}
+              >
+                Annuler
+              </Button>
+              <Button
+                onClick={handleDeleteSelectedSocialAccounts}
+                disabled={selectedSocialAccounts.length === 0}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                Supprimer ({selectedSocialAccounts.length})
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de suppression sélective des playlists */}
+      <Dialog open={isDeletePlaylistModalOpen} onOpenChange={setIsDeletePlaylistModalOpen}>
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Supprimer des playlists</DialogTitle>
+            <DialogDescription>
+              Sélectionnez les playlists que vous souhaitez supprimer.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="max-h-96 overflow-y-auto">
+              {playlists.map((playlist) => (
+                <div
+                  key={playlist.id}
+                  className="flex items-center gap-3 p-3 border rounded-lg bg-card hover:bg-muted/50 transition-colors"
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedPlaylists.includes(playlist.id)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedPlaylists(prev => [...prev, playlist.id]);
+                      } else {
+                        setSelectedPlaylists(prev => prev.filter(id => id !== playlist.id));
+                      }
+                    }}
+                    className="w-4 h-4"
+                  />
+                  <div className="flex-1">
+                    <div className="font-medium">{playlist.name}</div>
+                    <div className="text-sm text-muted-foreground">
+                      {playlist.description || 'Aucune description'}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="flex justify-between">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setSelectedPlaylists([]);
+                  setIsDeletePlaylistModalOpen(false);
+                }}
+              >
+                Annuler
+              </Button>
+              <Button
+                onClick={handleDeleteSelectedPlaylists}
+                disabled={selectedPlaylists.length === 0}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                Supprimer ({selectedPlaylists.length})
               </Button>
             </div>
           </div>

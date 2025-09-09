@@ -8,6 +8,8 @@ export interface UserSocialAccount {
   display_name?: string;
   profile_url?: string;
   is_active: boolean;
+  custom_name?: string;
+  order: number;
   created_at: string;
   updated_at: string;
 }
@@ -34,6 +36,7 @@ export interface UserContentPlaylist {
   description?: string;
   is_public: boolean;
   color: string;
+  order: number;
   created_at: string;
   updated_at: string;
 }
@@ -57,7 +60,7 @@ export class UserProfileService {
       .select('*')
       .eq('user_id', userId)
       .eq('is_active', true)
-      .order('created_at', { ascending: true });
+      .order('order', { ascending: true });
 
     if (error) {
       console.error('❌ Erreur lors de la récupération des comptes sociaux:', error);
@@ -68,10 +71,22 @@ export class UserProfileService {
     return data || [];
   }
 
-  static async addSocialAccount(account: Omit<UserSocialAccount, 'id' | 'created_at' | 'updated_at'>): Promise<UserSocialAccount> {
+  static async addSocialAccount(account: Omit<UserSocialAccount, 'id' | 'created_at' | 'updated_at' | 'order'>): Promise<UserSocialAccount> {
+    // Récupérer le nombre de comptes existants pour calculer l'ordre
+    const { count } = await supabase
+      .from('user_social_accounts')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', account.user_id)
+      .eq('is_active', true);
+
+    const newOrder = (count || 0) + 1;
+
     const { data, error } = await supabase
       .from('user_social_accounts')
-      .insert(account)
+      .insert({
+        ...account,
+        order: newOrder
+      })
       .select()
       .single();
 
@@ -116,50 +131,7 @@ export class UserProfileService {
     return data || [];
   }
 
-  // Récupérer les publications d'une playlist spécifique
-  static async getPlaylistPosts(playlistId: string): Promise<UserSocialPost[]> {
-    const { data, error } = await supabase
-      .from('playlist_posts')
-      .select(`
-        position,
-        added_at,
-        user_social_posts!inner(
-          *,
-          user_social_accounts!inner(platform, username, display_name)
-        )
-      `)
-      .eq('playlist_id', playlistId)
-      .order('position', { ascending: true });
 
-    if (error) throw error;
-    
-    // Extraire les publications de la structure de réponse
-    return data?.map(item => item.user_social_posts) || [];
-  }
-
-  // Ajouter une publication à une playlist
-  static async addPostToPlaylist(playlistId: string, postId: string, position?: number): Promise<void> {
-    const { error } = await supabase
-      .from('playlist_posts')
-      .insert({
-        playlist_id: playlistId,
-        post_id: postId,
-        position: position || 0
-      });
-
-    if (error) throw error;
-  }
-
-  // Retirer une publication d'une playlist
-  static async removePostFromPlaylist(playlistId: string, postId: string): Promise<void> {
-    const { error } = await supabase
-      .from('playlist_posts')
-      .delete()
-      .eq('playlist_id', playlistId)
-      .eq('post_id', postId);
-
-    if (error) throw error;
-  }
 
   static async addSocialPost(post: Omit<UserSocialPost, 'id' | 'created_at' | 'updated_at'>): Promise<UserSocialPost> {
     const { data, error } = await supabase
@@ -197,26 +169,16 @@ export class UserProfileService {
   
   static async getPlaylists(userId: string): Promise<UserContentPlaylist[]> {
     try {
+      // Récupérer les playlists sans jointure pour éviter les conflits de colonnes
       const { data, error } = await supabase
         .from('user_content_playlists')
-        .select(`
-          *,
-          user_social_accounts!inner(platform, display_name, username)
-        `)
+        .select('*')
         .eq('user_id', userId)
-        .order('created_at', { ascending: true });
+        .order('order', { ascending: true });
 
       if (error) {
-        console.error('Erreur lors de la récupération des playlists avec jointure:', error);
-        // Fallback: récupérer les playlists sans la jointure
-        const { data: fallbackData, error: fallbackError } = await supabase
-          .from('user_content_playlists')
-          .select('*')
-          .eq('user_id', userId)
-          .order('created_at', { ascending: true });
-        
-        if (fallbackError) throw fallbackError;
-        return fallbackData || [];
+        console.error('Erreur lors de la récupération des playlists:', error);
+        throw error;
       }
       
       return data || [];
@@ -228,28 +190,17 @@ export class UserProfileService {
 
   static async getPlaylistsBySocialNetwork(userId: string, socialNetworkId: string): Promise<UserContentPlaylist[]> {
     try {
+      // Récupérer les playlists sans jointure pour éviter les conflits de colonnes
       const { data, error } = await supabase
         .from('user_content_playlists')
-        .select(`
-          *,
-          user_social_accounts!inner(platform, display_name, username)
-        `)
+        .select('*')
         .eq('user_id', userId)
         .eq('social_network_id', socialNetworkId)
         .order('created_at', { ascending: true });
 
       if (error) {
-        console.error('Erreur lors de la récupération des playlists par réseau avec jointure:', error);
-        // Fallback: récupérer les playlists sans la jointure
-        const { data: fallbackData, error: fallbackError } = await supabase
-          .from('user_content_playlists')
-          .select('*')
-          .eq('user_id', userId)
-          .eq('social_network_id', socialNetworkId)
-          .order('created_at', { ascending: true });
-        
-        if (fallbackError) throw fallbackError;
-        return fallbackData || [];
+        console.error('Erreur lors de la récupération des playlists par réseau:', error);
+        throw error;
       }
       
       return data || [];
