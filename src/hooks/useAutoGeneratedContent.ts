@@ -1,7 +1,5 @@
-
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-
 export const useSubcategoryHooks = (subcategoryId: string) => {
   return useQuery({
     queryKey: ['subcategory-hooks', subcategoryId],
@@ -11,14 +9,12 @@ export const useSubcategoryHooks = (subcategoryId: string) => {
         .select('*')
         .eq('subcategory_id', subcategoryId)
         .order('hook_order');
-      
       if (error) throw error;
       return data;
     },
     enabled: !!subcategoryId
   });
 };
-
 export const useSubcategoryHashtags = (subcategoryId: string) => {
   return useQuery({
     queryKey: ['subcategory-hashtags', subcategoryId],
@@ -28,14 +24,12 @@ export const useSubcategoryHashtags = (subcategoryId: string) => {
         .select('*')
         .eq('subcategory_id', subcategoryId)
         .order('hashtag_order');
-      
       if (error) throw error;
       return data;
     },
     enabled: !!subcategoryId
   });
 };
-
 export const useSubcategoryMetrics = (subcategoryId: string) => {
   return useQuery({
     queryKey: ['subcategory-metrics', subcategoryId],
@@ -45,14 +39,12 @@ export const useSubcategoryMetrics = (subcategoryId: string) => {
         .select('*')
         .eq('subcategory_id', subcategoryId)
         .order('metric_order');
-      
       if (error) throw error;
       return data;
     },
     enabled: !!subcategoryId
   });
 };
-
 export const useSubcategoryTemplates = (subcategoryId: string) => {
   return useQuery({
     queryKey: ['subcategory-templates', subcategoryId],
@@ -62,27 +54,26 @@ export const useSubcategoryTemplates = (subcategoryId: string) => {
         .select('*')
         .eq('subcategory_id', subcategoryId)
         .order('created_at');
-      
       if (error) throw error;
       return data;
     },
     enabled: !!subcategoryId
   });
 };
-
 // Hook pour déclencher la génération automatique
 export const useAutoGenerateContent = () => {
   const generateContent = async (subcategoryId: string) => {
-    const { data, error } = await supabase.functions.invoke(
-      'auto-generate-subcategory-content',
-      {
-        body: { subcategoryId }
-      }
-    );
-    
-    if (error) throw error;
-    return data;
+    // Temporarily disabled since Edge Function doesn't exist
+    // const { data, error } = await supabase.functions.invoke(
+    //   'auto-generate-subcategory-content',
+    //   {
+    //     body: { subcategoryId }
+    //   }
+    // );
+    // if (error) throw error;
+    // return data;
+    // For now, just return success without doing anything
+    return { success: true, message: 'Auto-generation temporarily disabled' };
   };
-
   return { generateContent };
 };

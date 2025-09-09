@@ -1,33 +1,31 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSmartNavigation } from '@/hooks/useNavigation';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { ArrowLeft } from 'lucide-react';
-
+import Navigation from '@/components/Navigation';
 const Privacy = () => {
   const navigate = useNavigate();
-  
+  const { navigateBack } = useSmartNavigation();
   const [dataSharing, setDataSharing] = React.useState(false);
   const [cookieConsent, setCookieConsent] = React.useState(true);
   const [notificationPermission, setNotificationPermission] = React.useState(false);
-
   return (
     <div className="min-h-screen pb-20">
       <header className="sticky top-0 z-10 bg-background border-b p-4 flex items-center">
         <Button 
           variant="ghost" 
           size="icon" 
-          onClick={() => navigate('/profile')} 
+            onClick={navigateBack}
           className="mr-2"
         >
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <h1 className="text-xl font-semibold">Confidentialité & sécurité</h1>
       </header>
-
       <main className="max-w-lg mx-auto p-4">
         {/* Gestion des données personnelles */}
         <section className="mb-6">
@@ -73,7 +71,6 @@ const Privacy = () => {
             </div>
           </Card>
         </section>
-
         {/* Historique de navigation */}
         <section className="mb-6">
           <h2 className="text-lg font-semibold mb-4">Historique de navigation</h2>
@@ -86,7 +83,6 @@ const Privacy = () => {
             </Button>
           </Card>
         </section>
-
         {/* Réinitialisation des préférences */}
         <section>
           <h2 className="text-lg font-semibold mb-4">Réinitialisation des préférences</h2>
@@ -100,8 +96,8 @@ const Privacy = () => {
           </Card>
         </section>
       </main>
+      <Navigation />
     </div>
   );
 };
-
 export default Privacy;

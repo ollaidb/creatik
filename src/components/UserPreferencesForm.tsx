@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,7 +6,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-
 const UserPreferencesForm = () => {
   const { toast } = useToast();
   const [formData, setFormData] = useState({
@@ -20,22 +18,18 @@ const UserPreferencesForm = () => {
     goals: '',
     frequency: ''
   });
-
   const interestOptions = [
     'Lifestyle', 'Tech', 'Mode', 'Cuisine', 'Voyage', 'Sport', 
     'Éducation', 'Business', 'Art', 'Musique', 'Santé', 'Gaming'
   ];
-
   const contentOptions = [
     'Tutoriels', 'Divertissement', 'Éducatif', 'Inspiration', 
     'Actualités', 'Reviews', 'Challenges', 'Storytelling'
   ];
-
   const platformOptions = [
     'TikTok', 'Instagram Stories', 'Instagram Reels', 'YouTube Shorts', 
     'YouTube Long', 'LinkedIn', 'Twitter', 'Facebook'
   ];
-
   const handleInterestChange = (interest: string, checked: boolean) => {
     setFormData(prev => ({
       ...prev,
@@ -44,7 +38,6 @@ const UserPreferencesForm = () => {
         : prev.interests.filter(i => i !== interest)
     }));
   };
-
   const handleContentPreferenceChange = (content: string, checked: boolean) => {
     setFormData(prev => ({
       ...prev,
@@ -53,7 +46,6 @@ const UserPreferencesForm = () => {
         : prev.contentPreferences.filter(c => c !== content)
     }));
   };
-
   const handlePlatformChange = (platform: string, checked: boolean) => {
     setFormData(prev => ({
       ...prev,
@@ -62,17 +54,14 @@ const UserPreferencesForm = () => {
         : prev.platforms.filter(p => p !== platform)
     }));
   };
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // Ici on sauvegarderait les préférences en base
-    console.log('Préférences utilisateur:', formData);
     toast({
       title: "Préférences sauvegardées",
       description: "Vos préférences ont été enregistrées avec succès. Nous pourrons maintenant vous proposer du contenu personnalisé."
     });
   };
-
   return (
     <Card className="w-full max-w-2xl mx-auto">
       <CardHeader>
@@ -109,7 +98,6 @@ const UserPreferencesForm = () => {
               />
             </div>
           </div>
-
           {/* Centres d'intérêt */}
           <div>
             <Label>Centres d'intérêt</Label>
@@ -126,7 +114,6 @@ const UserPreferencesForm = () => {
               ))}
             </div>
           </div>
-
           {/* Préférences de contenu */}
           <div>
             <Label>Types de contenu préférés</Label>
@@ -143,7 +130,6 @@ const UserPreferencesForm = () => {
               ))}
             </div>
           </div>
-
           {/* Plateformes */}
           <div>
             <Label>Plateformes utilisées</Label>
@@ -160,7 +146,6 @@ const UserPreferencesForm = () => {
               ))}
             </div>
           </div>
-
           {/* Expérience */}
           <div>
             <Label htmlFor="experience">Niveau d'expérience en création de contenu</Label>
@@ -176,7 +161,6 @@ const UserPreferencesForm = () => {
               <option value="expert">Expert</option>
             </select>
           </div>
-
           {/* Objectifs */}
           <div>
             <Label htmlFor="goals">Vos objectifs de création de contenu</Label>
@@ -188,7 +172,6 @@ const UserPreferencesForm = () => {
               rows={3}
             />
           </div>
-
           {/* Fréquence */}
           <div>
             <Label htmlFor="frequency">Fréquence de publication souhaitée</Label>
@@ -204,7 +187,6 @@ const UserPreferencesForm = () => {
               <option value="rare">Rarement</option>
             </select>
           </div>
-
           <Button type="submit" className="w-full">
             Sauvegarder mes préférences
           </Button>
@@ -213,5 +195,4 @@ const UserPreferencesForm = () => {
     </Card>
   );
 };
-
 export default UserPreferencesForm;
