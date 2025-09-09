@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSmartNavigation } from '@/hooks/useNavigation';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Info, Target, Settings, BookOpen, Lightbulb, Users, Star, TrendingUp, Calendar, Hash } from 'lucide-react';
+import { ArrowLeft, Info, Target, Settings, BookOpen, Lightbulb, Users, Star, TrendingUp, Calendar, Hash, Wrench, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -18,6 +18,7 @@ const CategoryInfo = () => {
   const navigate = useNavigate();
   const { navigateBack } = useSmartNavigation();
   const [activeTab, setActiveTab] = useState('explication');
+  const tabsListRef = useRef<HTMLDivElement>(null);
   
   const { data: categories } = useCategories();
   const { data: subcategories } = useSubcategories(categoryId);
@@ -33,6 +34,24 @@ const CategoryInfo = () => {
       navigate(`/categories`);
     }
   };
+
+  // Faire défiler vers l'onglet actif
+  useEffect(() => {
+    if (tabsListRef.current) {
+      const activeTabElement = tabsListRef.current.querySelector(`[data-state="active"]`);
+      if (activeTabElement) {
+        activeTabElement.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      }
+    }
+  }, [activeTab]);
+
+  // S'assurer que le premier onglet est visible au chargement
+  useEffect(() => {
+    if (tabsListRef.current) {
+      // Scroll vers le début pour montrer "Définition"
+      tabsListRef.current.scrollLeft = 0;
+    }
+  }, []);
 
   // Utiliser les données de la base de données
   const categoryInfo = guide ? {
@@ -178,32 +197,40 @@ const CategoryInfo = () => {
 
       <main className="max-w-4xl mx-auto p-4">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-6 bg-transparent border-0 p-0 gap-2">
+          <div className="overflow-x-auto scrollbar-hide touch-pan-x">
+            <TabsList ref={tabsListRef} className="flex w-max min-w-full mb-4 sm:mb-6 bg-transparent border-0 p-0 gap-1 sm:gap-2 scroll-smooth">
             <TabsTrigger 
               value="explication" 
-              className="flex items-center gap-2 bg-transparent data-[state=active]:bg-blue-100 dark:data-[state=active]:bg-blue-900/30 data-[state=active]:text-blue-700 dark:data-[state=active]:text-blue-300 rounded-lg px-3 py-2 text-sm font-medium transition-colors"
+              className="flex-shrink-0 bg-transparent data-[state=active]:bg-blue-100 dark:data-[state=active]:bg-blue-900/30 data-[state=active]:text-blue-700 dark:data-[state=active]:text-blue-300 rounded-lg px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium transition-colors whitespace-nowrap min-w-fit"
             >
-              <BookOpen className="w-4 h-4" />
-              <span className="hidden sm:inline">Qu'est-ce que c'est ?</span>
-              <span className="sm:hidden">Qu'est-ce ?</span>
+              Définition
             </TabsTrigger>
             <TabsTrigger 
               value="comment-faire" 
-              className="flex items-center gap-2 bg-transparent data-[state=active]:bg-blue-100 dark:data-[state=active]:bg-blue-900/30 data-[state=active]:text-blue-700 dark:data-[state=active]:text-blue-300 rounded-lg px-3 py-2 text-sm font-medium transition-colors"
+              className="flex-shrink-0 bg-transparent data-[state=active]:bg-blue-100 dark:data-[state=active]:bg-blue-900/30 data-[state=active]:text-blue-700 dark:data-[state=active]:text-blue-300 rounded-lg px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium transition-colors whitespace-nowrap min-w-fit"
             >
-              <Target className="w-4 h-4" />
-              <span className="hidden sm:inline">Comment faire ?</span>
-              <span className="sm:hidden">Comment ?</span>
+              Réalisation
             </TabsTrigger>
             <TabsTrigger 
               value="personnalisation" 
-              className="flex items-center gap-2 bg-transparent data-[state=active]:bg-blue-100 dark:data-[state=active]:bg-blue-900/30 data-[state=active]:text-blue-700 dark:data-[state=active]:text-blue-300 rounded-lg px-3 py-2 text-sm font-medium transition-colors"
+              className="flex-shrink-0 bg-transparent data-[state=active]:bg-blue-100 dark:data-[state=active]:bg-blue-900/30 data-[state=active]:text-blue-700 dark:data-[state=active]:text-blue-300 rounded-lg px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium transition-colors whitespace-nowrap min-w-fit"
             >
-              <Settings className="w-4 h-4" />
-              <span className="hidden sm:inline">Personnalisation</span>
-              <span className="sm:hidden">Perso</span>
+              Personnalisation
+            </TabsTrigger>
+            <TabsTrigger 
+              value="outils" 
+              className="flex-shrink-0 bg-transparent data-[state=active]:bg-blue-100 dark:data-[state=active]:bg-blue-900/30 data-[state=active]:text-blue-700 dark:data-[state=active]:text-blue-300 rounded-lg px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium transition-colors whitespace-nowrap min-w-fit"
+            >
+              Outils
+            </TabsTrigger>
+            <TabsTrigger 
+              value="mots-cles" 
+              className="flex-shrink-0 bg-transparent data-[state=active]:bg-blue-100 dark:data-[state=active]:bg-blue-900/30 data-[state=active]:text-blue-700 dark:data-[state=active]:text-blue-300 rounded-lg px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium transition-colors whitespace-nowrap min-w-fit"
+            >
+              Mots-clés
             </TabsTrigger>
           </TabsList>
+          </div>
 
           {/* Onglet Explication */}
           <TabsContent value="explication" className="space-y-6">
@@ -446,6 +473,200 @@ const CategoryInfo = () => {
                     </div>
                   </div>
                 )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Onglet Mots-clés */}
+          <TabsContent value="mots-cles" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Hash className="w-5 h-5" />
+                  Mots-clés à maîtriser pour {currentCategory.name}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="prose dark:prose-invert max-w-none">
+                  <p className="text-lg leading-relaxed text-gray-700 dark:text-gray-300">
+                    Maîtrisez ces termes clés pour créer du contenu professionnel et engageant dans cette catégorie.
+                  </p>
+                </div>
+
+                {/* Mots-clés essentiels */}
+                <div className="mt-6">
+                  <h3 className="text-lg font-semibold mb-3">Mots-clés essentiels</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    <Badge variant="outline" className="p-2 text-sm">Terme technique 1</Badge>
+                    <Badge variant="outline" className="p-2 text-sm">Concept clé 2</Badge>
+                    <Badge variant="outline" className="p-2 text-sm">Vocabulaire spécialisé 3</Badge>
+                    <Badge variant="outline" className="p-2 text-sm">Terme technique 4</Badge>
+                    <Badge variant="outline" className="p-2 text-sm">Concept clé 5</Badge>
+                    <Badge variant="outline" className="p-2 text-sm">Vocabulaire spécialisé 6</Badge>
+                  </div>
+                </div>
+
+                {/* Mots-clés par niveau */}
+                <div className="mt-6">
+                  <h3 className="text-lg font-semibold mb-3">Par niveau de complexité</h3>
+                  <div className="space-y-4">
+                    <div className="p-4 border border-green-200 dark:border-green-700 rounded-lg bg-green-50 dark:bg-green-900/20">
+                      <h4 className="font-medium mb-2 text-green-800 dark:text-green-200">Débutant</h4>
+                      <div className="flex flex-wrap gap-2">
+                        <Badge variant="secondary" className="bg-green-100 text-green-800">Terme de base 1</Badge>
+                        <Badge variant="secondary" className="bg-green-100 text-green-800">Terme de base 2</Badge>
+                        <Badge variant="secondary" className="bg-green-100 text-green-800">Terme de base 3</Badge>
+                      </div>
+                    </div>
+                    <div className="p-4 border border-yellow-200 dark:border-yellow-700 rounded-lg bg-yellow-50 dark:bg-yellow-900/20">
+                      <h4 className="font-medium mb-2 text-yellow-800 dark:text-yellow-200">Intermédiaire</h4>
+                      <div className="flex flex-wrap gap-2">
+                        <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">Terme avancé 1</Badge>
+                        <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">Terme avancé 2</Badge>
+                        <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">Terme avancé 3</Badge>
+                      </div>
+                    </div>
+                    <div className="p-4 border border-red-200 dark:border-red-700 rounded-lg bg-red-50 dark:bg-red-900/20">
+                      <h4 className="font-medium mb-2 text-red-800 dark:text-red-200">Expert</h4>
+                      <div className="flex flex-wrap gap-2">
+                        <Badge variant="secondary" className="bg-red-100 text-red-800">Terme expert 1</Badge>
+                        <Badge variant="secondary" className="bg-red-100 text-red-800">Terme expert 2</Badge>
+                        <Badge variant="secondary" className="bg-red-100 text-red-800">Terme expert 3</Badge>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Onglet Outils */}
+          <TabsContent value="outils" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Wrench className="w-5 h-5" />
+                  Outils nécessaires pour {currentCategory.name}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="prose dark:prose-invert max-w-none">
+                  <p className="text-lg leading-relaxed text-gray-700 dark:text-gray-300">
+                    Découvrez les outils essentiels pour créer du contenu de qualité dans cette catégorie.
+                  </p>
+                </div>
+
+                {/* Outils par catégorie */}
+                <div className="mt-6">
+                  <h3 className="text-lg font-semibold mb-3">Outils de création</h3>
+                  <div className="space-y-4">
+                    <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                      <h4 className="font-medium mb-2 flex items-center gap-2">
+                        <BookOpen className="w-4 h-4 text-blue-500" />
+                        Outils de conception
+                      </h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded">
+                          <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                          <span className="text-sm">Outil de design 1</span>
+                        </div>
+                        <div className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded">
+                          <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                          <span className="text-sm">Outil de design 2</span>
+                        </div>
+                        <div className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded">
+                          <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                          <span className="text-sm">Outil de design 3</span>
+                        </div>
+                        <div className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded">
+                          <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                          <span className="text-sm">Outil de design 4</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                      <h4 className="font-medium mb-2 flex items-center gap-2">
+                        <Target className="w-4 h-4 text-green-500" />
+                        Outils d'analyse
+                      </h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded">
+                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                          <span className="text-sm">Outil d'analyse 1</span>
+                        </div>
+                        <div className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded">
+                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                          <span className="text-sm">Outil d'analyse 2</span>
+                        </div>
+                        <div className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded">
+                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                          <span className="text-sm">Outil d'analyse 3</span>
+                        </div>
+                        <div className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded">
+                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                          <span className="text-sm">Outil d'analyse 4</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                      <h4 className="font-medium mb-2 flex items-center gap-2">
+                        <Settings className="w-4 h-4 text-purple-500" />
+                        Outils de production
+                      </h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded">
+                          <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                          <span className="text-sm">Outil de production 1</span>
+                        </div>
+                        <div className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded">
+                          <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                          <span className="text-sm">Outil de production 2</span>
+                        </div>
+                        <div className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded">
+                          <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                          <span className="text-sm">Outil de production 3</span>
+                        </div>
+                        <div className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded">
+                          <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                          <span className="text-sm">Outil de production 4</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Outils gratuits vs payants */}
+                <div className="mt-6">
+                  <h3 className="text-lg font-semibold mb-3">Gratuits vs Payants</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="p-4 border border-green-200 dark:border-green-700 rounded-lg bg-green-50 dark:bg-green-900/20">
+                      <h4 className="font-medium mb-2 text-green-800 dark:text-green-200 flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4" />
+                        Outils gratuits
+                      </h4>
+                      <ul className="text-sm space-y-1">
+                        <li>• Outil gratuit 1</li>
+                        <li>• Outil gratuit 2</li>
+                        <li>• Outil gratuit 3</li>
+                        <li>• Outil gratuit 4</li>
+                      </ul>
+                    </div>
+                    <div className="p-4 border border-blue-200 dark:border-blue-700 rounded-lg bg-blue-50 dark:bg-blue-900/20">
+                      <h4 className="font-medium mb-2 text-blue-800 dark:text-blue-200 flex items-center gap-2">
+                        <Star className="w-4 h-4" />
+                        Outils premium
+                      </h4>
+                      <ul className="text-sm space-y-1">
+                        <li>• Outil premium 1</li>
+                        <li>• Outil premium 2</li>
+                        <li>• Outil premium 3</li>
+                        <li>• Outil premium 4</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
