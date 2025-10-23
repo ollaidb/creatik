@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useFavorites } from '@/hooks/useFavorites';
 import LocalSearchBar from '@/components/LocalSearchBar';
 import Navigation from '@/components/Navigation';
+import { getNetworkDisplayName } from '@/utils/networkUtils';
 
 const Hooks = () => {
   const { subcategoryId, categoryId } = useParams();
@@ -33,20 +34,6 @@ const Hooks = () => {
   );
 
   // Fonction pour obtenir le nom d'affichage du réseau social
-  const getNetworkDisplayName = (networkId: string) => {
-    switch (networkId) {
-      case 'tiktok': return 'TikTok';
-      case 'instagram': return 'Instagram';
-      case 'youtube': return 'YouTube';
-      case 'twitter': return 'Twitter';
-      case 'facebook': return 'Facebook';
-      case 'linkedin': return 'LinkedIn';
-      case 'twitch': return 'Twitch';
-      case 'blog': return 'Blog';
-      case 'article': return 'Article';
-      default: return 'Toutes les plateformes';
-    }
-  };
 
   // Vérifier si les hooks sont disponibles pour ce réseau
   const isHooksAvailableForNetwork = (networkId: string) => {
@@ -85,7 +72,7 @@ const Hooks = () => {
   };
 
   const handleAddToChallenge = (hookId: string) => {
-    // TODO: Implémenter l'ajout aux défis
+    // TODO: Implémenter l'ajout à la communauté
     toast({
       title: "Ajouté"
     });
@@ -168,7 +155,7 @@ const Hooks = () => {
               Hooks {networkStyle.name} - {subcategory?.name || 'Sous-catégorie'}
             </h1>
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              {filteredHooks?.length || 0} hooks disponibles
+              {filteredHooks?.length || 0} hooks
             </p>
             {/* Indicateur du réseau social sélectionné */}
             {selectedNetwork !== 'all' && (
@@ -242,7 +229,7 @@ const Hooks = () => {
                     onClick={() => toggleFavorite(hook.id)}
                     className="p-2 h-10 w-10 rounded-full"
                   >
-                    <Heart size={18} className={isFavorite(hook.id) ? 'text-red-500 fill-red-500' : ''} />
+                    <Heart className={`w-3 h-3 sm:w-4 sm:h-4 ${isFavorite(hook.id) ? 'text-red-500 fill-red-500' : ''}`} />
                   </Button>
                   <Button
                     variant="ghost"

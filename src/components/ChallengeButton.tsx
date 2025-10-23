@@ -27,7 +27,7 @@ const ChallengeButton: React.FC<ChallengeButtonProps> = ({
       className={`flex items-center gap-2 ${className}`}
     >
       <Target className="w-4 h-4" />
-      {filterLiked ? 'Mes Challenges' : 'Challenges'}
+      {filterLiked ? 'Ma Communauté' : 'Communauté'}
     </Button>
   );
 };

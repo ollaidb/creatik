@@ -16,6 +16,7 @@ import { useMotsCles } from '@/hooks/useMotsCles';
 import { useExemples } from '@/hooks/useExemples';
 import { useIdees } from '@/hooks/useIdees';
 import { usePodcasts } from '@/hooks/usePodcasts';
+import { useHooks } from '@/hooks/useHooks';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useFavorites } from '@/hooks/useFavorites';
@@ -23,6 +24,7 @@ import LocalSearchBar from '@/components/LocalSearchBar';
 import SubcategoryTabs from '@/components/SubcategoryTabs';
 import HashtagsSection from '@/components/HashtagsSection';
 import Navigation from '@/components/Navigation';
+import { getNetworkDisplayName } from '@/utils/networkUtils';
 
 type TabType = 'titres' | 'comptes' | 'sources' | 'hashtags' | 'hooks' | 'blog' | 'article' | 'mots-cles' | 'exemple' | 'idees' | 'podcast';
 
@@ -82,6 +84,16 @@ const Titles = () => {
   const { data: idees = [], isLoading: ideesLoading } = useIdees(currentSubcategoryId, detectedNetwork);
   const { data: podcasts = [], isLoading: podcastsLoading } = usePodcasts(currentSubcategoryId, detectedNetwork);
   
+  // Récupérer les hooks
+  const { data: hooks = [], isLoading: hooksLoading } = useHooks(categoryId, subcategoryId, detectedNetwork);
+  
+  // Debug logs pour les hooks
+  console.log('Debug Titles - hooks:', hooks);
+  console.log('Debug Titles - hooksLoading:', hooksLoading);
+  console.log('Debug Titles - categoryId:', categoryId);
+  console.log('Debug Titles - subcategoryId:', subcategoryId);
+  console.log('Debug Titles - detectedNetwork:', detectedNetwork);
+  
   // Utiliser les données appropriées selon le niveau
   const currentSubcategory = isLevel2 ? subcategoryLevel2 : subcategory;
   const isLoading = isLevel2 ? 
@@ -98,6 +110,7 @@ const Titles = () => {
   const { favorites: exempleFavorites, toggleFavorite: toggleExempleFavorite, isFavorite: isExempleFavorite } = useFavorites('exemple');
   const { favorites: ideeFavorites, toggleFavorite: toggleIdeeFavorite, isFavorite: isIdeeFavorite } = useFavorites('idee');
   const { favorites: podcastFavorites, toggleFavorite: togglePodcastFavorite, isFavorite: isPodcastFavorite } = useFavorites('podcast');
+  const { favorites: hookFavorites, toggleFavorite: toggleHookFavorite, isFavorite: isHookFavorite } = useFavorites('hook');
   
   // Combiner tous les types de titres
   const allTitles = [
@@ -141,21 +154,6 @@ const Titles = () => {
   });
 
   // Fonction pour obtenir le nom d'affichage du réseau social
-  const getNetworkDisplayName = (networkId: string) => {
-    switch (networkId) {
-      case 'tiktok': return 'TikTok';
-      case 'instagram': return 'Instagram';
-      case 'youtube': return 'YouTube';
-      case 'twitter': return 'Twitter';
-      case 'facebook': return 'Facebook';
-      case 'linkedin': return 'LinkedIn';
-      case 'twitch': return 'Twitch';
-      case 'blog': return 'Blog';
-      case 'article': return 'Article';
-      case 'podcasts': return 'Podcasts';
-      default: return 'Toutes les plateformes';
-    }
-  };
 
   // Fonction pour obtenir le type de titre
   const getTitleType = (title: { type?: string; source?: string }) => {
@@ -169,14 +167,8 @@ const Titles = () => {
 
   // Vérifier si les hooks sont disponibles pour ce réseau
   const isHooksAvailableForNetwork = (networkId: string) => {
-    // Les hooks ne sont disponibles que pour YouTube
-    const isAvailable = networkId === 'youtube' || 
-                       networkId === 'YouTube' ||
-                       networkId === '550e8400-e29b-41d4-a716-446655440003' || // UUID de YouTube
-                       searchParams.toString().includes('youtube') ||
-                       searchParams.toString().includes('YouTube') ||
-                       window.location.href.includes('youtube') ||
-                       window.location.href.includes('YouTube');
+    // Les hooks sont disponibles pour tous les réseaux maintenant
+    const isAvailable = true; // Toujours afficher les hooks
     
     console.log('🔍 Debug Hooks Availability:', {
       networkId,
@@ -209,6 +201,7 @@ const Titles = () => {
     exemples: exemples.length,
     idees: idees.length,
     podcasts: podcasts.length,
+    hooks: hooks.length,
     showHooksValue: isHooksAvailableForNetwork(detectedNetwork),
     urlParams: searchParams.toString(),
     currentUrl: window.location.href
@@ -365,7 +358,7 @@ const Titles = () => {
   };
 
   const handleAddToChallenge = (titleId: string) => {
-    // Logique pour ajouter à un challenge
+    // Logique pour ajouter à une communauté
     console.log('Adding to challenge:', titleId);
   };
 
@@ -529,7 +522,7 @@ const Titles = () => {
               {currentSubcategory?.name || 'Titres'}
             </h1>
             <p className="text-sm text-muted-foreground">
-              {filteredTitles.length} titres disponibles
+              {filteredTitles.length} titres
             </p>
             {/* Indicateur du réseau social sélectionné */}
             {selectedNetwork !== 'all' && (
@@ -1114,10 +1107,58 @@ const Titles = () => {
           )}
 
           {activeTab === 'hooks' && isHooksAvailableForNetwork(detectedNetwork) && (
-            <div className="text-center py-12">
-              <p className="text-gray-500 dark:text-gray-400">
-                Hooks disponibles pour {getNetworkDisplayName(detectedNetwork)}
-              </p>
+            <div className="space-y-3">
+              {hooks.length > 0 ? (
+                hooks.map((hook, index) => (
+                  <motion.div
+                    key={hook.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all duration-200 cursor-pointer"
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center text-white text-lg">
+                          🎣
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-medium text-gray-900 dark:text-white text-base truncate">
+                            {hook.title}
+                          </h3>
+                          <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
+                            {hook.description || 'Hook vidéo'}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleCopyTitle(hook.title)}
+                          className="p-2 h-10 w-10 rounded-full"
+                        >
+                          <Copy size={18} />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => toggleHookFavorite(hook.id)}
+                          className="p-2 h-10 w-10 rounded-full"
+                        >
+                          <Heart className={`w-3 h-3 sm:w-4 sm:h-4 ${isHookFavorite(hook.id) ? 'text-red-500 fill-red-500' : ''}`} />
+                        </Button>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))
+              ) : (
+                <div className="text-center py-12">
+                  <p className="text-gray-500 dark:text-gray-400">
+                    Aucun hook disponible pour {getNetworkDisplayName(detectedNetwork)}
+                  </p>
+                </div>
+              )}
             </div>
           )}
         </div>

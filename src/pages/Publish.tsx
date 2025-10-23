@@ -9,6 +9,8 @@ import { Send, Loader2, ArrowLeft, Search, X, Check, AlertTriangle, Eye, FileTex
 import { useToast } from '@/hooks/use-toast';
 import { useCategories } from '@/hooks/useCategories';
 import { useSubcategories } from '@/hooks/useSubcategories';
+import { useSubcategoriesLevel2 } from '@/hooks/useSubcategoriesLevel2';
+import { useSubcategoryHierarchy } from '@/hooks/useSubcategoryHierarchy';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import Navigation from '@/components/Navigation';
@@ -28,6 +30,13 @@ interface Subcategory {
   category_id: string;
 }
 
+interface SubcategoryLevel2 {
+  id: string;
+  name: string;
+  description: string;
+  subcategory_id: string;
+}
+
 const Publish = () => {
   const navigate = useNavigate();
   const { navigateBack } = useSmartNavigation();
@@ -36,9 +45,10 @@ const Publish = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
-    content_type: 'title' as 'category' | 'subcategory' | 'title' | 'challenge' | 'source' | 'account' | 'hooks',
+    content_type: 'title' as 'category' | 'subcategory' | 'subcategory_level2' | 'title' | 'challenge' | 'source' | 'account' | 'hooks',
     category_id: '',
     subcategory_id: '',
+    subcategory_level2_id: '',
     description: '', // Added for challenges
     url: '', // Added for sources and accounts
     platform: '', // Added for accounts
@@ -48,11 +58,15 @@ const Publish = () => {
   // États pour les barres de recherche
   const [categorySearch, setCategorySearch] = useState('');
   const [subcategorySearch, setSubcategorySearch] = useState('');
+  const [subcategoryLevel2Search, setSubcategoryLevel2Search] = useState('');
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   const [showSubcategoryDropdown, setShowSubcategoryDropdown] = useState(false);
+  const [showSubcategoryLevel2Dropdown, setShowSubcategoryLevel2Dropdown] = useState(false);
   const [selectedNetwork, setSelectedNetwork] = useState('');
   const { data: socialNetworks } = useSocialNetworks();
   const { data: themes } = useThemes();
+  const { data: subcategoriesLevel2 } = useSubcategoriesLevel2(formData.subcategory_id);
+  const { data: subcategoryHierarchy } = useSubcategoryHierarchy();
 
   // Refs pour les dropdowns
   const categoryDropdownRef = useRef<HTMLDivElement>(null);
@@ -67,10 +81,22 @@ const Publish = () => {
     category.name.toLowerCase().includes(categorySearch.toLowerCase())
   ) || [];
 
-  // Filtrer les sous-catégories selon la recherche
-  const filteredSubcategories = subcategories?.filter(subcategory =>
-    subcategory.name.toLowerCase().includes(subcategorySearch.toLowerCase())
-  ) || [];
+  // Filtrer les sous-catégories selon la recherche et le type de contenu
+  const filteredSubcategories = (() => {
+    if (!subcategories) return [];
+    
+    let baseSubcategories = subcategories.filter(subcategory => 
+      subcategory.name.toLowerCase().includes(subcategorySearch.toLowerCase()) &&
+      subcategory.category_id === formData.category_id
+    );
+    
+    // Si on publie une sous-catégorie de niveau 2, montrer toutes les sous-catégories
+    // (le système activera automatiquement la fonctionnalité si nécessaire)
+    // Note: On pourrait filtrer ici si on veut seulement montrer celles qui ont déjà la fonctionnalité
+    // Mais pour l'instant, on permet la création automatique
+    
+    return baseSubcategories;
+  })();
 
   // Fermer les dropdowns quand on clique à l'extérieur
   useEffect(() => {
@@ -132,12 +158,38 @@ const Publish = () => {
       return;
     }
 
+    if (formData.content_type === 'subcategory_level2' && !formData.subcategory_id) {
+      toast({
+        title: "Sous-catégorie requise",
+        variant: "destructive"
+      });
+      return;
+    }
+
     if ((formData.content_type === 'title' || formData.content_type === 'account') && !formData.subcategory_id) {
       toast({
         title: "Sous-catégorie requise",
         variant: "destructive"
       });
       return;
+    }
+
+    // Validation conditionnelle pour les sous-catégories de niveau 2
+    if ((formData.content_type === 'title' || formData.content_type === 'account' || formData.content_type === 'source' || formData.content_type === 'hooks') && formData.subcategory_id) {
+      // Vérifier si la sous-catégorie a des sous-catégories de niveau 2
+      const hasLevel2Subcategories = subcategoryHierarchy?.some(config => 
+        config.subcategory_id === formData.subcategory_id && config.has_level2 === true
+      );
+      
+      // Si la sous-catégorie a des sous-catégories de niveau 2, alors subcategory_level2_id est requis
+      if (hasLevel2Subcategories && !formData.subcategory_level2_id) {
+        toast({
+          title: "Sous-catégorie de niveau 2 requise",
+          description: "Cette sous-catégorie a des sous-catégories de niveau 2. Veuillez en sélectionner une.",
+          variant: "destructive"
+        });
+        return;
+      }
     }
 
     if (formData.content_type === 'challenge' && !formData.description) {
@@ -180,6 +232,8 @@ const Publish = () => {
       console.log('Type de contenu:', formData.content_type);
       
       // Publication directe selon le type de contenu
+      let createdItemId = null;
+      
       if (formData.content_type === 'category') {
         console.log('Publication catégorie...');
         // Couleurs valides pour les catégories (mises à jour)
@@ -188,13 +242,15 @@ const Publish = () => {
         
         console.log('Couleur sélectionnée:', randomColor);
         
-        const { error } = await supabase
+        const { data: categoryData, error } = await supabase
           .from('categories')
           .insert({
             name: formData.title,
             description: formData.description || 'Catégorie publiée',
             color: randomColor
-          });
+          })
+          .select()
+          .single();
         
         if (error) {
           console.error('Erreur catégorie:', error);
@@ -204,95 +260,159 @@ const Publish = () => {
           throw error;
         }
         
-        console.log('Catégorie publiée avec succès');
+        createdItemId = categoryData.id;
+        console.log('Catégorie publiée avec succès, ID:', createdItemId);
         toast({
           title: "Catégorie publiée"
         });
       } else if (formData.content_type === 'subcategory') {
         console.log('Publication sous-catégorie...');
-        const { error } = await supabase
+        const { data: subcategoryData, error } = await supabase
           .from('subcategories')
           .insert({
             name: formData.title,
             description: formData.description || 'Sous-catégorie publiée',
             category_id: formData.category_id
-          });
+          })
+          .select()
+          .single();
         
         if (error) {
           console.error('Erreur sous-catégorie:', error);
           throw error;
         }
         
-        console.log('Sous-catégorie publiée avec succès');
+        createdItemId = subcategoryData.id;
+        console.log('Sous-catégorie publiée avec succès, ID:', createdItemId);
         toast({
           title: "Sous-catégorie publiée"
         });
+      } else if (formData.content_type === 'subcategory_level2') {
+        console.log('Publication sous-catégorie niveau 2...');
+        
+        // Vérifier si la sous-catégorie parent a déjà des sous-catégories de niveau 2
+        const hasLevel2Config = subcategoryHierarchy?.some(config => 
+          config.subcategory_id === formData.subcategory_id && config.has_level2 === true
+        );
+        
+        // Si la sous-catégorie n'a pas de configuration pour les sous-catégories de niveau 2,
+        // l'activer automatiquement
+        if (!hasLevel2Config) {
+          console.log('Activation automatique des sous-catégories de niveau 2 pour cette sous-catégorie...');
+          
+          const { error: configError } = await supabase
+            .from('subcategory_hierarchy_config')
+            .upsert({
+              subcategory_id: formData.subcategory_id,
+              has_level2: true,
+              created_at: new Date().toISOString()
+            });
+          
+          if (configError) {
+            console.error('Erreur lors de l\'activation des sous-catégories de niveau 2:', configError);
+            // On continue quand même la création
+          } else {
+            console.log('Configuration des sous-catégories de niveau 2 activée avec succès');
+          }
+        }
+        
+        const { data: subcategoryLevel2Data, error } = await supabase
+          .from('subcategories_level2')
+          .insert({
+            name: formData.title,
+            description: formData.description || 'Sous-catégorie niveau 2 publiée',
+            subcategory_id: formData.subcategory_id
+          })
+          .select()
+          .single();
+        
+        if (error) {
+          console.error('Erreur sous-catégorie niveau 2:', error);
+          throw error;
+        }
+        
+        createdItemId = subcategoryLevel2Data.id;
+        console.log('Sous-catégorie niveau 2 publiée avec succès, ID:', createdItemId);
+        toast({
+          title: "Sous-catégorie niveau 2 publiée",
+          description: "La page des sous-catégories de niveau 2 a été automatiquement activée pour cette sous-catégorie"
+        });
       } else if (formData.content_type === 'title') {
         console.log('Publication titre...');
-        const { error } = await supabase
+        const { data: titleData, error } = await supabase
           .from('content_titles')
           .insert({
             title: formData.title,
             subcategory_id: formData.subcategory_id,
+            subcategory_level2_id: formData.subcategory_level2_id || null,
             platform: selectedNetwork,
             type: 'title'
-          });
+          })
+          .select()
+          .single();
         
         if (error) {
           console.error('Erreur titre:', error);
           throw error;
         }
         
-        console.log('Titre publié avec succès');
+        createdItemId = titleData.id;
+        console.log('Titre publié avec succès, ID:', createdItemId);
         toast({
           title: "Titre publié"
         });
       } else if (formData.content_type === 'challenge') {
         console.log('Publication challenge...');
-        const { error } = await supabase
+        const { data: challengeData, error } = await supabase
           .from('challenges')
           .insert({
             title: formData.title,
             description: formData.description,
-            category: 'Challenge',
+            category: 'Communauté',
             points: 50,
             difficulty: 'medium',
             duration_days: 1,
             is_daily: false,
             is_active: true
-          });
+          })
+          .select()
+          .single();
         
         if (error) {
           console.error('Erreur challenge:', error);
           throw error;
         }
         
-        console.log('Challenge publié avec succès');
+        createdItemId = challengeData.id;
+        console.log('Communauté publiée avec succès, ID:', createdItemId);
         toast({
-          title: "Challenge publié"
+          title: "Communauté publiée"
         });
       } else if (formData.content_type === 'source') {
         console.log('Publication source...');
-        const { error } = await supabase
+        const { data: sourceData, error } = await supabase
           .from('sources')
           .insert({
             name: formData.title,
             description: formData.description || 'Source publiée',
             url: formData.url
-          });
+          })
+          .select()
+          .single();
         
         if (error) {
           console.error('Erreur source:', error);
           throw error;
         }
         
-        console.log('Source publiée avec succès');
+        createdItemId = sourceData.id;
+        console.log('Source publiée avec succès, ID:', createdItemId);
         toast({
           title: "Source publiée"
         });
       } else if (formData.content_type === 'account') {
         console.log('Publication compte...');
-        const { error } = await supabase
+        const { data: accountData, error } = await supabase
           .from('exemplary_accounts')
           .insert({
             account_name: formData.title,
@@ -300,33 +420,43 @@ const Publish = () => {
             platform: formData.platform,
             account_url: formData.url,
             subcategory_id: formData.subcategory_id
-          });
+          })
+          .select()
+          .single();
         
         if (error) {
           console.error('Erreur compte:', error);
           throw error;
         }
         
-        console.log('Compte publié avec succès');
+        createdItemId = accountData.id;
+        console.log('Compte publié avec succès, ID:', createdItemId);
         toast({
           title: "Compte publié"
         });
       } else if (formData.content_type === 'hooks') {
         console.log('Publication hook...');
-        const { error } = await supabase
+        console.log('Subcategory ID:', formData.subcategory_id);
+        console.log('Subcategory Level 2 ID:', formData.subcategory_level2_id);
+        const { data: hookData, error } = await supabase
           .from('content_titles')
           .insert({
             title: formData.title,
+            subcategory_id: formData.subcategory_id,
+            subcategory_level2_id: formData.subcategory_level2_id || null,
             platform: selectedNetwork,
             type: 'hook'
-          });
+          })
+          .select()
+          .single();
         
         if (error) {
           console.error('Erreur hook:', error);
           throw error;
         }
         
-        console.log('Hook publié avec succès');
+        createdItemId = hookData.id;
+        console.log('Hook publié avec succès, ID:', createdItemId);
         toast({
           title: "Hook publié"
         });
@@ -341,18 +471,44 @@ const Publish = () => {
         console.log('Content Type:', formData.content_type);
         console.log('Title:', formData.title);
         console.log('Description:', formData.description);
+        console.log('Created Item ID:', createdItemId);
         console.log('Category ID:', formData.category_id);
         console.log('Subcategory ID:', formData.subcategory_id);
         console.log('Platform:', selectedNetwork || formData.platform);
         console.log('URL:', formData.url);
+        
+        // Déterminer les IDs à utiliser selon le type de contenu
+        let categoryId = null;
+        let subcategoryId = null;
+        let subcategoryLevel2Id = null;
+        
+        if (formData.content_type === 'category') {
+          categoryId = createdItemId;
+        } else if (formData.content_type === 'subcategory') {
+          subcategoryId = createdItemId;
+          categoryId = formData.category_id;
+        } else if (formData.content_type === 'subcategory_level2') {
+          subcategoryLevel2Id = createdItemId;
+          subcategoryId = formData.subcategory_id;
+          categoryId = formData.category_id;
+        } else if (formData.content_type === 'title' || formData.content_type === 'hooks') {
+          subcategoryId = formData.subcategory_id;
+          subcategoryLevel2Id = formData.subcategory_level2_id;
+          categoryId = formData.category_id;
+        } else if (formData.content_type === 'account') {
+          subcategoryId = formData.subcategory_id;
+          subcategoryLevel2Id = formData.subcategory_level2_id;
+          categoryId = formData.category_id;
+        }
         
         const publicationData = {
           user_id: user.id,
           content_type: formData.content_type,
           title: formData.title,
           description: formData.description,
-          category_id: formData.category_id || null,
-          subcategory_id: formData.subcategory_id || null,
+          category_id: categoryId,
+          subcategory_id: subcategoryId,
+          subcategory_level2_id: subcategoryLevel2Id || null,
           platform: selectedNetwork || formData.platform || null,
           url: formData.url || null,
           status: 'approved'
@@ -406,6 +562,7 @@ const Publish = () => {
         content_type: 'title',
         category_id: '',
         subcategory_id: '',
+        subcategory_level2_id: '',
         description: '',
         url: '',
         platform: '',
@@ -453,10 +610,20 @@ const Publish = () => {
   const handleSubcategorySelect = (subcategory: Subcategory) => {
     setFormData(prev => ({
       ...prev,
-      subcategory_id: subcategory.id
+      subcategory_id: subcategory.id,
+      subcategory_level2_id: ''
     }));
     setSubcategorySearch(subcategory.name);
     setShowSubcategoryDropdown(false);
+  };
+
+  const handleSubcategoryLevel2Select = (subcategoryLevel2: SubcategoryLevel2) => {
+    setFormData(prev => ({
+      ...prev,
+      subcategory_level2_id: subcategoryLevel2.id
+    }));
+    setSubcategoryLevel2Search(subcategoryLevel2.name);
+    setShowSubcategoryLevel2Dropdown(false);
   };
 
   // Fonction pour obtenir le label du titre selon le type ET le réseau
@@ -464,6 +631,7 @@ const Publish = () => {
     switch (formData.content_type) {
       case 'category': return 'Nom de la catégorie';
       case 'subcategory': return 'Nom de la sous-catégorie';
+      case 'subcategory_level2': return 'Nom de la sous-catégorie de niveau 2';
       case 'challenge': return 'Nom du challenge';
       case 'source': return 'Titre de la source';
       case 'account': return 'Pseudo de la personne';
@@ -477,6 +645,7 @@ const Publish = () => {
     switch (formData.content_type) {
       case 'category': return 'Entrez le nom de la catégorie';
       case 'subcategory': return 'Entrez le nom de la sous-catégorie';
+      case 'subcategory_level2': return 'Entrez le nom de la sous-catégorie de niveau 2';
       case 'challenge': return 'Entrez le nom de votre challenge';
       case 'source': return 'Entrez le titre de la source (ex: "TikTok", "Instagram", "YouTube")';
       case 'account': return 'Entrez le pseudo de la personne (ex: "@username")';
@@ -487,12 +656,38 @@ const Publish = () => {
 
   // Fonction pour déterminer si on doit afficher la sélection de catégorie
   const shouldShowCategorySelection = () => {
-    return ['subcategory', 'title', 'source', 'account', 'hooks'].includes(formData.content_type);
+    return ['subcategory', 'subcategory_level2', 'title', 'source', 'account', 'hooks'].includes(formData.content_type);
   };
 
   // Fonction pour déterminer si on doit afficher la sélection de sous-catégorie
   const shouldShowSubcategorySelection = () => {
-    return ['title', 'source', 'account', 'hooks'].includes(formData.content_type) && formData.category_id;
+    return ['subcategory_level2', 'title', 'source', 'account', 'hooks'].includes(formData.content_type) && formData.category_id;
+  };
+
+  // Fonction pour filtrer les sous-catégories qui ont des sous-catégories de niveau 2
+  const getSubcategoriesWithLevel2 = () => {
+    if (!subcategories || !subcategoryHierarchy) return [];
+    
+    return subcategories.filter(subcategory => {
+      // Vérifier si cette sous-catégorie a des sous-catégories de niveau 2
+      return subcategoryHierarchy.some(config => 
+        config.subcategory_id === subcategory.id && config.has_level2 === true
+      );
+    });
+  };
+
+  // Fonction pour déterminer si on doit afficher la sélection de sous-catégorie de niveau 2
+  const shouldShowSubcategoryLevel2Selection = () => {
+    if (!['title', 'source', 'account', 'hooks'].includes(formData.content_type) || !formData.subcategory_id) {
+      return false;
+    }
+    
+    // Vérifier si la sous-catégorie a des sous-catégories de niveau 2
+    const hasLevel2Subcategories = subcategoryHierarchy?.some(config => 
+      config.subcategory_id === formData.subcategory_id && config.has_level2 === true
+    );
+    
+    return hasLevel2Subcategories;
   };
 
   // Fonction pour déterminer si le réseau social est requis
@@ -566,8 +761,9 @@ const Publish = () => {
                     <span className="font-medium">
                       {formData.content_type === 'title' ? 'Titre' :
                        formData.content_type === 'subcategory' ? 'Sous-catégorie' :
+                       formData.content_type === 'subcategory_level2' ? 'Sous-catégorie niveau 2' :
                        formData.content_type === 'category' ? 'Catégorie' :
-                       formData.content_type === 'challenge' ? 'Challenge' :
+                       formData.content_type === 'challenge' ? 'Communauté' :
                        formData.content_type === 'source' ? 'Source' :
                        formData.content_type === 'account' ? 'Compte' :
                        formData.content_type === 'hooks' ? 'Hooks' : 'Sélectionner un type'}
@@ -596,8 +792,9 @@ const Publish = () => {
                   >
                     <option value="title">Titre</option>
                     <option value="subcategory">Sous-catégorie</option>
+                    <option value="subcategory_level2">Sous-catégorie niveau 2</option>
                     <option value="category">Catégorie</option>
-                    <option value="challenge">Challenge</option>
+                    <option value="challenge">Communauté</option>
                     <option value="source">Source</option>
                     <option value="account">Compte</option>
                     <option value="hooks">Hooks</option>
@@ -726,7 +923,14 @@ const Publish = () => {
             <div className="mb-3">
               <div className="rounded-lg border border-gray-700 p-3" style={{ backgroundColor: '#0f0f10' }}>
                 <div className="space-y-1">
-                  <Label htmlFor="subcategory" className="text-sm text-white">Sous-catégorie *</Label>
+                  <Label htmlFor="subcategory" className="text-sm text-white">
+                    Sous-catégorie *
+                    {formData.content_type === 'subcategory_level2' && (
+                      <span className="text-xs text-gray-400 ml-2">
+                        (Le système activera automatiquement les sous-catégories de niveau 2 si nécessaire)
+                      </span>
+                    )}
+                  </Label>
                   <div className="relative" ref={subcategoryDropdownRef}>
                     <div className="relative">
                       <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-3 w-3 text-gray-400" />
@@ -757,14 +961,94 @@ const Publish = () => {
                         </Button>
                       )}
                     </div>
-                    {showSubcategoryDropdown && filteredSubcategories.length > 0 && (
+                    {showSubcategoryDropdown && (
                       <div className="absolute z-10 w-full mt-1 bg-gray-800 border border-gray-600 rounded-md shadow-lg max-h-40 overflow-y-auto">
-                        {filteredSubcategories.map((subcategory) => (
+                        {filteredSubcategories.length > 0 ? (
+                          filteredSubcategories.map((subcategory) => (
+                            <button
+                              key={subcategory.id}
+                              type="button"
+                              className="w-full px-3 py-2 text-left hover:bg-gray-700 focus:bg-gray-700 focus:outline-none text-white text-sm"
+                              onClick={() => handleSubcategorySelect(subcategory)}
+                            >
+                              <div>
+                                <div className="font-medium text-white">{subcategory.name}</div>
+                                {subcategory.description && (
+                                  <div className="text-xs text-gray-400 truncate">
+                                    {subcategory.description}
+                                  </div>
+                                )}
+                              </div>
+                            </button>
+                          ))
+                        ) : formData.content_type === 'subcategory_level2' ? (
+                          <div className="px-3 py-2 text-sm text-gray-400">
+                            <div className="mb-2">Aucune sous-catégorie trouvée pour cette recherche.</div>
+                            <div className="text-xs">
+                              💡 Vous pouvez publier une sous-catégorie de niveau 2 et le système activera automatiquement cette fonctionnalité pour la sous-catégorie parent.
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="px-3 py-2 text-sm text-gray-400">
+                            Aucune sous-catégorie trouvée.
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Section 7 : Sous-catégorie niveau 2 (si nécessaire) */}
+          {shouldShowSubcategoryLevel2Selection() && (
+            <div className="mb-3">
+              <div className="rounded-lg border border-gray-700 p-3" style={{ backgroundColor: '#0f0f10' }}>
+                <div className="space-y-1">
+                  <Label htmlFor="subcategory_level2" className="text-sm text-white">Sous-catégorie niveau 2 *</Label>
+                  <div className="relative">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-3 w-3 text-gray-400" />
+                      <Input
+                        type="text"
+                        placeholder="Rechercher une sous-catégorie niveau 2..."
+                        value={subcategoryLevel2Search}
+                        onChange={(e) => {
+                          setSubcategoryLevel2Search(e.target.value);
+                          setShowSubcategoryLevel2Dropdown(true);
+                        }}
+                        onFocus={() => setShowSubcategoryLevel2Dropdown(true)}
+                        className="pl-8 pr-8 text-sm border-gray-600 text-white placeholder-gray-400"
+                        style={{ backgroundColor: '#0f0f10' }}
+                      />
+                      {subcategoryLevel2Search && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="absolute right-1 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 hover:text-white"
+                          onClick={() => {
+                            setSubcategoryLevel2Search('');
+                            setFormData(prev => ({ ...prev, subcategory_level2_id: '' }));
+                          }}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      )}
+                    </div>
+                    {showSubcategoryLevel2Dropdown && subcategoriesLevel2 && subcategoriesLevel2.length > 0 && (
+                      <div className="absolute z-10 w-full mt-1 bg-gray-800 border border-gray-600 rounded-md shadow-lg max-h-40 overflow-y-auto">
+                        {subcategoriesLevel2
+                          .filter(subcategory => 
+                            subcategory.name.toLowerCase().includes(subcategoryLevel2Search.toLowerCase())
+                          )
+                          .map((subcategory) => (
                           <button
                             key={subcategory.id}
                             type="button"
                             className="w-full px-3 py-2 text-left hover:bg-gray-700 focus:bg-gray-700 focus:outline-none text-white text-sm"
-                            onClick={() => handleSubcategorySelect(subcategory)}
+                            onClick={() => handleSubcategoryLevel2Select(subcategory)}
                           >
                             <div>
                               <div className="font-medium text-white">{subcategory.name}</div>
@@ -784,7 +1068,7 @@ const Publish = () => {
             </div>
           )}
 
-          {/* Section 7 : Plateforme (pour les comptes) */}
+          {/* Section 8 : Plateforme (pour les comptes) */}
           {formData.content_type === 'account' && (
             <div className="mb-3">
               <div className="rounded-lg border border-gray-700 p-3" style={{ backgroundColor: '#0f0f10' }}>

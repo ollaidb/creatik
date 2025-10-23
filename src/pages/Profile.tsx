@@ -28,11 +28,21 @@ import {
   X,
   ArrowLeft,
   BarChart3,
-  Edit
+  LogIn,
+  LogOut,
+  Edit,
+  ToggleLeft,
+  ToggleRight,
+  UserCheck,
+  Users2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
+import AuthModal from '@/components/AuthModal';
+import AuthRequired from '@/components/AuthRequired';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
@@ -43,7 +53,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import Navigation from '@/components/Navigation';
 import { UserProfileService, UserSocialAccount, UserSocialPost, UserContentPlaylist } from '@/services/userProfileService';
 import { ProgramSettingsService, ProgramSettingsInput } from '@/services/programSettingsService';
-import { useAuth } from '@/hooks/useAuth';
 import { useChallenges } from '@/hooks/useChallenges';
 
 // Type pour les défis (importé depuis useChallenges)
@@ -59,7 +68,6 @@ interface UserChallenge {
   playlist_id?: string;
   is_custom?: boolean;
 }
-import { useToast } from '@/hooks/use-toast';
 import { useProfileFiltering } from '@/hooks/useProfileFiltering';
 import { useNetworkStats } from '@/hooks/useNetworkStats';
 import { AddSocialAccountModal } from '@/components/modals/AddSocialAccountModal';
@@ -68,10 +76,57 @@ import { AddPublicationModal } from '@/components/modals/AddPublicationModal';
 
 const UserProfile: React.FC = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const { toast } = useToast();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [profileType, setProfileType] = useState<'creator' | 'contributor'>('creator');
   const menuRef = useRef<HTMLDivElement>(null);
+
+  // Rediriger vers la page appropriée selon le type de profil
+  const handleProfileTypeChange = (newType: 'creator' | 'contributor') => {
+    setProfileType(newType);
+    if (newType === 'contributor') {
+      navigate('/contributor-profile');
+    } else {
+      navigate('/profile');
+    }
+  };
+
+  // Fonctions d'authentification
+  const handleLoginClick = (e) => {
+    e?.preventDefault();
+    e?.stopPropagation();
+    console.log('🔐 Ouverture de la modal de connexion...');
+    setIsAuthModalOpen(true);
+  };
+
+  const handleLogoutClick = async () => {
+    try {
+      const { error } = await signOut();
+      if (error) {
+        toast({
+          title: "Erreur de déconnexion",
+          description: "Impossible de se déconnecter. Veuillez réessayer.",
+          variant: "destructive",
+        });
+      } else {
+        // Marquer la déconnexion pour afficher le message
+        localStorage.setItem('just_logged_out', 'true');
+        toast({
+          title: "Déconnexion réussie",
+          description: "Vous avez été déconnecté avec succès.",
+        });
+      }
+    } catch (error) {
+      console.error('Erreur lors de la déconnexion:', error);
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors de la déconnexion.",
+        variant: "destructive",
+      });
+    }
+  };
   
   // Hook pour les défis
   const {
@@ -707,11 +762,20 @@ const UserProfile: React.FC = () => {
   };
 
 
-  const profileMenuItems = [
+  const creatorMenuItems = [
     { icon: BookOpen, label: "Notes", path: "/notes", color: "text-blue-500" },
-    { icon: Target, label: "Challenges", path: "/public-challenges", color: "text-orange-500" },
-    { icon: Heart, label: "Favoris", path: "/profile/favorites", color: "text-red-500" }
+    { icon: Target, label: "Communauté", path: "/public-challenges", color: "text-orange-500" },
+    { icon: Heart, label: "Favoris", path: "/profile/favorites", color: "text-red-500" },
+    { icon: FileText, label: "Ressources", path: "/profile/resources", color: "text-green-500" },
+    { icon: Calendar, label: "Historique", path: "/profile/history", color: "text-purple-500" }
   ];
+
+  const contributorMenuItems = [
+    { icon: Target, label: "Communauté", path: "/public-challenges", color: "text-orange-500" },
+    { icon: Users2, label: "Mes Contributions", path: "/my-contributions", color: "text-indigo-500" }
+  ];
+
+  const profileMenuItems = profileType === 'creator' ? creatorMenuItems : contributorMenuItems;
 
   const renderPublications = () => {
     if (loading) {
@@ -763,7 +827,11 @@ const UserProfile: React.FC = () => {
             variant="ghost" 
                 size="sm"
                 className="absolute top-2 right-2 h-8 w-8 p-0 bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity rounded-full"
-                onClick={() => handleDeletePublication(post.id, post.title)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleDeletePublication(post.id, post.title);
+                }}
               >
                 <Trash2 className="w-4 h-4" />
           </Button>
@@ -777,6 +845,20 @@ const UserProfile: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background pb-20">
+      {/* Message d'information pour les utilisateurs non connectés */}
+      {!user && (
+        <div className="bg-blue-50 dark:bg-blue-950 border-b border-blue-200 dark:border-blue-800">
+          <div className="container mx-auto px-4 py-3">
+            <div className="flex items-center gap-2 text-blue-700 dark:text-blue-300">
+              <LogIn className="w-4 h-4" />
+              <span className="text-sm">
+                Connectez-vous pour accéder à toutes les fonctionnalités de votre profil
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header du profil */}
       <div className="bg-card border-b">
         <div className="container mx-auto px-4 py-6">
@@ -789,24 +871,46 @@ const UserProfile: React.FC = () => {
                   </Avatar>
             <div className="flex-1">
               <h1 className="text-2xl font-bold text-foreground">{userProfile.name}</h1>
+              
             </div>
             <div className="flex gap-2 relative" ref={menuRef}>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="flex items-center gap-2"
-              >
-                <MoreHorizontal className="w-4 h-4" />
-                <ChevronDown className="w-3 h-3" />
-              </Button>
+              {/* Bouton d'authentification */}
+              {user ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setIsMenuOpen(!isMenuOpen);
+                  }}
+                  className="flex items-center gap-2 z-10 relative"
+                  title="Menu"
+                >
+                  <MoreHorizontal className="w-4 h-4" />
+                </Button>
+              ) : (
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={handleLoginClick}
+                  className="flex items-center gap-2 z-10 relative"
+                  title="Connexion"
+                >
+                  <LogIn className="w-4 h-4" />
+                  Connexion
+                </Button>
+              )}
+              
               
               {/* Menu déroulant */}
               {isMenuOpen && (
                 <div className="absolute right-0 top-full mt-2 w-64 bg-card border border-border rounded-lg shadow-lg z-50">
                   <div className="py-2">
                     <button
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
                         setIsMenuOpen(false);
                         setIsShareModalOpen(true);
                       }}
@@ -817,7 +921,9 @@ const UserProfile: React.FC = () => {
                     </button>
                     
                     <button
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
                         navigate('/compte');
                         setIsMenuOpen(false);
                       }}
@@ -826,14 +932,14 @@ const UserProfile: React.FC = () => {
                       <Settings className="w-4 h-4" />
                       <span>Paramètres et confidentialité</span>
                     </button>
-                  </div>
+                    </div>
                 </div>
               )}
             </div>
           </div>
         </div>
-      </div>
-
+                </div>
+                
       {/* Section 1: Icônes des pages existantes */}
       <div className="bg-card border-b">
         <div className="container mx-auto px-4 py-2">
@@ -843,7 +949,11 @@ const UserProfile: React.FC = () => {
                 key={index}
             variant="ghost" 
                 className="flex flex-col items-center gap-1 h-auto py-2 min-w-[60px] flex-shrink-0"
-                onClick={() => navigate(item.path)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  navigate(item.path);
+                }}
           >
                 <item.icon className={`w-4 h-4 ${item.color}`} />
                 <span className="text-xs text-center">{item.label}</span>
@@ -851,177 +961,265 @@ const UserProfile: React.FC = () => {
             ))}
           </div>
         </div>
-      </div>
-
+                </div>
+                
       {/* Section 2: Réseaux sociaux */}
       <div className="bg-card border-b">
         <div className="container mx-auto px-4 py-2">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs text-muted-foreground">
-              {socialAccounts.length} réseau{socialAccounts.length > 1 ? 'x' : ''} social{socialAccounts.length > 1 ? 'aux' : ''}
-            </span>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="p-1 h-6 w-6 hover:bg-gray-100 dark:hover:bg-gray-800"
-              onClick={() => setIsEditSocialModalOpen(true)}
-              title="Options d'édition"
-            >
-              <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M3 10a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zM8.5 10a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zM14 10a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0z" />
-              </svg>
-            </Button>
-          </div>
-          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-            {loading ? (
-              // Skeleton loading pour les réseaux sociaux
-              <>
-                {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="min-w-[80px] h-8 bg-muted rounded animate-pulse flex-shrink-0"></div>
-                ))}
-                <div className="min-w-[32px] h-8 bg-muted rounded animate-pulse flex-shrink-0"></div>
-              </>
-            ) : (
-              <>
-                <Reorder.Group
-                  axis="x"
-                  values={socialAccounts}
-                  onReorder={handleReorderSocialAccounts}
-                  className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide"
-                >
-                  {socialAccounts.map((account) => {
-                    const isSelected = selectedSocialNetworkId === account.id;
-                    return (
-                      <Reorder.Item
-                        key={account.id}
-                        value={account}
-                        className="min-w-[80px] flex-shrink-0"
-                      >
-                        <Button
-                          variant={isSelected ? "default" : "outline"}
-                          className={`text-xs h-8 w-full ${
-                            isSelected ? "bg-primary text-primary-foreground" : ""
-                          }`}
-                          onClick={() => selectSocialNetwork(account.id)}
-                        >
-                          {account.custom_name || account.platform}
-                        </Button>
-                      </Reorder.Item>
-                    );
-                  })}
-                </Reorder.Group>
-                
-                {/* Bouton d'édition des réseaux */}
-                
-                {/* Bouton d'ajout */}
-                <Button
-                  variant="outline"
-                  className="min-w-[32px] flex-shrink-0 border-dashed flex items-center justify-center h-8"
-                  onClick={() => setIsAddSocialModalOpen(true)}
-                >
-                  <Plus className="w-3 h-3" />
+          <AuthRequired
+            message="Gestion des réseaux sociaux"
+            description="Connectez-vous pour gérer vos réseaux sociaux et créer du contenu."
+            fallback={
+              <div className="text-center py-8">
+                <div className="flex items-center justify-center gap-2 text-muted-foreground mb-4">
+                  <Users className="w-5 h-5" />
+                  <span className="text-sm">Gestion des réseaux sociaux</span>
+                </div>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Connectez-vous pour ajouter et gérer vos réseaux sociaux
+                </p>
+                <Button onClick={handleLoginClick} size="sm">
+                  <LogIn className="w-4 h-4 mr-2" />
+                  Se connecter
                 </Button>
-              </>
-                      )}
-                    </div>
+              </div>
+            }
+          >
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs text-muted-foreground">
+                {socialAccounts.length} réseau{socialAccounts.length > 1 ? 'x' : ''} social{socialAccounts.length > 1 ? 'aux' : ''}
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="p-1 h-6 w-6 hover:bg-gray-100 dark:hover:bg-gray-800"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setIsEditSocialModalOpen(true);
+                }}
+                title="Options d'édition"
+              >
+                <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M3 10a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zM8.5 10a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zM14 10a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0z" />
+                    </svg>
+              </Button>
+                  </div>
+            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+              {loading ? (
+                // Skeleton loading pour les réseaux sociaux
+                <>
+                  {[1, 2, 3, 4].map((i) => (
+                    <div key={i} className="min-w-[80px] h-8 bg-muted rounded animate-pulse flex-shrink-0"></div>
+                  ))}
+                  <div className="min-w-[32px] h-8 bg-muted rounded animate-pulse flex-shrink-0"></div>
+                </>
+              ) : (
+                <>
+                  <Reorder.Group
+                    axis="x"
+                    values={socialAccounts}
+                    onReorder={handleReorderSocialAccounts}
+                    className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide"
+                  >
+                    {socialAccounts.map((account) => {
+                      const isSelected = selectedSocialNetworkId === account.id;
+                      return (
+                        <Reorder.Item
+                          key={account.id}
+                          value={account}
+                          className="min-w-[80px] flex-shrink-0"
+                        >
+                          <Button
+                            variant={isSelected ? "default" : "outline"}
+                            className={`text-xs h-8 w-full ${
+                              isSelected ? "bg-primary text-primary-foreground" : ""
+                            }`}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              selectSocialNetwork(account.id);
+                            }}
+                          >
+                            {account.custom_name || account.platform}
+                          </Button>
+                        </Reorder.Item>
+                      );
+                    })}
+                  </Reorder.Group>
+                  
+                  {/* Bouton d'édition des réseaux */}
+                  
+                  {/* Bouton d'ajout */}
+                  <Button
+                    variant="outline"
+                    className="min-w-[32px] flex-shrink-0 border-dashed flex items-center justify-center h-8"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setIsAddSocialModalOpen(true);
+                    }}
+                  >
+                    <Plus className="w-3 h-3" />
+                  </Button>
+                </>
+                        )}
+                </div>
+          </AuthRequired>
         </div>
       </div>
 
       {/* Section 3: Playlists */}
       <div className="bg-card border-b">
         <div className="container mx-auto px-4 py-2">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs text-muted-foreground">
-              {filteredPlaylists.length} playlist{filteredPlaylists.length > 1 ? 's' : ''}
-            </span>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="p-1 h-6 w-6 hover:bg-gray-100 dark:hover:bg-gray-800"
-              onClick={() => setIsEditPlaylistModalOpen(true)}
-              title="Options d'édition des playlists"
-            >
-              <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M3 10a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zM8.5 10a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zM14 10a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0z" />
-              </svg>
-            </Button>
-          </div>
-          
-          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-            {loading ? (
-              // Skeleton loading pour les playlists
-              <>
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="min-w-[80px] h-8 bg-muted rounded animate-pulse flex-shrink-0"></div>
-                ))}
-                <div className="min-w-[32px] h-8 bg-muted rounded animate-pulse flex-shrink-0"></div>
-              </>
-            ) : !selectedSocialNetworkId ? (
-              <div className="text-center py-4 text-muted-foreground text-sm">
-                Sélectionnez un réseau social pour voir ses playlists
-              </div>
-            ) : (
-              <>
-                {/* Option "Tout" pour afficher toutes les publications du réseau */}
-                <div className="group relative min-w-[80px] flex-shrink-0">
-                  <Button
-                    variant={selectedPlaylistId === '' ? "default" : "outline"}
-                    className={`text-xs h-8 w-full ${
-                      selectedPlaylistId === '' ? "bg-primary text-primary-foreground" : ""
-                    }`}
-                    onClick={() => selectPlaylist('')}
-                  >
-                    Tout
-                  </Button>
+          <AuthRequired
+            message="Gestion des playlists"
+            description="Connectez-vous pour créer et gérer vos playlists de contenu."
+            fallback={
+              <div className="text-center py-8">
+                <div className="flex items-center justify-center gap-2 text-muted-foreground mb-4">
+                  <BookOpen className="w-5 h-5" />
+                  <span className="text-sm">Gestion des playlists</span>
                 </div>
-                
-                {/* Playlists spécifiques */}
-                {filteredPlaylists.map((playlist) => {
-                           const isSelected = selectedPlaylistId === playlist.id;
-                           return (
-                             <div key={playlist.id} className="group relative min-w-[80px] flex-shrink-0">
-                               <Button
-                                 variant={isSelected ? "default" : "outline"}
-                                 className={`text-xs h-8 w-full ${
-                                   isSelected ? "bg-primary text-primary-foreground" : ""
-                                 }`}
-                                 style={{ borderColor: isSelected ? undefined : playlist.color }}
-                                 onClick={() => selectPlaylist(playlist.id)}
-                               >
-                                 {playlist.name}
-                               </Button>
-                               <Button
-                                 variant="ghost"
-                                 size="sm"
-                                 className="absolute -top-1 -right-1 h-6 w-6 p-0 bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity rounded-full"
-                                 onClick={(e) => {
-                                   e.stopPropagation();
-                                   handleDeletePlaylist(playlist.id, playlist.name);
-                                 }}
-                               >
-                                 <Trash2 className="w-3 h-3" />
-                               </Button>
-                </div>
-                           );
-                         })}
-                
-                <Button
-                  variant="outline"
-                  className="min-w-[32px] flex-shrink-0 border-dashed flex items-center justify-center h-8"
-                  onClick={() => setIsAddPlaylistModalOpen(true)}
-                >
-                  <Plus className="w-3 h-3" />
+                <p className="text-sm text-muted-foreground mb-4">
+                  Connectez-vous pour créer et organiser vos playlists de contenu
+                </p>
+                <Button onClick={handleLoginClick} size="sm">
+                  <LogIn className="w-4 h-4 mr-2" />
+                  Se connecter
                 </Button>
-              </>
-            )}
-          </div>
+              </div>
+            }
+          >
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs text-muted-foreground">
+                {filteredPlaylists.length} playlist{filteredPlaylists.length > 1 ? 's' : ''}
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="p-1 h-6 w-6 hover:bg-gray-100 dark:hover:bg-gray-800"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setIsEditPlaylistModalOpen(true);
+                }}
+                title="Options d'édition des playlists"
+              >
+                <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M3 10a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zM8.5 10a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zM14 10a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0z" />
+                </svg>
+              </Button>
+            </div>
+            
+            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+              {loading ? (
+                // Skeleton loading pour les playlists
+                <>
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="min-w-[80px] h-8 bg-muted rounded animate-pulse flex-shrink-0"></div>
+                  ))}
+                  <div className="min-w-[32px] h-8 bg-muted rounded animate-pulse flex-shrink-0"></div>
+                </>
+              ) : !selectedSocialNetworkId ? (
+                <div className="text-center py-4 text-muted-foreground text-sm">
+                  Sélectionnez un réseau social pour voir ses playlists
+                </div>
+              ) : (
+                <>
+                  {/* Option "Tout" pour afficher toutes les publications du réseau */}
+                  <div className="group relative min-w-[80px] flex-shrink-0">
+                    <Button
+                      variant={selectedPlaylistId === '' ? "default" : "outline"}
+                      className={`text-xs h-8 w-full ${
+                        selectedPlaylistId === '' ? "bg-primary text-primary-foreground" : ""
+                      }`}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        selectPlaylist('');
+                      }}
+                    >
+                      Tout
+                    </Button>
+                      </div>
+                  
+                  {/* Playlists spécifiques */}
+                  {filteredPlaylists.map((playlist) => {
+                             const isSelected = selectedPlaylistId === playlist.id;
+                             return (
+                               <div key={playlist.id} className="group relative min-w-[80px] flex-shrink-0">
+                                 <Button
+                                   variant={isSelected ? "default" : "outline"}
+                                   className={`text-xs h-8 w-full ${
+                                     isSelected ? "bg-primary text-primary-foreground" : ""
+                                   }`}
+                                   style={{ borderColor: isSelected ? undefined : playlist.color }}
+                                   onClick={(e) => {
+                                     e.preventDefault();
+                                     e.stopPropagation();
+                                     selectPlaylist(playlist.id);
+                                   }}
+                                 >
+                                   {playlist.name}
+                                 </Button>
+                                 <Button
+                                   variant="ghost"
+                                   size="sm"
+                                   className="absolute -top-1 -right-1 h-6 w-6 p-0 bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity rounded-full"
+                                   onClick={(e) => {
+                                     e.preventDefault();
+                                     e.stopPropagation();
+                                     handleDeletePlaylist(playlist.id, playlist.name);
+                                   }}
+                                 >
+                                   <Trash2 className="w-3 h-3" />
+                                 </Button>
+                  </div>
+                             );
+                           })}
+                  
+                  <Button
+                    variant="outline"
+                    className="min-w-[32px] flex-shrink-0 border-dashed flex items-center justify-center h-8"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setIsAddPlaylistModalOpen(true);
+                    }}
+                  >
+                    <Plus className="w-3 h-3" />
+                  </Button>
+                </>
+              )}
+            </div>
+          </AuthRequired>
         </div>
       </div>
 
       {/* Section Contenu avec onglets */}
       <div className="bg-card border-b">
         <div className="container mx-auto px-4 py-4">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <AuthRequired
+            message="Gestion du contenu"
+            description="Connectez-vous pour créer, gérer et suivre votre contenu."
+            fallback={
+              <div className="text-center py-12">
+                <div className="flex items-center justify-center gap-2 text-muted-foreground mb-4">
+                  <FileText className="w-8 h-8" />
+                  <span className="text-lg font-medium">Gestion du contenu</span>
+                </div>
+                <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                  Connectez-vous pour créer du contenu, gérer vos défis et suivre vos statistiques
+                </p>
+                <Button onClick={handleLoginClick} size="lg">
+                  <LogIn className="w-5 h-5 mr-2" />
+                  Se connecter pour commencer
+                </Button>
+              </div>
+            }
+          >
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <div className="overflow-x-auto scrollbar-hide">
               <TabsList className="inline-flex w-max min-w-full justify-start gap-1">
                 <TabsTrigger value="publications" className="text-xs sm:text-sm px-3 py-2 whitespace-nowrap">
@@ -1055,7 +1253,11 @@ const UserProfile: React.FC = () => {
                   </p>
                 )}
                 <Button
-                  onClick={() => setIsAddPublicationModalOpen(true)}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setIsAddPublicationModalOpen(true);
+                  }}
                   size="sm"
                   className="flex items-center gap-2"
                 >
@@ -1075,7 +1277,11 @@ const UserProfile: React.FC = () => {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => setShowProgramSettingsDialog(true)}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setShowProgramSettingsDialog(true);
+                      }}
                       className="w-10 h-10 p-0"
                       title="Programmer"
                     >
@@ -1150,7 +1356,7 @@ const UserProfile: React.FC = () => {
                     <Card key={challenge.id} className="hover:shadow-md transition-shadow">
                       <CardContent className="p-4">
                         <div className="flex items-center justify-between">
-                <div className="flex-1">
+                    <div className="flex-1">
                             <h3 className="font-semibold text-lg">{challenge.title}</h3>
                             <p className="text-sm text-muted-foreground">
                               Jour {currentDay}
@@ -1158,7 +1364,11 @@ const UserProfile: React.FC = () => {
                 </div>
                           <div className="flex items-center gap-2">
                             <button 
-                              onClick={() => handleCompleteChallenge(challenge.id)}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleCompleteChallenge(challenge.id);
+                              }}
                               disabled={validatingChallenges.has(challenge.id)}
                               className={`p-2 rounded transition-all duration-700 ease-in-out ${
                                 validatingChallenges.has(challenge.id)
@@ -1173,10 +1383,10 @@ const UserProfile: React.FC = () => {
                                 <Square className="w-6 h-6 text-gray-400 transition-all duration-300" />
                               )}
                             </button>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
                   ))
                 )}
               </div>
@@ -1188,7 +1398,11 @@ const UserProfile: React.FC = () => {
                 <Button
                   variant={isEditModeCompleted ? "default" : "outline"}
                   size="sm"
-                  onClick={() => setIsEditModeCompleted(!isEditModeCompleted)}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setIsEditModeCompleted(!isEditModeCompleted);
+                  }}
                   className="flex items-center gap-2"
                 >
                   <Edit className="w-4 h-4" />
@@ -1235,7 +1449,7 @@ const UserProfile: React.FC = () => {
             <TabsContent value="stats" className="mt-6">
               <div className="space-y-6">
                 {statsLoading ? (
-                  <Card>
+          <Card>
                     <CardContent className="p-6">
                       <div className="text-center text-muted-foreground">Chargement des statistiques...</div>
                     </CardContent>
@@ -1325,7 +1539,7 @@ const UserProfile: React.FC = () => {
                 ) : (
                   deletedChallenges.filter(challenge => challenge.title && challenge.user_id).map((challenge) => (
                     <Card key={challenge.id} className="hover:shadow-md transition-shadow border-red-200">
-                      <CardContent className="p-4">
+            <CardContent className="p-4">
                         <div className="flex items-center justify-between">
                     <div className="flex-1">
                             <h3 className="font-semibold text-lg text-foreground">{challenge.title}</h3>
@@ -1341,6 +1555,7 @@ const UserProfile: React.FC = () => {
               </div>
             </TabsContent>
           </Tabs>
+          </AuthRequired>
         </div>
       </div>
 
@@ -1430,13 +1645,13 @@ const UserProfile: React.FC = () => {
           </div>
 
           <div className="flex gap-2 pt-4">
-            <Button
-              variant="outline"
+                <Button 
+                  variant="outline" 
               onClick={() => setIsShareModalOpen(false)}
               className="flex-1"
-            >
+                >
               Annuler
-            </Button>
+                </Button>
             <Button
               onClick={() => {
                 // TODO: Implémenter la logique de partage
@@ -2066,6 +2281,12 @@ const UserProfile: React.FC = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Modal d'authentification */}
+      <AuthModal 
+        isOpen={isAuthModalOpen} 
+        onClose={() => setIsAuthModalOpen(false)} 
+      />
     </div>
   );
 };

@@ -40,10 +40,10 @@ const PrivacySettings = () => {
     allowAnalytics: true
   });
 
-  // État du statut créateur
+  // État du statut utilisateur
   const [creatorStatus, setCreatorStatus] = useState({
     isCreator: true,
-    creatorType: 'influencer', // 'influencer' | 'content_creator' | 'business'
+    creatorType: 'creator', // 'creator' | 'contributor'
     verified: false,
     publicProfile: true,
     showEarnings: false
@@ -55,6 +55,15 @@ const PrivacySettings = () => {
 
   const handleCreatorChange = (setting: string, value: any) => {
     setCreatorStatus(prev => ({ ...prev, [setting]: value }));
+    
+    // Si on change le type d'utilisateur, rediriger vers la page appropriée
+    if (setting === 'creatorType') {
+      if (value === 'creator') {
+        navigate('/profile');
+      } else if (value === 'contributor') {
+        navigate('/contributor-profile');
+      }
+    }
   };
 
   const handleSave = () => {
@@ -215,7 +224,7 @@ const PrivacySettings = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <UserCheck className="w-5 h-5" />
-                Statut créateur
+                Statut utilisateur
                 {creatorStatus.verified && (
                   <Badge variant="default" className="ml-2">
                     Vérifié
@@ -225,83 +234,30 @@ const PrivacySettings = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-1">
-                    <Label>Être créateur de contenu</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Activez votre statut de créateur pour accéder aux fonctionnalités avancées
-                    </p>
+                <div className="space-y-2">
+                  <Label>Type d'utilisateur</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Choisissez votre type de profil pour accéder aux fonctionnalités appropriées
+                  </p>
+                  <div className="flex gap-2">
+                    <Button
+                      variant={creatorStatus.creatorType === 'creator' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => handleCreatorChange('creatorType', 'creator')}
+                      disabled={!isEditing}
+                    >
+                      Créateur
+                    </Button>
+                    <Button
+                      variant={creatorStatus.creatorType === 'contributor' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => handleCreatorChange('creatorType', 'contributor')}
+                      disabled={!isEditing}
+                    >
+                      Contributeur
+                    </Button>
                   </div>
-                  <Switch
-                    checked={creatorStatus.isCreator}
-                    onCheckedChange={(checked) => handleCreatorChange('isCreator', checked)}
-                    disabled={!isEditing}
-                  />
                 </div>
-
-                {creatorStatus.isCreator && (
-                  <>
-                    <Separator />
-                    
-                    <div className="space-y-2">
-                      <Label>Type de créateur</Label>
-                      <div className="flex gap-2">
-                        <Button
-                          variant={creatorStatus.creatorType === 'influencer' ? 'default' : 'outline'}
-                          size="sm"
-                          onClick={() => handleCreatorChange('creatorType', 'influencer')}
-                          disabled={!isEditing}
-                        >
-                          Influenceur
-                        </Button>
-                        <Button
-                          variant={creatorStatus.creatorType === 'content_creator' ? 'default' : 'outline'}
-                          size="sm"
-                          onClick={() => handleCreatorChange('creatorType', 'content_creator')}
-                          disabled={!isEditing}
-                        >
-                          Créateur de contenu
-                        </Button>
-                        <Button
-                          variant={creatorStatus.creatorType === 'business' ? 'default' : 'outline'}
-                          size="sm"
-                          onClick={() => handleCreatorChange('creatorType', 'business')}
-                          disabled={!isEditing}
-                        >
-                          Entreprise
-                        </Button>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-1">
-                        <Label>Profil public créateur</Label>
-                        <p className="text-sm text-muted-foreground">
-                          Rendre votre profil créateur visible publiquement
-                        </p>
-                      </div>
-                      <Switch
-                        checked={creatorStatus.publicProfile}
-                        onCheckedChange={(checked) => handleCreatorChange('publicProfile', checked)}
-                        disabled={!isEditing}
-                      />
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-1">
-                        <Label>Afficher les revenus</Label>
-                        <p className="text-sm text-muted-foreground">
-                          Afficher vos revenus de créateur (optionnel)
-                        </p>
-                      </div>
-                      <Switch
-                        checked={creatorStatus.showEarnings}
-                        onCheckedChange={(checked) => handleCreatorChange('showEarnings', checked)}
-                        disabled={!isEditing}
-                      />
-                    </div>
-                  </>
-                )}
               </div>
             </CardContent>
           </Card>

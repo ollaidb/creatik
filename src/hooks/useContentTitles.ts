@@ -8,6 +8,7 @@ export const useContentTitles = (subcategoryId?: string, networkId?: string) => 
       let query = supabase
         .from('content_titles')
         .select('*')
+        .eq('type', 'title') // Filtrer seulement les titres, pas les hooks
         .order('created_at', { ascending: false });
       
       if (subcategoryId) {

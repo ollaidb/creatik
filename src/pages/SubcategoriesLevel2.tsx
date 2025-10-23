@@ -5,10 +5,12 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, Plus, Heart, Filter } from 'lucide-react';
 import { useSubcategoriesLevel2 } from '@/hooks/useSubcategoriesLevel2';
 import { useCategories } from '@/hooks/useCategories';
+import { useSubcategory } from '@/hooks/useSubcategory';
 import { useFavorites } from '@/hooks/useFavorites';
 import { Button } from '@/components/ui/button';
 import LocalSearchBar from '@/components/LocalSearchBar';
 import Navigation from '@/components/Navigation';
+import { getNetworkDisplayName } from '@/utils/networkUtils';
 
 const SubcategoriesLevel2 = () => {
   const { categoryId, subcategoryId } = useParams();
@@ -20,24 +22,10 @@ const SubcategoriesLevel2 = () => {
   const [sortOrder, setSortOrder] = useState<'alphabetical' | 'priority' | 'recent'>('priority');
   const { data: subcategoriesLevel2, isLoading } = useSubcategoriesLevel2(subcategoryId);
   const { data: categories } = useCategories();
+  const { data: currentSubcategory } = useSubcategory(subcategoryId);
   const currentCategory = categories?.find(cat => cat.id === categoryId);
   const { favorites, toggleFavorite, isFavorite } = useFavorites('subcategory_level2');
   
-  // Fonction pour obtenir le nom d'affichage du réseau social
-  const getNetworkDisplayName = (networkId: string) => {
-    switch (networkId) {
-      case 'tiktok': return 'TikTok';
-      case 'instagram': return 'Instagram';
-      case 'youtube': return 'YouTube';
-      case 'twitter': return 'Twitter';
-      case 'facebook': return 'Facebook';
-      case 'linkedin': return 'LinkedIn';
-      case 'twitch': return 'Twitch';
-      case 'blog': return 'Blog';
-      case 'article': return 'Article';
-      default: return 'Toutes les plateformes';
-    }
-  };
   
   // Fonction de tri
   const getSortedSubcategories = (subcategories: Array<{id: string, name: string, created_at?: string}>) => {
@@ -135,7 +123,7 @@ const SubcategoriesLevel2 = () => {
           </Button>
           <div className="flex-1 min-w-0">
             <h1 className="text-lg font-semibold text-foreground truncate">
-              Sous-catégories 2
+              {currentSubcategory?.name || 'Sous-catégories 2'}
             </h1>
             <p className="text-sm text-muted-foreground">
               {filteredSubcategories.length} sous-catégories
@@ -200,7 +188,7 @@ const SubcategoriesLevel2 = () => {
                   className="absolute top-2 right-2 z-10"
                   onClick={e => { e.stopPropagation(); toggleFavorite(subcategory.id); }}
                 >
-                  <Heart className={isFavorite(subcategory.id) ? 'w-5 h-5 text-red-500 fill-red-500' : 'w-5 h-5 text-gray-300'} />
+                  <Heart className={isFavorite(subcategory.id) ? 'w-3 h-3 sm:w-4 sm:h-4 text-red-500 fill-red-500' : 'w-3 h-3 sm:w-4 sm:h-4 text-gray-300'} />
                 </div>
                 <div className="p-4 h-full flex flex-col justify-center items-center text-center">
                   <h3 className="text-gray-900 dark:text-white font-semibold text-base md:text-lg leading-tight text-center">

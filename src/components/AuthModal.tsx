@@ -19,6 +19,7 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
   const [password, setPassword] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [userType, setUserType] = useState<'creator' | 'contributor'>('creator');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const { signUp, signIn, signInWithGoogle, signInWithApple } = useAuth();
@@ -32,7 +33,8 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
       if (isSignUp) {
         result = await signUp(email, password, {
           first_name: firstName,
-          last_name: lastName
+          last_name: lastName,
+          user_type: userType
         });
       } else {
         result = await signIn(email, password);
@@ -164,6 +166,34 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                     />
                   </div>
                 </div>
+              </div>
+            )}
+            {isSignUp && (
+              <div>
+                <Label>Type d'utilisateur</Label>
+                <div className="flex gap-2 mt-2">
+                  <Button
+                    type="button"
+                    variant={userType === 'creator' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setUserType('creator')}
+                    className="flex-1"
+                  >
+                    Créateur
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={userType === 'contributor' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setUserType('contributor')}
+                    className="flex-1"
+                  >
+                    Contributeur
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Choisissez votre type de profil pour accéder aux fonctionnalités appropriées
+                </p>
               </div>
             )}
             <div>

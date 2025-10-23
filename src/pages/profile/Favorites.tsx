@@ -5,8 +5,8 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Plus, Heart, Search } from 'lucide-react';
 import { useCategoriesByTheme } from '@/hooks/useCategoriesByTheme';
-import { useSubcategories } from '@/hooks/useSubcategories';
-import { useSubcategoriesLevel2 } from '@/hooks/useSubcategoriesLevel2';
+import { useAllSubcategories } from '@/hooks/useAllSubcategories';
+import { useAllSubcategoriesLevel2 } from '@/hooks/useAllSubcategoriesLevel2';
 import { useContentTitles } from '@/hooks/useContentTitles';
 import { useGeneratedTitles } from '@/hooks/useGeneratedTitles';
 import { useAccounts } from '@/hooks/useAccounts';
@@ -40,7 +40,7 @@ const FAVORITE_TABS = [
   { key: 'comptes', label: 'Comptes' },
   { key: 'sources', label: 'Sources' },
   { key: 'hooks', label: 'Hooks' },
-  { key: 'challenges', label: 'Challenges' },
+  { key: 'challenges', label: 'Communauté' },
 ];
 
 const Favorites = () => {
@@ -60,8 +60,8 @@ const Favorites = () => {
   const { favorites: favoriteHooks, toggleFavorite: toggleHookFavorite, isFavorite: isHookFavorite } = useFavorites('hook');
   const { favorites: favoriteChallenges, toggleFavorite: toggleChallengeFavorite, isFavorite: isChallengeFavorite } = useFavorites('challenge');
   const { data: allCategories = [] } = useCategoriesByTheme('all');
-  const { data: allSubcategories = [] } = useSubcategories();
-  const { data: allSubcategoriesLevel2 = [] } = useSubcategoriesLevel2(null); // Passer null pour récupérer toutes
+  const { data: allSubcategories = [] } = useAllSubcategories();
+  const { data: allSubcategoriesLevel2 = [] } = useAllSubcategoriesLevel2();
   const { data: contentTitles = [] } = useContentTitles();
   const { data: generatedTitles = [] } = useGeneratedTitles({
     platform: 'all',
@@ -463,20 +463,6 @@ const Favorites = () => {
                           if (path) navigate(path);
                         }}
                       />
-                      <div
-                        className="absolute top-1 right-1 sm:top-2 sm:right-2 z-10"
-                        onClick={e => {
-                          e.stopPropagation();
-                          toggleFavorite(category.id);
-                          toast({
-                            title: isFavorite(category.id)
-                              ? "Retiré"
-                              : "Ajouté"
-                          });
-                        }}
-                      >
-                        <Heart className={isFavorite(category.id) ? 'w-4 h-4 sm:w-5 sm:h-5 text-red-500 fill-red-500' : 'w-4 h-4 sm:w-5 sm:h-5 text-gray-300'} />
-                      </div>
                     </div>
                   </motion.div>
                 ))}
@@ -533,7 +519,7 @@ const Favorites = () => {
                           });
                         }}
                       >
-                        <Heart className={isSubcategoryFavorite(subcategory.id) ? 'w-5 h-5 text-red-500 fill-red-500' : 'w-5 h-5 text-gray-300'} />
+                        <Heart className={isSubcategoryFavorite(subcategory.id) ? 'w-3 h-3 sm:w-4 sm:h-4 text-red-500 fill-red-500' : 'w-3 h-3 sm:w-4 sm:h-4 text-gray-300'} />
                       </div>
                       <div className="p-4 h-full flex flex-col justify-center items-center text-center">
                         <h3 className="text-gray-900 dark:text-white font-semibold text-base md:text-lg leading-tight text-center">
@@ -589,7 +575,7 @@ const Favorites = () => {
                           });
                         }}
                       >
-                        <Heart className={isSubcategoryLevel2Favorite(subcategory.id) ? 'w-5 h-5 text-red-500 fill-red-500' : 'w-5 h-5 text-gray-300'} />
+                        <Heart className={isSubcategoryLevel2Favorite(subcategory.id) ? 'w-3 h-3 sm:w-4 sm:h-4 text-red-500 fill-red-500' : 'w-3 h-3 sm:w-4 sm:h-4 text-gray-300'} />
                       </div>
                       <div className="p-4 h-full flex flex-col justify-center items-center text-center">
                         <h3 className="text-gray-900 dark:text-white font-semibold text-base md:text-lg leading-tight text-center">
@@ -756,7 +742,7 @@ const Favorites = () => {
                           }}
                           className="p-2 h-10 w-10 rounded-full"
                         >
-                          <Heart size={18} className={isAccountFavorite(account.id) ? 'text-red-500 fill-red-500' : ''} />
+                          <Heart className={`w-3 h-3 sm:w-4 sm:h-4 ${isAccountFavorite(account.id) ? 'text-red-500 fill-red-500' : ''}`} />
                         </Button>
                         <Button
                           variant="ghost"
@@ -834,7 +820,7 @@ const Favorites = () => {
                           }}
                           className="p-2 h-8 w-8 rounded-full"
                         >
-                          <Heart size={16} className={isSourceFavorite(source.id) ? 'text-red-500 fill-red-500' : ''} />
+                          <Heart className={`w-3 h-3 sm:w-4 sm:h-4 ${isSourceFavorite(source.id) ? 'text-red-500 fill-red-500' : ''}`} />
                         </Button>
                         <Button
                           variant="ghost"
@@ -909,7 +895,7 @@ const Favorites = () => {
                           }}
                           className="p-2 h-10 w-10 rounded-full"
                         >
-                          <Heart size={18} className={isHookFavorite(hook.id) ? 'text-red-500 fill-red-500' : ''} />
+                          <Heart className={`w-3 h-3 sm:w-4 sm:h-4 ${isHookFavorite(hook.id) ? 'text-red-500 fill-red-500' : ''}`} />
                         </Button>
                       </div>
                     </div>
@@ -954,9 +940,15 @@ const Favorites = () => {
                         <span className="text-xs text-gray-500 font-mono flex-shrink-0">
                           {(index + 1).toString().padStart(2, '0')}
                         </span>
-                        <h3 className="font-medium text-gray-900 dark:text-white text-base leading-relaxed">
-                          {challenge.title}
-                        </h3>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-medium text-gray-900 dark:text-white text-base leading-relaxed">
+                            {challenge.title}
+                          </h3>
+                          {/* Indicateur du type de challenge */}
+                          <p className="text-xs text-primary font-medium mt-1">
+                            {challenge.challenge_type === 'account' ? 'Compte' : 'Contenu'}
+                          </p>
+                        </div>
                       </div>
                       {/* Actions */}
                       <div className="flex items-center gap-2 flex-shrink-0">
@@ -973,7 +965,7 @@ const Favorites = () => {
                           }}
                           className="p-2 h-10 w-10 rounded-full"
                         >
-                          <Heart size={18} className={isChallengeFavorite(challenge.id) ? 'text-red-500 fill-red-500' : ''} />
+                          <Heart className={`w-3 h-3 sm:w-4 sm:h-4 ${isChallengeFavorite(challenge.id) ? 'text-red-500 fill-red-500' : ''}`} />
                         </Button>
                       </div>
                     </div>
@@ -985,7 +977,7 @@ const Favorites = () => {
                 <Heart className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 mb-4" />
                 <h3 className="text-base sm:text-lg font-medium">Aucun favori trouvé</h3>
                 <p className="text-muted-foreground mt-2 text-sm sm:text-base">
-                  Vous n'avez pas encore ajouté de challenges en favoris
+                  Vous n'avez pas encore ajouté de communautés en favoris
                 </p>
               </div>
             )}

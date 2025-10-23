@@ -239,7 +239,7 @@ const Accounts = () => {
                             : 'text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20'
                         }`}
                       >
-                        <Heart className={`w-4 h-4 ${isFavorite(account.id) ? 'fill-current' : ''}`} />
+                        <Heart className={`w-3 h-3 sm:w-4 sm:h-4 ${isFavorite(account.id) ? 'fill-current' : ''}`} />
                       </Button>
 
                       <Button

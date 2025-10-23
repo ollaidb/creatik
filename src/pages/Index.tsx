@@ -194,7 +194,7 @@ const Index: React.FC = () => {
             className="w-24 h-10 sm:w-32 sm:h-12 text-xs sm:text-sm font-medium text-primary hover:text-primary-foreground rounded-xl sm:rounded-2xl transition-all duration-500 ease-out hover:scale-105 group bg-card hover:bg-primary/10 shadow-md border border-border flex items-center justify-center"
             onClick={() => navigate('/public-challenges')}
           >
-            Challenge
+            Communauté
           </Button>
           
           

@@ -7,9 +7,15 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import { AuthProvider } from "@/components/AuthProvider";
 import VisitTracker from "@/components/VisitTracker";
 import CacheManager from "@/components/CacheManager";
+import ProtectedRoute from "@/components/ProtectedRoute";
+import AuthGuard from "@/components/AuthGuard";
+import WelcomeMessage from "@/components/WelcomeMessage";
+import LogoutMessage from "@/components/LogoutMessage";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Profile from "./pages/Profile";
+import ContributorProfile from "./pages/ContributorProfile";
+import MyContributions from "./pages/MyContributions";
 import Favorites from "./pages/profile/Favorites";
 import Preferences from "./pages/profile/Preferences";
 import Settings from "./pages/profile/Settings";
@@ -38,6 +44,11 @@ import AuthCallback from "./pages/AuthCallback";
 import Notes from "./pages/Notes";
 import Compte from "./pages/Compte";
 import Contenu from "./pages/Contenu";
+import IdeesCompte from "./pages/IdeesCompte";
+import ContentManagement from "./pages/ContentManagement";
+import AccountManagement from "./pages/AccountManagement";
+import ContentDetail from "./pages/ContentDetail";
+import AccountDetail from "./pages/AccountDetail";
 import Notifications from "./pages/profile/Notifications";
 import Resources from "./pages/profile/Resources";
 import Personalization from "./pages/profile/Personalization";
@@ -69,7 +80,10 @@ const AppContent = () => {
     <TooltipProvider>
       <Toaster />
       <Sonner />
+      <WelcomeMessage />
+      <LogoutMessage />
       <BrowserRouter>
+        <AuthGuard>
         <VisitTracker>
           <Routes>
             <Route path="/" element={<Index />} />
@@ -83,7 +97,7 @@ const AppContent = () => {
             <Route path="/category/:categoryId/subcategory/:subcategoryId" element={<Titles />} />
             <Route path="/category/:categoryId/info" element={<CategoryInfo />} />
             <Route path="/category/:categoryId/subcategory/:subcategoryId/hooks" element={<Hooks />} />
-            {/* Challenges Routes */}
+            {/* Communauté Routes */}
             <Route path="/public-challenges" element={<PublicChallenges />} />
             {/* Trending Ideas Route */}
             <Route path="/trending" element={<TrendingIdeas />} />
@@ -99,33 +113,40 @@ const AppContent = () => {
             {/* Accounts and Sources Routes */}
             <Route path="/accounts" element={<Accounts />} />
             <Route path="/sources" element={<Sources />} />
-            {/* Profile Routes */}
+            {/* Profile Routes - Accessible to all users */}
             <Route path="/profile" element={<Profile />} />
+            <Route path="/contributor-profile" element={<ContributorProfile />} />
+            <Route path="/my-contributions" element={<MyContributions />} />
             <Route path="/profile/details" element={<ProfileDetails />} />
             <Route path="/profile/favorites" element={<Favorites />} />
             <Route path="/profile/history" element={<History />} />
             <Route path="/profile/preferences" element={<Preferences />} />
             <Route path="/profile/legal" element={<Legal />} />
             <Route path="/profile/contact" element={<Contact />} />
-                        <Route path="/profile/publications" element={<Publications />} />
+            <Route path="/profile/publications" element={<Publications />} />
             <Route path="/profile/notifications" element={<Notifications />} />
             <Route path="/profile/settings" element={<Settings />} />
             <Route path="/profile/resources" element={<Resources />} />
             <Route path="/profile/personalization" element={<Personalization />} />
             <Route path="/profile/language" element={<Language />} />
             <Route path="/profile/display-mode" element={<DisplayMode />} />
-            {/* New Settings Routes */}
+            {/* New Settings Routes - Accessible to all users */}
             <Route path="/profile/account" element={<Account />} />
             <Route path="/profile/privacy-settings" element={<PrivacySettings />} />
             <Route path="/profile/conditions-policies" element={<ConditionsPolicies />} />
             <Route path="/profile/support" element={<Support />} />
-            {/* Publish Route */}
+            {/* Publish Route - Accessible to all users */}
             <Route path="/publish" element={<Publish />} />
             <Route path="/search" element={<SearchResults />} />
-            {/* Notes Route */}
+            {/* Notes Route - Accessible to all users */}
             <Route path="/notes" element={<Notes />} />
-        <Route path="/compte" element={<Compte />} />
-        <Route path="/contenu" element={<Contenu />} />
+            <Route path="/compte" element={<Compte />} />
+            <Route path="/contenu" element={<Contenu />} />
+            <Route path="/idees-compte" element={<IdeesCompte />} />
+            <Route path="/content-management" element={<ContentManagement />} />
+            <Route path="/account-management" element={<AccountManagement />} />
+            <Route path="/content/:id" element={<ContentDetail />} />
+            <Route path="/account/:id" element={<AccountDetail />} />
             {/* Inspiration Card Routes */}
             <Route path="/ideas/trending" element={<NotFound />} />
             <Route path="/categories/explore" element={<Categories />} />
@@ -134,6 +155,7 @@ const AppContent = () => {
             <Route path="*" element={<NotFound />} />
           </Routes>
         </VisitTracker>
+        </AuthGuard>
       </BrowserRouter>
     </TooltipProvider>
     </CacheManager>

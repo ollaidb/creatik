@@ -1,303 +1,740 @@
-import { useState, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from './useAuth';
+import { useState, useEffect, useCallback } from 'react';
+import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/hooks/useAuth';
+import type {
+  UserFolder,
+  UserDocument,
+  DocumentSocialSettings,
+  DocumentAccountSettings,
+  DocumentTemplate,
+  CreateFolderData,
+  CreateDocumentData,
+  UpdateDocumentData,
+  DocumentSearchFilters,
+  DocumentSearchResult,
+  DocumentStats,
+  UseDocumentsOptions,
+  UseFoldersOptions
+} from '@/types/notes';
 
-export interface Note {
-  id: string;
-  user_id: string;
-  title: string;
-  content: string;
-  category: string;
-  tags: string[];
-  is_favorite: boolean;
-  is_archived: boolean;
-  color?: string;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface CreateNoteData {
-  title: string;
-  content: string;
-  category: string;
-  tags: string[];
-  color?: string;
-}
-
-export interface UpdateNoteData {
-  id: string;
-  title?: string;
-  content?: string;
-  category?: string;
-  tags?: string[];
-  color?: string;
-  is_favorite?: boolean;
-  is_archived?: boolean;
-}
-
-export const useNotes = () => {
+// Hook pour gérer les dossiers
+export const useFolders = (options: UseFoldersOptions = {}) => {
   const { user } = useAuth();
-  const queryClient = useQueryClient();
+  const [folders, setFolders] = useState<UserFolder[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Récupérer toutes les notes de l'utilisateur
-  const { data: notes = [], isLoading, error } = useQuery({
-    queryKey: ['notes', user?.id],
-    queryFn: async (): Promise<Note[]> => {
-      if (!user) return [];
+  const fetchFolders = useCallback(async () => {
+    if (!user) return;
 
-      const { data, error } = await supabase
-        .from('user_notes')
-        .select('*')
+    try {
+      setLoading(true);
+      setError(null);
+
+      let query = supabase
+        .from('user_folders')
+        .select(`
+          *,
+          parent_folder:user_folders!parent_folder_id(*),
+          sub_folders:user_folders!parent_folder_id(*),
+          documents:user_documents(*)
+        `)
         .eq('user_id', user.id)
-        .order('updated_at', { ascending: false });
+        .eq('is_archived', false);
 
-      if (error) {
-        console.error('Erreur lors de la récupération des notes:', error);
-        throw error;
+      if (options.type) {
+        query = query.eq('type', options.type);
       }
 
-      return data || [];
-    },
-    enabled: !!user,
-  });
+      if (options.parent_folder_id !== undefined) {
+        if (options.parent_folder_id === null) {
+          query = query.is('parent_folder_id', null);
+        } else {
+          query = query.eq('parent_folder_id', options.parent_folder_id);
+        }
+      }
 
-  // Créer une nouvelle note
-  const createNoteMutation = useMutation({
-    mutationFn: async (noteData: CreateNoteData): Promise<Note> => {
+      query = query.order('sort_order', { ascending: true });
+
+      const { data, error: fetchError } = await query;
+
+      if (fetchError) throw fetchError;
+
+      setFolders(data || []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erreur lors du chargement des dossiers');
+    } finally {
+      setLoading(false);
+    }
+  }, [user, options.type, options.parent_folder_id]);
+
+  const createFolder = useCallback(async (folderData: CreateFolderData) => {
       if (!user) throw new Error('Utilisateur non connecté');
 
+    try {
       const { data, error } = await supabase
-        .from('user_notes')
+        .from('user_folders')
         .insert({
-          user_id: user.id,
-          title: noteData.title,
-          content: noteData.content,
-          category: noteData.category,
-          tags: noteData.tags,
-          color: noteData.color || '#3B82F6',
-          is_favorite: false,
-          is_archived: false,
+          ...folderData,
+          user_id: user.id
         })
         .select()
         .single();
 
-      if (error) {
-        console.error('Erreur lors de la création de la note:', error);
-        throw error;
-      }
+      if (error) throw error;
 
+      setFolders(prev => [...prev, data]);
       return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notes', user?.id] });
-    },
-  });
+    } catch (err) {
+      throw new Error(err instanceof Error ? err.message : 'Erreur lors de la création du dossier');
+    }
+  }, [user]);
 
-  // Mettre à jour une note
-  const updateNoteMutation = useMutation({
-    mutationFn: async (noteData: UpdateNoteData): Promise<Note> => {
+  const updateFolder = useCallback(async (folderId: string, updates: Partial<UserFolder>) => {
       if (!user) throw new Error('Utilisateur non connecté');
 
+    try {
       const { data, error } = await supabase
-        .from('user_notes')
-        .update({
-          title: noteData.title,
-          content: noteData.content,
-          category: noteData.category,
-          tags: noteData.tags,
-          color: noteData.color,
-          is_favorite: noteData.is_favorite,
-          is_archived: noteData.is_archived,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', noteData.id)
+        .from('user_folders')
+        .update(updates)
+        .eq('id', folderId)
         .eq('user_id', user.id)
         .select()
         .single();
 
-      if (error) {
-        console.error('Erreur lors de la mise à jour de la note:', error);
-        throw error;
-      }
+      if (error) throw error;
+
+      setFolders(prev => prev.map(folder => 
+        folder.id === folderId ? { ...folder, ...data } : folder
+      ));
 
       return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notes', user?.id] });
-    },
-  });
+    } catch (err) {
+      throw new Error(err instanceof Error ? err.message : 'Erreur lors de la mise à jour du dossier');
+    }
+  }, [user]);
 
-  // Supprimer une note
-  const deleteNoteMutation = useMutation({
-    mutationFn: async (noteId: string): Promise<void> => {
+  const deleteFolder = useCallback(async (folderId: string) => {
       if (!user) throw new Error('Utilisateur non connecté');
 
+    try {
       const { error } = await supabase
-        .from('user_notes')
+        .from('user_folders')
         .delete()
-        .eq('id', noteId)
+        .eq('id', folderId)
         .eq('user_id', user.id);
 
-      if (error) {
-        console.error('Erreur lors de la suppression de la note:', error);
-        throw error;
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notes', user?.id] });
-    },
-  });
+      if (error) throw error;
 
-  // Basculer le statut favori
-  const toggleFavoriteMutation = useMutation({
-    mutationFn: async ({ noteId, isFavorite }: { noteId: string; isFavorite: boolean }): Promise<Note> => {
-      if (!user) throw new Error('Utilisateur non connecté');
+      setFolders(prev => prev.filter(folder => folder.id !== folderId));
+    } catch (err) {
+      throw new Error(err instanceof Error ? err.message : 'Erreur lors de la suppression du dossier');
+    }
+  }, [user]);
 
+  const moveFolder = useCallback(async (folderId: string, newParentId?: string) => {
+    if (!user) throw new Error('Utilisateur non connecté');
+
+    try {
       const { data, error } = await supabase
-        .from('user_notes')
-        .update({
-          is_favorite: isFavorite,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', noteId)
+        .from('user_folders')
+        .update({ parent_folder_id: newParentId })
+        .eq('id', folderId)
         .eq('user_id', user.id)
         .select()
         .single();
 
-      if (error) {
-        console.error('Erreur lors de la mise à jour du favori:', error);
-        throw error;
-      }
+      if (error) throw error;
+
+      setFolders(prev => prev.map(folder => 
+        folder.id === folderId ? { ...folder, ...data } : folder
+      ));
 
       return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notes', user?.id] });
-    },
-  });
-
-  // Basculer le statut d'archivage
-  const toggleArchiveMutation = useMutation({
-    mutationFn: async ({ noteId, isArchived }: { noteId: string; isArchived: boolean }): Promise<Note> => {
-      if (!user) throw new Error('Utilisateur non connecté');
-
-      const { data, error } = await supabase
-        .from('user_notes')
-        .update({
-          is_archived: isArchived,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', noteId)
-        .eq('user_id', user.id)
-        .select()
-        .single();
-
-      if (error) {
-        console.error('Erreur lors de la mise à jour de l\'archivage:', error);
-        throw error;
-      }
-
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notes', user?.id] });
-    },
-  });
-
-  // Rechercher dans les notes
-  const searchNotes = (query: string, filters: {
-    category?: string;
-    tags?: string[];
-    showArchived?: boolean;
-  } = {}) => {
-    let filtered = notes;
-
-    // Filtre par texte de recherche
-    if (query) {
-      const searchLower = query.toLowerCase();
-      filtered = filtered.filter(note =>
-        note.title.toLowerCase().includes(searchLower) ||
-        note.content.toLowerCase().includes(searchLower)
-      );
+    } catch (err) {
+      throw new Error(err instanceof Error ? err.message : 'Erreur lors du déplacement du dossier');
     }
+  }, [user]);
 
-    // Filtre par catégorie
-    if (filters.category && filters.category !== 'all') {
-      filtered = filtered.filter(note => note.category === filters.category);
-    }
-
-    // Filtre par tags
-    if (filters.tags && filters.tags.length > 0) {
-      filtered = filtered.filter(note =>
-        filters.tags!.some(tag => note.tags.includes(tag))
-      );
-    }
-
-    // Filtre par statut d'archivage
-    if (filters.showArchived !== undefined) {
-      filtered = filtered.filter(note => note.is_archived === filters.showArchived);
-    }
-
-    return filtered;
-  };
-
-  // Trier les notes
-  const sortNotes = (notes: Note[], sortBy: 'date' | 'title' | 'favorite') => {
-    const sorted = [...notes];
-    
-    switch (sortBy) {
-      case 'title':
-        return sorted.sort((a, b) => a.title.localeCompare(b.title));
-      case 'favorite':
-        return sorted.sort((a, b) => (b.is_favorite ? 1 : 0) - (a.is_favorite ? 1 : 0));
-      case 'date':
-      default:
-        return sorted.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
-    }
-  };
-
-  // Obtenir les statistiques des notes
-  const getNotesStats = () => {
-    const total = notes.length;
-    const favorites = notes.filter(note => note.is_favorite).length;
-    const archived = notes.filter(note => note.is_archived).length;
-    const categories = Array.from(new Set(notes.map(note => note.category)));
-    const allTags = Array.from(new Set(notes.flatMap(note => note.tags)));
-
-    return {
-      total,
-      favorites,
-      archived,
-      active: total - archived,
-      categories: categories.length,
-      tags: allTags.length,
-    };
-  };
+  useEffect(() => {
+    fetchFolders();
+  }, [fetchFolders]);
 
   return {
-    // Données
-    notes,
-    isLoading,
+    folders,
+    loading,
     error,
-    
-    // Mutations
-    createNote: createNoteMutation.mutate,
-    updateNote: updateNoteMutation.mutate,
-    deleteNote: deleteNoteMutation.mutate,
-    toggleFavorite: toggleFavoriteMutation.mutate,
-    toggleArchive: toggleArchiveMutation.mutate,
-    
-    // États des mutations
-    isCreating: createNoteMutation.isPending,
-    isUpdating: updateNoteMutation.isPending,
-    isDeleting: deleteNoteMutation.isPending,
-    isTogglingFavorite: toggleFavoriteMutation.isPending,
-    isTogglingArchive: toggleArchiveMutation.isPending,
-    
-    // Fonctions utilitaires
-    searchNotes,
-    sortNotes,
-    getNotesStats,
+    createFolder,
+    updateFolder,
+    deleteFolder,
+    moveFolder,
+    refetch: fetchFolders
+  };
+};
+
+// Hook pour gérer les documents
+export const useDocuments = (options: UseDocumentsOptions = {}) => {
+  const { user } = useAuth();
+  const [documents, setDocuments] = useState<UserDocument[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchDocuments = useCallback(async () => {
+    if (!user) return;
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      let query = supabase
+        .from('user_documents')
+        .select(`
+          *,
+          folder:user_folders(*),
+          social_settings:document_social_settings(*),
+          account_settings:document_account_settings(*)
+        `)
+        .eq('user_id', user.id)
+        .eq('is_archived', false);
+
+      if (options.type) {
+        query = query.eq('type', options.type);
+      }
+
+      if (options.folder_id) {
+        query = query.eq('folder_id', options.folder_id);
+      }
+
+      if (options.is_favorite !== undefined) {
+        query = query.eq('is_favorite', options.is_favorite);
+      }
+
+      if (options.is_pinned !== undefined) {
+        query = query.eq('is_pinned', options.is_pinned);
+      }
+
+      if (options.search) {
+        query = query.or(`title.ilike.%${options.search}%,content.ilike.%${options.search}%`);
+      }
+
+      if (options.tags && options.tags.length > 0) {
+        query = query.overlaps('tags', options.tags);
+      }
+
+      query = query.order('is_pinned', { ascending: false })
+                  .order('last_edited_at', { ascending: false });
+
+      const { data, error: fetchError } = await query;
+
+      if (fetchError) throw fetchError;
+
+      setDocuments(data || []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erreur lors du chargement des documents');
+    } finally {
+      setLoading(false);
+    }
+  }, [user, options]);
+
+  const createDocument = useCallback(async (documentData: CreateDocumentData) => {
+      if (!user) throw new Error('Utilisateur non connecté');
+
+    try {
+      const { data, error } = await supabase
+        .from('user_documents')
+        .insert({
+          ...documentData,
+          user_id: user.id,
+          content: documentData.content || '',
+          format: documentData.format || 'markdown',
+          tags: documentData.tags || []
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setDocuments(prev => [data, ...prev]);
+      return data;
+    } catch (err) {
+      throw new Error(err instanceof Error ? err.message : 'Erreur lors de la création du document');
+    }
+  }, [user]);
+
+  const updateDocument = useCallback(async (documentId: string, updates: UpdateDocumentData) => {
+    if (!user) throw new Error('Utilisateur non connecté');
+
+    try {
+      const { data, error } = await supabase
+        .from('user_documents')
+        .update(updates)
+        .eq('id', documentId)
+        .eq('user_id', user.id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setDocuments(prev => prev.map(doc => 
+        doc.id === documentId ? { ...doc, ...data } : doc
+      ));
+
+      return data;
+    } catch (err) {
+      throw new Error(err instanceof Error ? err.message : 'Erreur lors de la mise à jour du document');
+    }
+  }, [user]);
+
+  const deleteDocument = useCallback(async (documentId: string) => {
+    if (!user) throw new Error('Utilisateur non connecté');
+
+    try {
+      const { error } = await supabase
+        .from('user_documents')
+        .delete()
+        .eq('id', documentId)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      setDocuments(prev => prev.filter(doc => doc.id !== documentId));
+    } catch (err) {
+      throw new Error(err instanceof Error ? err.message : 'Erreur lors de la suppression du document');
+    }
+  }, [user]);
+
+  const duplicateDocument = useCallback(async (documentId: string) => {
+      if (!user) throw new Error('Utilisateur non connecté');
+
+    try {
+      const { data: originalDoc, error: fetchError } = await supabase
+        .from('user_documents')
+        .select('*')
+        .eq('id', documentId)
+        .eq('user_id', user.id)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      const { data, error } = await supabase
+        .from('user_documents')
+        .insert({
+          user_id: user.id,
+          folder_id: originalDoc.folder_id,
+          title: `${originalDoc.title} (Copie)`,
+          content: originalDoc.content,
+          type: originalDoc.type,
+          format: originalDoc.format,
+          tags: originalDoc.tags
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setDocuments(prev => [data, ...prev]);
+      return data;
+    } catch (err) {
+      throw new Error(err instanceof Error ? err.message : 'Erreur lors de la duplication du document');
+    }
+  }, [user]);
+
+  const moveDocument = useCallback(async (documentId: string, newFolderId?: string) => {
+    if (!user) throw new Error('Utilisateur non connecté');
+
+    try {
+      const { data, error } = await supabase
+        .from('user_documents')
+        .update({ folder_id: newFolderId })
+        .eq('id', documentId)
+        .eq('user_id', user.id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setDocuments(prev => prev.map(doc => 
+        doc.id === documentId ? { ...doc, ...data } : doc
+      ));
+
+      return data;
+    } catch (err) {
+      throw new Error(err instanceof Error ? err.message : 'Erreur lors du déplacement du document');
+    }
+  }, [user]);
+
+  useEffect(() => {
+    fetchDocuments();
+  }, [fetchDocuments]);
+
+  return {
+    documents,
+    loading,
+    error,
+    createDocument,
+    updateDocument,
+    deleteDocument,
+    duplicateDocument,
+    moveDocument,
+    refetch: fetchDocuments
+  };
+};
+
+// Hook pour la recherche de documents
+export const useDocumentSearch = () => {
+  const { user } = useAuth();
+  const [results, setResults] = useState<DocumentSearchResult[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const searchDocuments = useCallback(async (filters: DocumentSearchFilters) => {
+    if (!user) return;
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      const { data, error: searchError } = await supabase
+        .rpc('search_documents', {
+          search_query: filters.query || null,
+          user_uuid: user.id,
+          document_type: filters.type || null,
+          folder_id_filter: filters.folder_id || null,
+          tags_filter: filters.tags || null,
+          show_archived: filters.is_archived || false
+        });
+
+      if (searchError) throw searchError;
+
+      setResults(data || []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erreur lors de la recherche');
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
+
+  return {
+    results,
+    loading,
+    error,
+    searchDocuments
+  };
+};
+
+// Hook pour les paramètres sociaux
+export const useDocumentSocialSettings = (documentId?: string) => {
+  const { user } = useAuth();
+  const [settings, setSettings] = useState<DocumentSocialSettings | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchSettings = useCallback(async () => {
+    if (!user || !documentId) return;
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      const { data, error: fetchError } = await supabase
+        .from('document_social_settings')
+        .select('*')
+        .eq('document_id', documentId)
+        .single();
+
+      if (fetchError && fetchError.code !== 'PGRST116') throw fetchError;
+
+      setSettings(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erreur lors du chargement des paramètres');
+    } finally {
+      setLoading(false);
+    }
+  }, [user, documentId]);
+
+  const updateSettings = useCallback(async (updates: Partial<DocumentSocialSettings>) => {
+    if (!user || !documentId) throw new Error('Document non spécifié');
+
+    try {
+      if (settings) {
+        // Mise à jour
+        const { data, error } = await supabase
+          .from('document_social_settings')
+          .update(updates)
+          .eq('id', settings.id)
+          .select()
+          .single();
+
+        if (error) throw error;
+        setSettings(data);
+      } else {
+        // Création
+        const { data, error } = await supabase
+          .from('document_social_settings')
+          .insert({
+            document_id: documentId,
+            ...updates
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+        setSettings(data);
+      }
+    } catch (err) {
+      throw new Error(err instanceof Error ? err.message : 'Erreur lors de la mise à jour des paramètres');
+    }
+  }, [user, documentId, settings]);
+
+  useEffect(() => {
+    fetchSettings();
+  }, [fetchSettings]);
+
+  return {
+    settings,
+    loading,
+    error,
+    updateSettings,
+    refetch: fetchSettings
+  };
+};
+
+// Hook pour les paramètres de compte
+export const useDocumentAccountSettings = (documentId?: string) => {
+  const { user } = useAuth();
+  const [settings, setSettings] = useState<DocumentAccountSettings | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchSettings = useCallback(async () => {
+    if (!user || !documentId) return;
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      const { data, error: fetchError } = await supabase
+        .from('document_account_settings')
+        .select('*')
+        .eq('document_id', documentId)
+        .single();
+
+      if (fetchError && fetchError.code !== 'PGRST116') throw fetchError;
+
+      setSettings(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erreur lors du chargement des paramètres');
+    } finally {
+      setLoading(false);
+    }
+  }, [user, documentId]);
+
+  const updateSettings = useCallback(async (updates: Partial<DocumentAccountSettings>) => {
+    if (!user || !documentId) throw new Error('Document non spécifié');
+
+    try {
+      if (settings) {
+        // Mise à jour
+        const { data, error } = await supabase
+          .from('document_account_settings')
+          .update(updates)
+          .eq('id', settings.id)
+          .select()
+          .single();
+
+        if (error) throw error;
+        setSettings(data);
+      } else {
+        // Création
+        const { data, error } = await supabase
+          .from('document_account_settings')
+          .insert({
+            document_id: documentId,
+            ...updates
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+        setSettings(data);
+      }
+    } catch (err) {
+      throw new Error(err instanceof Error ? err.message : 'Erreur lors de la mise à jour des paramètres');
+    }
+  }, [user, documentId, settings]);
+
+  useEffect(() => {
+    fetchSettings();
+  }, [fetchSettings]);
+
+    return {
+    settings,
+    loading,
+    error,
+    updateSettings,
+    refetch: fetchSettings
+  };
+};
+
+// Hook pour les templates
+export const useDocumentTemplates = () => {
+  const { user } = useAuth();
+  const [templates, setTemplates] = useState<DocumentTemplate[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchTemplates = useCallback(async () => {
+    if (!user) return;
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      const { data, error: fetchError } = await supabase
+        .from('document_templates')
+        .select('*')
+        .or(`user_id.eq.${user.id},is_public.eq.true`)
+        .order('usage_count', { ascending: false });
+
+      if (fetchError) throw fetchError;
+
+      setTemplates(data || []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erreur lors du chargement des modèles');
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
+
+  const createTemplate = useCallback(async (templateData: Partial<DocumentTemplate>) => {
+    if (!user) throw new Error('Utilisateur non connecté');
+
+    try {
+      const { data, error } = await supabase
+        .from('document_templates')
+        .insert({
+          ...templateData,
+          user_id: user.id
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setTemplates(prev => [data, ...prev]);
+      return data;
+    } catch (err) {
+      throw new Error(err instanceof Error ? err.message : 'Erreur lors de la création du modèle');
+    }
+  }, [user]);
+
+  const updateTemplateUsage = useCallback(async (templateId: string) => {
+    try {
+      const { error } = await supabase
+        .from('document_templates')
+        .update({ usage_count: supabase.raw('usage_count + 1') })
+        .eq('id', templateId);
+
+      if (error) throw error;
+    } catch (err) {
+      console.error('Erreur lors de la mise à jour du compteur d\'utilisation:', err);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchTemplates();
+  }, [fetchTemplates]);
+
+  return {
+    templates,
+    loading,
+    error,
+    createTemplate,
+    updateTemplateUsage,
+    refetch: fetchTemplates
+  };
+};
+
+// Hook pour les statistiques
+export const useDocumentStats = () => {
+  const { user } = useAuth();
+  const [stats, setStats] = useState<DocumentStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchStats = useCallback(async () => {
+    if (!user) return;
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Récupérer les statistiques de base
+      const { data: documents, error: docsError } = await supabase
+        .from('user_documents')
+        .select('type, word_count, created_at, updated_at')
+        .eq('user_id', user.id)
+        .eq('is_archived', false);
+
+      if (docsError) throw docsError;
+
+      const { data: folders, error: foldersError } = await supabase
+        .from('user_folders')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('is_archived', false);
+
+      if (foldersError) throw foldersError;
+
+      // Calculer les statistiques
+      const totalWords = documents?.reduce((sum, doc) => sum + (doc.word_count || 0), 0) || 0;
+      const totalReadingTime = Math.ceil(totalWords / 200);
+
+      const documentsByType = documents?.reduce((acc, doc) => {
+        acc[doc.type as keyof typeof acc] = (acc[doc.type as keyof typeof acc] || 0) + 1;
+        return acc;
+      }, { content: 0, account_idea: 0 }) || { content: 0, account_idea: 0 };
+
+      const today = new Date();
+      const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+      const recentActivity = {
+        documents_created: documents?.filter(doc => new Date(doc.created_at) >= weekAgo).length || 0,
+        documents_updated: documents?.filter(doc => new Date(doc.updated_at) >= weekAgo).length || 0,
+        words_written: documents?.filter(doc => new Date(doc.updated_at) >= weekAgo)
+          .reduce((sum, doc) => sum + (doc.word_count || 0), 0) || 0
+      };
+
+      setStats({
+        total_documents: documents?.length || 0,
+        total_folders: folders?.length || 0,
+        total_words: totalWords,
+        total_reading_time: totalReadingTime,
+        documents_by_type: documentsByType,
+        documents_by_status: {
+          idea: 0,
+          planning: 0,
+          in_progress: 0,
+          completed: 0,
+          on_hold: 0
+        },
+        recent_activity: recentActivity
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erreur lors du chargement des statistiques');
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    fetchStats();
+  }, [fetchStats]);
+
+  return {
+    stats,
+    loading,
+    error,
+    refetch: fetchStats
   };
 };

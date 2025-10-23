@@ -270,7 +270,7 @@ const PublicChallenges = () => {
                               : 'text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20'
                           }`}
                         >
-                          <Heart className={`w-4 h-4 ${isFavorite(challenge.id) ? 'fill-current' : ''}`} />
+                          <Heart className={`w-3 h-3 sm:w-4 sm:h-4 ${isFavorite(challenge.id) ? 'fill-current' : ''}`} />
                           <span>{challenge.likes_count || 0}</span>
                         </Button>
             </div>
@@ -330,7 +330,7 @@ const PublicChallenges = () => {
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <h1 className="text-xl font-semibold">
-            {filterLikedOnly ? 'Mes Challenges Likés' : 'Challenges'}
+            {filterLikedOnly ? 'Mes Communautés Likées' : 'Communauté'}
           </h1>
         </header>
         <main className="max-w-4xl mx-auto p-4">
@@ -356,7 +356,7 @@ const PublicChallenges = () => {
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <h1 className="text-xl font-semibold">
-            {filterLikedOnly ? 'Mes Challenges Likés' : 'Challenges'}
+            {filterLikedOnly ? 'Mes Communautés Likées' : 'Communauté'}
           </h1>
         </header>
         <main className="max-w-4xl mx-auto p-4">
@@ -389,7 +389,7 @@ const PublicChallenges = () => {
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <h1 className="text-xl font-semibold">
-            {filterLikedOnly ? 'Mes Challenges Likés' : 'Challenge'}
+            {filterLikedOnly ? 'Mes Communautés Likées' : 'Communauté'}
           </h1>
         </div>
         {user && (

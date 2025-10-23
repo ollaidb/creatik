@@ -158,7 +158,7 @@ export const RippleCard: React.FC<RippleCardProps> = ({
               }}
               className="p-2 h-10 w-10 rounded-full"
             >
-              <Heart size={18} className={isFavorite ? 'text-red-500 fill-red-500' : ''} />
+              <Heart className={`w-3 h-3 sm:w-4 sm:h-4 ${isFavorite ? 'text-red-500 fill-red-500' : ''}`} />
             </Button>
           </motion.div>
           {onAddToChallenge && (

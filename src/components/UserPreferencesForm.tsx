@@ -24,7 +24,7 @@ const UserPreferencesForm = () => {
   ];
   const contentOptions = [
     'Tutoriels', 'Divertissement', 'Éducatif', 'Inspiration', 
-    'Actualités', 'Reviews', 'Challenges', 'Storytelling'
+    'Actualités', 'Reviews', 'Communauté', 'Storytelling'
   ];
   const platformOptions = [
     'TikTok', 'Instagram Stories', 'Instagram Reels', 'YouTube Shorts', 

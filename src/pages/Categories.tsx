@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import LocalSearchBar from '@/components/LocalSearchBar';
 import CreatorsButton from '@/components/CreatorsButton';
 import Navigation from '@/components/Navigation';
+import { getNetworkDisplayName } from '@/utils/networkUtils';
 
 const Categories = () => {
   const navigate = useNavigate();
@@ -40,7 +41,7 @@ const Categories = () => {
     if (selectedTheme) params.set('theme', selectedTheme);
     if (selectedNetwork !== 'all') params.set('network', selectedNetwork);
     setSearchParams(params, { replace: true });
-  }, [selectedTheme, selectedNetwork]);
+  }, [selectedTheme, selectedNetwork, setSearchParams]);
 
   // Utiliser les catégories filtrées par thème et réseau
   const baseCategories = selectedTheme ? categoriesByTheme : categories;
@@ -183,6 +184,15 @@ const Categories = () => {
                 {/* currentCategory?.name || 'Catégories' */}
                 Catégories
               </h1>
+              <p className="text-sm text-muted-foreground">
+                {filteredCategories.length} catégories
+              </p>
+              {/* Indicateur du réseau social sélectionné */}
+              {selectedNetwork !== 'all' && (
+                <p className="text-xs text-primary font-medium">
+                  {getNetworkDisplayName(selectedNetwork)}
+                </p>
+              )}
             </div>
           <Button 
             size="sm"
@@ -256,6 +266,39 @@ const Categories = () => {
           <div className="mb-3">
             <div className="overflow-x-auto scrollbar-hide">
               <div className="flex gap-2 pb-2 min-w-max">
+                <motion.button
+                  onClick={() => setSelectedNetwork('all')}
+                  className={`
+                    px-3 py-2 rounded-lg transition-all duration-300 min-w-[70px] text-center flex items-center justify-center gap-2
+                    ${selectedNetwork === 'all'
+                      ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg scale-105'
+                      : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                    }
+                  `}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  animate={selectedNetwork === 'all' ? {
+                    scale: [1, 1.1, 1.05],
+                    boxShadow: [
+                      "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+                      "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
+                      "0 4px 6px -1px rgba(0, 0, 0, 0.1)"
+                    ]
+                  } : {}}
+                  transition={selectedNetwork === 'all' ? {
+                    duration: 0.6,
+                    ease: "easeInOut"
+                  } : {
+                    duration: 0.2
+                  }}
+                >
+                  <span className={`
+                    text-xs font-medium leading-tight
+                    ${selectedNetwork === 'all' ? 'text-white' : 'text-gray-700 dark:text-gray-300'}
+                  `}>
+                    Tout
+                  </span>
+                </motion.button>
                 {socialNetworks.map((network) => {
                   const isActive = selectedNetwork === network.name;
                   return (

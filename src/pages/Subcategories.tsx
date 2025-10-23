@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import LocalSearchBar from '@/components/LocalSearchBar';
 import Navigation from '@/components/Navigation';
 import { supabase } from '@/integrations/supabase/client';
+import { getNetworkDisplayName } from '@/utils/networkUtils';
 
 const Subcategories = () => {
   const { categoryId } = useParams();
@@ -28,21 +29,6 @@ const Subcategories = () => {
   const currentCategory = categories?.find(cat => cat.id === categoryId);
   const { favorites, toggleFavorite, isFavorite } = useFavorites('subcategory');
   
-  // Fonction pour obtenir le nom d'affichage du réseau social
-  const getNetworkDisplayName = (networkId: string) => {
-    switch (networkId) {
-      case 'tiktok': return 'TikTok';
-      case 'instagram': return 'Instagram';
-      case 'youtube': return 'YouTube';
-      case 'twitter': return 'Twitter';
-      case 'facebook': return 'Facebook';
-      case 'linkedin': return 'LinkedIn';
-      case 'twitch': return 'Twitch';
-      case 'blog': return 'Blog';
-      case 'article': return 'Article';
-      default: return 'Toutes les plateformes';
-    }
-  };
   
   // Fonction de tri
   const getSortedSubcategories = (subcategories: Array<{id: string, name: string, created_at?: string}>) => {
@@ -77,23 +63,34 @@ const Subcategories = () => {
 
   // Fonction pour gérer le clic sur une sous-catégorie
   const handleSubcategoryClick = async (subcategoryId: string) => {
+    console.log('🔍 Debug - Clic sur sous-catégorie:', subcategoryId);
+    console.log('🔍 Debug - Configuration catégorie:', hierarchyConfig);
+    
     // Vérifier d'abord la configuration de la catégorie
     if (hierarchyConfig?.has_level2) {
+      console.log('✅ Catégorie a le niveau 2, vérification sous-catégorie...');
+      
       // Si la catégorie a le niveau 2, vérifier la configuration de la sous-catégorie
-      const { data: subcategoryConfig } = await supabase
+      const { data: subcategoryConfig, error } = await supabase
         .from('subcategory_hierarchy_config')
         .select('*')
         .eq('subcategory_id', subcategoryId)
         .single();
 
+      console.log('🔍 Debug - Configuration sous-catégorie:', subcategoryConfig);
+      console.log('🔍 Debug - Erreur sous-catégorie:', error);
+
       if (subcategoryConfig?.has_level2) {
+        console.log('✅ Sous-catégorie a le niveau 2, navigation vers subcategories-level2');
         // La sous-catégorie a besoin du niveau 2
         navigate(`/category/${categoryId}/subcategory/${subcategoryId}/subcategories-level2?network=${selectedNetwork}`);
       } else {
+        console.log('❌ Sous-catégorie n\'a pas le niveau 2, navigation vers titres');
         // La sous-catégorie va directement aux titres
         navigate(`/category/${categoryId}/subcategory/${subcategoryId}?network=${selectedNetwork}`);
       }
     } else {
+      console.log('❌ Catégorie n\'a pas le niveau 2, navigation vers titres');
       // La catégorie n'a pas de niveau 2, aller directement aux titres
       navigate(`/category/${categoryId}/subcategory/${subcategoryId}?network=${selectedNetwork}`);
     }
@@ -240,7 +237,7 @@ const Subcategories = () => {
                   className="absolute top-2 right-2 z-10"
                   onClick={e => { e.stopPropagation(); toggleFavorite(subcategory.id); }}
                 >
-                  <Heart className={isFavorite(subcategory.id) ? 'w-5 h-5 text-red-500 fill-red-500' : 'w-5 h-5 text-gray-300'} />
+                  <Heart className={isFavorite(subcategory.id) ? 'w-3 h-3 sm:w-4 sm:h-4 text-red-500 fill-red-500' : 'w-3 h-3 sm:w-4 sm:h-4 text-gray-300'} />
                 </div>
                 <div className="p-4 h-full flex flex-col justify-center items-center text-center">
                   <h3 className="text-gray-900 dark:text-white font-semibold text-base md:text-lg leading-tight text-center">
