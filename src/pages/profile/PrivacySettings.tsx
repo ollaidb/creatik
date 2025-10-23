@@ -40,10 +40,19 @@ const PrivacySettings = () => {
     allowAnalytics: true
   });
 
+  // Détecter le type de profil actuel basé sur l'URL
+  const getCurrentProfileType = () => {
+    const currentPath = window.location.pathname;
+    if (currentPath.includes('contributor-profile')) {
+      return 'contributor';
+    }
+    return 'creator'; // Par défaut
+  };
+
   // État du statut utilisateur
   const [creatorStatus, setCreatorStatus] = useState({
     isCreator: true,
-    creatorType: 'creator', // 'creator' | 'contributor'
+    creatorType: getCurrentProfileType(), // Détecter automatiquement
     verified: false,
     publicProfile: true,
     showEarnings: false
@@ -55,21 +64,40 @@ const PrivacySettings = () => {
 
   const handleCreatorChange = (setting: string, value: any) => {
     setCreatorStatus(prev => ({ ...prev, [setting]: value }));
-    
-    // Si on change le type d'utilisateur, rediriger vers la page appropriée
-    if (setting === 'creatorType') {
-      if (value === 'creator') {
-        navigate('/profile');
-      } else if (value === 'contributor') {
-        navigate('/contributor-profile');
-      }
-    }
   };
 
   const handleSave = () => {
     console.log('Sauvegarde des paramètres de confidentialité:', privacySettings);
     console.log('Sauvegarde du statut créateur:', creatorStatus);
+    
+    // Sauvegarder le type de profil dans localStorage
+    localStorage.setItem('userProfileType', creatorStatus.creatorType);
+    
     setIsEditing(false);
+    
+    // Rediriger vers la page appropriée selon le type d'utilisateur sauvegardé
+    if (creatorStatus.creatorType === 'creator') {
+      navigate('/profile');
+    } else if (creatorStatus.creatorType === 'contributor') {
+      navigate('/contributor-profile');
+    }
+  };
+
+  const handleCancel = () => {
+    // Revenir au type de profil actuel sans sauvegarder
+    setCreatorStatus(prev => ({ ...prev, creatorType: getCurrentProfileType() }));
+    setIsEditing(false);
+    
+    // Rediriger vers la page actuelle
+    const currentPath = window.location.pathname;
+    if (currentPath.includes('privacy')) {
+      // Si on est dans les paramètres, revenir au profil approprié
+      if (getCurrentProfileType() === 'creator') {
+        navigate('/profile');
+      } else {
+        navigate('/contributor-profile');
+      }
+    }
   };
 
   return (
@@ -324,14 +352,17 @@ const PrivacySettings = () => {
           </Card>
         </motion.div>
 
-        {/* Bouton de sauvegarde */}
+        {/* Boutons de sauvegarde */}
         {isEditing && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.3 }}
-            className="flex justify-end"
+            className="flex justify-end gap-4"
           >
+            <Button variant="outline" onClick={handleCancel} size="lg">
+              Annuler
+            </Button>
             <Button onClick={handleSave} size="lg">
               <Save className="w-4 h-4 mr-2" />
               Sauvegarder les modifications

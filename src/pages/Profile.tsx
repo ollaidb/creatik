@@ -83,6 +83,17 @@ const UserProfile: React.FC = () => {
   const [profileType, setProfileType] = useState<'creator' | 'contributor'>('creator');
   const menuRef = useRef<HTMLDivElement>(null);
 
+  // Détecter le type de profil sauvegardé au chargement
+  useEffect(() => {
+    const savedProfileType = localStorage.getItem('userProfileType') as 'creator' | 'contributor' | null;
+    if (savedProfileType) {
+      setProfileType(savedProfileType);
+      if (savedProfileType === 'contributor') {
+        navigate('/contributor-profile');
+      }
+    }
+  }, [navigate]);
+
   // Rediriger vers la page appropriée selon le type de profil
   const handleProfileTypeChange = (newType: 'creator' | 'contributor') => {
     setProfileType(newType);
@@ -932,7 +943,7 @@ const UserProfile: React.FC = () => {
                       <Settings className="w-4 h-4" />
                       <span>Paramètres et confidentialité</span>
                     </button>
-                    </div>
+                  </div>
                 </div>
               )}
             </div>
