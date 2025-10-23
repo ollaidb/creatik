@@ -1,0 +1,78 @@
+import { useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
+import { SupabaseClient } from '@supabase/supabase-js';
+
+interface DeleteContentParams {
+  content_type: 'category' | 'subcategory' | 'title' | 'challenge';
+  content_id: string;
+}
+
+export const useDeleteContent = () => {
+  const [isDeleting, setIsDeleting] = useState(false);
+  const { user } = useAuth();
+  const { toast } = useToast();
+
+  const deleteContent = async ({ content_type, content_id }: DeleteContentParams) => {
+    if (!user) {
+      toast({
+        title: "Connexion requise",
+        description: "Vous devez être connecté pour supprimer du contenu",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    setIsDeleting(true);
+    try {
+      const { data, error } = await (supabase as SupabaseClient)
+        .rpc('delete_user_content', {
+          p_content_type: content_type,
+          p_content_id: content_id,
+          p_user_id: user.id
+        });
+
+      if (error) {
+        console.error('❌ Erreur suppression:', error);
+        toast({
+          title: "Erreur",
+          description: `Erreur lors de la suppression: ${error.message}`,
+          variant: "destructive"
+        });
+        return false;
+      }
+
+      if (data && data.success) {
+        toast({
+          title: "Contenu supprimé",
+          description: "Le contenu a été supprimé avec succès"
+        });
+        return true;
+      } else {
+        console.error('❌ Échec suppression:', data);
+        toast({
+          title: "Erreur",
+          description: data?.message || "Échec de la suppression",
+          variant: "destructive"
+        });
+        return false;
+      }
+    } catch (error) {
+      console.error('❌ Exception suppression:', error);
+      toast({
+        title: "Erreur",
+        description: `Erreur lors de la suppression: ${error instanceof Error ? error.message : 'Erreur inconnue'}`,
+        variant: "destructive"
+      });
+      return false;
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  return {
+    deleteContent,
+    isDeleting
+  };
+}; 

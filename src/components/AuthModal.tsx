@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -7,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
-import { Mail, Lock, User, Phone, Apple } from 'lucide-react';
+import { Mail, Lock, User, Phone, Apple, Eye, EyeOff } from 'lucide-react';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -20,25 +19,26 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
   const [password, setPassword] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [userType, setUserType] = useState<'creator' | 'contributor'>('creator');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const { signUp, signIn, signInWithGoogle, signInWithApple } = useAuth();
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-
     try {
       let result;
       if (isSignUp) {
         result = await signUp(email, password, {
           first_name: firstName,
-          last_name: lastName
+          last_name: lastName,
+          user_type: userType
         });
       } else {
         result = await signIn(email, password);
       }
-
       if (result.error) {
         toast({
           title: "Erreur",
@@ -69,7 +69,6 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
       const result = provider === 'google' 
         ? await signInWithGoogle() 
         : await signInWithApple();
-      
       if (result.error) {
         toast({
           title: "Erreur",
@@ -96,7 +95,6 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
             {isSignUp ? 'Créer un compte' : 'Se connecter'}
           </DialogTitle>
         </DialogHeader>
-
         <div className="space-y-4">
           {/* Social Login Buttons */}
           <div className="space-y-2">
@@ -115,7 +113,6 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
               </svg>
               Continuer avec Google
             </Button>
-            
             <Button
               type="button"
               variant="outline"
@@ -127,7 +124,6 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
               Continuer avec Apple
             </Button>
           </div>
-
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
               <Separator className="w-full" />
@@ -138,7 +134,6 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
               </span>
             </div>
           </div>
-
           {/* Email/Password Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             {isSignUp && (
@@ -173,7 +168,34 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                 </div>
               </div>
             )}
-
+            {isSignUp && (
+              <div>
+                <Label>Type d'utilisateur</Label>
+                <div className="flex gap-2 mt-2">
+                  <Button
+                    type="button"
+                    variant={userType === 'creator' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setUserType('creator')}
+                    className="flex-1"
+                  >
+                    Créateur
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={userType === 'contributor' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setUserType('contributor')}
+                    className="flex-1"
+                  >
+                    Contributeur
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Choisissez votre type de profil pour accéder aux fonctionnalités appropriées
+                </p>
+              </div>
+            )}
             <div>
               <Label htmlFor="email">Email</Label>
               <div className="relative">
@@ -188,27 +210,35 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                 />
               </div>
             </div>
-
             <div>
               <Label htmlFor="password">Mot de passe</Label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
                   id="password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10"
+                  className="pl-10 pr-10"
                   required
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
               </div>
             </div>
-
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? 'Chargement...' : (isSignUp ? 'Créer un compte' : 'Se connecter')}
             </Button>
           </form>
-
           <div className="text-center">
             <button
               type="button"

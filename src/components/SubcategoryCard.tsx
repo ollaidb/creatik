@@ -1,41 +1,52 @@
-
-import React from "react";
-import { cn } from "@/lib/utils";
-import { motion } from "framer-motion";
-import { Database } from "@/integrations/supabase/types";
-
-type Subcategory = Database['public']['Tables']['subcategories']['Row'];
+import React from 'react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 
 interface SubcategoryCardProps {
-  subcategory: Subcategory;
+  subcategory: {
+    id: string;
+    name: string;
+    description: string;
+    contentCount?: number;
+  };
   className?: string;
   onClick?: () => void;
 }
 
-const SubcategoryCard = ({ subcategory, className, onClick }: SubcategoryCardProps) => {
+const SubcategoryCard: React.FC<SubcategoryCardProps> = ({ 
+  subcategory, 
+  className, 
+  onClick 
+}) => {
   return (
-    <motion.div
-      whileHover={{ y: -2 }}
-      whileTap={{ scale: 0.98 }}
-      onClick={onClick}
+    <Card 
       className={cn(
-        "bg-white dark:bg-creatik-dark/50 rounded-xl p-4 cursor-pointer",
-        "border border-gray-200 dark:border-gray-700",
-        "hover:shadow-lg transition-all duration-200",
-        "flex flex-col gap-2",
+        "cursor-pointer transition-all duration-200 hover:shadow-lg hover:scale-105",
         className
       )}
+      onClick={onClick}
+      data-title={subcategory.name}
+      data-type="subcategory"
+      data-subcategory-id={subcategory.id}
     >
-      <h3 className="font-semibold text-gray-900 dark:text-white text-sm leading-tight">
-        {subcategory.name}
-      </h3>
-      
-      {subcategory.description && (
-        <p className="text-xs text-gray-600 dark:text-gray-300 line-clamp-2">
+      <CardContent className="p-4">
+        <div className="flex items-start justify-between mb-3">
+          <h3 className="font-semibold text-lg text-gray-900 dark:text-white line-clamp-2">
+            {subcategory.name}
+          </h3>
+          {subcategory.contentCount && (
+            <Badge variant="outline" className="text-xs">
+              {subcategory.contentCount} contenus
+            </Badge>
+          )}
+        </div>
+        
+        <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-3">
           {subcategory.description}
         </p>
-      )}
-    </motion.div>
+      </CardContent>
+    </Card>
   );
 };
 

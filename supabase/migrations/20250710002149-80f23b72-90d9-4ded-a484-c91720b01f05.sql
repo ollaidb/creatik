@@ -74,9 +74,10 @@ CREATE POLICY "Users can delete own preferences"
 CREATE TABLE public.user_favorites (
   id uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id uuid NOT NULL REFERENCES auth.users ON DELETE CASCADE,
-  category_id uuid NOT NULL REFERENCES public.categories(id) ON DELETE CASCADE,
+  item_id uuid NOT NULL,
+  item_type text NOT NULL, -- 'category', 'title', 'subcategory', 'compte', 'source', 'challenge'
   created_at timestamp with time zone NOT NULL DEFAULT now(),
-  UNIQUE(user_id, category_id)
+  UNIQUE(user_id, item_id, item_type)
 );
 
 -- Enable RLS on user_favorites table

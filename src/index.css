@@ -1,69 +1,73 @@
 
+@import './styles/colors.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --background: 220 33% 98%;
-    --foreground: 240 10% 4%;
+    /* Mode Light - Nouvelles couleurs Creatik */
+    --background: 240 5% 97%; /* #F7F8F9 - Blanc cassé */
+    --foreground: 0 0% 12%; /* #1E1E1E - Gris foncé */
 
-    --card: 0 0% 100%;
-    --card-foreground: 240 10% 4%;
+    --card: 0 0% 100%; /* #FFFFFF - Blanc */
+    --card-foreground: 0 0% 12%; /* #1E1E1E - Gris foncé */
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 4%;
+    --popover: 0 0% 100%; /* #FFFFFF - Blanc */
+    --popover-foreground: 0 0% 12%; /* #1E1E1E - Gris foncé */
 
-    --primary: 250 84% 63%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 252 83% 58%; /* #6C5DD3 - Violet Proton */
+    --primary-foreground: 0 0% 100%; /* #FFFFFF - Blanc */
 
-    --secondary: 207 79% 61%;
-    --secondary-foreground: 0 0% 100%;
+    --secondary: 220 14% 96%; /* #F3F4F6 */
+    --secondary-foreground: 220 9% 46%; /* #6B7280 */
 
-    --muted: 220 14% 96%;
-    --muted-foreground: 240 5% 65%;
+    --muted: 220 14% 96%; /* #F3F4F6 */
+    --muted-foreground: 220 9% 46%; /* #6B7280 */
 
-    --accent: 39 100% 63%;
-    --accent-foreground: 240 10% 4%;
+    --accent: 252 83% 58%; /* #6C5DD3 - Violet Proton */
+    --accent-foreground: 0 0% 100%; /* #FFFFFF - Blanc */
 
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%; /* #EF4444 */
+    --destructive-foreground: 0 0% 98%; /* #FAFAFA */
 
-    --border: 220 14% 90%;
-    --input: 220 14% 90%;
-    --ring: 250 84% 63%;
+    --border: 220 13% 91%; /* #E5E7EB */
+    --input: 220 13% 91%; /* #E5E7EB */
+    --ring: 252 83% 58%; /* #6C5DD3 - Violet Proton */
 
     --radius: 0.75rem;
   }
 
   .dark {
-    --background: 0 0% 10%;
-    --foreground: 0 0% 98%;
+    /* Mode Dark - Nouvelles couleurs Creatik */
+    --background: 240 6% 6%; /* #0F0F10 - Anthracite très foncé */
+    --foreground: 220 13% 91%; /* #E5E7EB - Gris clair */
 
-    --card: 0 0% 15%;
-    --card-foreground: 0 0% 98%;
+    --card: 240 6% 7%; /* #111617 - Fond secondaire */
+    --card-foreground: 220 13% 91%; /* #E5E7EB - Gris clair */
 
-    --popover: 0 0% 15%;
-    --popover-foreground: 0 0% 98%;
+    --popover: 240 6% 6%; /* #0F0F10 - Anthracite très foncé */
+    --popover-foreground: 220 13% 91%; /* #E5E7EB - Gris clair */
 
-    --primary: 250 84% 63%;
-    --primary-foreground: 0 0% 98%;
+    --primary: 330 85% 71%; /* #F472B6 - Rose Proton */
+    --primary-foreground: 0 0% 100%; /* #FFFFFF - Blanc */
 
-    --secondary: 207 79% 61%;
-    --secondary-foreground: 0 0% 98%;
+    --secondary: 217 33% 17%; /* #334155 */
+    --secondary-foreground: 220 13% 91%; /* #E5E7EB - Gris clair */
 
-    --muted: 0 0% 20%;
-    --muted-foreground: 0 0% 70%;
+    --muted: 217 33% 17%; /* #334155 */
+    --muted-foreground: 215 20% 65%; /* #94A3B8 */
 
-    --accent: 39 100% 63%;
-    --accent-foreground: 240 10% 4%;
+    --accent: 330 85% 71%; /* #F472B6 - Rose Proton */
+    --accent-foreground: 0 0% 100%; /* #FFFFFF - Blanc */
 
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive: 0 84% 60%; /* #EF4444 */
+    --destructive-foreground: 0 0% 98%; /* #FAFAFA */
 
-    --border: 0 0% 25%;
-    --input: 0 0% 25%;
-    --ring: 250 84% 63%;
+    --border: 217 33% 17%; /* #334155 */
+    --input: 217 33% 17%; /* #334155 */
+    --ring: 330 85% 71%; /* #F472B6 - Rose Proton */
   }
 }
 
@@ -78,36 +82,86 @@
   }
 }
 
+/* Désactiver le zoom sur clic */
+* {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Permettre la sélection de texte dans les champs de saisie */
+input, textarea, [contenteditable] {
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+  user-select: text;
+}
+
+/* Désactiver le zoom sur double-tap */
+html {
+  touch-action: manipulation;
+}
+
+/* Animations mobiles pour les événements */
 @layer components {
-  .creatik-container {
-    @apply w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  .event-button-mobile {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    touch-action: manipulation;
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    will-change: transform;
   }
 
-  .creatik-section {
-    @apply py-8 md:py-12;
+  /* Masquer les barres de défilement */
+  .scrollbar-hide {
+    -ms-overflow-style: none;  /* Internet Explorer 10+ */
+    scrollbar-width: none;  /* Firefox */
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;  /* Safari and Chrome */
   }
 
-  .creatik-card {
-    @apply rounded-xl bg-white dark:bg-creatik-dark shadow-md overflow-hidden transition-all duration-300 hover:shadow-lg;
+  .event-button-mobile:active {
+    transform: scale(0.95) translateZ(0);
+    transition: transform 0.1s ease-out;
   }
 
-  .creatik-heading {
-    @apply text-2xl md:text-3xl font-bold mb-6;
+  .event-card-mobile {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    will-change: transform;
   }
 
-  .creatik-subheading {
-    @apply text-xl font-semibold mb-4;
+  .event-card-mobile:active {
+    transform: scale(0.97) translateZ(0);
+    transition: transform 0.15s ease-out;
   }
+}
 
-  .creatik-gradient-primary {
-    @apply bg-gradient-to-r from-creatik-primary to-creatik-secondary text-white;
+@keyframes fade-out {
+  from {
+    opacity: 1;
+    transform: translateY(0);
   }
+  to {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+}
 
-  .creatik-gradient-orange {
-    @apply bg-gradient-to-r from-creatik-orange to-creatik-pink text-white;
-  }
-
-  .creatik-gradient-green {
-    @apply bg-gradient-to-r from-creatik-green to-creatik-secondary text-white;
-  }
+.animate-fade-out {
+  animation: fade-out 0.3s ease-out forwards;
 }
