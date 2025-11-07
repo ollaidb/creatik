@@ -8,7 +8,7 @@ import { useSubcategoryLevel2 } from '@/hooks/useSubcategoryLevel2';
 import { useGeneratedTitles } from '@/hooks/useGeneratedTitles';
 import { useContentTitles } from '@/hooks/useContentTitles';
 import { useContentTitlesLevel2 } from '@/hooks/useContentTitlesLevel2';
-import { useAccounts } from '@/hooks/useAccounts';
+import { useCreators } from '@/hooks/useCreators';
 import { useSources } from '@/hooks/useSources';
 import { useBlogs } from '@/hooks/useBlogs';
 import { useArticles } from '@/hooks/useArticles';
@@ -26,7 +26,7 @@ import HashtagsSection from '@/components/HashtagsSection';
 import Navigation from '@/components/Navigation';
 import { getNetworkDisplayName } from '@/utils/networkUtils';
 
-type TabType = 'titres' | 'comptes' | 'sources' | 'hashtags' | 'hooks' | 'blog' | 'article' | 'mots-cles' | 'exemple' | 'idees' | 'podcast';
+type TabType = 'titres' | 'créateurs' | 'sources' | 'hashtags' | 'hooks' | 'blog' | 'article' | 'mots-cles' | 'exemple' | 'idees' | 'podcast';
 
 const Titles = () => {
   const { subcategoryId, categoryId, subcategoryLevel2Id } = useParams();
@@ -73,7 +73,7 @@ const Titles = () => {
   const contentTitles = isLevel2 ? contentTitlesLevel2 : contentTitlesLevel1;
   const contentTitlesLoading = isLevel2 ? contentTitlesLevel2Loading : contentTitlesLevel1Loading;
   
-  const { data: accounts = [], isLoading: accountsLoading } = useAccounts(detectedNetwork);
+  const { data: creators = [], isLoading: creatorsLoading } = useCreators();
   const { data: sources = [], isLoading: sourcesLoading } = useSources(detectedNetwork);
   
   // Nouveaux hooks pour les nouveaux types de contenu
@@ -106,13 +106,13 @@ const Titles = () => {
   const hasAnyData = !isCriticalLoading && (
     generatedTitles?.length > 0 || 
     contentTitles?.length > 0 || 
-    accounts.length > 0 || 
+    creators.length > 0 || 
     sources.length > 0
   );
   
   // Hooks pour les favoris
   const { favorites: titleFavorites, toggleFavorite: toggleTitleFavorite, isFavorite: isTitleFavorite } = useFavorites('title');
-  const { favorites: accountFavorites, toggleFavorite: toggleAccountFavorite, isFavorite: isAccountFavorite } = useFavorites('account');
+  const { favorites: creatorFavorites, toggleFavorite: toggleCreatorFavorite, isFavorite: isCreatorFavorite } = useFavorites('creator');
   const { favorites: sourceFavorites, toggleFavorite: toggleSourceFavorite, isFavorite: isSourceFavorite } = useFavorites('source');
   const { favorites: blogFavorites, toggleFavorite: toggleBlogFavorite, isFavorite: isBlogFavorite } = useFavorites('blog');
   const { favorites: articleFavorites, toggleFavorite: toggleArticleFavorite, isFavorite: isArticleFavorite } = useFavorites('article');
@@ -145,14 +145,16 @@ const Titles = () => {
     title.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
   
-  // Filtrer les comptes selon la catégorie et sous-catégorie
-  const filteredAccounts = accounts.filter(account => {
+  // Filtrer les créateurs selon la catégorie et sous-catégorie
+  const filteredCreators = creators.filter(creator => {
+    // Filtrer selon la sous-catégorie actuelle
     if (isLevel2) {
-      return account.category === currentSubcategory?.subcategory?.category?.name && 
-             account.subcategory === currentSubcategory?.name;
+      // Si on est au niveau 2, on filtre par subcategory_id (mais on utilise le subcategory_id du niveau 1 pour l'instant)
+      // Note: Les créateurs sont liés aux sous-catégories niveau 1, pas niveau 2
+      return creator.subcategory_id === subcategoryId;
     } else {
-      return account.category === currentSubcategory?.category?.name && 
-             account.subcategory === currentSubcategory?.name;
+      // Si on est au niveau 1, on filtre par subcategory_id
+      return creator.subcategory_id === subcategoryId;
     }
   });
   
@@ -201,8 +203,8 @@ const Titles = () => {
     contentTitles: contentTitles?.length || 0,
     allTitles: allTitles.length,
     filteredTitles: filteredTitles.length,
-    accounts: accounts.length,
-    filteredAccounts: filteredAccounts.length,
+    creators: creators.length,
+    filteredCreators: filteredCreators.length,
     sources: sources.length,
     filteredSources: filteredSources.length,
     blogs: blogs.length,
@@ -247,11 +249,11 @@ const Titles = () => {
     }
   };
 
-  const handleLikeAccount = async (accountId: string) => {
+  const handleLikeCreator = async (creatorId: string) => {
     try {
-      await toggleAccountFavorite(accountId);
+      await toggleCreatorFavorite(creatorId);
       toast({
-        title: isAccountFavorite(accountId) ? "Retiré" : "Ajouté"
+        title: isCreatorFavorite(creatorId) ? "Retiré" : "Ajouté"
       });
     } catch (error) {
       console.error('Erreur lors du like:', error);
@@ -372,22 +374,6 @@ const Titles = () => {
     console.log('Adding to challenge:', titleId);
   };
 
-  const handleProfileClick = (account: {
-    id: string;
-    account_name: string;
-    description?: string;
-    platform?: string;
-    account_url?: string;
-    avatar_url?: string;
-    category?: string;
-    subcategory?: string;
-  }) => {
-    if (account.account_url) {
-      window.open(account.account_url, '_blank');
-    } else {
-      console.log('No URL for account:', account.account_name);
-    }
-  };
 
   const handleSourceClick = (source: {
     id: string;
@@ -639,76 +625,74 @@ const Titles = () => {
             </motion.div>
           )}
 
-          {activeTab === 'comptes' && (
+          {activeTab === 'créateurs' && (
             <motion.div 
               className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
               variants={containerVariants}
               initial="hidden"
               animate="visible"
             >
-              {filteredAccounts.map((account, index) => (
-                <motion.div key={account.id} variants={itemVariants}>
-                  <div 
-                    className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all duration-200 cursor-pointer"
-                    onClick={() => handleProfileClick(account)}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="flex-shrink-0">
-                        {account.avatar_url ? (
-                          <img 
-                            src={account.avatar_url} 
-                            alt={account.account_name}
-                            className="w-12 h-12 rounded-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-12 h-12 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                            <User size={20} className="text-gray-500" />
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-gray-900 dark:text-white font-medium text-sm truncate">
-                          {account.account_name}
-                        </h3>
-                        {account.platform && (
-                          <div className="flex items-center gap-2 mt-1">
-                            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getPlatformColor(account.platform)}`}>
-                              {getPlatformIcon(account.platform)} {account.platform}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleLikeAccount(account.id);
-                          }}
-                          className={`p-2 h-8 w-8 transition-all duration-200 ${
-                            isAccountFavorite(account.id) 
-                              ? 'text-red-500 hover:text-red-600' 
-                              : 'text-gray-400 hover:text-red-400'
-                          }`}
-                        >
-                          <Heart 
-                            size={16} 
-                            className={`transition-all duration-200 ${
-                              isAccountFavorite(account.id) 
-                                ? 'fill-red-500 text-red-500' 
-                                : 'fill-transparent text-current'
+              {filteredCreators.length === 0 ? (
+                <div className="col-span-full text-center py-12">
+                  <p className="text-gray-500 dark:text-gray-400">
+                    Aucun créateur disponible pour cette sous-catégorie
+                  </p>
+                </div>
+              ) : (
+                filteredCreators.map((creator, index) => (
+                  <motion.div key={creator.id} variants={itemVariants}>
+                    <div 
+                      className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all duration-200 cursor-pointer"
+                      onClick={() => handleCreatorClick(creator)}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="flex-shrink-0">
+                          {(creator as any).avatar_url || creator.avatar ? (
+                            <img 
+                              src={(creator as any).avatar_url || creator.avatar || ''} 
+                              alt={creator.display_name || creator.name}
+                              className="w-12 h-12 rounded-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-12 h-12 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                              <User size={20} className="text-gray-500" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-gray-900 dark:text-white font-medium text-sm truncate">
+                            {creator.display_name || creator.name}
+                          </h3>
+                        </div>
+                        <div className="flex items-center">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleLikeCreator(creator.id);
+                            }}
+                            className={`p-2 h-8 w-8 transition-all duration-200 ${
+                              isCreatorFavorite(creator.id) 
+                                ? 'text-red-500 hover:text-red-600' 
+                                : 'text-gray-400 hover:text-red-400'
                             }`}
-                          />
-                        </Button>
-                        {account.account_url && (
-                          <ExternalLink size={16} className="text-gray-400 flex-shrink-0" />
-                        )}
+                          >
+                            <Heart 
+                              size={16} 
+                              className={`transition-all duration-200 ${
+                                isCreatorFavorite(creator.id) 
+                                  ? 'fill-red-500 text-red-500' 
+                                  : 'fill-transparent text-current'
+                              }`}
+                            />
+                          </Button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </motion.div>
-              ))}
+                  </motion.div>
+                ))
+              )}
             </motion.div>
           )}
 

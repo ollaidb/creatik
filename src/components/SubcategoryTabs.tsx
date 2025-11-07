@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 
-type TabType = 'titres' | 'comptes' | 'sources' | 'hashtags' | 'hooks' | 'blog' | 'article' | 'mots-cles' | 'exemple' | 'idees' | 'podcast';
+type TabType = 'titres' | 'créateurs' | 'sources' | 'hashtags' | 'hooks' | 'blog' | 'article' | 'mots-cles' | 'exemple' | 'idees' | 'podcast';
 
 interface SubcategoryTabsProps {
   activeTab: TabType;
@@ -26,17 +26,17 @@ const SubcategoryTabs: React.FC<SubcategoryTabsProps> = ({
       case 'article':
         return ['titres', 'sources', 'article', 'mots-cles'];
       case 'twitter':
-        return ['exemple', 'comptes', 'sources', 'hashtags'];
+        return ['exemple', 'créateurs', 'sources', 'hashtags'];
       case 'instagram':
-        return ['titres', 'comptes', 'sources', 'idees', 'hashtags'];
+        return ['titres', 'créateurs', 'sources', 'idees', 'hashtags'];
       case 'youtube':
-        return ['titres', 'comptes', 'sources', 'hashtags', 'hooks'];
+        return ['titres', 'créateurs', 'sources', 'hashtags', 'hooks'];
       case 'podcasts':
         return ['titres', 'sources', 'podcast', 'mots-cles'];
       case 'twitch':
-        return ['titres', 'comptes', 'idees'];
+        return ['titres', 'créateurs', 'idees'];
       default:
-        return ['titres', 'comptes', 'sources', 'hashtags'];
+        return ['titres', 'créateurs', 'sources', 'hashtags'];
     }
   };
 
@@ -45,7 +45,7 @@ const SubcategoryTabs: React.FC<SubcategoryTabsProps> = ({
   const getTabLabel = (tab: TabType): string => {
     switch (tab) {
       case 'titres': return 'Titres';
-      case 'comptes': return 'Comptes';
+      case 'créateurs': return 'Créateurs';
       case 'sources': return 'Sources';
       case 'hashtags': return '#';
       case 'hooks': return 'Hooks';

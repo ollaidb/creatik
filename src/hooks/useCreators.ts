@@ -9,6 +9,8 @@ export interface Creator {
   bio: string | null;
   category: string | null;
   subcategory: string | null;
+  category_id: string | null;
+  subcategory_id: string | null;
   is_verified: boolean;
   created_at: string;
   updated_at: string;

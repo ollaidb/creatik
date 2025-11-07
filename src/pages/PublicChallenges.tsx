@@ -7,11 +7,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Heart, Target, Plus, User, Clock, Star, Calendar, Trophy, Eye, ChevronDown, ChevronUp, MessageCircle, ThumbsUp } from 'lucide-react';
+import { ArrowLeft, Heart, Target, Plus, User, Clock, Star, Calendar, Trophy, Eye, ChevronDown, ChevronUp, MessageCircle, ThumbsUp, AtSign } from 'lucide-react';
 import { usePublicChallenges } from '@/hooks/usePublicChallenges';
 import { useFavorites } from '@/hooks/useFavorites';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { useUsernameIdeas } from '@/hooks/useUsernameIdeas';
 import Navigation from '@/components/Navigation';
 
 // Type pour les challenges publics
@@ -56,9 +57,17 @@ const PublicChallenges = () => {
   const [expandedChallenges, setExpandedChallenges] = useState<Set<string>>(new Set());
   const [activeTab, setActiveTab] = useState('content');
   
+  // Gérer la navigation vers les pseudos
+  const handlePseudosClick = () => {
+    navigate('/community/usernames');
+  };
+  
   // Déterminer si on affiche seulement les challenges likés
   const filterLikedOnly = searchParams.get('filter') === 'liked';
   const { challenges, loading, error, addToPersonalChallenges } = usePublicChallenges(filterLikedOnly);
+  
+  // Récupérer les pseudos pour l'onglet Pseudos
+  const { data: usernameIdeas = [], isLoading: usernamesLoading } = useUsernameIdeas();
 
   // Récupérer le paramètre de retour
   const returnTo = searchParams.get('returnTo') || 'profile';
@@ -70,6 +79,9 @@ const PublicChallenges = () => {
   const accountChallenges = challenges.filter(challenge => 
     challenge.challenge_type === 'account'
   );
+  
+  // Limiter les pseudos à afficher (par exemple, les 20 premiers)
+  const displayedUsernames = usernameIdeas.slice(0, 20);
 
   const handleBackClick = () => {
     if (returnTo === 'home') {
@@ -405,14 +417,18 @@ const PublicChallenges = () => {
 
       <main className="max-w-4xl mx-auto p-4">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-6">
+          <TabsList className="grid w-full grid-cols-3 mb-6">
             <TabsTrigger value="content" className="flex items-center gap-2">
               <Target className="w-4 h-4" />
-              Contenu ({contentChallenges.length})
+              Contenu
             </TabsTrigger>
             <TabsTrigger value="accounts" className="flex items-center gap-2">
               <User className="w-4 h-4" />
-              Comptes ({accountChallenges.length})
+              Comptes
+            </TabsTrigger>
+            <TabsTrigger value="usernames" className="flex items-center gap-2">
+              <AtSign className="w-4 h-4" />
+              Pseudos
             </TabsTrigger>
           </TabsList>
 
@@ -455,6 +471,70 @@ const PublicChallenges = () => {
               </Card>
             ) : (
               accountChallenges.map(challenge => renderChallengeCard(challenge, true))
+            )}
+          </TabsContent>
+
+          <TabsContent value="usernames" className="space-y-4">
+            {usernamesLoading ? (
+              <Card className="text-center py-12">
+                <CardContent>
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-gray-100 mx-auto mb-4"></div>
+                  <p className="text-muted-foreground">Chargement des pseudos...</p>
+                </CardContent>
+              </Card>
+            ) : displayedUsernames.length === 0 ? (
+              <Card className="text-center py-12">
+                <CardContent>
+                  <AtSign className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                  <h3 className="text-lg font-medium mb-2">Aucun pseudo disponible</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Soyez le premier à publier un pseudo !
+                  </p>
+                  {user && (
+                    <Button onClick={() => navigate('/publish')}>
+                      Publier
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+            ) : (
+              displayedUsernames.map((username) => (
+                <Card
+                  key={username.id}
+                  className="cursor-pointer hover:shadow-md transition-shadow"
+                  onClick={() => navigate('/community/usernames')}
+                >
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <div className="flex-shrink-0">
+                          <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                            <User size={20} className="text-gray-500" />
+                          </div>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-medium text-gray-900 dark:text-white text-base">
+                            {username.pseudo}
+                          </h3>
+                          {username.network && (
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                              {username.network.display_name}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        {username.network && username.network.color_theme && (
+                          <div 
+                            className="w-3 h-3 rounded-full"
+                            style={{ backgroundColor: username.network.color_theme }}
+                          />
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
             )}
           </TabsContent>
         </Tabs>

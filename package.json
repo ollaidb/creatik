@@ -11,7 +11,9 @@
     "preview": "vite preview",
     "enrich-events": "node scripts/enrich-events.mjs",
     "test-apis": "node scripts/quick-start.mjs",
-    "setup-apis": "./scripts/setup-api-integration.sh"
+    "setup-apis": "./scripts/setup-api-integration.sh",
+    "update-creator-stats": "node scripts/fetch-creator-stats-hybrid.js",
+    "insert-usernames": "node scripts/insert-username-ideas.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
@@ -47,6 +49,7 @@
     "@vitejs/plugin-react": "^4.7.0",
     "axios": "^1.11.0",
     "caniuse-lite": "^1.0.30001727",
+    "cheerio": "^1.1.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.0.0",

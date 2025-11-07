@@ -22,20 +22,30 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // Initialiser l'état d'authentification
     const initializeAuth = async () => {
       try {
-        if (isOAuthCallback) {
-          // Si on vient d'un callback OAuth, récupérer la session
-          const { data: { session } } = await supabase.auth.getSession();
-          if (session) {
-            setSession(session);
-            setUser(session.user);
-          } else {
-            setSession(null);
-            setUser(null);
+        // Toujours récupérer la session au démarrage pour restaurer la connexion
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (session && !error) {
+          setSession(session);
+          setUser(session.user);
+          explicitSignInRef.current = true; // Marquer comme session valide
+          
+          // Charger le type d'utilisateur depuis la base de données
+          if (session.user?.id) {
+            try {
+              const { data: profile, error: profileError } = await supabase
+                .from('profiles')
+                .select('user_type')
+                .eq('id', session.user.id)
+                .single();
+              
+              if (!profileError && profile?.user_type) {
+                localStorage.setItem('userProfileType', profile.user_type);
+              }
+            } catch (error) {
+              console.warn('Erreur lors du chargement du type d\'utilisateur:', error);
+            }
           }
         } else {
-          // Ne pas récupérer la session au démarrage - l'utilisateur doit se connecter explicitement
-          // Initialiser l'état à null sans récupérer la session existante
-          // La session dans le localStorage sera ignorée par le listener
           setSession(null);
           setUser(null);
         }
@@ -50,16 +60,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     initializeAuth();
 
-    // Set up auth state listener pour les connexions explicites uniquement
-    // Utiliser un délai plus long pour ignorer les événements initiaux qui peuvent restaurer une session
-    let ignoreInitialEvents = !isOAuthCallback;
-    let ignoreTimeout: NodeJS.Timeout | null = null;
-    if (ignoreInitialEvents) {
-      // Ignorer les événements pendant 3 secondes pour être sûr que la session n'est pas restaurée automatiquement
-      ignoreTimeout = setTimeout(() => {
-        ignoreInitialEvents = false;
-      }, 3000);
-    }
+    // Set up auth state listener
+    // Ne plus ignorer les événements initiaux - on veut restaurer la session automatiquement
+    let ignoreInitialEvents = false;
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
@@ -93,17 +96,34 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           return;
         }
 
-        // Ignorer tous les événements initiaux qui peuvent restaurer automatiquement une session
-        // Ne traiter que les événements SIGNED_IN qui se produisent après une action explicite
-        if (ignoreInitialEvents || !explicitSignInRef.current) {
-          // Ignorer tous les événements qui peuvent restaurer automatiquement une session
-          if (event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED' || event === 'SIGNED_IN') {
-            // Ne pas restaurer la session pour ces événements initiaux
-            // Sauf si c'est une connexion explicite (flag mis à true par signIn/signUp)
-            if (!explicitSignInRef.current) {
-              return;
+        // Accepter tous les événements de session valides
+        // INITIAL_SESSION : restaurer la session au chargement
+        // TOKEN_REFRESHED : maintenir la session active
+        // SIGNED_IN : nouvelle connexion
+        if (event === 'INITIAL_SESSION' && session) {
+          // Restaurer la session au chargement de la page
+          setSession(session);
+          setUser(session.user);
+          explicitSignInRef.current = true;
+          setLoading(false);
+          
+          // Charger le type d'utilisateur si nécessaire
+          if (session.user?.id) {
+            try {
+              const { data: profile, error: profileError } = await supabase
+                .from('profiles')
+                .select('user_type')
+                .eq('id', session.user.id)
+                .single();
+              
+              if (!profileError && profile?.user_type) {
+                localStorage.setItem('userProfileType', profile.user_type);
+              }
+            } catch (error) {
+              console.warn('Erreur lors du chargement du type d\'utilisateur:', error);
             }
           }
+          return;
         }
 
         // Vérifier si on est l'onglet principal pour éviter les requêtes multiples
@@ -111,14 +131,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           ? ((window as any).__CREATIK_IS_PRIMARY_TAB__ ?? sessionStorage.getItem('tab-primary') === 'true')
           : true;
 
-        // Traiter uniquement les événements de connexion/déconnexion explicites
+        // Traiter les événements de connexion/déconnexion
         if (event === 'SIGNED_IN') {
-          // Accepter uniquement les connexions explicites (le flag est vérifié plus haut)
+          // Accepter toutes les connexions (explicites ou restaurées)
           setSession(session);
           setUser(session?.user ?? null);
-          
-          // Réinitialiser le flag après avoir traité la connexion
-          explicitSignInRef.current = false;
+          explicitSignInRef.current = true;
           
           // Charger le type d'utilisateur depuis la base de données UNIQUEMENT dans l'onglet principal
           // pour éviter les requêtes multiples
@@ -153,10 +171,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           localStorage.removeItem('userProfileType');
           // Réinitialiser le flag de connexion explicite
           explicitSignInRef.current = false;
-        } else if (event === 'TOKEN_REFRESHED' && session && !ignoreInitialEvents) {
-          // Accepter le refresh de token seulement si on est déjà connecté et après le délai initial
+        } else if (event === 'TOKEN_REFRESHED' && session) {
+          // Accepter le refresh de token pour maintenir la session active
           setSession(session);
           setUser(session.user);
+          explicitSignInRef.current = true;
         }
         setLoading(false);
       }
@@ -164,9 +183,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     return () => {
       subscription.unsubscribe();
-      if (ignoreTimeout) {
-        clearTimeout(ignoreTimeout);
-      }
     };
   }, []);
 

@@ -39,6 +39,7 @@ const SubcategoriesLevel2 = lazy(() => import("./pages/SubcategoriesLevel2"));
 const Titles = lazy(() => import("./pages/Titles"));
 const Hooks = lazy(() => import("./pages/Hooks"));
 const PublicChallenges = lazy(() => import("./pages/PublicChallenges"));
+const UsernameIdeas = lazy(() => import("./pages/UsernameIdeas"));
 const Accounts = lazy(() => import("./pages/Accounts"));
 const Sources = lazy(() => import("./pages/Sources"));
 const TrendingIdeas = lazy(() => import("./pages/TrendingIdeas"));
@@ -154,6 +155,7 @@ const AppContent = () => {
                   <Route path="/category/:categoryId/subcategory/:subcategoryId/hooks" element={<Hooks />} />
                   {/* Communauté Routes */}
                   <Route path="/public-challenges" element={<PublicChallenges />} />
+                  <Route path="/community/usernames" element={<UsernameIdeas />} />
                   {/* Trending Ideas Route */}
                   <Route path="/trending" element={<TrendingIdeas />} />
                   {/* What to Post Today Route */}

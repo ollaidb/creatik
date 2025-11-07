@@ -12,6 +12,7 @@ import { useGeneratedTitles } from '@/hooks/useGeneratedTitles';
 import { useAccounts } from '@/hooks/useAccounts';
 import { useSources } from '@/hooks/useSources';
 import { usePublicChallenges } from '@/hooks/usePublicChallenges';
+import { useUsernameIdeas } from '@/hooks/useUsernameIdeas';
 import { useFavorites } from '@/hooks/useFavorites'; 
 import { useAuth } from '@/hooks/useAuth';
 import CategoryCard from '@/components/CategoryCard';
@@ -41,6 +42,7 @@ const FAVORITE_TABS = [
   { key: 'sources', label: 'Sources' },
   { key: 'hooks', label: 'Hooks' },
   { key: 'challenges', label: 'Communauté' },
+  { key: 'usernames', label: 'Pseudos' },
 ];
 
 const Favorites = () => {
@@ -59,6 +61,7 @@ const Favorites = () => {
   const { favorites: favoriteSources, toggleFavorite: toggleSourceFavorite, isFavorite: isSourceFavorite } = useFavorites('source');
   const { favorites: favoriteHooks, toggleFavorite: toggleHookFavorite, isFavorite: isHookFavorite } = useFavorites('hook');
   const { favorites: favoriteChallenges, toggleFavorite: toggleChallengeFavorite, isFavorite: isChallengeFavorite } = useFavorites('challenge');
+  const { favorites: favoriteUsernames, toggleFavorite: toggleUsernameFavorite, isFavorite: isUsernameFavorite } = useFavorites('username');
   const { data: allCategories = [] } = useCategoriesByTheme('all');
   const { data: allSubcategories = [] } = useAllSubcategories();
   const { data: allSubcategoriesLevel2 = [] } = useAllSubcategoriesLevel2();
@@ -72,6 +75,7 @@ const Favorites = () => {
   const { data: allSources = [] } = useSources();
   const { data: allHooks = [] } = useContentTitles(); // Utiliser contentTitles pour les hooks
   const { challenges: allChallenges = [] } = usePublicChallenges();
+  const { data: allUsernames = [] } = useUsernameIdeas();
   const { toast } = useToast();
 
   // Récupérer le paramètre de retour
@@ -109,6 +113,7 @@ const Favorites = () => {
   const sourcesToShow = allSources.filter(source => favoriteSources.includes(source.id));
   const hooksToShow = allHooks.filter(hook => hook.type === 'hook' && favoriteHooks.includes(hook.id));
   const challengesToShow = allChallenges.filter(challenge => favoriteChallenges.includes(challenge.id));
+  const usernamesToShow = allUsernames.filter(username => favoriteUsernames.includes(username.id));
 
   // Logs de débogage
   console.log('🔍 Debug Favorites:', {
@@ -978,6 +983,73 @@ const Favorites = () => {
                 <h3 className="text-base sm:text-lg font-medium">Aucun favori trouvé</h3>
                 <p className="text-muted-foreground mt-2 text-sm sm:text-base">
                   Vous n'avez pas encore ajouté de communautés en favoris
+                </p>
+              </div>
+            )}
+          </>
+        )}
+
+        {selectedTab === 'usernames' && (
+          <>
+            {usernamesToShow.length > 0 ? (
+              <motion.div
+                className="space-y-3"
+                variants={containerVariants}
+                initial="hidden"
+                animate="visible"
+              >
+                {usernamesToShow.map((username, index) => (
+                  <motion.div 
+                    key={username.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all duration-200"
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <span className="text-xs text-gray-500 font-mono flex-shrink-0">
+                          {(index + 1).toString().padStart(2, '0')}
+                        </span>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-medium text-gray-900 dark:text-white text-base leading-relaxed">
+                            {username.pseudo}
+                          </h3>
+                          {username.network && (
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                              {username.network.display_name}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      {/* Actions */}
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            toggleUsernameFavorite(username.id);
+                            toast({
+                              title: isUsernameFavorite(username.id)
+                                ? "Retiré"
+                                : "Ajouté"
+                            });
+                          }}
+                          className="p-2 h-10 w-10 rounded-full"
+                        >
+                          <Heart className={`w-3 h-3 sm:w-4 sm:h-4 ${isUsernameFavorite(username.id) ? 'text-red-500 fill-red-500' : ''}`} />
+                        </Button>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </motion.div>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-60 text-center px-4">
+                <Heart className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 mb-4" />
+                <h3 className="text-base sm:text-lg font-medium">Aucun favori trouvé</h3>
+                <p className="text-muted-foreground mt-2 text-sm sm:text-base">
+                  Vous n'avez pas encore ajouté de pseudos en favoris
                 </p>
               </div>
             )}
