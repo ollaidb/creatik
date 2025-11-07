@@ -17,12 +17,21 @@ export const useSubcategories = (categoryId?: string) => {
       return data;
     },
     enabled: !!categoryId, // Seulement activé si categoryId est fourni
-    // Optimisation des performances
     staleTime: 1000 * 60 * 5, // 5 minutes
     gcTime: 1000 * 60 * 10, // 10 minutes
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
-    refetchInterval: false
+    retry: (failureCount, error) => {
+      if (error && typeof error === 'object') {
+        const errorMessage = String(error);
+        if (errorMessage.includes('permission denied') || 
+            errorMessage.includes('does not exist')) {
+          return false;
+        }
+      }
+      return failureCount < 1;
+    },
+    retryDelay: 1000,
   });
 };
 
@@ -42,11 +51,20 @@ export const useSubcategory = (subcategoryId: string) => {
       return data;
     },
     enabled: !!subcategoryId,
-    // Optimisation des performances
     staleTime: 1000 * 60 * 5, // 5 minutes
     gcTime: 1000 * 60 * 10, // 10 minutes
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
-    refetchInterval: false
+    retry: (failureCount, error) => {
+      if (error && typeof error === 'object') {
+        const errorMessage = String(error);
+        if (errorMessage.includes('permission denied') || 
+            errorMessage.includes('does not exist')) {
+          return false;
+        }
+      }
+      return failureCount < 1;
+    },
+    retryDelay: 1000,
   });
 };

@@ -96,9 +96,19 @@ const Titles = () => {
   
   // Utiliser les données appropriées selon le niveau
   const currentSubcategory = isLevel2 ? subcategoryLevel2 : subcategory;
-  const isLoading = isLevel2 ? 
+  
+  // Optimisation: ne bloquer que les données critiques, permettre l'affichage progressif
+  const isCriticalLoading = isLevel2 ? 
     (subcategoryLevel2Loading || generatedTitlesLoading || contentTitlesLoading) : 
     (subcategoryLoading || generatedTitlesLoading || contentTitlesLoading);
+  
+  // Les autres données (blogs, articles, etc.) peuvent se charger en arrière-plan
+  const hasAnyData = !isCriticalLoading && (
+    generatedTitles?.length > 0 || 
+    contentTitles?.length > 0 || 
+    accounts.length > 0 || 
+    sources.length > 0
+  );
   
   // Hooks pour les favoris
   const { favorites: titleFavorites, toggleFavorite: toggleTitleFavorite, isFavorite: isTitleFavorite } = useFavorites('title');
@@ -469,7 +479,7 @@ const Titles = () => {
     visible: { opacity: 1, y: 0 }
   };
 
-  if (isLoading) {
+  if (isCriticalLoading && !hasAnyData) {
     return (
       <div className="min-h-screen">
         {/* Header fixe pour mobile */}

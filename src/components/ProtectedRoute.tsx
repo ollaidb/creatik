@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { useSmartNavigation } from '@/hooks/useNavigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { LogIn, User } from 'lucide-react';
@@ -17,6 +18,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 }) => {
   const { user, loading } = useAuth();
   const location = useLocation();
+  const { navigateBack } = useSmartNavigation();
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   // Afficher un loader pendant le chargement
@@ -52,7 +54,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
             </Button>
             <Button 
               variant="outline" 
-              onClick={() => window.history.back()}
+              onClick={navigateBack}
               className="w-full"
             >
               Retour

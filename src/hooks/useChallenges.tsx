@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { useToast } from './use-toast';
@@ -34,12 +34,64 @@ export const useChallenges = () => {
   const [stats, setStats] = useState<ChallengeStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Refs pour le debounce de sauvegarde
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastSavedChallengesRef = useRef<string>('');
+  const lastSavedStatsRef = useRef<string>('');
+  
+  // Refs pour capturer les valeurs actuelles au démontage
+  const currentUserRef = useRef(user);
+  const currentChallengesRef = useRef<UserChallenge[]>([]);
+  const currentStatsRef = useRef<ChallengeStats | null>(null);
+  
+  // Ref pour éviter les chargements multiples
+  const isLoadingRef = useRef(false);
+  const lastLoadedUserIdRef = useRef<string | null>(null);
+
+  // Fonction de sauvegarde avec debounce
+  const debouncedSave = useCallback((challenges: UserChallenge[], stats: ChallengeStats | null) => {
+    if (!user) return;
+    
+    // Annuler la sauvegarde précédente
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+    
+    // Créer une sauvegarde avec debounce (300ms)
+    saveTimeoutRef.current = setTimeout(() => {
+      try {
+        const challengesStr = JSON.stringify(challenges);
+        const statsStr = stats ? JSON.stringify(stats) : '';
+        
+        // Sauvegarder seulement si les données ont changé
+        if (challengesStr !== lastSavedChallengesRef.current) {
+          localStorage.setItem(`user_challenges_${user.id}`, challengesStr);
+          lastSavedChallengesRef.current = challengesStr;
+        }
+        
+        if (stats && statsStr !== lastSavedStatsRef.current) {
+          localStorage.setItem(`challenge_stats_${user.id}`, statsStr);
+          lastSavedStatsRef.current = statsStr;
+        }
+      } catch (err) {
+        console.error('Erreur lors de la sauvegarde:', err);
+      }
+    }, 300);
+  }, [user]);
 
   // Charger les défis depuis localStorage (préparé pour migration Supabase)
   const loadChallenges = useCallback(async () => {
     if (!user) return;
+    
+    // Protection contre les chargements multiples pour le même utilisateur
+    if (isLoadingRef.current && lastLoadedUserIdRef.current === user.id) {
+      return;
+    }
 
     try {
+      isLoadingRef.current = true;
+      lastLoadedUserIdRef.current = user.id;
       setLoading(true);
       setError(null);
 
@@ -47,14 +99,16 @@ export const useChallenges = () => {
       const storedChallenges = localStorage.getItem(`user_challenges_${user.id}`);
       const challengesData = storedChallenges ? JSON.parse(storedChallenges) : [];
       setUserChallenges(challengesData);
-
-      console.log('Défis chargés:', challengesData);
-      console.log('Défis supprimés:', challengesData.filter(c => c.status === 'deleted'));
+      
+      // Mettre à jour la référence pour éviter les sauvegardes inutiles
+      lastSavedChallengesRef.current = JSON.stringify(challengesData);
 
       // Charger les statistiques depuis localStorage
       const storedStats = localStorage.getItem(`challenge_stats_${user.id}`);
       if (storedStats) {
-        setStats(JSON.parse(storedStats));
+        const parsedStats = JSON.parse(storedStats);
+        setStats(parsedStats);
+        lastSavedStatsRef.current = storedStats;
       } else {
         // Créer des statistiques par défaut
         const defaultStats: ChallengeStats = {
@@ -65,25 +119,19 @@ export const useChallenges = () => {
           contents_per_day: 1
         };
         setStats(defaultStats);
+        const defaultStatsStr = JSON.stringify(defaultStats);
+        lastSavedStatsRef.current = defaultStatsStr;
         // Sauvegarder les stats par défaut
-        localStorage.setItem(`challenge_stats_${user.id}`, JSON.stringify(defaultStats));
+        localStorage.setItem(`challenge_stats_${user.id}`, defaultStatsStr);
       }
     } catch (err) {
       console.error('Erreur lors du chargement:', err);
       setError(err instanceof Error ? err.message : 'Erreur inconnue');
     } finally {
       setLoading(false);
+      isLoadingRef.current = false;
     }
   }, [user]);
-
-  // Sauvegarder les changements
-  const saveChanges = useCallback(() => {
-    if (!user) return;
-    localStorage.setItem(`user_challenges_${user.id}`, JSON.stringify(userChallenges));
-    if (stats) {
-      localStorage.setItem(`challenge_stats_${user.id}`, JSON.stringify(stats));
-    }
-  }, [user, userChallenges, stats]);
 
   // Ajouter un défi
   const addChallenge = async (title: string, additionalData?: {
@@ -106,7 +154,6 @@ export const useChallenges = () => {
       };
 
       setUserChallenges(prev => [...prev, newChallenge]);
-      saveChanges();
       
       return { success: true };
     } catch (err) {
@@ -132,8 +179,6 @@ export const useChallenges = () => {
             : c
         )
       );
-
-      saveChanges();
       
       return { success: true };
     } catch (err) {
@@ -156,8 +201,6 @@ export const useChallenges = () => {
             : c
         )
       );
-
-      saveChanges();
       
       console.log('Défi supprimé vers la corbeille:', id);
       
@@ -181,7 +224,6 @@ export const useChallenges = () => {
         )
       );
       
-      saveChanges();
       return { success: true };
     } catch (err) {
       console.error('Erreur lors de la mise à jour:', err);
@@ -195,7 +237,6 @@ export const useChallenges = () => {
 
     try {
       setUserChallenges(newOrder);
-      saveChanges();
       
       return { success: true };
     } catch (err) {
@@ -265,20 +306,18 @@ export const useChallenges = () => {
       const completedCount = userChallenges.filter(c => c.status === 'completed').length;
       const totalCount = userChallenges.filter(c => c.status !== 'deleted').length;
 
-      const statsData: ChallengeStats = {
+      // Utiliser une mise à jour fonctionnelle pour préserver les valeurs existantes
+      setStats(prevStats => ({
         total_challenges: totalCount,
         completed_challenges: completedCount,
         pending_challenges: pendingCount,
-        program_duration: stats?.program_duration || '3months',
-        contents_per_day: stats?.contents_per_day || 1
-      };
-
-      setStats(statsData);
-      saveChanges();
+        program_duration: prevStats?.program_duration || '3months',
+        contents_per_day: prevStats?.contents_per_day || 1
+      }));
     } catch (err) {
       console.error('Erreur lors de la mise à jour des stats:', err);
     }
-  }, [user, userChallenges, stats]);
+  }, [user, userChallenges]);
 
   // Remettre un défi accompli en défis
   const restoreChallenge = async (id: string) => {
@@ -292,7 +331,6 @@ export const useChallenges = () => {
             : c
         )
       );
-      saveChanges();
       return { success: true };
     } catch (err) {
       console.error('Erreur lors de la restauration:', err);
@@ -312,7 +350,6 @@ export const useChallenges = () => {
             : c
         )
       );
-      saveChanges();
       return { success: true };
     } catch (err) {
       console.error('Erreur lors de la restauration:', err);
@@ -326,7 +363,6 @@ export const useChallenges = () => {
 
     try {
       setUserChallenges(prev => prev.filter(c => c.id !== id));
-      saveChanges();
       return { success: true };
     } catch (err) {
       console.error('Erreur lors de la suppression définitive:', err);
@@ -336,15 +372,72 @@ export const useChallenges = () => {
 
   // Charger les données au montage et quand l'utilisateur change
   useEffect(() => {
-    loadChallenges();
-  }, [user, loadChallenges]);
+    if (user?.id) {
+      // Réinitialiser les refs quand l'utilisateur change
+      if (lastLoadedUserIdRef.current !== user.id) {
+        isLoadingRef.current = false;
+        lastLoadedUserIdRef.current = null;
+      }
+      loadChallenges();
+    } else {
+      setUserChallenges([]);
+      setStats(null);
+      setLoading(false);
+      isLoadingRef.current = false;
+      lastLoadedUserIdRef.current = null;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]); // Seulement quand l'ID de l'utilisateur change
 
   // Mettre à jour les statistiques automatiquement quand userChallenges change
   useEffect(() => {
-    if (userChallenges.length > 0) {
+    if (user && userChallenges.length >= 0) {
       updateStats();
     }
-  }, [userChallenges, updateStats]);
+  }, [user, userChallenges, updateStats]);
+
+  // Mettre à jour les refs pour le cleanup
+  useEffect(() => {
+    currentUserRef.current = user;
+    currentChallengesRef.current = userChallenges;
+    currentStatsRef.current = stats;
+  }, [user, userChallenges, stats]);
+
+  // Sauvegarder avec debounce quand userChallenges ou stats changent
+  useEffect(() => {
+    if (!user) return;
+    
+    // Ne sauvegarder que si on a des données
+    if (userChallenges.length > 0 || stats) {
+      debouncedSave(userChallenges, stats);
+    }
+    
+    // Cleanup: sauvegarder immédiatement au démontage ou changement d'utilisateur
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+        saveTimeoutRef.current = null;
+        // Sauvegarder immédiatement si on a des données en attente
+        const currentUser = currentUserRef.current;
+        const currentChallenges = currentChallengesRef.current;
+        const currentStats = currentStatsRef.current;
+        if (currentUser && (currentChallenges.length > 0 || currentStats)) {
+          try {
+            const challengesStr = JSON.stringify(currentChallenges);
+            const statsStr = currentStats ? JSON.stringify(currentStats) : '';
+            if (challengesStr !== lastSavedChallengesRef.current) {
+              localStorage.setItem(`user_challenges_${currentUser.id}`, challengesStr);
+            }
+            if (currentStats && statsStr !== lastSavedStatsRef.current) {
+              localStorage.setItem(`challenge_stats_${currentUser.id}`, statsStr);
+            }
+          } catch (err) {
+            console.error('Erreur lors de la sauvegarde finale:', err);
+          }
+        }
+      }
+    };
+  }, [user?.id, userChallenges, stats, debouncedSave]);
 
   // Filtrer les défis par statut
   const challenges = userChallenges.filter(c => c.status === 'pending');

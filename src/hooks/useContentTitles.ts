@@ -25,6 +25,12 @@ export const useContentTitles = (subcategoryId?: string, networkId?: string) => 
       if (error) throw error;
       return data;
     },
-    enabled: true
+    enabled: true,
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 10,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: 1,
+    retryDelay: 1000,
   });
 };

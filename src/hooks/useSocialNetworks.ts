@@ -99,6 +99,12 @@ export const useSocialNetworks = () => {
       
       return sortedData;
     },
+    staleTime: 1000 * 60 * 10, // 10 minutes - les réseaux changent rarement
+    gcTime: 1000 * 60 * 30, // 30 minutes
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: 1,
+    retryDelay: 1000,
   });
 };
 

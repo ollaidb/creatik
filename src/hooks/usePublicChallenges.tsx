@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { useToast } from './use-toast';
@@ -36,88 +36,59 @@ interface PublicChallenge {
 export const usePublicChallenges = (filterLikedOnly: boolean = false) => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [challenges, setChallenges] = useState<PublicChallenge[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
-  // Charger les challenges publics
-  const loadPublicChallenges = async () => {
-    try {
-      console.log('🔄 Chargement des challenges publics...');
-      setLoading(true);
-      setError(null);
-      
+  // Utiliser React Query pour le chargement avec cache
+  const { data: challenges = [], isLoading: loading, isError, error, refetch } = useQuery({
+    queryKey: ['public-challenges', filterLikedOnly],
+    queryFn: async () => {
       const startTime = performance.now();
       
-      const { data, error } = await supabase
+      const { data, error: queryError } = await supabase
         .from('challenges')
         .select('*')
         .eq('is_active', true)
         .order('created_at', { ascending: false });
 
-      const endTime = performance.now();
-      const duration = endTime - startTime;
-      
+      const duration = performance.now() - startTime;
       console.log(`✅ Challenges récupérés en ${duration.toFixed(2)}ms:`, data?.length || 0);
 
-      if (error) {
-        console.error('❌ Erreur lors du chargement des challenges:', error);
-        throw error;
+      if (queryError) {
+        console.error('❌ Erreur lors du chargement des challenges:', queryError);
+        throw queryError;
       }
 
       const challengesWithCreator = (data || []).map((challenge: PublicChallenge) => ({
         ...challenge,
-        creator: null // Pas de créateur pour l'instant
+        creator: null
       }));
-      
-      setChallenges(challengesWithCreator);
-      console.log('✅ Challenges chargés avec succès');
-      
-    } catch (err) {
-      console.error('❌ Erreur lors du chargement des challenges publics:', err);
-      setError('Impossible de charger les challenges');
-      
-      // Fallback: utiliser des données temporaires si la table n'existe pas
-      if (err instanceof Error && err.message.includes('does not exist')) {
-        console.log('⚠️ Table challenges non trouvée, utilisation de données temporaires');
-        setChallenges([
-          {
-            id: 'temp-1',
-            title: 'Défi de création de contenu',
-            description: 'Créez du contenu engageant pour votre audience',
-            category: 'Création',
-            points: 100,
-            difficulty: 'medium',
-            duration_days: 7,
-            is_daily: false,
-            is_active: true,
-            created_by: 'system',
-            likes_count: 0,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-            creator: null
-          }
-        ]);
-        setError(null);
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  // Ajouter un challenge à ses défis personnels
-  const addToPersonalChallenges = async (challengeId: string) => {
-    if (!user) {
-      toast({
-        title: "Connexion requise",
-        description: "Connectez-vous pour ajouter des défis",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    try {
-      console.log('🔄 Ajout du challenge aux défis personnels...');
+      return challengesWithCreator;
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    gcTime: 1000 * 60 * 10, // 10 minutes
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: (failureCount, error) => {
+      // Ne pas retry si erreur de permission ou table inexistante
+      if (error && typeof error === 'object') {
+        const errorMessage = String(error);
+        if (errorMessage.includes('permission denied') || 
+            errorMessage.includes('does not exist')) {
+          return false;
+        }
+      }
+      return failureCount < 1; // Maximum 1 retry
+    },
+    retryDelay: 1000,
+  });
+
+  // Mutation pour ajouter un challenge aux défis personnels
+  const addToPersonalChallengesMutation = useMutation({
+    mutationFn: async (challengeId: string) => {
+      if (!user) {
+        throw new Error('Utilisateur non connecté');
+      }
       
       const { error } = await supabase
         .from('user_challenges')
@@ -128,36 +99,43 @@ export const usePublicChallenges = (filterLikedOnly: boolean = false) => {
           points_earned: 0
         });
         
-      if (error) {
-        console.error('❌ Erreur lors de l\'ajout du défi:', error);
-        throw error;
-      }
-      
-      console.log('✅ Challenge ajouté avec succès');
+      if (error) throw error;
+    },
+    onSuccess: () => {
       toast({
         title: "Défi ajouté !",
         description: "Le challenge a été ajouté à vos défis personnels",
       });
-    } catch (err) {
+      // Invalider les défis personnels pour rafraîchir
+      queryClient.invalidateQueries({ queryKey: ['user-challenges'] });
+    },
+    onError: (err: Error) => {
       console.error('❌ Erreur lors de l\'ajout du défi:', err);
-      toast({
-        title: "Erreur",
-        description: "Impossible d'ajouter le défi",
-        variant: "destructive"
-      });
-    }
-  };
+      if (err.message === 'Utilisateur non connecté') {
+        toast({
+          title: "Connexion requise",
+          description: "Connectez-vous pour ajouter des défis",
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Erreur",
+          description: "Impossible d'ajouter le défi",
+          variant: "destructive"
+        });
+      }
+    },
+  });
 
-  useEffect(() => {
-    console.log('🔄 useEffect usePublicChallenges - user:', user?.id, 'filterLikedOnly:', filterLikedOnly);
-    loadPublicChallenges();
-  }, [user, filterLikedOnly]);
+  const addToPersonalChallenges = (challengeId: string) => {
+    addToPersonalChallengesMutation.mutate(challengeId);
+  };
 
   return {
     challenges,
     loading,
-    error,
+    error: isError ? (error instanceof Error ? error.message : 'Erreur lors du chargement') : null,
     addToPersonalChallenges,
-    refresh: loadPublicChallenges
+    refresh: () => refetch()
   };
 }; 

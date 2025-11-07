@@ -42,6 +42,12 @@ export function useIdees(subcategoryId?: string, platform?: string) {
       console.log('✅ Idées chargées:', data?.length || 0);
       return data as Idee[] || [];
     },
-    enabled: !!subcategoryId
+    enabled: !!subcategoryId,
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 10,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: 1,
+    retryDelay: 1000,
   });
 } 

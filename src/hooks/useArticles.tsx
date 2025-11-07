@@ -42,6 +42,12 @@ export function useArticles(subcategoryId?: string, platform?: string) {
       console.log('✅ Articles chargés:', data?.length || 0);
       return data as Article[] || [];
     },
-    enabled: !!subcategoryId
+    enabled: !!subcategoryId,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    gcTime: 1000 * 60 * 10, // 10 minutes
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: 1,
+    retryDelay: 1000,
   });
 } 

@@ -24,7 +24,7 @@ const Notes = () => {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => navigate(-1)}
+                onClick={navigateBack}
                 className="h-8 w-8"
               >
                 <ArrowLeft className="h-4 w-4" />

@@ -24,11 +24,12 @@ const Hooks = () => {
   const { data: subcategory, isLoading: subcategoryLoading } = useSubcategory(subcategoryId);
   const { data: hooks, isLoading: hooksLoading } = useHooks(categoryId, subcategoryId, selectedNetwork);
   
-  // Utiliser directement les hooks filtrés par le hook
-  const filteredHooks = hooks || [];
+  // Utiliser les données en cache même si isLoading est vrai
+  const displayHooks = hooks || [];
+  const isCriticalLoading = hooksLoading && !hooks;
   
   // Filtrer les hooks par searchTerm
-  const filteredHooksBySearch = filteredHooks.filter(hook => 
+  const filteredHooksBySearch = displayHooks.filter(hook => 
     hook.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (hook.description && hook.description.toLowerCase().includes(searchTerm.toLowerCase()))
   );
@@ -102,7 +103,7 @@ const Hooks = () => {
 
   const networkStyle = getNetworkStyle(selectedNetwork);
 
-  if (subcategoryLoading || hooksLoading) {
+  if ((subcategoryLoading && !subcategory) || isCriticalLoading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         {/* Header fixe pour mobile */}

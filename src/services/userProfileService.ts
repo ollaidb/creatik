@@ -53,8 +53,6 @@ export class UserProfileService {
   // ===== RÉSEAUX SOCIAUX =====
   
   static async getSocialAccounts(userId: string): Promise<UserSocialAccount[]> {
-    console.log('🔍 Récupération des comptes sociaux pour l\'utilisateur:', userId);
-    
     const { data, error } = await supabase
       .from('user_social_accounts')
       .select('*')
@@ -67,7 +65,6 @@ export class UserProfileService {
       throw error;
     }
     
-    console.log('✅ Comptes sociaux récupérés:', data?.length || 0, data);
     return data || [];
   }
 

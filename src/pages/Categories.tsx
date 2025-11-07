@@ -29,7 +29,7 @@ const Categories = () => {
   );
   const [sortOrder, setSortOrder] = useState<'alphabetical' | 'priority' | 'recent'>('priority');
   
-  const { data: categories, isLoading } = useCategories();
+  const { data: categories, isLoading, isError, error } = useCategories();
   const { data: categoriesByTheme } = useCategoriesByTheme(selectedTheme);
   const { data: themes } = useThemes();
   const { data: socialNetworks } = useSocialNetworks();
@@ -52,30 +52,30 @@ const Categories = () => {
     selectedNetwork
   );
 
-  // Logs de débogage
-  console.log('🔍 Debug Categories:', {
-    selectedTheme,
-    selectedNetwork,
-    categories: categories?.length || 0,
-    categoriesByTheme: categoriesByTheme?.length || 0,
-    baseCategories: baseCategories?.length || 0,
-    filteredCategories: filteredCategories?.length || 0,
-    themes: themes?.length || 0,
-    socialNetworks: socialNetworks?.length || 0,
-    // Détails du filtrage
-    baseCategoriesNames: baseCategories?.map(c => c.name).slice(0, 5),
-    filteredCategoriesNames: filteredCategories?.map(c => c.name).slice(0, 5),
-    searchTerm,
-    sortOrder,
-    // Détails des réseaux sociaux
-    socialNetworksData: socialNetworks?.slice(0, 3),
-    // Vérifier si la personnalisation fonctionne
-    hasSelectedNetwork: selectedNetwork !== 'all',
-    hasSelectedTheme: selectedTheme !== null,
-    // Détails de l'URL
-    urlParams: searchParams.toString(),
-    allUrlParams: Object.fromEntries(searchParams.entries())
-  });
+  // Logs de débogage (désactivés pour la production)
+  // console.log('🔍 Debug Categories:', {
+  //   selectedTheme,
+  //   selectedNetwork,
+  //   categories: categories?.length || 0,
+  //   categoriesByTheme: categoriesByTheme?.length || 0,
+  //   baseCategories: baseCategories?.length || 0,
+  //   filteredCategories: filteredCategories?.length || 0,
+  //   themes: themes?.length || 0,
+  //   socialNetworks: socialNetworks?.length || 0,
+  //   // Détails du filtrage
+  //   baseCategoriesNames: baseCategories?.map(c => c.name).slice(0, 5),
+  //   filteredCategoriesNames: filteredCategories?.map(c => c.name).slice(0, 5),
+  //   searchTerm,
+  //   sortOrder,
+  //   // Détails des réseaux sociaux
+  //   socialNetworksData: socialNetworks?.slice(0, 3),
+  //   // Vérifier si la personnalisation fonctionne
+  //   hasSelectedNetwork: selectedNetwork !== 'all',
+  //   hasSelectedTheme: selectedTheme !== null,
+  //   // Détails de l'URL
+  //   urlParams: searchParams.toString(),
+  //   allUrlParams: Object.fromEntries(searchParams.entries())
+  // });
 
   // Fonction de tri
   const getSortedCategories = (categories: Array<{id: string, name: string, color?: string, created_at?: string}>) => {
@@ -158,6 +158,57 @@ const Categories = () => {
             </div>
           </div>
         </div>
+      </div>
+    );
+  }
+
+  if (isError) {
+    const errorMessage = error instanceof Error ? error.message : 'Une erreur est survenue lors du chargement des catégories';
+    console.error('❌ Erreur Categories:', error);
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="sticky top-0 z-50 bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border px-4 py-3">
+          <div className="flex items-center gap-3">
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={handleBackClick} 
+              className="p-2 h-10 w-10 rounded-full text-foreground hover:bg-accent"
+            >
+              <ArrowLeft size={20} />
+            </Button>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-lg font-semibold text-foreground truncate">
+                Erreur
+              </h1>
+            </div>
+          </div>
+        </div>
+        <div className="px-4 py-4">
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+            <h2 className="text-lg font-semibold text-red-800 dark:text-red-200 mb-2">
+              Erreur de chargement des catégories
+            </h2>
+            <p className="text-red-600 dark:text-red-300 mb-4">{errorMessage}</p>
+            <div className="flex gap-2">
+              <Button 
+                onClick={() => window.location.reload()} 
+                variant="outline"
+                size="sm"
+              >
+                Réessayer
+              </Button>
+              <Button 
+                onClick={() => navigate('/database-diagnostic')} 
+                variant="outline"
+                size="sm"
+              >
+                Diagnostic
+              </Button>
+            </div>
+          </div>
+        </div>
+        <Navigation />
       </div>
     );
   }

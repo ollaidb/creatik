@@ -42,6 +42,12 @@ export function useExemples(subcategoryId?: string, platform?: string) {
       console.log('✅ Exemples chargés:', data?.length || 0);
       return data as Exemple[] || [];
     },
-    enabled: !!subcategoryId
+    enabled: !!subcategoryId,
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 10,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: 1,
+    retryDelay: 1000,
   });
 } 

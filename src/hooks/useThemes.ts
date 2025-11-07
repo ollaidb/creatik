@@ -12,7 +12,13 @@ export const useThemes = () => {
         .order('display_order');
       if (error) throw error;
       return data;
-    }
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    gcTime: 1000 * 60 * 10, // 10 minutes
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: 1, // Seulement 1 retry
+    retryDelay: 1000,
   });
 };
 
@@ -39,6 +45,12 @@ export const useCategoriesByTheme = (themeId?: string) => {
       if (error) throw error;
       return data.map(item => item.category).filter(Boolean);
     },
-    enabled: true
+    enabled: true,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    gcTime: 1000 * 60 * 10, // 10 minutes
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: 1, // Seulement 1 retry
+    retryDelay: 1000,
   });
 };

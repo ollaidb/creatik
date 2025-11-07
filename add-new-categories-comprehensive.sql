@@ -1,4 +1,4 @@
--- Script pour ajouter de nouvelles catégories de contenu
+ -- Script pour ajouter de nouvelles catégories de contenu
 -- Couvrant tous les domaines possibles pour les réseaux sociaux
 -- Date: 2025-01-28
 

@@ -34,11 +34,11 @@ export const useSources = (networkId?: string) => {
       return (data || []) as Source[];
     },
     enabled: true,
-    // Optimisation des performances
     staleTime: 1000 * 60 * 5, // 5 minutes
     gcTime: 1000 * 60 * 10, // 10 minutes
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
-    refetchInterval: false
+    retry: 1,
+    retryDelay: 1000,
   });
 }; 

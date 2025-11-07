@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
 
-// Optimisations de performance et prévention du cache
+// Optimisations de performance
 if (import.meta.env.DEV) {
   // En développement, forcer le rechargement des modules
   const originalFetch = window.fetch;
@@ -19,26 +19,14 @@ if (import.meta.env.DEV) {
 // Optimisation du rendu React
 const root = ReactDOM.createRoot(document.getElementById('root')!);
 
-// Force le re-rendu en cas de mise à jour
-const renderApp = () => {
+// Rendu optimisé - pas de StrictMode en production pour éviter les doubles rendus
+if (import.meta.env.DEV) {
   root.render(
     <React.StrictMode>
       <App />
     </React.StrictMode>,
   );
-};
-
-// Re-rendu automatique en cas de changement de version
-let currentVersion = '1.0.0';
-const checkForUpdates = () => {
-  const newVersion = document.querySelector('meta[name="version"]')?.getAttribute('content');
-  if (newVersion && newVersion !== currentVersion) {
-    currentVersion = newVersion;
-    renderApp();
-  }
-};
-
-// Vérifier les mises à jour toutes les 30 secondes
-setInterval(checkForUpdates, 30000);
-
-renderApp();
+} else {
+  // En production, éviter StrictMode pour de meilleures performances
+  root.render(<App />);
+}

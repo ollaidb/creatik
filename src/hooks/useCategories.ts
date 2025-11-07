@@ -11,55 +11,40 @@ export const useCategories = () => {
   return useQuery({
     queryKey: ['categories'],
     queryFn: async () => {
-      console.log('🔄 Début de la requête des catégories...');
-      const startTime = performance.now();
+      const { data, error } = await supabase
+        .from('categories')
+        .select('*')
+        .order('name');
       
-      try {
-        const { data, error } = await supabase
-          .from('categories')
-          .select('*')
-          .order('name');
-        
-        const endTime = performance.now();
-        const duration = endTime - startTime;
-        
-        console.log(`✅ Catégories récupérées en ${duration.toFixed(2)}ms:`, data?.length || 0);
-        
-        if (error) {
-          console.error('❌ Erreur lors de la récupération des catégories:', error);
-          throw error;
-        }
-        
-        if (!data || data.length === 0) {
-          console.warn('⚠️ Aucune catégorie trouvée dans la base de données');
-        }
-        
-        return data;
-      } catch (error) {
-        console.error('❌ Exception lors de la récupération des catégories:', error);
+      if (error) {
+        console.error('❌ Erreur lors de la récupération des catégories:', error);
         throw error;
       }
+      
+      return data || [];
     },
     // Optimisation des performances
-    staleTime: 1000 * 60 * 5, // 5 minutes
-    gcTime: 1000 * 60 * 10, // 10 minutes (anciennement cacheTime)
+    staleTime: 1000 * 60 * 15, // 15 minutes - plus long pour éviter les refetch fréquents
+    gcTime: 1000 * 60 * 30, // 30 minutes
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
+    refetchOnMount: false, // Ne pas refetch si déjà en cache
     refetchInterval: false,
-    // Gestion des erreurs et retry
+    // Gestion des erreurs et retry - Limité pour éviter la saturation
     retry: (failureCount, error) => {
-      console.log(`🔄 Tentative ${failureCount + 1} de récupération des catégories`);
-      // Retry seulement pour les erreurs réseau, pas pour les erreurs 4xx
-      if (error && typeof error === 'object' && 'code' in error) {
-        const supabaseError = error as SupabaseError;
-        if (supabaseError.code && supabaseError.code.startsWith('4')) {
-          console.log('❌ Erreur client, pas de retry');
+      // Ne pas retry si c'est une erreur de permission ou client
+      if (error && typeof error === 'object') {
+        const errorMessage = String(error);
+        if (errorMessage.includes('permission denied') || 
+            errorMessage.includes('does not exist') ||
+            (('code' in error) && typeof (error as SupabaseError).code === 'string' && (error as SupabaseError).code?.startsWith('4'))) {
           return false;
         }
       }
-      return failureCount < 2; // Maximum 3 tentatives
+      // Maximum 0 retry pour éviter la saturation - si ça échoue, on utilise le cache
+      return false;
     },
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Backoff exponentiel
+    retryDelay: 2000,
   });
 };
 

@@ -75,22 +75,34 @@ export const useHooks = (categoryId?: string, subcategoryId?: string, networkId?
         throw contentTitlesError;
       }
 
-      // Convertir les content_titles en format Hook
-      const userHooks: Hook[] = await Promise.all(
-        (contentTitlesData || []).map(async (item) => {
-          const socialNetworkId = item.platform ? await getSocialNetworkIdByName(item.platform) : null;
-          return {
-            id: item.id,
-            title: item.title,
-            description: item.description || '',
-            category_id: item.category_id || categoryId || null,
-            subcategory_id: item.subcategory_id,
-            social_network_id: socialNetworkId,
-            created_at: item.created_at,
-            updated_at: item.updated_at
-          };
-        })
-      );
+      // Optimisation: récupérer tous les réseaux sociaux en une seule requête
+      const platforms = [...new Set((contentTitlesData || []).map(item => item.platform).filter(Boolean))];
+      const socialNetworksMap = new Map<string, string | null>();
+      
+      if (platforms.length > 0) {
+        const { data: socialNetworks } = await supabase
+          .from('social_networks')
+          .select('id, name');
+        
+        if (socialNetworks) {
+          platforms.forEach(platform => {
+            const network = socialNetworks.find(n => n.name.toLowerCase() === platform?.toLowerCase());
+            socialNetworksMap.set(platform, network?.id || null);
+          });
+        }
+      }
+
+      // Convertir les content_titles en format Hook (plus rapide, sans Promise.all inutile)
+      const userHooks: Hook[] = (contentTitlesData || []).map((item) => ({
+        id: item.id,
+        title: item.title,
+        description: item.description || '',
+        category_id: item.category_id || categoryId || null,
+        subcategory_id: item.subcategory_id,
+        social_network_id: item.platform ? socialNetworksMap.get(item.platform) || null : null,
+        created_at: item.created_at,
+        updated_at: item.updated_at
+      }));
 
       // Combiner les deux sources et trier par date de création
       const allHooks = [...(hooksData || []), ...userHooks];
@@ -100,7 +112,13 @@ export const useHooks = (categoryId?: string, subcategoryId?: string, networkId?
       
       return allHooks.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
     },
-    enabled: true
+    enabled: true,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    gcTime: 1000 * 60 * 10, // 10 minutes
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: 1,
+    retryDelay: 1000,
   });
 };
 

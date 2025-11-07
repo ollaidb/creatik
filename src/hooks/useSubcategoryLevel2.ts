@@ -50,5 +50,20 @@ export const useSubcategoryLevel2 = (subcategoryLevel2Id?: string) => {
       return data;
     },
     enabled: !!subcategoryLevel2Id,
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 10,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: (failureCount, error) => {
+      if (error && typeof error === 'object') {
+        const errorMessage = String(error);
+        if (errorMessage.includes('permission denied') || 
+            errorMessage.includes('does not exist')) {
+          return false;
+        }
+      }
+      return failureCount < 1;
+    },
+    retryDelay: 1000,
   });
 }; 

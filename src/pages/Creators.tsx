@@ -84,38 +84,88 @@ const Creators = () => {
     visible: { opacity: 1, y: 0 }
   };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-      {/* Header */}
-      <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate(-1)}
-                className="p-2 h-10 w-10 rounded-full"
-              >
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
-              <div className="flex items-center space-x-3">
-                <Users className="h-8 w-8 text-purple-600 dark:text-purple-400" />
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                  Créateurs
-                </h1>
-              </div>
+  if (creatorsLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        {/* Header fixe pour mobile */}
+        <div className="sticky top-0 z-50 bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border px-4 py-3">
+          <div className="flex items-center gap-3">
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={navigateBack} 
+              className="p-2 h-10 w-10 rounded-full text-foreground hover:bg-accent"
+            >
+              <ArrowLeft size={20} />
+            </Button>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-lg font-semibold text-foreground truncate">
+                Chargement...
+              </h1>
             </div>
-            <div className="flex items-center space-x-3">
-              <Button
-                onClick={() => navigate('/publish')}
-                className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Publier
-              </Button>
+            <Button 
+              size="sm"
+              onClick={() => navigate('/publish')}
+              className="px-3 py-2 h-auto rounded-full"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Publier
+            </Button>
+          </div>
+        </div>
+        <div className="px-4 py-4">
+          <div className="animate-pulse">
+            <div className="h-8 bg-gray-200 rounded w-1/3 mb-6"></div>
+            <div className="space-y-4">
+              {[...Array(10)].map((_, i) => (
+                <div key={i} className="h-16 bg-gray-200 rounded"></div>
+              ))}
             </div>
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen pb-20 bg-background" style={{ 
+      WebkitOverflowScrolling: 'touch',
+      overscrollBehavior: 'contain'
+    }}>
+      {/* Header fixe pour mobile */}
+      <div className="sticky top-0 z-50 bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border px-4 py-3">
+        <div className="flex items-center gap-3">
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={navigateBack} 
+            className="p-2 h-10 w-10 rounded-full text-foreground hover:bg-accent touch-manipulation"
+            style={{ WebkitTapHighlightColor: 'transparent' }}
+          >
+            <ArrowLeft size={20} />
+          </Button>
+          <div className="flex-1 min-w-0">
+            <h1 className="text-lg font-semibold text-foreground truncate">
+              Créateurs
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              {filteredCreators.length} créateur{filteredCreators.length > 1 ? 's' : ''}
+            </p>
+            {/* Indicateur du réseau social sélectionné */}
+            {selectedNetwork !== 'all' && (
+              <p className="text-xs text-primary font-medium">
+                {socialNetworks?.find(n => n.name === selectedNetwork)?.display_name}
+              </p>
+            )}
+          </div>
+          <Button 
+            size="sm"
+            onClick={() => navigate('/publish')}
+            className="px-3 py-2 h-auto rounded-full"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Publier
+          </Button>
         </div>
       </div>
 
@@ -180,6 +230,39 @@ const Creators = () => {
           <div className="mb-3">
             <div className="overflow-x-auto scrollbar-hide">
               <div className="flex gap-2 pb-2 min-w-max">
+                <motion.button
+                  onClick={() => setSelectedNetwork('all')}
+                  className={`
+                    px-3 py-2 rounded-lg transition-all duration-300 min-w-[70px] text-center flex items-center justify-center gap-2
+                    ${selectedNetwork === 'all'
+                      ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg scale-105'
+                      : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                    }
+                  `}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  animate={selectedNetwork === 'all' ? {
+                    scale: [1, 1.1, 1.05],
+                    boxShadow: [
+                      "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+                      "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
+                      "0 4px 6px -1px rgba(0, 0, 0, 0.1)"
+                    ]
+                  } : {}}
+                  transition={selectedNetwork === 'all' ? {
+                    duration: 0.6,
+                    ease: "easeInOut"
+                  } : {
+                    duration: 0.2
+                  }}
+                >
+                  <span className={`
+                    text-xs font-medium leading-tight
+                    ${selectedNetwork === 'all' ? 'text-white' : 'text-gray-700 dark:text-gray-300'}
+                  `}>
+                    Tout
+                  </span>
+                </motion.button>
                 {socialNetworks.map((network) => {
                   const isActive = selectedNetwork === network.name;
                   return (
@@ -249,7 +332,7 @@ const Creators = () => {
                 onClick={() => navigate('/categories')}
                 variant="outline"
                 size="sm"
-                className="rounded-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white border-0"
+                className="rounded-full"
               >
                 <FolderOpen className="h-4 w-4 mr-2" />
                 Catégories
@@ -259,14 +342,7 @@ const Creators = () => {
         </div>
 
         {/* Grille des créateurs */}
-        {creatorsLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
-              <p className="text-gray-600 dark:text-gray-400">Chargement des créateurs...</p>
-            </div>
-          </div>
-        ) : filteredCreators.length > 0 ? (
+        {filteredCreators.length > 0 ? (
           <motion.div 
             className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4"
             variants={containerVariants}
@@ -313,10 +389,20 @@ const Creators = () => {
             ))}
           </motion.div>
         ) : (
-          <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-            <Users className="h-16 w-16 mx-auto mb-4 text-gray-300 dark:text-gray-600" />
-            <p className="text-lg font-medium mb-2">Aucun créateur trouvé</p>
-            <p className="text-sm">Essayez de modifier vos critères de recherche</p>
+          <div className="text-center py-12">
+            <div className="text-muted-foreground mb-4 text-sm">
+              {searchTerm 
+                ? 'Aucun créateur trouvé pour cette recherche' 
+                : selectedNetwork !== 'all'
+                ? `Aucun créateur disponible pour ${socialNetworks?.find(n => n.name === selectedNetwork)?.display_name}`
+                : 'Aucun créateur disponible'
+              }
+            </div>
+            {searchTerm && (
+              <Button onClick={() => setSearchTerm('')} className="text-sm">
+                Effacer la recherche
+              </Button>
+            )}
           </div>
         )}
 

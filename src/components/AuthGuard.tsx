@@ -12,11 +12,8 @@ const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  useEffect(() => {
-    // L'AuthGuard ne bloque plus l'accès aux pages
-    // L'authentification se fait maintenant au niveau des fonctionnalités individuelles
-    console.log('🔓 AuthGuard: Accès libre à toutes les pages activé');
-  }, [user, loading, navigate, toast]);
+  // L'AuthGuard ne bloque plus l'accès aux pages
+  // L'authentification se fait maintenant au niveau des fonctionnalités individuelles
 
   return <>{children}</>;
 };

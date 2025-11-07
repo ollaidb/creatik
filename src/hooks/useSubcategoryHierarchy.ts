@@ -34,5 +34,11 @@ export const useSubcategoryHierarchy = (subcategoryId?: string) => {
       return data;
     },
     enabled: !!subcategoryId,
+    staleTime: 1000 * 60 * 10, // 10 minutes
+    gcTime: 1000 * 60 * 30,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: 1,
+    retryDelay: 1000,
   });
 }; 

@@ -54,6 +54,7 @@ import Navigation from '@/components/Navigation';
 import { UserProfileService, UserSocialAccount, UserSocialPost, UserContentPlaylist } from '@/services/userProfileService';
 import { ProgramSettingsService, ProgramSettingsInput } from '@/services/programSettingsService';
 import { useChallenges } from '@/hooks/useChallenges';
+import { useUserProfile } from '@/hooks/useUserProfile';
 
 // Type pour les défis (importé depuis useChallenges)
 interface UserChallenge {
@@ -260,27 +261,21 @@ const UserProfile: React.FC = () => {
     };
   }, []);
 
-  // Charger les données du profil
+  // Utiliser React Query pour charger les données du profil avec cache
+  const { data: profileData, isLoading: profileLoading, error: profileError } = useUserProfile(user?.id);
+  
   useEffect(() => {
-    const loadProfileData = async () => {
-      if (!user?.id) return;
-      
-      try {
-        setLoading(true);
-        const data = await UserProfileService.getUserProfileData(user.id);
-        setSocialAccounts(data.socialAccounts);
-        setSocialPosts(data.socialPosts);
-        setPlaylists(data.playlists);
-        
-      } catch (error) {
-        console.error('Erreur lors du chargement des données du profil:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadProfileData();
-  }, [user?.id]);
+    if (profileData) {
+      setSocialAccounts(profileData.socialAccounts);
+      setSocialPosts(profileData.socialPosts);
+      setPlaylists(profileData.playlists);
+    }
+  }, [profileData]);
+  
+  // Combiner le loading du profil avec les autres états de chargement
+  useEffect(() => {
+    setLoading(profileLoading);
+  }, [profileLoading]);
 
   // Mettre à jour les paramètres de programmation quand la sélection change
   useEffect(() => {
@@ -986,13 +981,9 @@ const UserProfile: React.FC = () => {
                   <Users className="w-5 h-5" />
                   <span className="text-sm">Gestion des réseaux sociaux</span>
                 </div>
-                <p className="text-sm text-muted-foreground mb-4">
+                <p className="text-sm text-muted-foreground">
                   Connectez-vous pour ajouter et gérer vos réseaux sociaux
                 </p>
-                <Button onClick={handleLoginClick} size="sm">
-                  <LogIn className="w-4 h-4 mr-2" />
-                  Se connecter
-                </Button>
               </div>
             }
           >
@@ -1092,13 +1083,9 @@ const UserProfile: React.FC = () => {
                   <BookOpen className="w-5 h-5" />
                   <span className="text-sm">Gestion des playlists</span>
                 </div>
-                <p className="text-sm text-muted-foreground mb-4">
+                <p className="text-sm text-muted-foreground">
                   Connectez-vous pour créer et organiser vos playlists de contenu
                 </p>
-                <Button onClick={handleLoginClick} size="sm">
-                  <LogIn className="w-4 h-4 mr-2" />
-                  Se connecter
-                </Button>
               </div>
             }
           >
@@ -1220,13 +1207,9 @@ const UserProfile: React.FC = () => {
                   <FileText className="w-8 h-8" />
                   <span className="text-lg font-medium">Gestion du contenu</span>
                 </div>
-                <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                <p className="text-muted-foreground max-w-md mx-auto">
                   Connectez-vous pour créer du contenu, gérer vos défis et suivre vos statistiques
                 </p>
-                <Button onClick={handleLoginClick} size="lg">
-                  <LogIn className="w-5 h-5 mr-2" />
-                  Se connecter pour commencer
-                </Button>
               </div>
             }
           >

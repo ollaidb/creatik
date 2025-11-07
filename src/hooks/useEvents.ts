@@ -193,8 +193,11 @@ export const useEvents = (): UseEventsReturn => {
   };
 
   useEffect(() => {
+    // Charger les événements une seule fois au montage
+    // Ne pas recharger automatiquement pour éviter la saturation
     fetchEvents();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Seulement au montage
 
   return {
     events,

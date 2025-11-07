@@ -40,5 +40,11 @@ export const useContentTitlesLevel2 = (subcategoryLevel2Id?: string, network?: s
       return data || [];
     },
     enabled: !!subcategoryLevel2Id,
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 10,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: 1,
+    retryDelay: 1000,
   });
 }; 

@@ -35,5 +35,11 @@ export const useCategoryHierarchy = (categoryId?: string) => {
       return data;
     },
     enabled: !!categoryId,
+    staleTime: 1000 * 60 * 10, // 10 minutes - la hiérarchie change rarement
+    gcTime: 1000 * 60 * 30,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: 1,
+    retryDelay: 1000,
   });
 }; 

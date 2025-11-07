@@ -42,6 +42,12 @@ export function useMotsCles(subcategoryId?: string, platform?: string) {
       console.log('✅ Mots-clés chargés:', data?.length || 0);
       return data as MotsCles[] || [];
     },
-    enabled: !!subcategoryId
+    enabled: !!subcategoryId,
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 10,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: 1,
+    retryDelay: 1000,
   });
 } 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import Hero from "@/components/Hero";
@@ -42,11 +42,46 @@ const Index: React.FC = () => {
   const { favorites, isLoading } = useFavorites('category');
   const { challenges: publicChallenges, addToPersonalChallenges } = usePublicChallenges();
   const { trends, getTopTrends } = useSocialTrends();
+  const { userChallenges, stats, completeChallenge } = useChallenges();
+  
+  // Utiliser useEvents avec mémorisation de la date pour éviter les rechargements
   const { getEventsForDate } = useEvents();
   const [todayEvents, setTodayEvents] = useState<Event[]>([]);
-  const { userChallenges, stats, completeChallenge } = useChallenges();
+  
+  // Mémoïser la date d'aujourd'hui pour éviter les rechargements
+  const today = useMemo(() => {
+    const date = new Date();
+    date.setHours(0, 0, 0, 0);
+    return date;
+  }, []); // Seulement une fois au montage
 
-  // Simuler des idées favorites
+  // Charger les événements d'aujourd'hui (une seule fois au montage)
+  useEffect(() => {
+    let isMounted = true;
+    
+    const loadTodayEvents = async () => {
+      try {
+        const events = await getEventsForDate(today);
+        if (isMounted) {
+          setTodayEvents(events || []);
+        }
+      } catch (err) {
+        console.error('Erreur lors du chargement des événements:', err);
+        if (isMounted) {
+          setTodayEvents([]);
+        }
+      }
+    };
+
+    loadTodayEvents();
+    
+    return () => {
+      isMounted = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Seulement au montage, la date est mémorisée
+
+  // Simuler des idées favorites (mémoïsé pour éviter les recalculs)
   useEffect(() => {
     const withFavorites = contentIdeas.map(idea => ({
       ...idea,
@@ -55,22 +90,6 @@ const Index: React.FC = () => {
     setFavoriteIdeas(withFavorites.filter(idea => idea.isFavorite));
     setPersonalizedIdeas(getPersonalizedRecommendations(visitedCategories));
   }, [visitedCategories]);
-
-  // Charger les événements d'aujourd'hui
-  useEffect(() => {
-    const loadTodayEvents = async () => {
-      try {
-        const today = new Date();
-        const events = await getEventsForDate(today);
-        setTodayEvents(events || []);
-      } catch (err) {
-        console.error('Erreur lors du chargement des événements:', err);
-        setTodayEvents([]);
-      }
-    };
-
-    loadTodayEvents();
-  }, [getEventsForDate]);
 
   // Filtrer les catégories favorites
   const favoriteCategories = categories?.filter(cat => favorites.includes(cat.id)) || [];
@@ -307,7 +326,7 @@ const Index: React.FC = () => {
         </section>
       )}
       
-      {/* Section Quoi poster aujourd'hui */}
+      {/* Section Évènement du jour */}
       <section className="container mx-auto px-4 py-2">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -319,7 +338,7 @@ const Index: React.FC = () => {
               className="text-lg font-semibold text-foreground cursor-pointer hover:text-primary transition-colors"
               onClick={() => navigate('/events')}
             >
-              Quoi poster aujourd'hui
+              Évènement du jour
             </h2>
           </div>
           {todayEvents.length === 0 ? (
@@ -336,7 +355,7 @@ const Index: React.FC = () => {
               </CardContent>
             </Card>
           ) : (
-            <div className="flex overflow-x-auto gap-3 pb-2 scrollbar-hide">
+            <div className="flex overflow-x-auto gap-2 pb-2 scrollbar-hide">
               {todayEvents.map((event) => (
                 <motion.div
                   key={event.id}
@@ -345,23 +364,23 @@ const Index: React.FC = () => {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.3 }}
                 >
-                  <Card className="w-64 hover:shadow-md transition-shadow cursor-pointer bg-card" onClick={() => navigate('/events')}>
-                    <CardContent className="p-3">
-                      <div className="flex items-center justify-between mb-2">
-                        <h3 className="font-semibold text-sm line-clamp-2 flex-1 text-foreground">
+                  <Card className="w-64 h-20 hover:shadow-md transition-shadow cursor-pointer bg-card flex flex-col" onClick={() => navigate('/events')}>
+                    <CardContent className="p-2 flex flex-col h-full">
+                      <div className="flex items-center justify-between gap-2 flex-1">
+                        <h3 className="font-semibold text-xs line-clamp-1 flex-1 text-foreground leading-tight">
                           {event.person_name || event.title}
                         </h3>
-                        <div className="text-xs text-muted-foreground ml-2 flex-shrink-0">
-                          {getEventTypeText(event.event_type)}
+                        <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                          <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5">
+                            {getEventTypeText(event.event_type)}
+                          </Badge>
+                          <div className="text-[10px] text-muted-foreground leading-tight whitespace-nowrap">
+                            {new Date(event.date).toLocaleDateString('fr-FR', {
+                              day: 'numeric',
+                              month: 'short'
+                            })}
+                          </div>
                         </div>
-                      </div>
-                      
-                      <div className="text-xs text-muted-foreground">
-                        {new Date(event.date).toLocaleDateString('fr-FR', {
-                          day: 'numeric',
-                          month: 'long',
-                          year: 'numeric'
-                        })}
                       </div>
                     </CardContent>
                   </Card>

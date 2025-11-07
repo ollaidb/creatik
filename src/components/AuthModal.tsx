@@ -17,28 +17,68 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [username, setUsername] = useState('');
   const [userType, setUserType] = useState<'creator' | 'contributor'>('creator');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const { signUp, signIn, signInWithGoogle, signInWithApple } = useAuth();
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    
+    // Validation pour l'inscription
+    if (isSignUp) {
+      if (!username.trim()) {
+        toast({
+          title: "Erreur",
+          description: "Le nom d'utilisateur est requis",
+          variant: "destructive"
+        });
+        setLoading(false);
+        return;
+      }
+      
+      if (password.length < 6) {
+        toast({
+          title: "Erreur",
+          description: "Le mot de passe doit contenir au moins 6 caractères",
+          variant: "destructive"
+        });
+        setLoading(false);
+        return;
+      }
+      
+      if (password !== confirmPassword) {
+        toast({
+          title: "Erreur",
+          description: "Les mots de passe ne correspondent pas",
+          variant: "destructive"
+        });
+        setLoading(false);
+        return;
+      }
+    }
+    
     try {
       let result;
       if (isSignUp) {
         result = await signUp(email, password, {
-          first_name: firstName,
-          last_name: lastName,
+          username: username.trim(),
           user_type: userType
         });
+        
+        // Enregistrer le type d'utilisateur dans localStorage pour adapter le profil
+        if (!result.error) {
+          localStorage.setItem('userProfileType', userType);
+        }
       } else {
         result = await signIn(email, password);
       }
+      
       if (result.error) {
         toast({
           title: "Erreur",
@@ -50,6 +90,11 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
           title: isSignUp ? "Inscription réussie" : "Connexion réussie",
           description: isSignUp ? "Vérifiez votre email pour confirmer votre compte" : "Bienvenue !"
         });
+        // Réinitialiser le formulaire après succès
+        if (isSignUp) {
+          setUsername('');
+          setConfirmPassword('');
+        }
         onClose();
       }
     } catch (error) {
@@ -137,34 +182,19 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
           {/* Email/Password Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             {isSignUp && (
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <Label htmlFor="firstName">Prénom</Label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                    <Input
-                      id="firstName"
-                      type="text"
-                      value={firstName}
-                      onChange={(e) => setFirstName(e.target.value)}
-                      className="pl-10"
-                      required={isSignUp}
-                    />
-                  </div>
-                </div>
-                <div>
-                  <Label htmlFor="lastName">Nom</Label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                    <Input
-                      id="lastName"
-                      type="text"
-                      value={lastName}
-                      onChange={(e) => setLastName(e.target.value)}
-                      className="pl-10"
-                      required={isSignUp}
-                    />
-                  </div>
+              <div>
+                <Label htmlFor="username">Nom d'utilisateur</Label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <Input
+                    id="username"
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    className="pl-10"
+                    placeholder="Choisissez un nom d'utilisateur"
+                    required={isSignUp}
+                  />
                 </div>
               </div>
             )}
@@ -220,6 +250,7 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="pl-10 pr-10"
+                  placeholder={isSignUp ? "Au moins 6 caractères" : ""}
                   required
                 />
                 <button
@@ -235,6 +266,37 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                 </button>
               </div>
             </div>
+            {isSignUp && (
+              <div>
+                <Label htmlFor="confirmPassword">Confirmer le mot de passe</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <Input
+                    id="confirmPassword"
+                    type={showConfirmPassword ? "text" : "password"}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="pl-10 pr-10"
+                    placeholder="Confirmez votre mot de passe"
+                    required={isSignUp}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
+                {confirmPassword && password !== confirmPassword && (
+                  <p className="text-xs text-red-500 mt-1">Les mots de passe ne correspondent pas</p>
+                )}
+              </div>
+            )}
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? 'Chargement...' : (isSignUp ? 'Créer un compte' : 'Se connecter')}
             </Button>

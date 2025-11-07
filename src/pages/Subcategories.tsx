@@ -23,12 +23,15 @@ const Subcategories = () => {
   const selectedNetwork = searchParams.get('network') || 'all';
   const [searchTerm, setSearchTerm] = useState('');
   const [sortOrder, setSortOrder] = useState<'alphabetical' | 'priority' | 'recent'>('priority');
-  const { data: subcategories, isLoading } = useSubcategories(categoryId);
-  const { data: categories } = useCategories();
+  const { data: subcategories, isLoading, isError, error } = useSubcategories(categoryId);
+  const { data: categories, isLoading: categoriesLoading } = useCategories();
   const { data: hierarchyConfig } = useCategoryHierarchy(categoryId);
   const currentCategory = categories?.find(cat => cat.id === categoryId);
   const { favorites, toggleFavorite, isFavorite } = useFavorites('subcategory');
   
+  // Utiliser les données en cache même si isLoading est vrai (chargement en arrière-plan)
+  const displaySubcategories = subcategories || [];
+  const isCriticalLoading = isLoading && !subcategories;
   
   // Fonction de tri
   const getSortedSubcategories = (subcategories: Array<{id: string, name: string, created_at?: string}>) => {
@@ -53,9 +56,9 @@ const Subcategories = () => {
     setSortOrder(sortOptions[nextIndex]);
   };
 
-  const filteredSubcategories = subcategories?.filter(subcategory => 
+  const filteredSubcategories = displaySubcategories.filter(subcategory => 
     subcategory.name.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
+  );
 
   const handleBackClick = () => {
     navigate(`/categories?network=${selectedNetwork}`);
@@ -111,10 +114,11 @@ const Subcategories = () => {
     visible: { opacity: 1, y: 0 }
   };
 
-  if (isLoading) {
+  // Afficher les erreurs
+  if (isError && !subcategories) {
+    const errorMessage = error instanceof Error ? error.message : 'Erreur lors du chargement';
     return (
       <div className="min-h-screen">
-        {/* Header fixe pour mobile */}
         <div className="sticky top-0 z-50 bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border px-4 py-3">
           <div className="flex items-center gap-3">
             <Button 
@@ -126,9 +130,46 @@ const Subcategories = () => {
               <ArrowLeft size={20} />
             </Button>
             <div className="flex-1 min-w-0">
-                          <h1 className="text-lg font-semibold text-foreground truncate">
-              Chargement...
-            </h1>
+              <h1 className="text-lg font-semibold text-foreground truncate">
+                Erreur
+              </h1>
+            </div>
+          </div>
+        </div>
+        <div className="px-4 py-4">
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+            <h2 className="text-lg font-semibold text-red-800 dark:text-red-200 mb-2">
+              Erreur de chargement
+            </h2>
+            <p className="text-red-600 dark:text-red-300 mb-4">{errorMessage}</p>
+            <Button onClick={() => window.location.reload()} variant="outline" size="sm">
+              Réessayer
+            </Button>
+          </div>
+        </div>
+        <Navigation />
+      </div>
+    );
+  }
+  
+  // Afficher le chargement uniquement si aucune donnée en cache
+  if (isCriticalLoading) {
+    return (
+      <div className="min-h-screen">
+        <div className="sticky top-0 z-50 bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border px-4 py-3">
+          <div className="flex items-center gap-3">
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={handleBackClick} 
+              className="p-2 h-10 w-10 rounded-full text-foreground hover:bg-accent"
+            >
+              <ArrowLeft size={20} />
+            </Button>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-lg font-semibold text-foreground truncate">
+                {currentCategory?.name || 'Chargement...'}
+              </h1>
             </div>
           </div>
         </div>
@@ -142,6 +183,7 @@ const Subcategories = () => {
             </div>
           </div>
         </div>
+        <Navigation />
       </div>
     );
   }
