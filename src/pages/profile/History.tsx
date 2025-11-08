@@ -1,62 +1,47 @@
 import React from 'react';
-import { useVisitHistory } from '@/hooks/useVisitHistory';
+import { useVisitHistory, VisitItem } from '@/hooks/useVisitHistory';
 
-import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Clock, Trash2, Eye } from 'lucide-react';
+import { Clock, Eye } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useSmartNavigation } from '@/hooks/useNavigation';
 import Navigation from '@/components/Navigation';
 
 const History: React.FC = () => {
   const { visits, loading, clearHistory } = useVisitHistory();
   const navigate = useNavigate();
-  const { navigateBack } = useSmartNavigation();
 
-  const formatTimeAgo = (timestamp: string) => {
-    const now = new Date();
-    const visitTime = new Date(timestamp);
-    const diffInMinutes = Math.floor((now.getTime() - visitTime.getTime()) / (1000 * 60));
-    
-    if (diffInMinutes < 1) return 'À l\'instant';
-    if (diffInMinutes < 60) return `Il y a ${diffInMinutes} min`;
-    if (diffInMinutes < 1440) return `Il y a ${Math.floor(diffInMinutes / 60)}h`;
-    return `Il y a ${Math.floor(diffInMinutes / 1440)}j`;
+  const getVisitLocation = (visit: VisitItem) => {
+    const primaryLabel = visit.title?.trim();
+    const description = visit.description?.trim();
+
+    const cleanedDescription = description?.replace(/^Visite de\s+/i, '').trim();
+
+    if (visit.type !== 'search') {
+      if (cleanedDescription) {
+        return cleanedDescription;
+      }
+      if (description && description !== visit.url) {
+        return description;
+      }
+    }
+
+    if (primaryLabel && primaryLabel.toLowerCase() !== 'page visitée') {
+      return primaryLabel;
+    }
+
+    if (description) {
+      return description;
+    }
+
+    return visit.url;
   };
 
-  const getTypeLabel = (type: string) => {
-    switch (type) {
-      case 'category':
-        return 'Catégorie';
-      case 'subcategory':
-        return 'Sous-catégorie';
-      case 'challenge':
-        return 'Défi';
-      case 'content':
-        return 'Contenu';
-      case 'title':
-        return 'Titre';
-      default:
-        return 'Élément';
-    }
-  };
-
-  const getTypeColor = (type: string) => {
-    switch (type) {
-      case 'category':
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
-      case 'subcategory':
-        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
-      case 'challenge':
-        return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200';
-      case 'content':
-        return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200';
-      case 'title':
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
-      default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
-    }
+  const formatVisitDate = (timestamp: string) => {
+    return new Date(timestamp).toLocaleDateString('fr-FR', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    });
   };
 
   if (loading) {
@@ -77,29 +62,15 @@ const History: React.FC = () => {
   return (
     <div className="min-h-screen bg-white dark:bg-slate-900">
       <div className="container mx-auto px-4 py-6">
-        {/* En-tête */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center space-x-2 mb-6">
           <div className="flex items-center space-x-2">
             <Eye className="w-6 h-6 text-purple-600 dark:text-purple-400" />
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
               Historique des visites
             </h1>
           </div>
-          
-          {visits.length > 0 && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={clearHistory}
-              className="border-gray-300 dark:border-gray-600 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
-            >
-              <Trash2 className="w-4 h-4 mr-2" />
-              Effacer tout
-            </Button>
-          )}
         </div>
 
-        {/* Liste des visites */}
         {visits.length === 0 ? (
           <div className="text-center py-12">
             <Eye className="w-16 h-16 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
@@ -121,36 +92,17 @@ const History: React.FC = () => {
             {visits.map((visit) => (
               <Card 
                 key={visit.id} 
-                className="bg-gray-50 dark:bg-slate-800 border-gray-200 dark:border-slate-700 hover:shadow-lg transition-shadow cursor-pointer"
+                className="bg-gray-50 dark:bg-slate-800 border-gray-200 dark:border-slate-700 hover:shadow-md transition-shadow cursor-pointer"
                 onClick={() => navigate(visit.url)}
               >
                 <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3 flex-1">
-                      <div className="text-2xl">
-                        {visit.icon}
-                      </div>
-                      
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-gray-900 dark:text-white text-sm truncate">
-                          {visit.title}
-                        </h3>
-                        <p className="text-gray-600 dark:text-gray-400 text-xs">
-                          {visit.description}
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center space-x-2">
-                      <Badge className={`text-xs ${getTypeColor(visit.type)}`}>
-                        {getTypeLabel(visit.type)}
-                      </Badge>
-                      
-                      <div className="flex items-center space-x-1 text-gray-500 dark:text-gray-400 text-xs">
-                        <Clock className="w-3 h-3" />
-                        <span>{formatTimeAgo(visit.timestamp)}</span>
-                      </div>
-                    </div>
+                  <div className="flex items-center justify-between gap-4 text-sm">
+                    <p className="font-semibold text-gray-900 dark:text-white truncate">
+                      {getVisitLocation(visit)}
+                    </p>
+                    <span className="text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                      {formatVisitDate(visit.timestamp)}
+                    </span>
                   </div>
                 </CardContent>
               </Card>

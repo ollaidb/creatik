@@ -52,7 +52,7 @@ interface Comment {
   replies?: Comment[];
 }
 
-const ChallengeDetail = () => {
+const CommunityAccountDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { navigateBack } = useSmartNavigation();
@@ -83,7 +83,7 @@ const ChallengeDetail = () => {
 
   // Changer le titre de la page
   useEffect(() => {
-    document.title = 'Challenge';
+    document.title = 'Compte';
   }, []);
 
   // Fermer le menu contextuel quand on clique ailleurs
@@ -119,7 +119,7 @@ const ChallengeDetail = () => {
         .from('challenge_comments')
         .select('*')
         .eq('challenge_id', id)
-        .is('parent_comment_id', null) // Seulement les commentaires parents
+        .is('parent_comment_id', null)
         .order('created_at', { ascending: false });
 
       if (commentsError) throw commentsError;
@@ -146,7 +146,7 @@ const ChallengeDetail = () => {
       console.error('Erreur lors du chargement:', error);
       toast({
         title: "Erreur",
-        description: "Impossible de charger le challenge",
+        description: "Impossible de charger le compte",
         variant: "destructive"
       });
     } finally {
@@ -155,7 +155,6 @@ const ChallengeDetail = () => {
   };
 
   const getCreatorName = (userId: string) => {
-    // Si c'est l'utilisateur connecté, utiliser ses informations
     if (user && user.id === userId) {
       const firstName = user.user_metadata?.first_name;
       const lastName = user.user_metadata?.last_name;
@@ -163,14 +162,10 @@ const ChallengeDetail = () => {
       if (firstName) return firstName;
       return user.email?.split('@')[0] || 'Utilisateur';
     }
-    
-    // Pour les autres utilisateurs, on retourne un nom générique
-    // Plus tard, on pourra implémenter un système de cache des noms d'utilisateur
     return 'Utilisateur';
   };
 
   const getCreatorAvatar = (userId: string) => {
-    // Si c'est l'utilisateur connecté, utiliser sa photo de profil
     if (user && user.id === userId) {
       return user.user_metadata?.avatar_url;
     }
@@ -223,7 +218,7 @@ const ChallengeDetail = () => {
       });
 
       setCommentContent('');
-      loadChallengeAndComments(); // Recharger les commentaires
+      loadChallengeAndComments();
       
     } catch (error) {
       console.error('Erreur lors de l\'ajout du commentaire:', error);
@@ -257,7 +252,7 @@ const ChallengeDetail = () => {
 
       setReplyContent('');
       setReplyingTo(null);
-      loadChallengeAndComments(); // Recharger les commentaires
+      loadChallengeAndComments();
       
     } catch (error) {
       console.error('Erreur lors de l\'ajout de la réponse:', error);
@@ -273,7 +268,6 @@ const ChallengeDetail = () => {
     if (!user) return;
 
     try {
-      // Vérifier si l'utilisateur a déjà liké
       const { data: existingLike } = await supabase
         .from('challenge_comment_likes')
         .select('id')
@@ -282,14 +276,12 @@ const ChallengeDetail = () => {
         .single();
 
       if (existingLike) {
-        // Supprimer le like
         await supabase
           .from('challenge_comment_likes')
           .delete()
           .eq('comment_id', commentId)
           .eq('user_id', user.id);
       } else {
-        // Ajouter le like
         await supabase
           .from('challenge_comment_likes')
           .insert({
@@ -298,7 +290,6 @@ const ChallengeDetail = () => {
           });
       }
 
-      // Recharger les commentaires pour mettre à jour les compteurs
       loadChallengeAndComments();
       
     } catch (error) {
@@ -310,7 +301,6 @@ const ChallengeDetail = () => {
     if (!user) return;
 
     try {
-      // Vérifier que l'utilisateur est bien l'auteur du commentaire
       const { data: comment } = await supabase
         .from('challenge_comments')
         .select('user_id')
@@ -326,7 +316,6 @@ const ChallengeDetail = () => {
         return;
       }
 
-      // Supprimer le commentaire
       const { error } = await supabase
         .from('challenge_comments')
         .delete()
@@ -339,10 +328,7 @@ const ChallengeDetail = () => {
         description: "Votre commentaire a été supprimé avec succès"
       });
 
-      // Fermer le menu contextuel
       setContextMenu(null);
-
-      // Recharger les commentaires
       loadChallengeAndComments();
       
     } catch (error) {
@@ -382,41 +368,13 @@ const ChallengeDetail = () => {
       transition={{ duration: 0.3 }}
       className={`${isReply ? 'ml-6 border-l border-gray-200 dark:border-gray-700 pl-3' : 'mb-4'}`}
     >
-      {/* Design compact style TikTok */}
       <div 
         className="flex gap-3"
         onContextMenu={(e) => {
           e.preventDefault();
           handleCommentLongPress(e, comment.id);
         }}
-        onTouchStart={(e) => {
-          // Appui long sur mobile (300ms)
-          const timer = setTimeout(() => {
-            handleCommentLongPress(e as any, comment.id);
-          }, 300);
-          
-          const handleTouchEnd = () => {
-            clearTimeout(timer);
-            document.removeEventListener('touchend', handleTouchEnd);
-          };
-          
-          document.addEventListener('touchend', handleTouchEnd);
-        }}
-        onMouseDown={(e) => {
-          // Appui long sur desktop (300ms)
-          const timer = setTimeout(() => {
-            handleCommentLongPress(e, comment.id);
-          }, 300);
-          
-          const handleMouseUp = () => {
-            clearTimeout(timer);
-            document.removeEventListener('mouseup', handleMouseUp);
-          };
-          
-          document.addEventListener('mouseup', handleMouseUp);
-        }}
       >
-        {/* Avatar */}
         <Avatar className="w-8 h-8 flex-shrink-0">
           <AvatarImage src={getCreatorAvatar(comment.user_id)} />
           <AvatarFallback className="bg-gradient-to-r from-primary to-secondary text-white text-xs">
@@ -424,9 +382,7 @@ const ChallengeDetail = () => {
           </AvatarFallback>
         </Avatar>
         
-        {/* Contenu principal */}
         <div className="flex-1 min-w-0">
-          {/* En-tête avec nom et date */}
           <div className="flex items-center gap-2 mb-1">
             <span className="font-medium text-sm text-gray-900 dark:text-gray-100">
               {getCreatorName(comment.user_id)}
@@ -436,55 +392,51 @@ const ChallengeDetail = () => {
             </span>
           </div>
           
-                  {/* Contenu du commentaire et like sur la même ligne */}
-        <div className="flex items-start justify-between gap-4">
-          <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed flex-1">
-            {comment.content}
-          </p>
-          
-          {/* Like sur la droite */}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              likeComment(comment.id);
-            }}
-            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-blue-600 p-1 h-auto flex-shrink-0"
-          >
-            <ThumbsUp className="w-3 h-3" />
-            <span className="ml-1">{comment.likes_count || 0}</span>
-          </Button>
-        </div>
-        
-                {/* Afficher/masquer les réponses */}
-        {comment.replies && comment.replies.length > 0 && (
-          <div className="mt-2">
+          <div className="flex items-start justify-between gap-4">
+            <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed flex-1">
+              {comment.content}
+            </p>
+            
             <Button
               variant="ghost"
               size="sm"
               onClick={(e) => {
                 e.stopPropagation();
-                toggleCommentExpanded(comment.id);
+                likeComment(comment.id);
               }}
-              className="text-xs text-muted-foreground p-1 h-auto"
+              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-blue-600 p-1 h-auto flex-shrink-0"
             >
-              {expandedComments.has(comment.id) ? (
-                <>
-                  <ChevronUp className="w-3 h-3 mr-1" />
-                  Masquer {comment.replies.length} réponse{comment.replies.length > 1 ? 's' : ''}
-                </>
-              ) : (
-                <>
-                  <ChevronDown className="w-3 h-3 mr-1" />
-                  Voir {comment.replies.length} réponse{comment.replies.length > 1 ? 's' : ''}
-                </>
-              )}
+              <ThumbsUp className="w-3 h-3" />
+              <span className="ml-1">{comment.likes_count || 0}</span>
             </Button>
           </div>
-        )}
+        
+          {comment.replies && comment.replies.length > 0 && (
+            <div className="mt-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleCommentExpanded(comment.id);
+                }}
+                className="text-xs text-muted-foreground p-1 h-auto"
+              >
+                {expandedComments.has(comment.id) ? (
+                  <>
+                    <ChevronUp className="w-3 h-3 mr-1" />
+                    Masquer {comment.replies.length} réponse{comment.replies.length > 1 ? 's' : ''}
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown className="w-3 h-3 mr-1" />
+                    Voir {comment.replies.length} réponse{comment.replies.length > 1 ? 's' : ''}
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
           
-          {/* Formulaire de réponse compact */}
           {replyingTo === comment.id && level < 5 && (
             <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
               <div className="flex gap-2">
@@ -507,7 +459,6 @@ const ChallengeDetail = () => {
             </div>
           )}
           
-          {/* Réponses imbriquées */}
           {comment.replies && comment.replies.length > 0 && expandedComments.has(comment.id) && (
             <div className="mt-3 space-y-3">
               {comment.replies.map((reply) => renderComment(reply, true, level + 1))}
@@ -525,7 +476,7 @@ const ChallengeDetail = () => {
           <Button 
             variant="ghost" 
             size="icon" 
-            onClick={navigateBack} 
+            onClick={() => navigate('/community/accounts')} 
             className="mr-2"
           >
             <ArrowLeft className="h-5 w-5" />
@@ -549,67 +500,29 @@ const ChallengeDetail = () => {
           <Button 
             variant="ghost" 
             size="icon" 
-            onClick={navigateBack} 
+            onClick={() => navigate('/community/accounts')} 
             className="mr-2"
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h1 className="text-xl font-semibold">Challenge non trouvé</h1>
+          <h1 className="text-xl font-semibold">Compte non trouvé</h1>
         </header>
         <main className="max-w-4xl mx-auto p-4">
           <Card className="text-center py-12">
             <CardContent>
-              <h3 className="text-lg font-medium mb-2">Challenge introuvable</h3>
+              <h3 className="text-lg font-medium mb-2">Compte introuvable</h3>
               <p className="text-muted-foreground mb-4">
-                Le challenge que vous recherchez n'existe pas ou a été supprimé.
+                Le compte que vous recherchez n'existe pas ou a été supprimé.
               </p>
-              <Button onClick={navigateBack}>
-                Retour aux challenges
+              <Button onClick={() => navigate('/community/accounts')}>
+                Retour aux comptes
               </Button>
             </CardContent>
-                  </Card>
-      </main>
-
-      {/* Menu contextuel style TikTok */}
-      {contextMenu && (
-        <div 
-          className="fixed inset-0 z-50"
-          onClick={closeContextMenu}
-        >
-          <div 
-            className="absolute bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 min-w-[200px]"
-            style={{
-              left: Math.min(contextMenu.x, window.innerWidth - 220),
-              top: Math.min(contextMenu.y, window.innerHeight - 120)
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Option Répondre */}
-            <button
-              onClick={() => handleReplyFromContextMenu(contextMenu.commentId)}
-              className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3"
-            >
-              <Reply className="w-4 h-4" />
-              Répondre
-            </button>
-            
-            {/* Option Supprimer (seulement pour l'auteur) */}
-            {user && contextMenu.commentId && (
-              <button
-                onClick={() => deleteComment(contextMenu.commentId)}
-                className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 flex items-center gap-3"
-              >
-                <Trash2 className="w-4 h-4" />
-                Supprimer
-              </button>
-            )}
-          </div>
-        </div>
-      )}
-
-      <Navigation />
-    </div>
-  );
+          </Card>
+        </main>
+        <Navigation />
+      </div>
+    );
   }
 
   return (
@@ -618,16 +531,16 @@ const ChallengeDetail = () => {
         <Button 
           variant="ghost" 
           size="icon" 
-          onClick={() => navigate('/public-challenges')} 
+          onClick={() => navigate('/community/accounts')} 
           className="mr-2"
         >
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        <h1 className="text-xl font-semibold">Challenge</h1>
+        <h1 className="text-xl font-semibold">Compte</h1>
       </header>
 
       <main className="max-w-4xl mx-auto p-4 space-y-6">
-        {/* Challenge principal - Version simplifiée */}
+        {/* Compte principal */}
         <Card>
           <CardHeader>
             <div className="flex items-start justify-between">
@@ -681,13 +594,13 @@ const ChallengeDetail = () => {
             {user && (
               <div className="mb-6 p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
                 <div className="flex gap-2">
-                                  <Textarea
-                  placeholder="Ajouter un commentaire"
-                  value={commentContent}
-                  onChange={(e) => setCommentContent(e.target.value)}
-                  rows={1}
-                  className="flex-1"
-                />
+                  <Textarea
+                    placeholder="Ajouter un commentaire"
+                    value={commentContent}
+                    onChange={(e) => setCommentContent(e.target.value)}
+                    rows={1}
+                    className="flex-1"
+                  />
                   <Button
                     onClick={addComment}
                     disabled={!commentContent.trim()}
@@ -713,11 +626,47 @@ const ChallengeDetail = () => {
             )}
           </CardContent>
         </Card>
-
       </main>
+
+      {/* Menu contextuel */}
+      {contextMenu && (
+        <div 
+          className="fixed inset-0 z-50"
+          onClick={closeContextMenu}
+        >
+          <div 
+            className="absolute bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 min-w-[200px]"
+            style={{
+              left: Math.min(contextMenu.x, window.innerWidth - 220),
+              top: Math.min(contextMenu.y, window.innerHeight - 120)
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => handleReplyFromContextMenu(contextMenu.commentId)}
+              className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3"
+            >
+              <Reply className="w-4 h-4" />
+              Répondre
+            </button>
+            
+            {user && contextMenu.commentId && (
+              <button
+                onClick={() => deleteComment(contextMenu.commentId)}
+                className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 flex items-center gap-3"
+              >
+                <Trash2 className="w-4 h-4" />
+                Supprimer
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       <Navigation />
     </div>
   );
 };
 
-export default ChallengeDetail;
+export default CommunityAccountDetail;
+

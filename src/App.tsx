@@ -40,6 +40,10 @@ const Titles = lazy(() => import("./pages/Titles"));
 const Hooks = lazy(() => import("./pages/Hooks"));
 const PublicChallenges = lazy(() => import("./pages/PublicChallenges"));
 const UsernameIdeas = lazy(() => import("./pages/UsernameIdeas"));
+const CommunityContent = lazy(() => import("./pages/CommunityContent"));
+const CommunityAccounts = lazy(() => import("./pages/CommunityAccounts"));
+const CommunityContentDetail = lazy(() => import("./pages/CommunityContentDetail"));
+const CommunityAccountDetail = lazy(() => import("./pages/CommunityAccountDetail"));
 const Accounts = lazy(() => import("./pages/Accounts"));
 const Sources = lazy(() => import("./pages/Sources"));
 const TrendingIdeas = lazy(() => import("./pages/TrendingIdeas"));
@@ -156,6 +160,10 @@ const AppContent = () => {
                   {/* Communauté Routes */}
                   <Route path="/public-challenges" element={<PublicChallenges />} />
                   <Route path="/community/usernames" element={<UsernameIdeas />} />
+                  <Route path="/community/content" element={<CommunityContent />} />
+                  <Route path="/community/content/:id" element={<CommunityContentDetail />} />
+                  <Route path="/community/accounts" element={<CommunityAccounts />} />
+                  <Route path="/community/account/:id" element={<CommunityAccountDetail />} />
                   {/* Trending Ideas Route */}
                   <Route path="/trending" element={<TrendingIdeas />} />
                   {/* What to Post Today Route */}

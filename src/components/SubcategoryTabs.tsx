@@ -30,7 +30,7 @@ const SubcategoryTabs: React.FC<SubcategoryTabsProps> = ({
       case 'instagram':
         return ['titres', 'créateurs', 'sources', 'idees', 'hashtags'];
       case 'youtube':
-        return ['titres', 'créateurs', 'sources', 'hashtags', 'hooks'];
+        return ['titres', 'hooks', 'créateurs', 'sources', 'hashtags'];
       case 'podcasts':
         return ['titres', 'sources', 'podcast', 'mots-cles'];
       case 'twitch':

@@ -38,10 +38,11 @@ const FAVORITE_TABS = [
   { key: 'subcategories', label: 'Sous-catégories' },
   { key: 'subcategories-level2', label: 'Sous-sous-catégories' },
   { key: 'titles', label: 'Titres' },
-  { key: 'comptes', label: 'Comptes' },
+  { key: 'comptes', label: 'Créateurs' },
   { key: 'sources', label: 'Sources' },
   { key: 'hooks', label: 'Hooks' },
-  { key: 'challenges', label: 'Communauté' },
+  { key: 'challenges-content', label: 'Contenu' },
+  { key: 'challenges-accounts', label: 'Compte' },
   { key: 'usernames', label: 'Pseudos' },
 ];
 
@@ -113,6 +114,8 @@ const Favorites = () => {
   const sourcesToShow = allSources.filter(source => favoriteSources.includes(source.id));
   const hooksToShow = allHooks.filter(hook => hook.type === 'hook' && favoriteHooks.includes(hook.id));
   const challengesToShow = allChallenges.filter(challenge => favoriteChallenges.includes(challenge.id));
+  const contentChallengesToShow = challengesToShow.filter(challenge => challenge.challenge_type !== 'account');
+  const accountChallengesToShow = challengesToShow.filter(challenge => challenge.challenge_type === 'account');
   const usernamesToShow = allUsernames.filter(username => favoriteUsernames.includes(username.id));
 
   // Logs de débogage
@@ -143,6 +146,8 @@ const Favorites = () => {
     allChallenges: allChallenges.length,
     favoriteChallenges: favoriteChallenges.length,
     challengesToShow: challengesToShow.length,
+    contentChallengesToShow: contentChallengesToShow.length,
+    accountChallengesToShow: accountChallengesToShow.length,
     // Détails des titres
     contentTitlesIds: contentTitles.slice(0, 3).map(t => t.id),
     generatedTitlesIds: generatedTitles.slice(0, 3).map(t => t.id),
@@ -394,7 +399,9 @@ const Favorites = () => {
                       return 'from-indigo-500 to-purple-500';
                     case 'hooks':
                       return 'from-yellow-500 to-orange-500';
-                    case 'challenges':
+                    case 'challenges-content':
+                      return 'from-red-500 to-pink-500';
+                    case 'challenges-accounts':
                       return 'from-red-500 to-pink-500';
                     default:
                       return 'from-gray-500 to-gray-600';
@@ -767,7 +774,7 @@ const Favorites = () => {
                 <Heart className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 mb-4" />
                 <h3 className="text-base sm:text-lg font-medium">Aucun favori trouvé</h3>
                 <p className="text-muted-foreground mt-2 text-sm sm:text-base">
-                  Vous n'avez pas encore ajouté de comptes en favoris
+                  Vous n'avez pas encore ajouté de favoris dans cette section
                 </p>
               </div>
             )}
@@ -919,16 +926,16 @@ const Favorites = () => {
           </>
         )}
 
-        {selectedTab === 'challenges' && (
+        {selectedTab === 'challenges-content' && (
           <>
-            {challengesToShow.length > 0 ? (
+            {contentChallengesToShow.length > 0 ? (
               <motion.div
                 className="space-y-3"
                 variants={containerVariants}
                 initial="hidden"
                 animate="visible"
               >
-                {challengesToShow.map((challenge, index) => (
+                {contentChallengesToShow.map((challenge, index) => (
                   <motion.div 
                     key={challenge.id}
                     initial={{ opacity: 0, y: 20 }}
@@ -949,10 +956,6 @@ const Favorites = () => {
                           <h3 className="font-medium text-gray-900 dark:text-white text-base leading-relaxed">
                             {challenge.title}
                           </h3>
-                          {/* Indicateur du type de challenge */}
-                          <p className="text-xs text-primary font-medium mt-1">
-                            {challenge.challenge_type === 'account' ? 'Compte' : 'Contenu'}
-                          </p>
                         </div>
                       </div>
                       {/* Actions */}
@@ -982,7 +985,72 @@ const Favorites = () => {
                 <Heart className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 mb-4" />
                 <h3 className="text-base sm:text-lg font-medium">Aucun favori trouvé</h3>
                 <p className="text-muted-foreground mt-2 text-sm sm:text-base">
-                  Vous n'avez pas encore ajouté de communautés en favoris
+                  Vous n'avez pas encore ajouté de créateurs en favoris
+                </p>
+              </div>
+            )}
+          </>
+        )}
+
+        {selectedTab === 'challenges-accounts' && (
+          <>
+            {accountChallengesToShow.length > 0 ? (
+              <motion.div
+                className="space-y-3"
+                variants={containerVariants}
+                initial="hidden"
+                animate="visible"
+              >
+                {accountChallengesToShow.map((challenge, index) => (
+                  <motion.div 
+                    key={challenge.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all duration-200 cursor-pointer"
+                    onClick={() => {
+                      const path = getNavigationPath(challenge, 'challenge');
+                      if (path) navigate(path);
+                    }}
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <span className="text-xs text-gray-500 font-mono flex-shrink-0">
+                          {(index + 1).toString().padStart(2, '0')}
+                        </span>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-medium text-gray-900 dark:text-white text-base leading-relaxed">
+                            {challenge.title}
+                          </h3>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            toggleChallengeFavorite(challenge.id);
+                            toast({
+                              title: isChallengeFavorite(challenge.id)
+                                ? "Retiré"
+                                : "Ajouté"
+                            });
+                          }}
+                          className="p-2 h-10 w-10 rounded-full"
+                        >
+                          <Heart className={`w-3 h-3 sm:w-4 sm:h-4 ${isChallengeFavorite(challenge.id) ? 'text-red-500 fill-red-500' : ''}`} />
+                        </Button>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </motion.div>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-60 text-center px-4">
+                <Heart className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 mb-4" />
+                <h3 className="text-base sm:text-lg font-medium">Aucun favori trouvé</h3>
+                <p className="text-muted-foreground mt-2 text-sm sm:text-base">
+                  Vous n'avez pas encore ajouté de favoris dans cette section
                 </p>
               </div>
             )}

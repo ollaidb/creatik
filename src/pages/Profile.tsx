@@ -42,7 +42,6 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import AuthModal from '@/components/AuthModal';
-import AuthRequired from '@/components/AuthRequired';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
@@ -75,6 +74,150 @@ import { AddSocialAccountModal } from '@/components/modals/AddSocialAccountModal
 import { AddPlaylistModal } from '@/components/modals/AddPlaylistModal';
 import { AddPublicationModal } from '@/components/modals/AddPublicationModal';
 
+// ------------------------------
+// Données de démonstration invité
+// ------------------------------
+const GUEST_SOCIAL_ACCOUNTS: UserSocialAccount[] = [
+  {
+    id: 'guest-instagram',
+    user_id: 'guest',
+    platform: 'instagram',
+    username: 'creatik_demo',
+    display_name: 'Creatik Studio',
+    profile_url: 'https://instagram.com/creatik',
+    is_active: true,
+    custom_name: 'Instagram',
+    order: 1,
+    created_at: '2024-01-10T09:00:00.000Z',
+    updated_at: '2024-01-15T09:00:00.000Z'
+  },
+  {
+    id: 'guest-youtube',
+    user_id: 'guest',
+    platform: 'youtube',
+    username: 'creatik_channel',
+    display_name: 'Creatik Channel',
+    profile_url: 'https://youtube.com/@creatik',
+    is_active: true,
+    custom_name: 'YouTube',
+    order: 2,
+    created_at: '2024-01-12T10:00:00.000Z',
+    updated_at: '2024-01-18T10:00:00.000Z'
+  }
+];
+
+const GUEST_SOCIAL_POSTS: UserSocialPost[] = [
+  {
+    id: 'guest-post-1',
+    user_id: 'guest',
+    social_account_id: 'guest-instagram',
+    title: '5 astuces pour booster votre visibilité sur Instagram',
+    content: 'Un carousel de 5 slides avec des conseils pratiques.',
+    published_date: '2024-02-02T09:00:00.000Z',
+    status: 'published',
+    created_at: '2024-01-30T08:00:00.000Z',
+    updated_at: '2024-02-02T09:00:00.000Z'
+  },
+  {
+    id: 'guest-post-2',
+    user_id: 'guest',
+    social_account_id: 'guest-youtube',
+    title: 'Vlog : les coulisses d’une semaine de création de contenu',
+    content: 'Vidéo longue format 12 minutes.',
+    published_date: '2024-02-05T18:00:00.000Z',
+    status: 'published',
+    created_at: '2024-02-01T11:30:00.000Z',
+    updated_at: '2024-02-05T18:00:00.000Z'
+  }
+];
+
+const GUEST_PLAYLISTS: UserContentPlaylist[] = [
+  {
+    id: 'guest-playlist-1',
+    user_id: 'guest',
+    social_network_id: 'instagram',
+    name: 'Série Instagram - Conseils pratiques',
+    description: 'Suite de contenus pour aider les entrepreneurs à utiliser Instagram.',
+    is_public: true,
+    color: '#F472B6',
+    order: 1,
+    created_at: '2024-01-20T10:00:00.000Z',
+    updated_at: '2024-01-20T10:00:00.000Z'
+  },
+  {
+    id: 'guest-playlist-2',
+    user_id: 'guest',
+    social_network_id: 'youtube',
+    name: 'YouTube - Histoires inspirantes',
+    description: 'Mini documentaire sur des créateurs à suivre.',
+    is_public: true,
+    color: '#FB7185',
+    order: 2,
+    created_at: '2024-01-22T10:00:00.000Z',
+    updated_at: '2024-01-22T10:00:00.000Z'
+  }
+];
+
+const GUEST_PENDING_CHALLENGES: UserChallenge[] = [
+  {
+    id: 'guest-challenge-1',
+    user_id: 'guest',
+    title: 'Publier un tutoriel Reels de 30 secondes',
+    status: 'pending',
+    created_at: '2024-01-25T09:00:00.000Z',
+    updated_at: '2024-01-25T09:00:00.000Z',
+    social_account_id: 'guest-instagram',
+    playlist_id: 'guest-playlist-1',
+    is_custom: true
+  },
+  {
+    id: 'guest-challenge-2',
+    user_id: 'guest',
+    title: 'Préparer le script d’une vidéo YouTube inspirante',
+    status: 'pending',
+    created_at: '2024-01-28T10:00:00.000Z',
+    updated_at: '2024-01-28T10:00:00.000Z',
+    social_account_id: 'guest-youtube',
+    playlist_id: 'guest-playlist-2',
+    is_custom: true
+  }
+];
+
+const GUEST_COMPLETED_CHALLENGES: UserChallenge[] = [
+  {
+    id: 'guest-challenge-completed-1',
+    user_id: 'guest',
+    title: 'Planifier la grille Instagram du mois',
+    status: 'completed',
+    created_at: '2024-01-05T09:00:00.000Z',
+    updated_at: '2024-01-08T09:00:00.000Z',
+    completed_at: '2024-01-08T09:00:00.000Z',
+    social_account_id: 'guest-instagram',
+    is_custom: true
+  }
+];
+
+const GUEST_DELETED_CHALLENGES: UserChallenge[] = [
+  {
+    id: 'guest-challenge-archived-1',
+    user_id: 'guest',
+    title: 'Préparer une campagne LinkedIn',
+    status: 'deleted',
+    created_at: '2023-12-20T08:00:00.000Z',
+    updated_at: '2023-12-25T08:00:00.000Z',
+    social_account_id: 'guest-instagram',
+    is_custom: true
+  }
+];
+
+const GUEST_CHALLENGE_STATS = {
+  total_challenges: GUEST_PENDING_CHALLENGES.length + GUEST_COMPLETED_CHALLENGES.length,
+  completed_challenges: GUEST_COMPLETED_CHALLENGES.length,
+  pending_challenges: GUEST_PENDING_CHALLENGES.length,
+  program_duration: '3months',
+  contents_per_day: 1
+};
+
 const UserProfile: React.FC = () => {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
@@ -106,7 +249,7 @@ const UserProfile: React.FC = () => {
   };
 
   // Fonctions d'authentification
-  const handleLoginClick = (e) => {
+  const handleLoginClick = (e?: React.MouseEvent) => {
     e?.preventDefault();
     e?.stopPropagation();
     console.log('🔐 Ouverture de la modal de connexion...');
@@ -140,6 +283,23 @@ const UserProfile: React.FC = () => {
     }
   };
   
+  const promptAuthentication = (message?: string) => {
+    toast({
+      title: "Connexion requise",
+      description: message || "Connectez-vous pour accéder à cette fonctionnalité.",
+      variant: "default",
+    });
+    handleLoginClick();
+  };
+
+  const ensureAuthenticated = (message?: string) => {
+    if (!user) {
+      promptAuthentication(message);
+      return false;
+    }
+    return true;
+  };
+
   // Hook pour les défis
   const {
     challenges,
@@ -277,6 +437,15 @@ const UserProfile: React.FC = () => {
     setLoading(profileLoading);
   }, [profileLoading]);
 
+  useEffect(() => {
+    if (!user) {
+      setSocialAccounts(GUEST_SOCIAL_ACCOUNTS);
+      setSocialPosts(GUEST_SOCIAL_POSTS);
+      setPlaylists(GUEST_PLAYLISTS);
+      setLoading(false);
+    }
+  }, [user]);
+
   // Mettre à jour les paramètres de programmation quand la sélection change
   useEffect(() => {
     setLocalProgramSettings(prev => ({
@@ -304,6 +473,13 @@ const UserProfile: React.FC = () => {
       }
     }
   }, [stats]);
+
+  useEffect(() => {
+    if (!user) {
+      setSelectedDuration(GUEST_CHALLENGE_STATS.program_duration);
+      setContentsPerDay(GUEST_CHALLENGE_STATS.contents_per_day);
+    }
+  }, [user]);
 
   // Fonction pour recharger les données après ajout
   const refreshData = async () => {
@@ -342,6 +518,9 @@ const UserProfile: React.FC = () => {
 
   // Fonctions de suppression
   const handleDeleteSocialAccount = async (accountId: string, platform: string, customName?: string) => {
+    if (!ensureAuthenticated("Connectez-vous pour gérer vos réseaux sociaux.")) {
+      return;
+    }
     const displayName = customName || platform;
     
     if (!confirm(`Êtes-vous sûr de vouloir supprimer le compte "${displayName}" ?`)) {
@@ -366,6 +545,9 @@ const UserProfile: React.FC = () => {
   };
 
   const handleDeleteAllSocialAccounts = () => {
+    if (!ensureAuthenticated("Connectez-vous pour gérer vos réseaux sociaux.")) {
+      return;
+    }
     if (socialAccounts.length === 0) return;
     
     const count = socialAccounts.length;
@@ -395,6 +577,9 @@ const UserProfile: React.FC = () => {
   };
 
   const handleDeleteAllPlaylists = () => {
+    if (!ensureAuthenticated("Connectez-vous pour gérer vos playlists.")) {
+      return;
+    }
     if (playlists.length === 0) return;
     
     const count = playlists.length;
@@ -424,6 +609,9 @@ const UserProfile: React.FC = () => {
   };
 
   const handleDeleteSelectedSocialAccounts = async () => {
+    if (!ensureAuthenticated("Connectez-vous pour gérer vos réseaux sociaux.")) {
+      return;
+    }
     if (selectedSocialAccounts.length === 0) return;
     
     const count = selectedSocialAccounts.length;
@@ -454,6 +642,9 @@ const UserProfile: React.FC = () => {
   };
 
   const handleDeleteSelectedPlaylists = async () => {
+    if (!ensureAuthenticated("Connectez-vous pour gérer vos playlists.")) {
+      return;
+    }
     if (selectedPlaylists.length === 0) return;
     
     const count = selectedPlaylists.length;
@@ -484,6 +675,9 @@ const UserProfile: React.FC = () => {
   };
 
   const handleRenameAccount = async () => {
+    if (!ensureAuthenticated("Connectez-vous pour renommer vos réseaux sociaux.")) {
+      return;
+    }
     if (!renamingAccountId || !renamingAccountName.trim()) return;
     
     try {
@@ -508,6 +702,9 @@ const UserProfile: React.FC = () => {
   };
 
   const handleRenamePlaylist = async () => {
+    if (!ensureAuthenticated("Connectez-vous pour renommer vos playlists.")) {
+      return;
+    }
     if (!renamingPlaylistId || !renamingPlaylistName.trim()) return;
     
     try {
@@ -535,6 +732,9 @@ const UserProfile: React.FC = () => {
   };
 
   const handleReorderSocialAccounts = async (newOrder: UserSocialAccount[]) => {
+    if (!ensureAuthenticated("Connectez-vous pour organiser vos réseaux sociaux.")) {
+      return;
+    }
     try {
       // Mettre à jour l'état local immédiatement
       setSocialAccounts(newOrder);
@@ -566,6 +766,9 @@ const UserProfile: React.FC = () => {
   };
 
   const handleReorderPlaylists = async (newOrder: UserContentPlaylist[]) => {
+    if (!ensureAuthenticated("Connectez-vous pour organiser vos playlists.")) {
+      return;
+    }
     try {
       // Mettre à jour l'état local immédiatement
       setPlaylists(newOrder);
@@ -597,6 +800,9 @@ const UserProfile: React.FC = () => {
   };
 
   const handleDeletePlaylist = async (playlistId: string, playlistName: string) => {
+    if (!ensureAuthenticated("Connectez-vous pour gérer vos playlists.")) {
+      return;
+    }
     if (!confirm(`Êtes-vous sûr de vouloir supprimer la playlist "${playlistName}" ?`)) return;
     
     try {
@@ -612,6 +818,9 @@ const UserProfile: React.FC = () => {
   };
 
   const handleDeletePublication = async (postId: string, postTitle: string) => {
+    if (!ensureAuthenticated("Connectez-vous pour gérer vos publications.")) {
+      return;
+    }
     if (!confirm(`Êtes-vous sûr de vouloir supprimer la publication "${postTitle}" ?`)) return;
     
     try {
@@ -649,6 +858,8 @@ const UserProfile: React.FC = () => {
     }
   };
 
+  const displayedStats = stats ?? GUEST_CHALLENGE_STATS;
+
   const getTotalContents = () => {
     const days = getDurationDays(selectedDuration);
     return days * contentsPerDay;
@@ -656,26 +867,29 @@ const UserProfile: React.FC = () => {
 
   const getRemainingContents = () => {
     const total = getTotalContents();
-    const completed = stats?.completed_challenges || 0;
+    const completed = displayedStats.completed_challenges || 0;
     return Math.max(0, total - completed);
   };
 
   const getProgressPercentage = () => {
     const total = getTotalContents();
     if (total === 0) return 0;
-    const completed = stats?.completed_challenges || 0;
+    const completed = displayedStats.completed_challenges || 0;
     return Math.min(100, (completed / total) * 100);
   };
 
   const getRemainingDays = () => {
     const totalDays = getDurationDays(selectedDuration);
-    const completed = stats?.completed_challenges || 0;
+    const completed = displayedStats.completed_challenges || 0;
     const completedDays = Math.floor(completed / contentsPerDay);
     return Math.max(0, totalDays - completedDays);
   };
 
   // Fonctions pour la gestion des défis
   const handleCompleteChallenge = async (id: string) => {
+    if (!ensureAuthenticated("Connectez-vous pour mettre à jour vos défis.")) {
+      return;
+    }
     setValidatingChallenges(prev => new Set([...prev, id]));
     
     setTimeout(async () => {
@@ -712,6 +926,9 @@ const UserProfile: React.FC = () => {
   };
 
   const handleAddChallenge = async () => {
+    if (!ensureAuthenticated("Connectez-vous pour créer vos propres défis.")) {
+      return;
+    }
     if (!newChallengeTitle.trim()) return;
     
     // Vérifier qu'un réseau social est sélectionné
@@ -757,9 +974,13 @@ const UserProfile: React.FC = () => {
     }
   };
 
-  // Filtrer les défis par statut en utilisant les données filtrées
-  const defis = filteredChallenges.filter((c) => c.status === "pending");
-  const accomplis = filteredChallenges.filter((c) => c.status === "completed");
+  const guestChallenges = [...GUEST_PENDING_CHALLENGES, ...GUEST_COMPLETED_CHALLENGES];
+  const challengesForDisplay = user ? filteredChallenges : guestChallenges;
+  const defis = challengesForDisplay.filter((c) => c.status === "pending");
+  const accomplis = challengesForDisplay.filter((c) => c.status === "completed");
+  const corbeille = user
+    ? deletedChallenges.filter((challenge) => challenge.title && challenge.user_id)
+    : GUEST_DELETED_CHALLENGES;
 
   // Données du profil utilisateur
   const userProfile = {
@@ -829,18 +1050,20 @@ const UserProfile: React.FC = () => {
                   {date} à {time}
                 </p>
               </div>
-          <Button 
-            variant="ghost" 
-                size="sm"
-                className="absolute top-2 right-2 h-8 w-8 p-0 bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity rounded-full"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  handleDeletePublication(post.id, post.title);
-                }}
-              >
-                <Trash2 className="w-4 h-4" />
-          </Button>
+          {user && (
+            <Button 
+              variant="ghost" 
+              size="sm"
+              className="absolute top-2 right-2 h-8 w-8 p-0 bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity rounded-full"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleDeletePublication(post.id, post.title);
+              }}
+            >
+              <Trash2 className="w-4 h-4" />
+            </Button>
+          )}
         </div>
           );
         })}
@@ -972,25 +1195,16 @@ const UserProfile: React.FC = () => {
       {/* Section 2: Réseaux sociaux */}
       <div className="bg-card border-b">
         <div className="container mx-auto px-4 py-2">
-          <AuthRequired
-            message="Gestion des réseaux sociaux"
-            description="Connectez-vous pour gérer vos réseaux sociaux et créer du contenu."
-            fallback={
-              <div className="text-center py-8">
-                <div className="flex items-center justify-center gap-2 text-muted-foreground mb-4">
-                  <Users className="w-5 h-5" />
-                  <span className="text-sm">Gestion des réseaux sociaux</span>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Connectez-vous pour ajouter et gérer vos réseaux sociaux
-                </p>
-              </div>
-            }
-          >
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs text-muted-foreground">
-                {socialAccounts.length} réseau{socialAccounts.length > 1 ? 'x' : ''} social{socialAccounts.length > 1 ? 'aux' : ''}
-              </span>
+          {!user && (
+            <div className="mb-3 text-center text-xs text-muted-foreground">
+              Mode aperçu : connectez-vous pour ajouter ou gérer vos réseaux sociaux.
+            </div>
+          )}
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs text-muted-foreground">
+              {socialAccounts.length} réseau{socialAccounts.length > 1 ? 'x' : ''} social{socialAccounts.length > 1 ? 'aux' : ''}
+            </span>
+            {user && (
               <Button
                 variant="ghost"
                 size="sm"
@@ -1004,95 +1218,99 @@ const UserProfile: React.FC = () => {
               >
                 <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M3 10a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zM8.5 10a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zM14 10a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0z" />
-                    </svg>
+                </svg>
               </Button>
-                  </div>
-            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-              {loading ? (
-                // Skeleton loading pour les réseaux sociaux
-                <>
-                  {[1, 2, 3, 4].map((i) => (
-                    <div key={i} className="min-w-[80px] h-8 bg-muted rounded animate-pulse flex-shrink-0"></div>
-                  ))}
-                  <div className="min-w-[32px] h-8 bg-muted rounded animate-pulse flex-shrink-0"></div>
-                </>
-              ) : (
-                <>
-                  <Reorder.Group
-                    axis="x"
-                    values={socialAccounts}
-                    onReorder={handleReorderSocialAccounts}
-                    className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide"
-                  >
-                    {socialAccounts.map((account) => {
-                      const isSelected = selectedSocialNetworkId === account.id;
-                      return (
-                        <Reorder.Item
-                          key={account.id}
-                          value={account}
-                          className="min-w-[80px] flex-shrink-0"
+            )}
+          </div>
+          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+            {loading ? (
+              <>
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="min-w-[80px] h-8 bg-muted rounded animate-pulse flex-shrink-0"></div>
+                ))}
+                <div className="min-w-[32px] h-8 bg-muted rounded animate-pulse flex-shrink-0"></div>
+              </>
+            ) : user ? (
+              <>
+                <Reorder.Group
+                  axis="x"
+                  values={socialAccounts}
+                  onReorder={handleReorderSocialAccounts}
+                  className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide"
+                >
+                  {socialAccounts.map((account) => {
+                    const isSelected = selectedSocialNetworkId === account.id;
+                    return (
+                      <Reorder.Item
+                        key={account.id}
+                        value={account}
+                        className="min-w-[80px] flex-shrink-0"
+                      >
+                        <Button
+                          variant={isSelected ? "default" : "outline"}
+                          className={`text-xs h-8 w-full ${
+                            isSelected ? "bg-primary text-primary-foreground" : ""
+                          }`}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            selectSocialNetwork(account.id);
+                          }}
                         >
-                          <Button
-                            variant={isSelected ? "default" : "outline"}
-                            className={`text-xs h-8 w-full ${
-                              isSelected ? "bg-primary text-primary-foreground" : ""
-                            }`}
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              selectSocialNetwork(account.id);
-                            }}
-                          >
-                            {account.custom_name || account.platform}
-                          </Button>
-                        </Reorder.Item>
-                      );
-                    })}
-                  </Reorder.Group>
-                  
-                  {/* Bouton d'édition des réseaux */}
-                  
-                  {/* Bouton d'ajout */}
+                          {account.custom_name || account.platform}
+                        </Button>
+                      </Reorder.Item>
+                    );
+                  })}
+                </Reorder.Group>
+                <Button
+                  variant="outline"
+                  className="min-w-[32px] flex-shrink-0 border-dashed flex items-center justify-center h-8"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setIsAddSocialModalOpen(true);
+                  }}
+                >
+                  <Plus className="w-3 h-3" />
+                </Button>
+              </>
+            ) : (
+              socialAccounts.map((account) => {
+                const isSelected = selectedSocialNetworkId === account.id;
+                return (
                   <Button
-                    variant="outline"
-                    className="min-w-[32px] flex-shrink-0 border-dashed flex items-center justify-center h-8"
+                    key={account.id}
+                    variant={isSelected ? "default" : "outline"}
+                    className="text-xs h-8 min-w-[80px] flex-shrink-0"
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      setIsAddSocialModalOpen(true);
+                      selectSocialNetwork(account.id);
                     }}
                   >
-                    <Plus className="w-3 h-3" />
+                    {account.custom_name || account.platform}
                   </Button>
-                </>
-                        )}
-                </div>
-          </AuthRequired>
+                );
+              })
+            )}
+          </div>
         </div>
       </div>
 
       {/* Section 3: Playlists */}
       <div className="bg-card border-b">
         <div className="container mx-auto px-4 py-2">
-          <AuthRequired
-            message="Gestion des playlists"
-            description="Connectez-vous pour créer et gérer vos playlists de contenu."
-            fallback={
-              <div className="text-center py-8">
-                <div className="flex items-center justify-center gap-2 text-muted-foreground mb-4">
-                  <BookOpen className="w-5 h-5" />
-                  <span className="text-sm">Gestion des playlists</span>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Connectez-vous pour créer et organiser vos playlists de contenu
-                </p>
-              </div>
-            }
-          >
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs text-muted-foreground">
-                {filteredPlaylists.length} playlist{filteredPlaylists.length > 1 ? 's' : ''}
-              </span>
+          {!user && (
+            <div className="mb-3 text-center text-xs text-muted-foreground">
+              Mode aperçu : connectez-vous pour créer ou modifier vos playlists.
+            </div>
+          )}
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs text-muted-foreground">
+              {filteredPlaylists.length} playlist{filteredPlaylists.length > 1 ? 's' : ''}
+            </span>
+            {user && (
               <Button
                 variant="ghost"
                 size="sm"
@@ -1108,75 +1326,76 @@ const UserProfile: React.FC = () => {
                   <path d="M3 10a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zM8.5 10a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zM14 10a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0z" />
                 </svg>
               </Button>
-            </div>
-            
-            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-              {loading ? (
-                // Skeleton loading pour les playlists
-                <>
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="min-w-[80px] h-8 bg-muted rounded animate-pulse flex-shrink-0"></div>
-                  ))}
-                  <div className="min-w-[32px] h-8 bg-muted rounded animate-pulse flex-shrink-0"></div>
-                </>
-              ) : !selectedSocialNetworkId ? (
-                <div className="text-center py-4 text-muted-foreground text-sm">
-                  Sélectionnez un réseau social pour voir ses playlists
+            )}
+          </div>
+          
+          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+            {loading ? (
+              <>
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="min-w-[80px] h-8 bg-muted rounded animate-pulse flex-shrink-0"></div>
+                ))}
+                <div className="min-w-[32px] h-8 bg-muted rounded animate-pulse flex-shrink-0"></div>
+              </>
+            ) : !selectedSocialNetworkId ? (
+              <div className="text-center py-4 text-muted-foreground text-sm">
+                Sélectionnez un réseau social pour voir ses playlists
+              </div>
+            ) : (
+              <>
+                <div className="group relative min-w-[80px] flex-shrink-0">
+                  <Button
+                    variant={selectedPlaylistId === '' ? "default" : "outline"}
+                    className={`text-xs h-8 w-full ${
+                      selectedPlaylistId === '' ? "bg-primary text-primary-foreground" : ""
+                    }`}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      selectPlaylist('');
+                    }}
+                  >
+                    Tout
+                  </Button>
                 </div>
-              ) : (
-                <>
-                  {/* Option "Tout" pour afficher toutes les publications du réseau */}
-                  <div className="group relative min-w-[80px] flex-shrink-0">
-                    <Button
-                      variant={selectedPlaylistId === '' ? "default" : "outline"}
-                      className={`text-xs h-8 w-full ${
-                        selectedPlaylistId === '' ? "bg-primary text-primary-foreground" : ""
-                      }`}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        selectPlaylist('');
-                      }}
-                    >
-                      Tout
-                    </Button>
-                      </div>
-                  
-                  {/* Playlists spécifiques */}
-                  {filteredPlaylists.map((playlist) => {
-                             const isSelected = selectedPlaylistId === playlist.id;
-                             return (
-                               <div key={playlist.id} className="group relative min-w-[80px] flex-shrink-0">
-                                 <Button
-                                   variant={isSelected ? "default" : "outline"}
-                                   className={`text-xs h-8 w-full ${
-                                     isSelected ? "bg-primary text-primary-foreground" : ""
-                                   }`}
-                                   style={{ borderColor: isSelected ? undefined : playlist.color }}
-                                   onClick={(e) => {
-                                     e.preventDefault();
-                                     e.stopPropagation();
-                                     selectPlaylist(playlist.id);
-                                   }}
-                                 >
-                                   {playlist.name}
-                                 </Button>
-                                 <Button
-                                   variant="ghost"
-                                   size="sm"
-                                   className="absolute -top-1 -right-1 h-6 w-6 p-0 bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity rounded-full"
-                                   onClick={(e) => {
-                                     e.preventDefault();
-                                     e.stopPropagation();
-                                     handleDeletePlaylist(playlist.id, playlist.name);
-                                   }}
-                                 >
-                                   <Trash2 className="w-3 h-3" />
-                                 </Button>
-                  </div>
-                             );
-                           })}
-                  
+                
+                {filteredPlaylists.map((playlist) => {
+                  const isSelected = selectedPlaylistId === playlist.id;
+                  return (
+                    <div key={playlist.id} className="group relative min-w-[80px] flex-shrink-0">
+                      <Button
+                        variant={isSelected ? "default" : "outline"}
+                        className={`text-xs h-8 w-full ${
+                          isSelected ? "bg-primary text-primary-foreground" : ""
+                        }`}
+                        style={{ borderColor: isSelected ? undefined : playlist.color }}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          selectPlaylist(playlist.id);
+                        }}
+                      >
+                        {playlist.name}
+                      </Button>
+                      {user && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="absolute -top-1 -right-1 h-6 w-6 p-0 bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity rounded-full"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleDeletePlaylist(playlist.id, playlist.name);
+                          }}
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </Button>
+                      )}
+                    </div>
+                  );
+                })}
+                
+                {user && (
                   <Button
                     variant="outline"
                     className="min-w-[32px] flex-shrink-0 border-dashed flex items-center justify-center h-8"
@@ -1188,32 +1407,22 @@ const UserProfile: React.FC = () => {
                   >
                     <Plus className="w-3 h-3" />
                   </Button>
-                </>
-              )}
-            </div>
-          </AuthRequired>
+                )}
+              </>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Section Contenu avec onglets */}
       <div className="bg-card border-b">
         <div className="container mx-auto px-4 py-4">
-          <AuthRequired
-            message="Gestion du contenu"
-            description="Connectez-vous pour créer, gérer et suivre votre contenu."
-            fallback={
-              <div className="text-center py-12">
-                <div className="flex items-center justify-center gap-2 text-muted-foreground mb-4">
-                  <FileText className="w-8 h-8" />
-                  <span className="text-lg font-medium">Gestion du contenu</span>
-                </div>
-                <p className="text-muted-foreground max-w-md mx-auto">
-                  Connectez-vous pour créer du contenu, gérer vos défis et suivre vos statistiques
-                </p>
-              </div>
-            }
-          >
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          {!user && (
+            <div className="mb-4 text-center text-sm text-muted-foreground">
+              Mode aperçu : connectez-vous pour créer, planifier et suivre votre contenu.
+            </div>
+          )}
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <div className="overflow-x-auto scrollbar-hide">
               <TabsList className="inline-flex w-max min-w-full justify-start gap-1">
                 <TabsTrigger value="publications" className="text-xs sm:text-sm px-3 py-2 whitespace-nowrap">
@@ -1250,10 +1459,14 @@ const UserProfile: React.FC = () => {
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
+                    if (!ensureAuthenticated("Connectez-vous pour ajouter une publication.")) {
+                      return;
+                    }
                     setIsAddPublicationModalOpen(true);
                   }}
                   size="sm"
                   className="flex items-center gap-2"
+                  disabled={!user}
                 >
                   <Plus className="w-4 h-4" />
                   Ajouter
@@ -1274,62 +1487,81 @@ const UserProfile: React.FC = () => {
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
+                        if (!ensureAuthenticated("Connectez-vous pour personnaliser votre programme.")) {
+                          return;
+                        }
                         setShowProgramSettingsDialog(true);
                       }}
                       className="w-10 h-10 p-0"
                       title="Programmer"
+                      disabled={!user}
                     >
                       <Edit className="w-4 h-4" />
                     </Button>
                   )}
-                  <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-                    <DialogTrigger asChild>
-                      <Button size="sm" className="w-10 h-10 p-0" title="Ajouter un défi">
-                        <Plus className="w-4 h-4" />
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Ajouter un nouveau défi</DialogTitle>
-                        <DialogDescription>
-                          Créez un nouveau défi personnel pour votre programme de création de contenu.
-                        </DialogDescription>
-                      </DialogHeader>
-                      <div className="space-y-4">
-                        <div>
-                          <Label htmlFor="challenge-title">Titre du défi</Label>
-                          <Input
-                            id="challenge-title"
-                            value={newChallengeTitle}
-                            onChange={(e) => setNewChallengeTitle(e.target.value)}
-                            placeholder="Ex: Créer un post sur l'environnement"
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
-                                handleAddChallenge();
-                              }
-                            }}
-                          />
+                  {user ? (
+                    <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+                      <DialogTrigger asChild>
+                        <Button size="sm" className="w-10 h-10 p-0" title="Ajouter un défi">
+                          <Plus className="w-4 h-4" />
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Ajouter un nouveau défi</DialogTitle>
+                          <DialogDescription>
+                            Créez un nouveau défi personnel pour votre programme de création de contenu.
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                          <div>
+                            <Label htmlFor="challenge-title">Titre du défi</Label>
+                            <Input
+                              id="challenge-title"
+                              value={newChallengeTitle}
+                              onChange={(e) => setNewChallengeTitle(e.target.value)}
+                              placeholder="Ex: Créer un post sur l'environnement"
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  handleAddChallenge();
+                                }
+                              }}
+                            />
+                          </div>
+                          <div className="flex gap-2 justify-end">
+                            <Button
+                              variant="outline"
+                              onClick={() => {
+                                setShowAddDialog(false);
+                                setNewChallengeTitle('');
+                              }}
+                            >
+                              Annuler
+                            </Button>
+                            <Button
+                              onClick={handleAddChallenge}
+                              disabled={!newChallengeTitle.trim()}
+                            >
+                              Ajouter
+                            </Button>
+                          </div>
                         </div>
-                        <div className="flex gap-2 justify-end">
-                          <Button
-                            variant="outline"
-                            onClick={() => {
-                              setShowAddDialog(false);
-                              setNewChallengeTitle('');
-                            }}
-                          >
-                            Annuler
-                          </Button>
-                          <Button
-                            onClick={handleAddChallenge}
-                            disabled={!newChallengeTitle.trim()}
-                          >
-                            Ajouter
-                          </Button>
-                        </div>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
+                      </DialogContent>
+                    </Dialog>
+                  ) : (
+                    <Button
+                      size="sm"
+                      className="w-10 h-10 p-0"
+                      title="Ajouter un défi"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        ensureAuthenticated("Connectez-vous pour ajouter un défi.");
+                      }}
+                    >
+                      <Plus className="w-4 h-4" />
+                    </Button>
+                  )}
                 </div>
                 </div>
                 
@@ -1363,7 +1595,7 @@ const UserProfile: React.FC = () => {
                                 e.stopPropagation();
                                 handleCompleteChallenge(challenge.id);
                               }}
-                              disabled={validatingChallenges.has(challenge.id)}
+                              disabled={!user || validatingChallenges.has(challenge.id)}
                               className={`p-2 rounded transition-all duration-700 ease-in-out ${
                                 validatingChallenges.has(challenge.id)
                                   ? 'bg-green-500 border-2 border-green-600 scale-150 shadow-xl animate-pulse'
@@ -1395,9 +1627,13 @@ const UserProfile: React.FC = () => {
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
+                    if (!ensureAuthenticated("Connectez-vous pour organiser vos défis accomplis.")) {
+                      return;
+                    }
                     setIsEditModeCompleted(!isEditModeCompleted);
                   }}
                   className="flex items-center gap-2"
+                  disabled={!user}
                 >
                   <Edit className="w-4 h-4" />
                   {isEditModeCompleted ? "Terminer" : "Éditer"}
@@ -1448,7 +1684,7 @@ const UserProfile: React.FC = () => {
                       <div className="text-center text-muted-foreground">Chargement des statistiques...</div>
                     </CardContent>
                   </Card>
-                ) : networkStats ? (
+                ) : user && networkStats ? (
                   <Card>
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
@@ -1505,12 +1741,59 @@ const UserProfile: React.FC = () => {
                       </div>
                     </CardContent>
           </Card>
-                ) : (
+                ) : user ? (
                   <Card>
                     <CardContent className="p-6">
                       <div className="text-center text-muted-foreground">
                         Sélectionnez un réseau social pour voir ses statistiques
                     </div>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <BarChart3 className="w-5 h-5" />
+                        Statistiques (aperçu démo)
+                      </CardTitle>
+                      <CardDescription>
+                        Exemples de progression calculés à partir des données invitées.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        <div>
+                          <div className="flex justify-between text-sm mb-2">
+                            <span>Progression du programme</span>
+                            <span>{Math.round(getProgressPercentage())}%</span>
+                          </div>
+                          <Progress value={getProgressPercentage()} className="h-3" />
+                        </div>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                          <div className="text-center">
+                            <div className="text-2xl font-bold text-blue-600">{getTotalContents()}</div>
+                            <div className="text-sm text-muted-foreground">Publications prévues</div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-2xl font-bold text-green-600">{displayedStats.completed_challenges}</div>
+                            <div className="text-sm text-muted-foreground">Défis accomplis</div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-2xl font-bold text-orange-600">{getRemainingContents()}</div>
+                            <div className="text-sm text-muted-foreground">Défis restants</div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-2xl font-bold text-purple-600">{getRemainingDays()}</div>
+                            <div className="text-sm text-muted-foreground">Jours restants estimés</div>
+                          </div>
+                        </div>
+                        <div className="bg-muted rounded-lg p-3">
+                          <div className="text-sm text-muted-foreground mb-1">Configuration du programme</div>
+                          <div className="text-xs text-muted-foreground">
+                            {getDurationText(displayedStats.program_duration)} • {displayedStats.contents_per_day} contenu(s) par jour • {getTotalContents()} publications au total
+                          </div>
+                        </div>
+                      </div>
                     </CardContent>
                   </Card>
                 )}
@@ -1520,7 +1803,7 @@ const UserProfile: React.FC = () => {
             {/* Onglet Corbeille */}
             <TabsContent value="trash" className="mt-6">
               <div className="space-y-3">
-                {deletedChallenges.filter(challenge => challenge.title && challenge.user_id).length === 0 ? (
+                {corbeille.length === 0 ? (
                   <Card className="text-center py-12">
                     <CardContent>
                       <Trash2 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
@@ -1531,7 +1814,7 @@ const UserProfile: React.FC = () => {
                     </CardContent>
                   </Card>
                 ) : (
-                  deletedChallenges.filter(challenge => challenge.title && challenge.user_id).map((challenge) => (
+                  corbeille.map((challenge) => (
                     <Card key={challenge.id} className="hover:shadow-md transition-shadow border-red-200">
             <CardContent className="p-4">
                         <div className="flex items-center justify-between">
@@ -1549,7 +1832,6 @@ const UserProfile: React.FC = () => {
               </div>
             </TabsContent>
           </Tabs>
-          </AuthRequired>
         </div>
       </div>
 

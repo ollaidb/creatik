@@ -27,10 +27,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import Navigation from '@/components/Navigation';
+import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
 
 const Compte = () => {
   const navigate = useNavigate();
   const { navigateWithReturn, navigateBack } = useSmartNavigation();
+  const { signOut } = useAuth();
+  const { toast } = useToast();
 
   // Section 1: COMPTE
   const accountItems = [
@@ -129,9 +133,32 @@ const Compte = () => {
   ];
 
   // Section 4: CONNEXION
-  const handleLogout = () => {
-    console.log('Déconnexion');
-    // Logique de déconnexion
+  const handleLogout = async () => {
+    try {
+      const { error } = await signOut();
+      if (error) {
+        toast({
+          title: "Erreur de déconnexion",
+          description: "Impossible de se déconnecter. Veuillez réessayer.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      localStorage.setItem('just_logged_out', 'true');
+      toast({
+        title: "Déconnexion réussie",
+        description: "Vous avez été déconnecté avec succès.",
+      });
+      navigate('/');
+    } catch (error) {
+      console.error('Erreur lors de la déconnexion:', error);
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors de la déconnexion.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (

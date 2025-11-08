@@ -72,7 +72,7 @@ const PublicChallenges = () => {
   // Récupérer le paramètre de retour
   const returnTo = searchParams.get('returnTo') || 'profile';
 
-  // Filtrer les challenges selon le type
+  // Filtrer les challenges selon le type (pour affichage dans l'aperçu)
   const contentChallenges = challenges.filter(challenge => 
     challenge.challenge_type === 'content' || !challenge.challenge_type
   );
@@ -418,11 +418,19 @@ const PublicChallenges = () => {
       <main className="max-w-4xl mx-auto p-4">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-3 mb-6">
-            <TabsTrigger value="content" className="flex items-center gap-2">
+            <TabsTrigger 
+              value="content" 
+              className="flex items-center gap-2"
+              onClick={() => navigate('/community/content')}
+            >
               <Target className="w-4 h-4" />
               Contenu
             </TabsTrigger>
-            <TabsTrigger value="accounts" className="flex items-center gap-2">
+            <TabsTrigger 
+              value="accounts" 
+              className="flex items-center gap-2"
+              onClick={() => navigate('/community/accounts')}
+            >
               <User className="w-4 h-4" />
               Comptes
             </TabsTrigger>
@@ -433,6 +441,7 @@ const PublicChallenges = () => {
           </TabsList>
 
           <TabsContent value="content" className="space-y-4">
+            {/* Afficher un aperçu limité et rediriger vers la page complète */}
             {contentChallenges.length === 0 ? (
               <Card className="text-center py-12">
                 <CardContent>
@@ -449,11 +458,23 @@ const PublicChallenges = () => {
                 </CardContent>
               </Card>
             ) : (
-              contentChallenges.map(challenge => renderChallengeCard(challenge, false))
+              <>
+                {contentChallenges.slice(0, 20).map(challenge => renderChallengeCard(challenge, false))}
+                {contentChallenges.length > 20 && (
+                  <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate('/community/content')}>
+                    <CardContent className="p-4 text-center">
+                      <Button variant="outline" className="w-full">
+                        Voir tous les contenus ({contentChallenges.length})
+                      </Button>
+                    </CardContent>
+                  </Card>
+                )}
+              </>
             )}
           </TabsContent>
 
           <TabsContent value="accounts" className="space-y-4">
+            {/* Afficher un aperçu limité et rediriger vers la page complète */}
             {accountChallenges.length === 0 ? (
               <Card className="text-center py-12">
                 <CardContent>
@@ -470,7 +491,18 @@ const PublicChallenges = () => {
                 </CardContent>
               </Card>
             ) : (
-              accountChallenges.map(challenge => renderChallengeCard(challenge, true))
+              <>
+                {accountChallenges.slice(0, 20).map(challenge => renderChallengeCard(challenge, true))}
+                {accountChallenges.length > 20 && (
+                  <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate('/community/accounts')}>
+                    <CardContent className="p-4 text-center">
+                      <Button variant="outline" className="w-full">
+                        Voir tous les comptes ({accountChallenges.length})
+                      </Button>
+                    </CardContent>
+                  </Card>
+                )}
+              </>
             )}
           </TabsContent>
 

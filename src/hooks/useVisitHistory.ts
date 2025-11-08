@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 
 export interface VisitItem {
@@ -17,28 +17,59 @@ export const useVisitHistory = () => {
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
 
+  const storageKey = useMemo(() => {
+    if (user?.id) {
+      return `visitHistory_${user.id}`;
+    }
+    return 'visitHistory_guest';
+  }, [user?.id]);
+
   // Charger l'historique depuis localStorage
   const loadVisits = useCallback(() => {
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('visitHistory');
-      if (stored) {
-        try {
-          const parsed = JSON.parse(stored);
-          setVisits(parsed);
-        } catch (error) {
-          console.error('Error parsing visit history:', error);
-        }
+    if (typeof window === 'undefined') {
+      setVisits([]);
+      setLoading(false);
+      return;
+    }
+
+    const stored = localStorage.getItem(storageKey);
+
+    // Migration depuis l'ancien stockage commun si nécessaire
+    if (!stored && user?.id) {
+      const legacyStored = localStorage.getItem('visitHistory');
+      if (legacyStored) {
+        localStorage.setItem(storageKey, legacyStored);
+        localStorage.removeItem('visitHistory');
       }
     }
+
+    const valueToParse = stored ?? (user?.id ? localStorage.getItem(storageKey) : localStorage.getItem('visitHistory_guest'));
+
+    if (valueToParse) {
+      try {
+        const parsed = JSON.parse(valueToParse);
+        if (Array.isArray(parsed)) {
+          setVisits(parsed);
+        } else {
+          setVisits([]);
+        }
+      } catch (error) {
+        console.error('Error parsing visit history:', error);
+        setVisits([]);
+      }
+    } else {
+      setVisits([]);
+    }
     setLoading(false);
-  }, []);
+  }, [storageKey, user?.id]);
 
   // Sauvegarder l'historique dans localStorage
   const saveVisits = useCallback((newVisits: VisitItem[]) => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('visitHistory', JSON.stringify(newVisits));
+    if (typeof window === 'undefined') {
+      return;
     }
-  }, []);
+    localStorage.setItem(storageKey, JSON.stringify(newVisits));
+  }, [storageKey]);
 
   // Ajouter une nouvelle visite
   const addVisit = useCallback((visit: Omit<VisitItem, 'id' | 'timestamp'>) => {
@@ -59,11 +90,15 @@ export const useVisitHistory = () => {
   const clearHistory = useCallback(() => {
     setVisits([]);
     saveVisits([]);
-  }, [saveVisits]);
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(storageKey);
+    }
+  }, [saveVisits, storageKey]);
 
   useEffect(() => {
+    setLoading(true);
     loadVisits();
-  }, [loadVisits]);
+  }, [loadVisits, storageKey]);
 
   return {
     visits,

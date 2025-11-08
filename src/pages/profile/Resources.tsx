@@ -1,170 +1,72 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import { ArrowLeft, FileText, Receipt, Type, Mail, Package, AppWindow, Sparkles } from 'lucide-react';
 import { useSmartNavigation } from '@/hooks/useNavigation';
-import { 
-  ArrowLeft, 
-  BookOpen, 
-  Video, 
-  FileText, 
-  ExternalLink,
-  PlayCircle,
-  Download,
-  Star,
-  Users,
-  Lightbulb,
-  Target,
-  TrendingUp
-} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import Navigation from '@/components/Navigation';
 
+const resourceTabs = [
+  { key: 'contracts', label: 'Contrats', gradient: 'from-blue-500 to-sky-500', icon: FileText },
+  { key: 'receipts', label: 'Reçus', gradient: 'from-emerald-500 to-teal-500', icon: Receipt },
+  { key: 'captions', label: 'Légendes', gradient: 'from-purple-500 to-fuchsia-500', icon: Type },
+  { key: 'emails', label: 'Mails', gradient: 'from-orange-500 to-amber-500', icon: Mail },
+  { key: 'equipment', label: 'Matériel', gradient: 'from-teal-500 to-emerald-500', icon: Package },
+  { key: 'apps', label: 'Apps', gradient: 'from-rose-500 to-pink-500', icon: AppWindow }
+] as const;
+
+const resourceDescriptions: Record<typeof resourceTabs[number]['key'], string[]> = {
+  contracts: [
+    'Modèles adaptables (collaboration, sponsoring, UGC).',
+    'Sections pré-remplies avec clauses clés pour protéger vos intérêts.',
+    'Signature électronique et export PDF intégrés (à venir).'
+  ],
+  receipts: [
+    'Générez un reçu professionnel en quelques clics.',
+    'Ajoutez vos prestations, tarifs et coordonnées automatiquement.',
+    'Historique exportable pour la comptabilité (à venir).'
+  ],
+  captions: [
+    'Légendes organisées par plateformes et objectifs (vente, engagement...).',
+    'Variables dynamiques pour personnaliser les messages.',
+    'Suggestions basées sur vos performances (vision future).'
+  ],
+  emails: [
+    'Templates pour démarcher les marques et répondre aux briefings.',
+    'Ton ajustable (professionnel, friendly, urgent).',
+    'Proposition de séquences d’emails complètes.'
+  ],
+  equipment: [
+    'Listes d’équipement recommandées selon votre budget.',
+    'Fiches pratiques d’installation et d’entretien.',
+    'Liens d’achat vérifiés et comparatifs (à venir).'
+  ],
+  apps: [
+    'Sélection d’apps pour planifier, filmer, monter et analyser.',
+    'Filtres par plateforme, prix et niveau.',
+    'Intégration avec Creatik pour synchroniser vos workflows (vision future).'
+  ]
+};
+
+const containerVariants = {
+  hidden: { opacity: 0, y: 16 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.3 }
+  }
+};
+
 const Resources = () => {
-  const navigate = useNavigate();
   const { navigateBack } = useSmartNavigation();
+  const [selectedTab, setSelectedTab] = useState<(typeof resourceTabs)[number]['key']>('contracts');
 
-  const resourceCategories = [
-    {
-      title: 'Guides de démarrage',
-      icon: PlayCircle,
-      color: 'bg-blue-500',
-      resources: [
-        {
-          title: 'Comment créer votre premier contenu',
-          description: 'Guide complet pour débuter sur les réseaux sociaux',
-          type: 'Guide',
-          duration: '15 min',
-          difficulty: 'Débutant'
-        },
-        {
-          title: 'Optimiser vos publications',
-          description: 'Techniques pour maximiser l\'engagement',
-          type: 'Tutoriel',
-          duration: '20 min',
-          difficulty: 'Intermédiaire'
-        },
-        {
-          title: 'Stratégie de contenu 30 jours',
-          description: 'Plan complet pour un mois de contenu',
-          type: 'Plan',
-          duration: '30 min',
-          difficulty: 'Avancé'
-        }
-      ]
-    },
-    {
-      title: 'Templates et modèles',
-      icon: FileText,
-      color: 'bg-green-500',
-      resources: [
-        {
-          title: 'Templates Instagram Stories',
-          description: '50+ modèles prêts à utiliser',
-          type: 'Template',
-          duration: 'Téléchargement',
-          difficulty: 'Tous niveaux'
-        },
-        {
-          title: 'Calendrier éditorial',
-          description: 'Modèle Excel pour planifier votre contenu',
-          type: 'Fichier',
-          duration: 'Téléchargement',
-          difficulty: 'Tous niveaux'
-        },
-        {
-          title: 'Captions prêtes à utiliser',
-          description: '100+ légendes pour tous types de contenu',
-          type: 'Texte',
-          duration: 'Téléchargement',
-          difficulty: 'Tous niveaux'
-        }
-      ]
-    },
-    {
-      title: 'Formations vidéo',
-      icon: Video,
-      color: 'bg-purple-500',
-      resources: [
-        {
-          title: 'Maîtrisez TikTok en 7 jours',
-          description: 'Formation complète sur l\'algorithme TikTok',
-          type: 'Formation',
-          duration: '2h 30min',
-          difficulty: 'Intermédiaire'
-        },
-        {
-          title: 'Instagram Reels : Le guide complet',
-          description: 'Tout savoir sur les Reels Instagram',
-          type: 'Formation',
-          duration: '1h 45min',
-          difficulty: 'Débutant'
-        },
-        {
-          title: 'YouTube : De 0 à 1000 abonnés',
-          description: 'Stratégies pour développer votre chaîne',
-          type: 'Formation',
-          duration: '3h 15min',
-          difficulty: 'Avancé'
-        }
-      ]
-    },
-    {
-      title: 'Outils et ressources',
-      icon: Lightbulb,
-      color: 'bg-orange-500',
-      resources: [
-        {
-          title: 'Générateur d\'idées de contenu',
-          description: 'IA pour générer des idées personnalisées',
-          type: 'Outil',
-          duration: 'En ligne',
-          difficulty: 'Tous niveaux'
-        },
-        {
-          title: 'Analyseur de hashtags',
-          description: 'Trouvez les meilleurs hashtags pour vos posts',
-          type: 'Outil',
-          duration: 'En ligne',
-          difficulty: 'Tous niveaux'
-        },
-        {
-          title: 'Bibliothèque d\'images libres',
-          description: '10,000+ images haute qualité gratuites',
-          type: 'Ressource',
-          duration: 'En ligne',
-          difficulty: 'Tous niveaux'
-        }
-      ]
-    }
-  ];
-
-  const getDifficultyColor = (difficulty: string) => {
-    switch (difficulty) {
-      case 'Débutant': return 'bg-green-100 text-green-800';
-      case 'Intermédiaire': return 'bg-yellow-100 text-yellow-800';
-      case 'Avancé': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const getTypeIcon = (type: string) => {
-    switch (type) {
-      case 'Guide': return BookOpen;
-      case 'Tutoriel': return PlayCircle;
-      case 'Formation': return Video;
-      case 'Template': return FileText;
-      case 'Outil': return Target;
-      default: return FileText;
-    }
-  };
+  const currentTab = resourceTabs.find(tab => tab.key === selectedTab) ?? resourceTabs[0];
 
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-6">
-        {/* Header */}
-        <div className="flex items-center gap-4 mb-6">
+        <div className="flex items-center gap-4 mb-8">
           <Button
             variant="ghost"
             size="sm"
@@ -175,125 +77,89 @@ const Resources = () => {
           </Button>
           <div>
             <h1 className="text-2xl font-bold text-foreground">Ressources</h1>
-            <p className="text-muted-foreground">Guides, templates et outils pour créer du contenu</p>
           </div>
         </div>
 
-        <div className="space-y-8">
-          {resourceCategories.map((category, categoryIndex) => (
-            <motion.div
-              key={category.title}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: categoryIndex * 0.1 }}
-            >
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <div className={`p-2 rounded-lg ${category.color}`}>
-                      <category.icon className="w-5 h-5 text-white" />
-                    </div>
-                    {category.title}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    {category.resources.map((resource, resourceIndex) => {
-                      const TypeIcon = getTypeIcon(resource.type);
-                      return (
-                        <motion.div
-                          key={resource.title}
-                          initial={{ opacity: 0, scale: 0.95 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          transition={{ delay: (categoryIndex * 0.1) + (resourceIndex * 0.05) }}
-                        >
-                          <Card className="h-full hover:shadow-md transition-shadow cursor-pointer">
-                            <CardContent className="p-4">
-                              <div className="flex items-start justify-between mb-3">
-                                <div className={`p-2 rounded-lg ${category.color} bg-opacity-20`}>
-                                  <TypeIcon className="w-4 h-4" style={{ color: category.color.replace('bg-', '') }} />
-                                </div>
-                                <Badge className={getDifficultyColor(resource.difficulty)}>
-                                  {resource.difficulty}
-                                </Badge>
-                              </div>
-                              
-                              <h3 className="font-semibold text-foreground mb-2 line-clamp-2">
-                                {resource.title}
-                              </h3>
-                              
-                              <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
-                                {resource.description}
-                              </p>
-                              
-                              <div className="flex items-center justify-between text-xs text-muted-foreground mb-3">
-                                <span className="flex items-center gap-1">
-                                  <Star className="w-3 h-3" />
-                                  {resource.type}
-                                </span>
-                                <span>{resource.duration}</span>
-                              </div>
-                              
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
-                                className="w-full"
-                                onClick={() => {
-                                  // Ici vous pouvez ajouter la logique pour ouvrir la ressource
-                                  console.log('Ouvrir:', resource.title);
-                                }}
-                              >
-                                <ExternalLink className="w-3 h-3 mr-2" />
-                                Accéder
-                              </Button>
-                            </CardContent>
-                          </Card>
-                        </motion.div>
-                      );
-                    })}
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          ))}
+        <div className="mb-6 overflow-x-auto scrollbar-hide">
+          <div className="flex gap-2 pb-2 min-w-max">
+            {resourceTabs.map((tab, index) => {
+              const isActive = selectedTab === tab.key;
+              return (
+                <motion.button
+                  key={tab.key}
+                  variants={containerVariants}
+                  initial="hidden"
+                  animate="visible"
+                  transition={{ delay: index * 0.05 }}
+                  onClick={() => setSelectedTab(tab.key)}
+                  className={`
+                    px-3 py-2 rounded-lg transition-all duration-300 min-w-[80px] text-center flex items-center justify-center gap-2
+                    ${isActive 
+                      ? `bg-gradient-to-r ${tab.gradient} text-white shadow-lg scale-105` 
+                      : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                    }
+                  `}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <tab.icon className={`h-4 w-4 ${isActive ? 'text-white' : 'text-current'}`} />
+                  <span className="text-xs font-medium leading-tight">
+                    {tab.label}
+                  </span>
+                </motion.button>
+              );
+            })}
+          </div>
+        </div>
 
-          {/* Section recommandations */}
+        <motion.div
+          key={currentTab.key}
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          className="space-y-4"
+        >
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="w-5 h-5" />
-                Recommandations pour vous
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="flex items-center gap-3 p-4 border rounded-lg hover:bg-accent transition-colors cursor-pointer">
-                  <div className="p-2 bg-blue-100 rounded-lg">
-                    <Users className="w-5 h-5 text-blue-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold">Rejoignez notre communauté</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Échangez avec d'autres créateurs de contenu
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="flex items-center gap-3 p-4 border rounded-lg hover:bg-accent transition-colors cursor-pointer">
-                  <div className="p-2 bg-green-100 rounded-lg">
-                    <Download className="w-5 h-5 text-green-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold">Téléchargez l'app mobile</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Créez du contenu où que vous soyez
-                    </p>
-                  </div>
-                </div>
+            <CardHeader className="flex flex-row items-start justify-between space-y-0">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <currentTab.icon className="h-5 w-5" />
+                  {currentTab.label}
+                </CardTitle>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Retrouvez ici toutes les ressources liées à cette catégorie.
+                </p>
               </div>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Sparkles className="h-4 w-4" />
+                Mode aperçu
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-3 text-sm text-muted-foreground">
+              {resourceDescriptions[currentTab.key].map((bullet, idx) => (
+                <div key={bullet} className="flex gap-3">
+                  <div className={`mt-1 h-2 w-2 rounded-full bg-gradient-to-r ${currentTab.gradient}`} />
+                  <span>{bullet}</span>
+                </div>
+              ))}
             </CardContent>
           </Card>
-        </div>
+
+          <Card className="border-dashed">
+            <CardHeader>
+              <CardTitle>Prochaine étape</CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm text-muted-foreground space-y-3">
+              <p>
+                Nous construisons actuellement l’interface complète pour la section « {currentTab.label} ».
+                Vous pourrez bientôt générer et exporter vos documents en quelques secondes.
+              </p>
+              <p>
+                Si vous avez des besoins spécifiques, notez-les et nous les intégrerons au futur générateur.
+              </p>
+            </CardContent>
+          </Card>
+        </motion.div>
       </div>
 
       <Navigation />
