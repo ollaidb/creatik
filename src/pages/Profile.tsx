@@ -34,10 +34,21 @@ import {
   ToggleLeft,
   ToggleRight,
   UserCheck,
-  Users2
+  Users2,
+  ClipboardList,
+  ListPlus,
+  Instagram,
+  Youtube,
+  Facebook,
+  Twitter,
+  Linkedin,
+  Twitch,
+  Music2,
+  Podcast,
+  Globe
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -300,6 +311,42 @@ const UserProfile: React.FC = () => {
     return true;
   };
 
+  const handleQuickAddSelection = (target: QuickAddTarget) => {
+    let message = "Connectez-vous pour utiliser cette action.";
+    switch (target) {
+      case 'network':
+        message = "Connectez-vous pour ajouter un réseau social.";
+        break;
+      case 'playlist':
+        message = "Connectez-vous pour créer une playlist.";
+        break;
+      case 'publication':
+        message = "Connectez-vous pour ajouter une publication.";
+        break;
+      case 'challenge':
+        message = "Connectez-vous pour créer un défi.";
+        break;
+    }
+    if (!ensureAuthenticated(message)) {
+      return;
+    }
+    setIsQuickAddDialogOpen(false);
+    switch (target) {
+      case 'network':
+        setIsAddSocialModalOpen(true);
+        break;
+      case 'playlist':
+        setIsAddPlaylistModalOpen(true);
+        break;
+      case 'publication':
+        setIsAddPublicationModalOpen(true);
+        break;
+      case 'challenge':
+        setShowAddDialog(true);
+        break;
+    }
+  };
+  
   // Hook pour les défis
   const {
     challenges,
@@ -340,6 +387,8 @@ const UserProfile: React.FC = () => {
   const [isDeleteSocialModalOpen, setIsDeleteSocialModalOpen] = useState(false);
   const [isDeletePlaylistModalOpen, setIsDeletePlaylistModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isQuickAddDialogOpen, setIsQuickAddDialogOpen] = useState(false);
+  type QuickAddTarget = 'network' | 'playlist' | 'publication' | 'challenge';
   
   // États pour le renommage
   const [renamingAccountId, setRenamingAccountId] = useState<string | null>(null);
@@ -860,6 +909,45 @@ const UserProfile: React.FC = () => {
 
   const displayedStats = stats ?? GUEST_CHALLENGE_STATS;
 
+const getNetworkIcon = (platform: string) => {
+  switch ((platform || '').toLowerCase()) {
+    case 'instagram':
+      return Instagram;
+    case 'youtube':
+      return Youtube;
+    case 'tiktok':
+      return Music2;
+    case 'facebook':
+      return Facebook;
+    case 'linkedin':
+      return Linkedin;
+    case 'twitter':
+    case 'x':
+      return Twitter;
+    case 'twitch':
+      return Twitch;
+    case 'podcasts':
+    case 'podcast':
+      return Podcast;
+    case 'blog':
+      return BookOpen;
+    case 'article':
+      return FileText;
+    default:
+      return Globe;
+  }
+};
+
+const renderNetworkLabel = (label: string, platform: string) => {
+  const Icon = getNetworkIcon(platform);
+  return (
+    <span className="flex items-center gap-2 truncate">
+      <Icon className="w-3.5 h-3.5 shrink-0" />
+      <span className="truncate capitalize">{label}</span>
+    </span>
+  );
+};
+
   const getTotalContents = () => {
     const days = getDurationDays(selectedDuration);
     return days * contentsPerDay;
@@ -994,7 +1082,8 @@ const UserProfile: React.FC = () => {
     { icon: Target, label: "Communauté", path: "/public-challenges", color: "text-orange-500" },
     { icon: Heart, label: "Favoris", path: "/profile/favorites", color: "text-red-500" },
     { icon: FileText, label: "Ressources", path: "/profile/resources", color: "text-green-500" },
-    { icon: Calendar, label: "Historique", path: "/profile/history", color: "text-purple-500" }
+    { icon: Calendar, label: "Historique", path: "/profile/history", color: "text-purple-500" },
+    { icon: ClipboardList, label: "Publications", path: "/profile/publications", color: "text-teal-500" }
   ];
 
   const contributorMenuItems = [
@@ -1003,6 +1092,109 @@ const UserProfile: React.FC = () => {
   ];
 
   const profileMenuItems = profileType === 'creator' ? creatorMenuItems : contributorMenuItems;
+
+  const quickAddOptions: Array<{
+    id: QuickAddTarget;
+    label: string;
+    description: string;
+    icon: React.ComponentType<{ className?: string }>;
+  }> = [
+    {
+      id: 'network',
+      label: 'Réseau social',
+      description: 'Connecter un nouveau compte social',
+      icon: Users
+    },
+    {
+      id: 'playlist',
+      label: 'Playlist',
+      description: 'Organiser vos contenus par thématique',
+      icon: ListPlus
+    },
+    {
+      id: 'publication',
+      label: 'Publication',
+      description: 'Ajouter un contenu publié',
+      icon: FileText
+    },
+    {
+      id: 'challenge',
+      label: 'Défi',
+      description: 'Créer un nouveau défi à réaliser',
+      icon: Target
+    }
+  ];
+
+  const renderSocialAccountChips = () => {
+    if (loading) {
+      return (
+        <>
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="min-w-[80px] h-8 bg-muted rounded animate-pulse flex-shrink-0"></div>
+          ))}
+          <div className="min-w-[32px] h-8 bg-muted rounded animate-pulse flex-shrink-0"></div>
+        </>
+      );
+    }
+
+    if (user) {
+      return (
+        <Reorder.Group
+          axis="x"
+          values={socialAccounts}
+          onReorder={handleReorderSocialAccounts}
+          className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide"
+        >
+          {socialAccounts.map((account) => {
+            const isSelected = selectedSocialNetworkId === account.id;
+            return (
+              <Reorder.Item
+                key={account.id}
+                value={account}
+                className="min-w-[80px] flex-shrink-0"
+              >
+                <Button
+                  variant={isSelected ? "default" : "outline"}
+                  className={`text-xs h-8 w-full ${
+                    isSelected ? "bg-primary text-primary-foreground" : ""
+                  }`}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    selectSocialNetwork(account.id);
+                  }}
+                >
+                  {renderNetworkLabel(account.custom_name || account.platform, account.platform)}
+                </Button>
+              </Reorder.Item>
+            );
+          })}
+        </Reorder.Group>
+      );
+    }
+
+    return (
+      <>
+        {socialAccounts.map((account) => {
+          const isSelected = selectedSocialNetworkId === account.id;
+          return (
+            <Button
+              key={account.id}
+              variant={isSelected ? "default" : "outline"}
+              className="text-xs h-8 min-w-[80px] flex-shrink-0"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                selectSocialNetwork(account.id);
+              }}
+            >
+              {renderNetworkLabel(account.custom_name || account.platform, account.platform)}
+            </Button>
+          );
+        })}
+      </>
+    );
+  };
 
   const renderPublications = () => {
     if (loading) {
@@ -1051,18 +1243,18 @@ const UserProfile: React.FC = () => {
                 </p>
               </div>
           {user && (
-            <Button 
-              variant="ghost" 
-              size="sm"
-              className="absolute top-2 right-2 h-8 w-8 p-0 bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity rounded-full"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                handleDeletePublication(post.id, post.title);
-              }}
-            >
-              <Trash2 className="w-4 h-4" />
-            </Button>
+          <Button 
+            variant="ghost" 
+                size="sm"
+                className="absolute top-2 right-2 h-8 w-8 p-0 bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity rounded-full"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleDeletePublication(post.id, post.title);
+                }}
+              >
+                <Trash2 className="w-4 h-4" />
+          </Button>
           )}
         </div>
           );
@@ -1173,20 +1365,34 @@ const UserProfile: React.FC = () => {
       <div className="bg-card border-b">
         <div className="container mx-auto px-4 py-2">
           <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+            {profileType === 'creator' && (
+              <Button
+                variant="default"
+                className="flex flex-col items-center gap-1 h-auto py-2 min-w-[60px] flex-shrink-0"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setIsQuickAddDialogOpen(true);
+                }}
+              >
+                <Plus className="w-4 h-4" />
+                <span className="text-xs text-center">Ajouter</span>
+              </Button>
+            )}
             {profileMenuItems.map((item, index) => (
-          <Button 
+              <Button 
                 key={index}
-            variant="ghost" 
+                variant="ghost" 
                 className="flex flex-col items-center gap-1 h-auto py-2 min-w-[60px] flex-shrink-0"
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
                   navigate(item.path);
                 }}
-          >
+              >
                 <item.icon className={`w-4 h-4 ${item.color}`} />
                 <span className="text-xs text-center">{item.label}</span>
-          </Button>
+              </Button>
             ))}
           </div>
         </div>
@@ -1198,219 +1404,143 @@ const UserProfile: React.FC = () => {
           {!user && (
             <div className="mb-3 text-center text-xs text-muted-foreground">
               Mode aperçu : connectez-vous pour ajouter ou gérer vos réseaux sociaux.
-            </div>
+                </div>
           )}
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs text-muted-foreground">
-              {socialAccounts.length} réseau{socialAccounts.length > 1 ? 'x' : ''} social{socialAccounts.length > 1 ? 'aux' : ''}
-            </span>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs text-muted-foreground">
+                {socialAccounts.length} réseau{socialAccounts.length > 1 ? 'x' : ''} social{socialAccounts.length > 1 ? 'aux' : ''}
+              </span>
             {user && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="p-1 h-6 w-6 hover:bg-gray-100 dark:hover:bg-gray-800"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setIsEditSocialModalOpen(true);
-                }}
-                title="Options d'édition"
-              >
-                <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M3 10a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zM8.5 10a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zM14 10a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0z" />
-                </svg>
-              </Button>
-            )}
-          </div>
-          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-            {loading ? (
-              <>
-                {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="min-w-[80px] h-8 bg-muted rounded animate-pulse flex-shrink-0"></div>
-                ))}
-                <div className="min-w-[32px] h-8 bg-muted rounded animate-pulse flex-shrink-0"></div>
-              </>
-            ) : user ? (
-              <>
-                <Reorder.Group
-                  axis="x"
-                  values={socialAccounts}
-                  onReorder={handleReorderSocialAccounts}
-                  className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide"
-                >
-                  {socialAccounts.map((account) => {
-                    const isSelected = selectedSocialNetworkId === account.id;
-                    return (
-                      <Reorder.Item
-                        key={account.id}
-                        value={account}
-                        className="min-w-[80px] flex-shrink-0"
-                      >
-                        <Button
-                          variant={isSelected ? "default" : "outline"}
-                          className={`text-xs h-8 w-full ${
-                            isSelected ? "bg-primary text-primary-foreground" : ""
-                          }`}
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            selectSocialNetwork(account.id);
-                          }}
-                        >
-                          {account.custom_name || account.platform}
-                        </Button>
-                      </Reorder.Item>
-                    );
-                  })}
-                </Reorder.Group>
+              <div className="flex items-center gap-2 ml-auto">
+                <p className="text-xs text-muted-foreground">
+                  Bouton “Ajouter” pour connecter un nouveau réseau.
+                </p>
                 <Button
-                  variant="outline"
-                  className="min-w-[32px] flex-shrink-0 border-dashed flex items-center justify-center h-8"
+                  variant="ghost"
+                  size="sm"
+                  className="p-1 h-6 w-6 hover:bg-gray-100 dark:hover:bg-gray-800"
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    setIsAddSocialModalOpen(true);
+                    setIsEditSocialModalOpen(true);
                   }}
+                  title="Options d'édition"
                 >
-                  <Plus className="w-3 h-3" />
+                  <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M3 10a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zM8.5 10a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zM14 10a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0z" />
+                  </svg>
                 </Button>
-              </>
-            ) : (
-              socialAccounts.map((account) => {
-                const isSelected = selectedSocialNetworkId === account.id;
-                return (
-                  <Button
-                    key={account.id}
-                    variant={isSelected ? "default" : "outline"}
-                    className="text-xs h-8 min-w-[80px] flex-shrink-0"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      selectSocialNetwork(account.id);
-                    }}
-                  >
-                    {account.custom_name || account.platform}
-                  </Button>
-                );
-              })
+              </div>
             )}
-          </div>
+            </div>
+            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+              {renderSocialAccountChips()}
+            </div>
         </div>
       </div>
-
+```
       {/* Section 3: Playlists */}
       <div className="bg-card border-b">
         <div className="container mx-auto px-4 py-2">
           {!user && (
             <div className="mb-3 text-center text-xs text-muted-foreground">
               Mode aperçu : connectez-vous pour créer ou modifier vos playlists.
-            </div>
-          )}
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs text-muted-foreground">
-              {filteredPlaylists.length} playlist{filteredPlaylists.length > 1 ? 's' : ''}
-            </span>
-            {user && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="p-1 h-6 w-6 hover:bg-gray-100 dark:hover:bg-gray-800"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setIsEditPlaylistModalOpen(true);
-                }}
-                title="Options d'édition des playlists"
-              >
-                <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M3 10a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zM8.5 10a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zM14 10a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0z" />
-                </svg>
-              </Button>
-            )}
-          </div>
-          
-          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-            {loading ? (
-              <>
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="min-w-[80px] h-8 bg-muted rounded animate-pulse flex-shrink-0"></div>
-                ))}
-                <div className="min-w-[32px] h-8 bg-muted rounded animate-pulse flex-shrink-0"></div>
-              </>
-            ) : !selectedSocialNetworkId ? (
-              <div className="text-center py-4 text-muted-foreground text-sm">
-                Sélectionnez un réseau social pour voir ses playlists
-              </div>
-            ) : (
-              <>
-                <div className="group relative min-w-[80px] flex-shrink-0">
-                  <Button
-                    variant={selectedPlaylistId === '' ? "default" : "outline"}
-                    className={`text-xs h-8 w-full ${
-                      selectedPlaylistId === '' ? "bg-primary text-primary-foreground" : ""
-                    }`}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      selectPlaylist('');
-                    }}
-                  >
-                    Tout
-                  </Button>
                 </div>
-                
-                {filteredPlaylists.map((playlist) => {
-                  const isSelected = selectedPlaylistId === playlist.id;
-                  return (
-                    <div key={playlist.id} className="group relative min-w-[80px] flex-shrink-0">
-                      <Button
-                        variant={isSelected ? "default" : "outline"}
-                        className={`text-xs h-8 w-full ${
-                          isSelected ? "bg-primary text-primary-foreground" : ""
-                        }`}
-                        style={{ borderColor: isSelected ? undefined : playlist.color }}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          selectPlaylist(playlist.id);
-                        }}
-                      >
-                        {playlist.name}
-                      </Button>
-                      {user && (
+          )}
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs text-muted-foreground">
+                {filteredPlaylists.length} playlist{filteredPlaylists.length > 1 ? 's' : ''}
+              </span>
+            {user && (
+              <div className="flex items-center gap-2">
+                <p className="text-xs text-muted-foreground">Bouton “Ajouter” pour créer une playlist.</p>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="p-1 h-6 w-6 hover:bg-gray-100 dark:hover:bg-gray-800"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setIsEditPlaylistModalOpen(true);
+                  }}
+                  title="Options d'édition des playlists"
+                >
+                  <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M3 10a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zM8.5 10a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zM14 10a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0z" />
+                  </svg>
+                </Button>
+              </div>
+            )}
+            </div>
+            
+            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+              {loading ? (
+                <>
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="min-w-[80px] h-8 bg-muted rounded animate-pulse flex-shrink-0"></div>
+                  ))}
+                  <div className="min-w-[32px] h-8 bg-muted rounded animate-pulse flex-shrink-0"></div>
+                </>
+              ) : !selectedSocialNetworkId ? (
+                <div className="text-center py-4 text-muted-foreground text-sm">
+                  Sélectionnez un réseau social pour voir ses playlists
+                </div>
+              ) : (
+                <>
+                  <div className="group relative min-w-[80px] flex-shrink-0">
+                    <Button
+                      variant={selectedPlaylistId === '' ? "default" : "outline"}
+                      className={`text-xs h-8 w-full ${
+                        selectedPlaylistId === '' ? "bg-primary text-primary-foreground" : ""
+                      }`}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        selectPlaylist('');
+                      }}
+                    >
+                      Tout
+                    </Button>
+                  </div>
+                  
+                  {filteredPlaylists.map((playlist) => {
+                    const isSelected = selectedPlaylistId === playlist.id;
+                    return (
+                      <div key={playlist.id} className="group relative min-w-[80px] flex-shrink-0">
                         <Button
-                          variant="ghost"
-                          size="sm"
-                          className="absolute -top-1 -right-1 h-6 w-6 p-0 bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity rounded-full"
+                          variant={isSelected ? "default" : "outline"}
+                          className={`text-xs h-8 w-full ${
+                            isSelected ? "bg-primary text-primary-foreground" : ""
+                          }`}
+                          style={{ borderColor: isSelected ? undefined : playlist.color }}
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            handleDeletePlaylist(playlist.id, playlist.name);
+                            selectPlaylist(playlist.id);
                           }}
                         >
-                          <Trash2 className="w-3 h-3" />
+                          {playlist.name}
                         </Button>
-                      )}
-                    </div>
-                  );
-                })}
-                
-                {user && (
-                  <Button
-                    variant="outline"
-                    className="min-w-[32px] flex-shrink-0 border-dashed flex items-center justify-center h-8"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setIsAddPlaylistModalOpen(true);
-                    }}
-                  >
-                    <Plus className="w-3 h-3" />
-                  </Button>
-                )}
-              </>
-            )}
-          </div>
+                        {user && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="absolute -top-1 -right-1 h-6 w-6 p-0 bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity rounded-full"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleDeletePlaylist(playlist.id, playlist.name);
+                            }}
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </>
+              )}
+            </div>
         </div>
       </div>
 
@@ -1420,9 +1550,9 @@ const UserProfile: React.FC = () => {
           {!user && (
             <div className="mb-4 text-center text-sm text-muted-foreground">
               Mode aperçu : connectez-vous pour créer, planifier et suivre votre contenu.
-            </div>
+                </div>
           )}
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <div className="overflow-x-auto scrollbar-hide">
               <TabsList className="inline-flex w-max min-w-full justify-start gap-1">
                 <TabsTrigger value="publications" className="text-xs sm:text-sm px-3 py-2 whitespace-nowrap">
@@ -1447,7 +1577,7 @@ const UserProfile: React.FC = () => {
             <TabsContent value="publications" className="mt-6">
               <div className="text-center mb-4">
                 {selectedSocialNetworkId && (
-                  <p className="text-sm text-muted-foreground mb-4">
+                  <p className="text-sm text-muted-foreground">
                     {selectedPlaylistId ? (
                       `${filteredPosts.length} publication${filteredPosts.length > 1 ? 's' : ''} dans cette playlist`
                     ) : (
@@ -1455,22 +1585,11 @@ const UserProfile: React.FC = () => {
                     )}
                   </p>
                 )}
-                <Button
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    if (!ensureAuthenticated("Connectez-vous pour ajouter une publication.")) {
-                      return;
-                    }
-                    setIsAddPublicationModalOpen(true);
-                  }}
-                  size="sm"
-                  className="flex items-center gap-2"
-                  disabled={!user}
-                >
-                  <Plus className="w-4 h-4" />
-                  Ajouter
-                </Button>
+                {user && (
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Utilisez le bouton “Ajouter” du menu principal pour créer une nouvelle publication.
+                  </p>
+                )}
               </div>
               {renderPublications()}
             </TabsContent>
@@ -1500,67 +1619,13 @@ const UserProfile: React.FC = () => {
                     </Button>
                   )}
                   {user ? (
-                    <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-                      <DialogTrigger asChild>
-                        <Button size="sm" className="w-10 h-10 p-0" title="Ajouter un défi">
-                          <Plus className="w-4 h-4" />
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>Ajouter un nouveau défi</DialogTitle>
-                          <DialogDescription>
-                            Créez un nouveau défi personnel pour votre programme de création de contenu.
-                          </DialogDescription>
-                        </DialogHeader>
-                        <div className="space-y-4">
-                          <div>
-                            <Label htmlFor="challenge-title">Titre du défi</Label>
-                            <Input
-                              id="challenge-title"
-                              value={newChallengeTitle}
-                              onChange={(e) => setNewChallengeTitle(e.target.value)}
-                              placeholder="Ex: Créer un post sur l'environnement"
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
-                                  handleAddChallenge();
-                                }
-                              }}
-                            />
-                          </div>
-                          <div className="flex gap-2 justify-end">
-                            <Button
-                              variant="outline"
-                              onClick={() => {
-                                setShowAddDialog(false);
-                                setNewChallengeTitle('');
-                              }}
-                            >
-                              Annuler
-                            </Button>
-                            <Button
-                              onClick={handleAddChallenge}
-                              disabled={!newChallengeTitle.trim()}
-                            >
-                              Ajouter
-                            </Button>
-                          </div>
-                        </div>
-                      </DialogContent>
-                    </Dialog>
+                    <p className="text-xs text-muted-foreground self-center">
+                      Utilisez le bouton “Ajouter” du menu principal pour créer un nouveau défi.
+                    </p>
                   ) : (
-                    <Button
-                      size="sm"
-                      className="w-10 h-10 p-0"
-                      title="Ajouter un défi"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        ensureAuthenticated("Connectez-vous pour ajouter un défi.");
-                      }}
-                    >
-                      <Plus className="w-4 h-4" />
-                    </Button>
+                    <p className="text-xs text-muted-foreground self-center">
+                      Connectez-vous puis utilisez le bouton “Ajouter” pour créer vos défis.
+                    </p>
                   )}
                 </div>
                 </div>
@@ -1793,7 +1858,7 @@ const UserProfile: React.FC = () => {
                             {getDurationText(displayedStats.program_duration)} • {displayedStats.contents_per_day} contenu(s) par jour • {getTotalContents()} publications au total
                           </div>
                         </div>
-                      </div>
+                    </div>
                     </CardContent>
                   </Card>
                 )}
@@ -1863,6 +1928,50 @@ const UserProfile: React.FC = () => {
         socialAccounts={socialAccounts}
         playlists={playlists}
       />
+
+      <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Ajouter un nouveau défi</DialogTitle>
+            <DialogDescription>
+              Créez un nouveau défi personnel pour votre programme de création de contenu.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="challenge-title">Titre du défi</Label>
+              <Input
+                id="challenge-title"
+                value={newChallengeTitle}
+                onChange={(e) => setNewChallengeTitle(e.target.value)}
+                placeholder="Ex: Créer un post sur l'environnement"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleAddChallenge();
+                  }
+                }}
+              />
+            </div>
+            <div className="flex gap-2 justify-end">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowAddDialog(false);
+                  setNewChallengeTitle('');
+                }}
+              >
+                Annuler
+              </Button>
+              <Button
+                onClick={handleAddChallenge}
+                disabled={!newChallengeTitle.trim()}
+              >
+                Ajouter
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Modal de partage */}
       <Dialog open={isShareModalOpen} onOpenChange={setIsShareModalOpen}>
@@ -2076,6 +2185,36 @@ const UserProfile: React.FC = () => {
                 Sauvegarder
               </Button>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Menu d'ajout rapide */}
+      <Dialog open={isQuickAddDialogOpen} onOpenChange={setIsQuickAddDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Que souhaitez-vous ajouter ?</DialogTitle>
+            <DialogDescription>
+              Choisissez un type de contenu à créer. Toutes les options sont accessibles depuis un seul endroit.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            {quickAddOptions.map((option) => (
+              <Button
+                key={option.id}
+                variant="outline"
+                className="w-full justify-start h-auto py-3 px-4 text-left"
+                onClick={() => handleQuickAddSelection(option.id)}
+              >
+                <div className="flex items-center gap-3">
+                  <option.icon className="w-5 h-5 text-primary" />
+                  <div className="flex-1">
+                    <div className="font-medium">{option.label}</div>
+                    <div className="text-xs text-muted-foreground">{option.description}</div>
+                  </div>
+                </div>
+              </Button>
+            ))}
           </div>
         </DialogContent>
       </Dialog>
