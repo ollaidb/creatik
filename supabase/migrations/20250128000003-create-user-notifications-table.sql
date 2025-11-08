@@ -85,7 +85,7 @@ RETURNS TABLE (
   type TEXT,
   title TEXT,
   message TEXT,
-  timestamp TIMESTAMP WITH TIME ZONE,
+  notification_timestamp TIMESTAMP WITH TIME ZONE,
   is_read BOOLEAN,
   priority TEXT,
   related_id TEXT,
@@ -95,7 +95,7 @@ RETURNS TABLE (
 ) AS $$
 BEGIN
   RETURN QUERY
-  SELECT un.id, un.user_id, un.type, un.title, un.message, un.timestamp,
+  SELECT un.id, un.user_id, un.type, un.title, un.message, un.timestamp AS notification_timestamp,
          un.is_read, un.priority, un.related_id, un.related_type,
          un.created_at, un.updated_at
   FROM user_notifications un
@@ -120,11 +120,27 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Insérer des données d'exemple (optionnel)
-INSERT INTO user_notifications (user_id, type, title, message, priority, related_id, related_type) VALUES
-  ('00000000-0000-0000-0000-000000000000', 'challenge_reminder', 'Bienvenue sur Creatik !', 'Commencez par créer votre premier défi personnel.', 'medium', NULL, NULL),
-  ('00000000-0000-0000-0000-000000000000', 'public_challenge', 'Défi de la semaine', 'Participez au défi "Créativité au quotidien" cette semaine !', 'low', 'public_challenge_1', 'public_challenge')
-ON CONFLICT DO NOTHING;
+DO $$
+DECLARE
+  demo_user UUID;
+BEGIN
+  SELECT id
+  INTO demo_user
+  FROM auth.users
+  ORDER BY created_at
+  LIMIT 1;
+
+  IF demo_user IS NULL THEN
+    RAISE NOTICE 'Aucun utilisateur trouvé, insertion des notifications de démonstration ignorée.';
+  ELSE
+    INSERT INTO user_notifications (user_id, type, title, message, priority, related_id, related_type)
+    VALUES
+      (demo_user, 'challenge_reminder', 'Bienvenue sur Creatik !', 'Commencez par créer votre premier défi personnel.', 'medium', NULL, NULL),
+      (demo_user, 'public_challenge', 'Défi de la semaine', 'Participez au défi "Créativité au quotidien" cette semaine !', 'low', 'public_challenge_1', 'public_challenge')
+    ON CONFLICT DO NOTHING;
+  END IF;
+END;
+$$;
 
 -- Commentaires sur la table et les colonnes
 COMMENT ON TABLE user_notifications IS 'Table des notifications utilisateur pour les rappels de défis, réactions aux commentaires, réponses aux publications et défis publics';

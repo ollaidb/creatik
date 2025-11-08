@@ -1,18 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSmartNavigation } from '@/hooks/useNavigation';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   ArrowLeft, 
   Bell, 
   Target, 
-  MessageCircle, 
   Heart, 
   Reply, 
-  Calendar,
   CheckCircle,
   Clock,
   AlertCircle
@@ -34,8 +31,6 @@ interface Notification {
 const Notifications: React.FC = () => {
   const navigate = useNavigate();
   const { navigateBack } = useSmartNavigation();
-  const [filteredNotifications, setFilteredNotifications] = useState<Notification[]>([]);
-  const [activeTab, setActiveTab] = useState('all');
 
   // Utiliser le hook personnalisé pour les notifications
   const {
@@ -45,25 +40,13 @@ const Notifications: React.FC = () => {
     error,
     markAsRead,
     markAllAsRead,
-    deleteNotification,
-    getNotificationsByType,
-    getNotificationsByPriority,
-    getUnreadCountByType
+    deleteNotification
   } = useNotifications();
 
-
-
-  // Filtrer les notifications
-  useEffect(() => {
-    let filtered = notifications;
-
-    // Filtre par type d'onglet
-    if (activeTab !== 'all') {
-      filtered = filtered.filter(notification => notification.type === activeTab);
-    }
-
-    setFilteredNotifications(filtered);
-  }, [notifications, activeTab]);
+  const sortedNotifications = useMemo(
+    () => [...notifications].sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime()),
+    [notifications]
+  );
 
   const handleBackClick = () => {
     navigateBack();
@@ -143,12 +126,12 @@ const Notifications: React.FC = () => {
             <div>
               <h1 className="text-xl font-semibold text-foreground">Notifications</h1>
               <p className="text-sm text-muted-foreground">
-                                 {unreadCount} non lue{unreadCount > 1 ? 's' : ''}
+                {unreadCount} non lue{unreadCount > 1 ? 's' : ''}
               </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
-                          <Button
+            <Button
                 variant="outline"
                 size="sm"
                 onClick={handleMarkAllAsRead}
@@ -188,126 +171,23 @@ const Notifications: React.FC = () => {
         {!isLoading && (
           <>
 
-        {/* Onglets */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="all" className="flex items-center gap-2">
-              <Bell className="w-4 h-4" />
-              Toutes
-              {unreadCount > 0 && (
-                <Badge variant="secondary" className="ml-1">
-                  {unreadCount}
-                </Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="challenge_reminder" className="flex items-center gap-2">
-              <Target className="w-4 h-4" />
-              Défis
-              {getUnreadCountByType('challenge_reminder') > 0 && (
-                <Badge variant="secondary" className="ml-1">
-                  {getUnreadCountByType('challenge_reminder')}
-                </Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="comment_reaction" className="flex items-center gap-2">
-              <Heart className="w-4 h-4" />
-              Réactions
-              {getUnreadCountByType('comment_reaction') > 0 && (
-                <Badge variant="secondary" className="ml-1">
-                  {getUnreadCountByType('comment_reaction')}
-                </Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="publication_reply" className="flex items-center gap-2">
-              <Reply className="w-4 h-4" />
-              Réponses
-              {getUnreadCountByType('publication_reply') > 0 && (
-                <Badge variant="secondary" className="ml-1">
-                  {getUnreadCountByType('publication_reply')}
-                </Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="public_challenge" className="flex items-center gap-2">
-              <Bell className="w-4 h-4" />
-              Défis Publics
-              {getUnreadCountByType('public_challenge') > 0 && (
-                <Badge variant="secondary" className="ml-1">
-                  {getUnreadCountByType('public_challenge')}
-                </Badge>
-              )}
-            </TabsTrigger>
-          </TabsList>
-
-          {/* Contenu des onglets */}
-          <TabsContent value="all" className="mt-6">
-            <NotificationList 
-              notifications={filteredNotifications}
-              onMarkAsRead={handleMarkAsRead}
-              onDelete={handleDeleteNotification}
-              getNotificationIcon={getNotificationIcon}
-              getPriorityColor={getPriorityColor}
-              getTimeAgo={getTimeAgo}
-            />
-          </TabsContent>
-
-          <TabsContent value="challenge_reminder" className="mt-6">
-            <NotificationList 
-              notifications={filteredNotifications}
-              onMarkAsRead={handleMarkAsRead}
-              onDelete={handleDeleteNotification}
-              getNotificationIcon={getNotificationIcon}
-              getPriorityColor={getPriorityColor}
-              getTimeAgo={getTimeAgo}
-            />
-          </TabsContent>
-
-          <TabsContent value="comment_reaction" className="mt-6">
-            <NotificationList 
-              notifications={filteredNotifications}
-              onMarkAsRead={handleMarkAsRead}
-              onDelete={handleDeleteNotification}
-              getNotificationIcon={getNotificationIcon}
-              getPriorityColor={getPriorityColor}
-              getTimeAgo={getTimeAgo}
-            />
-          </TabsContent>
-
-          <TabsContent value="publication_reply" className="mt-6">
-            <NotificationList 
-              notifications={filteredNotifications}
-              onMarkAsRead={handleMarkAsRead}
-              onDelete={handleDeleteNotification}
-              getNotificationIcon={getNotificationIcon}
-              getPriorityColor={getPriorityColor}
-              getTimeAgo={getTimeAgo}
-            />
-          </TabsContent>
-
-          <TabsContent value="public_challenge" className="mt-6">
-            <NotificationList 
-              notifications={filteredNotifications}
-              onMarkAsRead={handleMarkAsRead}
-              onDelete={handleDeleteNotification}
-              getNotificationIcon={getNotificationIcon}
-              getPriorityColor={getPriorityColor}
-              getTimeAgo={getTimeAgo}
-            />
-          </TabsContent>
-        </Tabs>
+        <NotificationList 
+          notifications={sortedNotifications}
+          onMarkAsRead={handleMarkAsRead}
+          onDelete={handleDeleteNotification}
+          getNotificationIcon={getNotificationIcon}
+          getPriorityColor={getPriorityColor}
+          getTimeAgo={getTimeAgo}
+        />
 
         {/* Message si aucune notification */}
-        {filteredNotifications.length === 0 && (
+        {sortedNotifications.length === 0 && (
           <Card className="text-center py-12 mt-6">
             <CardContent>
               <Bell className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-medium mb-2 text-foreground">
-                {activeTab !== 'all' ? 'Aucune notification trouvée' : 'Aucune notification'}
-              </h3>
+              <h3 className="text-lg font-medium mb-2 text-foreground">Aucune notification</h3>
               <p className="text-muted-foreground">
-                {activeTab !== 'all'
-                  ? 'Essayez de changer d\'onglet'
-                  : 'Vous serez notifié ici de toutes vos activités importantes'
-                }
+                Vous serez notifié ici de toutes vos activités importantes.
               </p>
             </CardContent>
           </Card>
