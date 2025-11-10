@@ -1,264 +1,403 @@
-import React, { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useSmartNavigation } from '@/hooks/useNavigation';
+import React, { useMemo, useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Users, Globe, Calendar, ExternalLink, Heart, BookOpen, Share2 } from 'lucide-react';
+import {
+  ArrowLeft,
+  Share2,
+  Users,
+  Globe,
+  Lock,
+  Layers3,
+  Sparkles,
+  Calendar,
+  ExternalLink,
+} from 'lucide-react';
+import { useSmartNavigation } from '@/hooks/useNavigation';
+import { useCreator } from '@/hooks/useCreators';
+import {
+  useUserPublicationsById,
+  Publication,
+  PublicationContentType,
+} from '@/hooks/usePublications';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Navigation from '@/components/Navigation';
-import { useCreator, useCreatorChallenges } from '@/hooks/useCreators';
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
 
-const CreatorDetail = () => {
-  const { creatorId } = useParams();
-  const navigate = useNavigate();
+type PublicTabKey = 'all' | PublicationContentType;
+
+const TAB_CONFIG: Record<PublicTabKey, { label: string; gradient: string }> = {
+  all: { label: 'Tout', gradient: 'from-purple-500 to-pink-500' },
+  content: { label: 'Contenu', gradient: 'from-orange-400 to-red-500' },
+  creator: { label: 'Créateurs', gradient: 'from-amber-500 to-orange-500' },
+  hooks: { label: 'Hooks', gradient: 'from-indigo-500 to-blue-500' },
+  pseudo: { label: 'Pseudos', gradient: 'from-teal-500 to-emerald-500' },
+  title: { label: 'Titres', gradient: 'from-purple-500 to-violet-500' },
+  source: { label: 'Sources', gradient: 'from-blue-500 to-cyan-500' },
+  category: { label: 'Catégories', gradient: 'from-slate-500 to-gray-600' },
+  subcategory: { label: 'Sous-catégories', gradient: 'from-rose-500 to-red-500' },
+  subcategory_level2: { label: 'Sous-catégories N2', gradient: 'from-pink-500 to-fuchsia-500' },
+  account: { label: 'Comptes', gradient: 'from-amber-500 to-yellow-500' },
+  challenge: { label: 'Challenges', gradient: 'from-purple-600 to-indigo-600' },
+};
+
+const getTabKeysInOrder = (publications: Publication[]): PublicTabKey[] => {
+  const encountered = new Set<PublicationContentType>();
+
+  publications.forEach((publication) => {
+    encountered.add(publication.content_type);
+  });
+
+  return (['all'] as PublicTabKey[]).concat(
+    (Object.keys(TAB_CONFIG) as PublicTabKey[]).filter(
+      (key) => key === 'all' || encountered.has(key as PublicationContentType)
+    )
+  );
+};
+
+const formatPublicationDate = (dateString: string) => {
+  try {
+    return format(new Date(dateString), "dd MMM yyyy 'à' HH:mm", { locale: fr });
+  } catch {
+    return null;
+  }
+};
+
+const PublicPublicationCard: React.FC<{ publication: Publication }> = ({ publication }) => (
+  <Card className="border-border/60 bg-card/80 backdrop-blur">
+    <CardHeader className="pb-2">
+      <div className="flex items-center justify-between gap-2">
+        <CardTitle className="text-base font-semibold leading-tight text-foreground">
+          {publication.title}
+        </CardTitle>
+        <Badge variant="secondary" className="text-xs">
+          {TAB_CONFIG[publication.content_type]?.label ?? publication.content_type}
+        </Badge>
+      </div>
+      {publication.description && (
+        <p className="text-sm text-muted-foreground mt-1 leading-snug">
+          {publication.description}
+        </p>
+      )}
+    </CardHeader>
+    <CardContent className="pt-0 text-xs text-muted-foreground space-y-2">
+      {publication.platform && (
+        <div className="flex items-center gap-2">
+          <Globe className="h-3.5 w-3.5 opacity-70" />
+          <span className="capitalize">{publication.platform}</span>
+        </div>
+      )}
+      <div className="flex items-center gap-2">
+        <Calendar className="h-3.5 w-3.5 opacity-70" />
+        <span>
+          {formatPublicationDate(publication.created_at) ?? 'Date inconnue'}
+        </span>
+      </div>
+    </CardContent>
+  </Card>
+);
+
+const CreatorDetail: React.FC = () => {
+  const { creatorId } = useParams<{ creatorId: string }>();
   const { navigateBack } = useSmartNavigation();
-  const [activeSection, setActiveSection] = useState<'wiki' | 'challenges'>('wiki');
+  const [activeTab, setActiveTab] = useState<PublicTabKey>('all');
 
-  // Récupérer les vraies données du créateur
-  const { data: creator, isLoading: creatorLoading } = useCreator(creatorId || '');
-  const { data: creatorChallenges, isLoading: challengesLoading } = useCreatorChallenges(creatorId || '');
+  const {
+    data: creator,
+    isLoading: creatorLoading,
+    isError: creatorError,
+  } = useCreator(creatorId || '');
 
-  if (creatorLoading || !creator) {
+  const ownerUserId = creator?.owner_user_id ?? null;
+  const {
+    publications,
+    loading: publicationsLoading,
+    error: publicationsError,
+  } = useUserPublicationsById(ownerUserId);
+
+  useEffect(() => {
+    if (!creator) return;
+
+    const orderedTabs = getTabKeysInOrder(publications);
+    if (!orderedTabs.includes(activeTab)) {
+      setActiveTab(orderedTabs[0] ?? 'all');
+    }
+  }, [creator, publications, activeTab]);
+
+  const availableTabs = useMemo(() => getTabKeysInOrder(publications), [publications]);
+
+  const filteredPublications = useMemo(() => {
+    if (activeTab === 'all') {
+      return publications;
+    }
+    return publications.filter((publication) => publication.content_type === activeTab);
+  }, [publications, activeTab]);
+
+  if (creatorLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-        <div className="flex items-center justify-center h-screen">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
-            <p className="text-gray-600 dark:text-gray-400">Chargement du créateur...</p>
-          </div>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center space-y-3">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary mx-auto"></div>
+          <p className="text-sm text-muted-foreground">Chargement du profil public...</p>
         </div>
       </div>
     );
   }
 
+  if (creatorError || !creator) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center text-center px-6">
+        <Layers3 className="h-10 w-10 text-muted-foreground mb-4" />
+        <h1 className="text-xl font-semibold mb-2">Profil introuvable</h1>
+        <p className="text-sm text-muted-foreground max-w-sm">
+          Nous n’avons pas réussi à charger ce profil public. Le créateur a peut-être supprimé son compte ou l’URL a changé.
+        </p>
+        <Button className="mt-6" onClick={navigateBack}>
+          Retour
+        </Button>
+      </div>
+    );
+  }
+
+  const heroBio = creator.public_bio || creator.bio;
+  const socialNetworks = creator.social_networks ?? [];
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-      {/* Header simplifié */}
-      <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={navigateBack}
-                className="p-2 h-10 w-10 rounded-full"
-              >
+    <div className="min-h-screen bg-background pb-20">
+      {/* Hero section */}
+      <section className="relative overflow-hidden border-b border-border bg-gradient-to-br from-purple-600 via-blue-600 to-indigo-700 text-white">
+        <div className="absolute inset-0 bg-[url('/noise.svg')] opacity-10" />
+        <div className="container mx-auto px-4 py-8 relative">
+          <div className="flex flex-col gap-4">
+            {!creator.is_public && (
+              <div className="flex items-center gap-2 rounded-md border border-amber-200 bg-amber-50/70 px-3 py-2 text-sm text-amber-800">
+                <Lock className="h-4 w-4" />
+                <span>
+                  Ce créateur n’a pas encore activé son profil public. Certaines sections
+                  peuvent être limitées, mais ses informations principales restent visibles ici.
+                </span>
+              </div>
+            )}
+            <div className="flex items-start gap-4">
+            <Button variant="ghost" size="icon" onClick={navigateBack} className="bg-white/10 text-white hover:bg-white/20">
                 <ArrowLeft className="h-5 w-5" />
               </Button>
-              <div className="flex items-center space-x-3">
-                <Users className="h-6 w-6 text-purple-600 dark:text-purple-400" />
-                <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
-                  Profil créateur
-                </h1>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-             {/* Profil horizontal compact */}
-       <div className="max-w-4xl mx-auto px-4 py-4">
-         <div className="flex items-center gap-4 mb-6">
-           {/* Photo de profil en cercle */}
-           <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full shadow-lg border-2 border-white dark:border-gray-800 overflow-hidden flex-shrink-0">
-             <img 
-               src={creator.avatar || '/placeholder.svg'} 
-               alt={creator.name}
-               className="w-full h-full object-cover"
-             />
-           </div>
-           
-           {/* Nom et pseudo */}
-           <div className="flex-1 min-w-0">
-             <h1 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white mb-1 leading-tight">
-               {creator.name}
-             </h1>
-             <p className="text-sm sm:text-base text-purple-600 dark:text-purple-400 leading-tight">
-               {creator.display_name}
-             </p>
-           </div>
-         </div>
-
-        {/* Premier menu horizontal : Wiki et Défis */}
-        <div className="flex gap-2 mb-4">
-          <button
-            onClick={() => setActiveSection('wiki')}
-            className={`
-              px-4 py-2 rounded-lg transition-all duration-300 flex items-center space-x-2
-              ${activeSection === 'wiki'
-                ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg scale-105'
-                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700'
-              }
-            `}
-          >
-            <BookOpen className={`h-4 w-4 ${activeSection === 'wiki' ? 'text-white' : 'text-purple-600 dark:text-purple-400'}`} />
-            <span className="font-medium">Wiki</span>
-          </button>
-          
-          <button
-            onClick={() => setActiveSection('challenges')}
-            className={`
-              px-4 py-2 rounded-lg transition-all duration-300 flex items-center space-x-2
-              ${activeSection === 'challenges'
-                ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg scale-105'
-                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700'
-              }
-            `}
-          >
-            <Heart className={`h-4 w-4 ${activeSection === 'challenges' ? 'text-white' : 'text-purple-600 dark:text-purple-400'}`} />
-            <span className="font-medium">Défis</span>
-          </button>
-        </div>
-
-        {/* Deuxième menu : Réseaux sociaux */}
-        <div className="mb-6">
-          <div className="overflow-x-auto scrollbar-hide">
-            <div className="flex gap-2 pb-2 min-w-max">
-              {creator.social_networks && creator.social_networks.length > 0 ? (
-                creator.social_networks.map((network) => (
-                  <div
-                    key={network.id}
-                    className="flex items-center p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 transition-colors cursor-pointer group"
-                  >
-                    <div 
-                      className="w-3 h-3 rounded-full mr-2"
-                      style={{ backgroundColor: network.network.color_theme || '#6B7280' }}
-                    ></div>
-                    <span className="text-sm font-medium text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400">
-                      {network.network.display_name}
-                    </span>
-                  </div>
-                ))
-              ) : (
-                <div className="text-center py-4 text-gray-500 dark:text-gray-400">
-                  <p className="text-sm">Aucun réseau social configuré</p>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between w-full gap-6">
+              <div className="flex items-center gap-4">
+                <Avatar className="h-16 w-16 border-2 border-white/60 shadow-lg">
+                  <AvatarImage src={creator.avatar || undefined} alt={creator.name} />
+                  <AvatarFallback className="bg-white/20 text-lg font-semibold">
+                    {creator.name
+                      .split(' ')
+                      .map((part) => part[0])
+                      .join('')
+                      .slice(0, 2)
+                      .toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="space-y-1">
+                  <span className="inline-flex items-center gap-2 text-xs uppercase tracking-wider text-white/80">
+                    <Globe className="h-3.5 w-3.5" />
+                    Profil public
+                  </span>
+                  <h1 className="text-2xl font-semibold leading-tight">{creator.name}</h1>
+                  {creator.display_name && (
+                    <p className="text-sm text-white/80">@{creator.display_name}</p>
+                  )}
                 </div>
-              )}
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge variant="secondary" className="bg-white/20 backdrop-blur text-white border-white/30">
+                  Ouvert aux collaborations
+                </Badge>
+                <Button
+                  variant="outline"
+                  className="border-white/40 text-white hover:bg-white/10"
+                  onClick={() => {
+                    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+                      void navigator.clipboard.writeText(window.location.href);
+                    }
+                  }}
+                >
+                  <Share2 className="h-4 w-4 mr-2" />
+                  Partager
+                </Button>
+                   </div>
             </div>
           </div>
-        </div>
-
-        {/* Contenu des menus */}
-        <div className="mt-6">
-          {activeSection === 'wiki' && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg"
-            >
-              <div className="flex items-center space-x-3 mb-6">
-                <BookOpen className="h-6 w-6 text-purple-600 dark:text-purple-400" />
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Wiki - {creator.name}</h2>
-              </div>
-              
-              {/* Informations du créateur */}
-              <div className="space-y-6">
-                <div>
-                  <h3 className="font-medium text-gray-900 dark:text-white mb-3">Biographie</h3>
-                  <p className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed">
-                    {creator.bio || 'Aucune biographie disponible'}
+          <div className="mt-6 grid gap-4 md:grid-cols-[2fr,1fr]">
+            <Card className="bg-white/15 backdrop-blur border-white/20">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-white flex items-center gap-2 text-base">
+                  <Sparkles className="h-4 w-4" />
+                  À propos
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-white/90 leading-relaxed">
+                  {heroBio || "Ce créateur n'a pas encore partagé de biographie."}
+                </p>
+              </CardContent>
+            </Card>
+            <Card className="bg-white/15 backdrop-blur border-white/20">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-white flex items-center gap-2 text-base">
+                  <Users className="h-4 w-4" />
+                  Réseaux connectés
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {socialNetworks.length === 0 ? (
+                  <p className="text-sm text-white/80">
+                    Aucun réseau social n’est encore connecté.
                   </p>
-                </div>
-                
-                <div>
-                  <h3 className="font-medium text-gray-900 dark:text-white mb-3">Catégories</h3>
+                ) : (
                   <div className="flex flex-wrap gap-2">
-                    {creator.category && (
-                      <span className="px-3 py-1 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 text-sm rounded-full">
-                        {creator.category}
-                      </span>
-                    )}
-                    {creator.subcategory && (
-                      <span className="px-3 py-1 bg-pink-100 dark:bg-pink-900 text-pink-800 dark:text-pink-200 text-sm rounded-full">
-                        {creator.subcategory}
-                      </span>
-                    )}
-                  </div>
-                </div>
-                
-
-              </div>
-              
-              {/* Défis */}
-              <div className="mt-8">
-                <h3 className="font-medium text-gray-900 dark:text-white mb-4">Défis récents</h3>
-                {creatorChallenges && creatorChallenges.length > 0 ? (
-                  <div className="space-y-3">
-                    {creatorChallenges.slice(0, 3).map((challenge) => (
-                      <div key={challenge.id} className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border-l-4 border-purple-400">
-                        <div className="flex items-start justify-between mb-2">
-                          <h4 className="font-medium text-gray-900 dark:text-white text-sm">
-                            {challenge.challenge?.title || 'Défi sans titre'}
-                          </h4>
-                          <span className="px-2 py-1 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 text-xs rounded-full">
-                            {challenge.network?.display_name || 'Réseau inconnu'}
-                          </span>
-                        </div>
-                        <p className="text-gray-600 dark:text-gray-300 text-xs mb-2">
-                          {challenge.content || 'Aucun contenu disponible'}
-                        </p>
-                        <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
-                          <span>Par utilisateur</span>
-                          <span>{new Date(challenge.created_at).toLocaleDateString('fr-FR')}</span>
-                        </div>
-                      </div>
+                    {socialNetworks.map((network) => (
+                      <Badge
+                        key={network.id}
+                        className="bg-white/20 text-white border-white/20 capitalize"
+                      >
+                        {network.platform_info?.label ?? network.platform}
+                      </Badge>
                     ))}
                   </div>
-                ) : (
-                  <div className="text-center py-6 text-gray-500 dark:text-gray-400">
-                    <Heart className="h-10 w-10 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
-                    <p className="text-sm">Aucun défi pour le moment</p>
-                  </div>
                 )}
+              </CardContent>
+            </Card>
               </div>
-            </motion.div>
-          )}
+                  </div>
+      </section>
 
-          {activeSection === 'challenges' && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg"
-            >
-              <div className="flex items-center space-x-3 mb-6">
-                <Heart className="h-6 w-6 text-purple-600 dark:text-purple-400" />
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Défis - {creator.name}</h2>
+      {/* Publications */}
+      <main className="container mx-auto px-4 py-6 space-y-8">
+        <section className="space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div>
+              <h2 className="text-xl font-semibold text-foreground">Publications</h2>
+              <p className="text-sm text-muted-foreground">
+                Les inspirations et contenus que {creator.name} partage avec la communauté Creatik.
+              </p>
+                </div>
               </div>
-              
-              {creatorChallenges && creatorChallenges.length > 0 ? (
-                <div className="space-y-4">
-                  {creatorChallenges.map((challenge) => (
-                    <div key={challenge.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-                      <div className="flex items-start justify-between mb-3">
-                        <div>
-                          <h4 className="font-medium text-gray-900 dark:text-white mb-1">
-                            {challenge.challenge?.title || 'Défi sans titre'}
-                          </h4>
-                          <p className="text-gray-600 dark:text-gray-300 text-sm mb-2">
-                            {challenge.content || 'Aucun contenu disponible'}
-                          </p>
-                        </div>
-                        <span className="px-2 py-1 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 text-xs rounded-full">
-                          {challenge.network?.display_name || 'Réseau inconnu'}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
-                        <span>Par utilisateur</span>
-                        <span>{new Date(challenge.created_at).toLocaleDateString('fr-FR')}</span>
-                      </div>
-                    </div>
-                  ))}
+
+          {publicationsLoading ? (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {[...Array(6)].map((_, index) => (
+                <div key={index} className="h-40 bg-muted animate-pulse rounded-lg" />
+              ))}
+            </div>
+          ) : publicationsError ? (
+            <Card className="border-destructive/30 bg-destructive/10">
+              <CardContent className="py-8 text-center space-y-3">
+                <Layers3 className="h-8 w-8 text-destructive mx-auto" />
+                <h3 className="text-lg font-semibold">Impossible de charger les publications</h3>
+                <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                  {publicationsError}
+                </p>
+              </CardContent>
+            </Card>
+          ) : publications.length === 0 ? (
+            <Card className="border-dashed">
+              <CardContent className="py-12 text-center space-y-3">
+                <Sparkles className="h-8 w-8 text-muted-foreground mx-auto" />
+                <h3 className="text-lg font-semibold">Pas encore de publications</h3>
+                <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                  Ce créateur n’a pas encore partagé de contenus avec la communauté. Revenez plus tard pour découvrir ses idées.
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <>
+              <div className="overflow-x-auto scrollbar-hide">
+                <div className="flex gap-2 pb-2 min-w-max">
+                  {availableTabs.map((tabKey) => {
+                    const tab = TAB_CONFIG[tabKey];
+                    const isActive = activeTab === tabKey;
+                    return (
+                      <motion.button
+                        key={tabKey}
+                        onClick={() => setActiveTab(tabKey)}
+                        className={`px-3 py-2 rounded-lg transition-all duration-300 min-w-[90px] text-center text-xs sm:text-sm ${
+                          isActive
+                            ? `bg-gradient-to-r ${tab.gradient} text-white shadow-lg scale-105`
+                            : 'bg-card border border-border text-foreground hover:border-primary/40'
+                        }`}
+                        whileTap={{ scale: 0.96 }}
+                      >
+                        {tab.label}
+                      </motion.button>
+                    );
+                  })}
                 </div>
-              ) : (
-                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                  <Heart className="h-12 w-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
-                  <p>Aucun défi n'a encore tagué ce créateur</p>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {filteredPublications.map((publication) => (
+                  <PublicPublicationCard key={publication.id} publication={publication} />
+                ))}
                 </div>
-              )}
-            </motion.div>
+            </>
           )}
-        </div>
-      </div>
+        </section>
+
+        {/* Réseaux sociaux détaillés */}
+        {socialNetworks.length > 0 && (
+          <section className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-semibold text-foreground">Présence sociale</h2>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              {socialNetworks.map((network) => (
+                <Card key={network.id} className="border-border bg-card/80">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle className="text-base flex items-center gap-2 capitalize">
+                          <Globe className="h-4 w-4 text-primary" />
+                          {network.platform_info?.label ?? network.platform}
+                        </CardTitle>
+                        {network.handle && (
+                          <p className="text-xs text-muted-foreground">
+                            @{network.handle}
+                          </p>
+                        )}
+                      </div>
+                      {network.profile_url && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-muted-foreground"
+                          asChild
+                        >
+                          <a href={network.profile_url} target="_blank" rel="noopener noreferrer">
+                            <ExternalLink className="h-4 w-4" />
+                          </a>
+                        </Button>
+                      )}
+                         </div>
+                  </CardHeader>
+                  <CardContent className="text-sm text-muted-foreground space-y-2">
+                    {network.followers_count && network.followers_count > 0 && (
+                      <div className="flex items-center gap-2">
+                        <Users className="h-3.5 w-3.5" />
+                        <span>{new Intl.NumberFormat('fr-FR').format(network.followers_count)} abonnés</span>
+                       </div>
+                    )}
+                    <p>
+                      {network.content_summary ||
+                        "Le créateur n'a pas encore détaillé ses contenus pour cette plateforme."}
+                    </p>
+                  </CardContent>
+                </Card>
+                     ))}
+                   </div>
+          </section>
+        )}
+      </main>
       
       <Navigation />
     </div>
@@ -266,3 +405,4 @@ const CreatorDetail = () => {
 };
 
 export default CreatorDetail;
+

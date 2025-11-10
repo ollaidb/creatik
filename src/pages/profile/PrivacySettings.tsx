@@ -1,108 +1,231 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useSmartNavigation } from '@/hooks/useNavigation';
+import React, { useCallback, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  ArrowLeft, 
-  Shield, 
-  Eye, 
-  EyeOff,
-  Users,
-  UserCheck,
+import {
+  AlertTriangle,
+  ArrowLeft,
+  Eye,
   Globe,
+  Loader2,
   Lock,
   Save,
-  AlertTriangle
+  Shield,
+  UserCheck,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
-import { Badge } from '@/components/ui/badge';
 import Navigation from '@/components/Navigation';
+import { useSmartNavigation } from '@/hooks/useNavigation';
+import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
-const PrivacySettings = () => {
-  const navigate = useNavigate();
+type ProfileVisibility = 'public' | 'private';
+
+type CreatorProfileSummary = {
+  id: string;
+  name: string | null;
+  is_public: boolean | null;
+};
+
+const VISIBILITY_COPY: Record<
+  ProfileVisibility,
+  { summary: string; detail: string; title: string }
+> = {
+  public: {
+    title: 'Profil public',
+    summary: 'Visible par toute la communauté Creatik.',
+    detail:
+      'Vos publications approuvées et vos playlists publiques sont accessibles aux visiteurs.',
+  },
+  private: {
+    title: 'Profil privé',
+    summary: 'Réservé à votre usage personnel.',
+    detail:
+      'Seuls vous et vos collaborateurs internes pouvez voir vos contenus et statistiques.',
+  },
+};
+
+const getInitialProfileType = () => {
+  if (typeof window === 'undefined') {
+    return 'creator';
+  }
+  const stored = window.localStorage.getItem('userProfileType');
+  return stored === 'contributor' ? 'contributor' : 'creator';
+};
+
+const getCurrentProfileType = () => {
+  if (typeof window === 'undefined') {
+    return 'creator';
+  }
+  return window.location.pathname.includes('contributor-profile')
+    ? 'contributor'
+    : 'creator';
+};
+
+const PrivacySettings: React.FC = () => {
   const { navigateBack } = useSmartNavigation();
-  const [isEditing, setIsEditing] = useState(false);
+  const { user } = useAuth();
+  const { toast } = useToast();
 
-  // État des paramètres de confidentialité
+  const [isEditing, setIsEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [loadingCreators, setLoadingCreators] = useState(true);
+  const [creatorProfiles, setCreatorProfiles] = useState<CreatorProfileSummary[]>([]);
+
   const [privacySettings, setPrivacySettings] = useState({
-    profileVisibility: 'public', // 'public' | 'private'
-    showEmail: false,
-    showPhone: false,
-    showBio: true,
-    allowMessages: true,
-    showOnlineStatus: true,
+    profileVisibility: 'private' as ProfileVisibility,
     allowDataCollection: true,
     allowMarketing: false,
-    allowAnalytics: true
+    allowAnalytics: true,
   });
 
-  // Détecter le type de profil actuel basé sur l'URL
-  const getCurrentProfileType = () => {
-    const currentPath = window.location.pathname;
-    if (currentPath.includes('contributor-profile')) {
-      return 'contributor';
-    }
-    return 'creator'; // Par défaut
-  };
-
-  // État du statut utilisateur
   const [creatorStatus, setCreatorStatus] = useState({
     isCreator: true,
-    creatorType: getCurrentProfileType(), // Détecter automatiquement
+    creatorType: getInitialProfileType(),
     verified: false,
-    publicProfile: true,
-    showEarnings: false
+    publicProfile: false,
+    showEarnings: false,
   });
 
-  const handlePrivacyChange = (setting: string, value: any) => {
-    setPrivacySettings(prev => ({ ...prev, [setting]: value }));
+  const loadCreatorProfiles = useCallback(async () => {
+    if (!user) {
+      setCreatorProfiles([]);
+      setPrivacySettings((prev) => ({ ...prev, profileVisibility: 'private' }));
+      setCreatorStatus((prev) => ({ ...prev, publicProfile: false }));
+      setLoadingCreators(false);
+      return;
+    }
+
+    try {
+      setLoadingCreators(true);
+      const { data, error } = await supabase
+        .from('creators')
+        .select('id, name, is_public')
+        .eq('owner_user_id', user.id);
+
+      if (error) {
+        throw error;
+      }
+
+      const profiles: CreatorProfileSummary[] = (data || []).map((profile) => ({
+        id: profile.id,
+        name: profile.name ?? null,
+        is_public: profile.is_public ?? false,
+      }));
+
+      const hasPublicProfile = profiles.some((profile) => profile.is_public);
+
+      setCreatorProfiles(profiles);
+      setPrivacySettings((prev) => ({
+        ...prev,
+        profileVisibility: hasPublicProfile ? 'public' : 'private',
+      }));
+      setCreatorStatus((prev) => ({
+        ...prev,
+        publicProfile: hasPublicProfile,
+      }));
+    } catch (error) {
+      console.error('Erreur chargement profils créateur:', error);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de charger la visibilité de votre profil public.',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoadingCreators(false);
+    }
+  }, [user, toast]);
+
+  useEffect(() => {
+    void loadCreatorProfiles();
+  }, [loadCreatorProfiles]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('profileVisibility', privacySettings.profileVisibility);
+    }
+  }, [privacySettings.profileVisibility]);
+
+  const handlePrivacyChange = (visibility: ProfileVisibility) => {
+    setPrivacySettings((prev) => ({ ...prev, profileVisibility: visibility }));
+    setCreatorStatus((prev) => ({ ...prev, publicProfile: visibility === 'public' }));
   };
 
-  const handleCreatorChange = (setting: string, value: any) => {
-    setCreatorStatus(prev => ({ ...prev, [setting]: value }));
+  const handleCreatorChange = (type: 'creator' | 'contributor') => {
+    setCreatorStatus((prev) => ({ ...prev, creatorType: type }));
   };
 
-  const handleSave = () => {
-    console.log('Sauvegarde des paramètres de confidentialité:', privacySettings);
-    console.log('Sauvegarde du statut créateur:', creatorStatus);
-    
-    // Sauvegarder le type de profil dans localStorage
-    localStorage.setItem('userProfileType', creatorStatus.creatorType);
-    
-    setIsEditing(false);
-    
-    // Rediriger vers la page appropriée selon le type d'utilisateur sauvegardé
-    if (creatorStatus.creatorType === 'creator') {
-      navigate('/profile');
-    } else if (creatorStatus.creatorType === 'contributor') {
-      navigate('/contributor-profile');
+  const handleSave = async () => {
+    if (!user) {
+      toast({
+        title: 'Connexion requise',
+        description: 'Connectez-vous pour modifier la visibilité de votre profil.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      setSaving(true);
+      const newVisibilityIsPublic = privacySettings.profileVisibility === 'public';
+
+      if (creatorProfiles.length > 0) {
+        const { error } = await supabase
+          .from('creators')
+          .update({ is_public: newVisibilityIsPublic })
+          .eq('owner_user_id', user.id);
+
+        if (error) {
+          throw error;
+        }
+
+        toast({
+          title: newVisibilityIsPublic
+            ? 'Profil public activé'
+            : 'Profil passé en privé',
+          description: newVisibilityIsPublic
+            ? 'Votre profil créateur est désormais visible par la communauté.'
+            : 'Votre profil créateur n’est plus accessible publiquement.',
+        });
+      } else if (newVisibilityIsPublic) {
+        toast({
+          title: 'Aucun profil créateur',
+          description:
+            "Publiez d'abord votre profil créateur via la page Publications pour l'activer en public.",
+          variant: 'destructive',
+        });
+        setPrivacySettings((prev) => ({ ...prev, profileVisibility: 'private' }));
+        setCreatorStatus((prev) => ({ ...prev, publicProfile: false }));
+      }
+
+      window.localStorage.setItem('userProfileType', creatorStatus.creatorType);
+
+      setIsEditing(false);
+      await loadCreatorProfiles();
+    } catch (error) {
+      console.error('Erreur sauvegarde visibilité profil:', error);
+      toast({
+        title: 'Erreur de sauvegarde',
+        description:
+          'Une erreur est survenue lors de la mise à jour de la visibilité de votre profil public.',
+        variant: 'destructive',
+      });
+    } finally {
+      setSaving(false);
     }
   };
 
   const handleCancel = () => {
-    // Revenir au type de profil actuel sans sauvegarder
-    setCreatorStatus(prev => ({ ...prev, creatorType: getCurrentProfileType() }));
+    setCreatorStatus((prev) => ({ ...prev, creatorType: getCurrentProfileType() }));
     setIsEditing(false);
-    
-    // Rediriger vers la page actuelle
-    const currentPath = window.location.pathname;
-    if (currentPath.includes('privacy')) {
-      // Si on est dans les paramètres, revenir au profil approprié
-      if (getCurrentProfileType() === 'creator') {
-        navigate('/profile');
-      } else {
-        navigate('/contributor-profile');
-      }
-    }
+    void loadCreatorProfiles();
   };
 
   return (
     <div className="min-h-screen bg-background pb-20">
-      {/* Header */}
       <header className="bg-card border-b border-border">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
@@ -118,23 +241,21 @@ const PrivacySettings = () => {
               <div>
                 <h1 className="text-xl font-semibold text-foreground">Confidentialité</h1>
                 <p className="text-sm text-muted-foreground">
-                  Gérez votre vie privée et votre statut créateur
+                  Gérez la visibilité de votre profil créateur public.
                 </p>
               </div>
             </div>
-            <Button 
-              onClick={() => setIsEditing(!isEditing)}
-              variant={isEditing ? "outline" : "default"}
+            <Button
+              onClick={() => setIsEditing((prev) => !prev)}
+              variant={isEditing ? 'outline' : 'default'}
             >
-              {isEditing ? "Annuler" : "Modifier"}
+              {isEditing ? 'Annuler' : 'Modifier'}
             </Button>
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="container mx-auto px-4 py-6 space-y-6">
-        {/* Visibilité du profil */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -144,158 +265,118 @@ const PrivacySettings = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Eye className="w-5 h-5" />
-                Visibilité du profil
+                Visibilité du profil public
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-1">
-                    <Label className="text-base font-medium">Type de profil</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Choisissez qui peut voir votre profil
-                    </p>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant={privacySettings.profileVisibility === 'public' ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => handlePrivacyChange('profileVisibility', 'public')}
-                      disabled={!isEditing}
-                    >
-                      <Globe className="w-4 h-4 mr-1" />
-                      Public
-                    </Button>
-                    <Button
-                      variant={privacySettings.profileVisibility === 'private' ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => handlePrivacyChange('profileVisibility', 'private')}
-                      disabled={!isEditing}
-                    >
-                      <Lock className="w-4 h-4 mr-1" />
-                      Privé
-                    </Button>
-                  </div>
-                </div>
+              <p className="text-sm text-muted-foreground">
+                Choisissez si votre profil créateur doit être visible par tout le monde ou
+                rester privé. Ce paramètre impacte les pages communauté qui affichent vos
+                publications.
+              </p>
 
-                <Separator />
-
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-1">
-                      <Label>Afficher l'email</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Permettre aux autres utilisateurs de voir votre email
-                      </p>
-                    </div>
-                    <Switch
-                      checked={privacySettings.showEmail}
-                      onCheckedChange={(checked) => handlePrivacyChange('showEmail', checked)}
-                      disabled={!isEditing}
-                    />
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-1">
-                      <Label>Afficher le téléphone</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Permettre aux autres utilisateurs de voir votre numéro
-                      </p>
-                    </div>
-                    <Switch
-                      checked={privacySettings.showPhone}
-                      onCheckedChange={(checked) => handlePrivacyChange('showPhone', checked)}
-                      disabled={!isEditing}
-                    />
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-1">
-                      <Label>Afficher la biographie</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Permettre aux autres utilisateurs de voir votre biographie
-                      </p>
-                    </div>
-                    <Switch
-                      checked={privacySettings.showBio}
-                      onCheckedChange={(checked) => handlePrivacyChange('showBio', checked)}
-                      disabled={!isEditing}
-                    />
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-1">
-                      <Label>Autoriser les messages</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Permettre aux autres utilisateurs de vous envoyer des messages
-                      </p>
-                    </div>
-                    <Switch
-                      checked={privacySettings.allowMessages}
-                      onCheckedChange={(checked) => handlePrivacyChange('allowMessages', checked)}
-                      disabled={!isEditing}
-                    />
-                  </div>
-                </div>
+              <div className="flex flex-wrap gap-3">
+                <Button
+                  variant={
+                    privacySettings.profileVisibility === 'public' ? 'default' : 'outline'
+                  }
+                  className="flex items-center gap-2"
+                  onClick={() => handlePrivacyChange('public')}
+                  disabled={!isEditing || loadingCreators || saving}
+                >
+                  <Globe className="w-4 h-4" />
+                  Profil public
+                </Button>
+                <Button
+                  variant={
+                    privacySettings.profileVisibility === 'private' ? 'default' : 'outline'
+                  }
+                  className="flex items-center gap-2"
+                  onClick={() => handlePrivacyChange('private')}
+                  disabled={!isEditing || loadingCreators || saving}
+                >
+                  <Lock className="w-4 h-4" />
+                  Profil privé
+                </Button>
               </div>
+
+              <div className="rounded-lg border border-border bg-muted/40 p-4 space-y-1">
+                <p className="font-medium text-foreground">
+                  {VISIBILITY_COPY[privacySettings.profileVisibility].title}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {VISIBILITY_COPY[privacySettings.profileVisibility].summary}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {VISIBILITY_COPY[privacySettings.profileVisibility].detail}
+                </p>
+              </div>
+
+              {creatorProfiles.length === 0 && (
+                <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-3 text-sm text-amber-700">
+                  <AlertTriangle className="h-4 w-4 mt-0.5" />
+                  <span>
+                    Aucun profil créateur n’est encore lié à votre compte. Publiez votre
+                    profil via l’onglet Publications pour l’activer publiquement.
+                  </span>
+                </div>
+              )}
+
+              {loadingCreators && (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Chargement de vos profils créateurs…
+                </div>
+              )}
             </CardContent>
           </Card>
         </motion.div>
 
-        {/* Statut créateur */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
+          transition={{ duration: 0.5, delay: 0.05 }}
         >
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <UserCheck className="w-5 h-5" />
                 Statut utilisateur
-                {creatorStatus.verified && (
-                  <Badge variant="default" className="ml-2">
-                    Vérifié
-                  </Badge>
-                )}
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Type d'utilisateur</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Choisissez votre type de profil pour accéder aux fonctionnalités appropriées
-                  </p>
-                  <div className="flex gap-2">
-                    <Button
-                      variant={creatorStatus.creatorType === 'creator' ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => handleCreatorChange('creatorType', 'creator')}
-                      disabled={!isEditing}
-                    >
-                      Créateur
-                    </Button>
-                    <Button
-                      variant={creatorStatus.creatorType === 'contributor' ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => handleCreatorChange('creatorType', 'contributor')}
-                      disabled={!isEditing}
-                    >
-                      Contributeur
-                    </Button>
-                  </div>
-                </div>
+            <CardContent className="space-y-3">
+              <Label>Type de profil</Label>
+              <p className="text-sm text-muted-foreground">
+                Sélectionnez le mode de navigation principal que vous souhaitez utiliser.
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  variant={creatorStatus.creatorType === 'creator' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => handleCreatorChange('creator')}
+                  disabled={!isEditing || saving}
+                >
+                  Créateur
+                </Button>
+                <Button
+                  variant={
+                    creatorStatus.creatorType === 'contributor' ? 'default' : 'outline'
+                  }
+                  size="sm"
+                  onClick={() => handleCreatorChange('contributor')}
+                  disabled={!isEditing || saving}
+                >
+                  Contributeur
+                </Button>
               </div>
             </CardContent>
           </Card>
         </motion.div>
 
-        {/* Paramètres de données */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
         >
           <Card>
             <CardHeader>
@@ -305,67 +386,87 @@ const PrivacySettings = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-1">
-                    <Label>Collecte de données</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Autoriser la collecte de données pour améliorer l'expérience
-                    </p>
-                  </div>
-                  <Switch
-                    checked={privacySettings.allowDataCollection}
-                    onCheckedChange={(checked) => handlePrivacyChange('allowDataCollection', checked)}
-                    disabled={!isEditing}
-                  />
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <Label>Collecte de données</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Autoriser la collecte de données anonymes pour améliorer l’expérience.
+                  </p>
                 </div>
+                <Switch
+                  checked={privacySettings.allowDataCollection}
+                  onCheckedChange={(checked) =>
+                    setPrivacySettings((prev) => ({ ...prev, allowDataCollection: checked }))
+                  }
+                  disabled={!isEditing || saving}
+                />
+              </div>
 
-                <div className="flex items-center justify-between">
-                  <div className="space-y-1">
-                    <Label>Marketing</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Recevoir des communications marketing
-                    </p>
-                  </div>
-                  <Switch
-                    checked={privacySettings.allowMarketing}
-                    onCheckedChange={(checked) => handlePrivacyChange('allowMarketing', checked)}
-                    disabled={!isEditing}
-                  />
-                </div>
+              <Separator />
 
-                <div className="flex items-center justify-between">
-                  <div className="space-y-1">
-                    <Label>Analytics</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Partager des données anonymes pour les statistiques
-                    </p>
-                  </div>
-                  <Switch
-                    checked={privacySettings.allowAnalytics}
-                    onCheckedChange={(checked) => handlePrivacyChange('allowAnalytics', checked)}
-                    disabled={!isEditing}
-                  />
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <Label>Marketing</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Recevoir des communications marketing ciblées.
+                  </p>
                 </div>
+                <Switch
+                  checked={privacySettings.allowMarketing}
+                  onCheckedChange={(checked) =>
+                    setPrivacySettings((prev) => ({ ...prev, allowMarketing: checked }))
+                  }
+                  disabled={!isEditing || saving}
+                />
+              </div>
+
+              <Separator />
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <Label>Analytics</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Partager des données anonymes pour les statistiques globales.
+                  </p>
+                </div>
+                <Switch
+                  checked={privacySettings.allowAnalytics}
+                  onCheckedChange={(checked) =>
+                    setPrivacySettings((prev) => ({ ...prev, allowAnalytics: checked }))
+                  }
+                  disabled={!isEditing || saving}
+                />
               </div>
             </CardContent>
           </Card>
         </motion.div>
 
-        {/* Boutons de sauvegarde */}
         {isEditing && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
+            transition={{ duration: 0.5, delay: 0.15 }}
             className="flex justify-end gap-4"
           >
             <Button variant="outline" onClick={handleCancel} size="lg">
               Annuler
             </Button>
-            <Button onClick={handleSave} size="lg">
-              <Save className="w-4 h-4 mr-2" />
-              Sauvegarder les modifications
+            <Button
+              onClick={handleSave}
+              size="lg"
+              disabled={saving || loadingCreators}
+            >
+              {saving ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Enregistrement...
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4 mr-2" />
+                  Sauvegarder les modifications
+                </>
+              )}
             </Button>
           </motion.div>
         )}
@@ -377,3 +478,4 @@ const PrivacySettings = () => {
 };
 
 export default PrivacySettings;
+

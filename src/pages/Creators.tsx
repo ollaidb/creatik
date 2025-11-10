@@ -9,6 +9,7 @@ import { useCreators } from '@/hooks/useCreators';
 import { Button } from '@/components/ui/button';
 import LocalSearchBar from '@/components/LocalSearchBar';
 import Navigation from '@/components/Navigation';
+import { useToast } from '@/hooks/use-toast';
 
 const Creators = () => {
   const navigate = useNavigate();
@@ -28,6 +29,7 @@ const Creators = () => {
   const { data: themes } = useThemes();
   const { data: socialNetworks } = useSocialNetworks();
   const { data: creators, isLoading: creatorsLoading } = useCreators();
+  const { toast } = useToast();
 
   // Mettre à jour l'URL quand les choix changent
   useEffect(() => {
@@ -367,8 +369,8 @@ const Creators = () => {
                 }}
                 layout
               >
-                <div 
-                  className="flex flex-col items-center justify-center text-center cursor-pointer transform hover:scale-105 transition-all duration-300"
+                <div
+                  className="flex flex-col items-center justify-center text-center transform transition-all duration-300 cursor-pointer hover:scale-105"
                   onClick={() => navigate(`/creator/${creator.id}`)}
                 >
                   {/* Photo de profil en cercle (le bloc entier) */}
@@ -384,6 +386,11 @@ const Creators = () => {
                   <h3 className="font-bold text-gray-900 dark:text-white text-xs sm:text-sm md:text-base leading-tight">
                     {creator.name}
                   </h3>
+                  {!creator.is_public && (
+                    <span className="mt-1 text-[10px] uppercase tracking-wide text-muted-foreground">
+                      Profil privé (accès restreint sur certains contenus)
+                    </span>
+                  )}
                 </div>
               </motion.div>
             ))}

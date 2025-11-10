@@ -7,31 +7,45 @@ export interface Creator {
   display_name: string | null;
   avatar: string | null;
   bio: string | null;
+  public_bio: string | null;
   category: string | null;
   subcategory: string | null;
   category_id: string | null;
   subcategory_id: string | null;
   is_verified: boolean;
+  owner_user_id: string | null;
+  is_public?: boolean;
   created_at: string;
   updated_at: string;
+}
+
+export interface CreatorSocialPostPreview {
+  id: string;
+  title: string;
+  hook?: string | null;
+  published_at?: string | null;
 }
 
 export interface CreatorSocialNetwork {
   id: string;
   creator_id: string;
-  social_network_id: string;
-  username: string | null;
+  platform: string;
   profile_url: string | null;
-  followers_count: number;
+  handle: string | null;
+  followers_count: number | null;
+  avg_engagement_rate: number | null;
+  activity_score: number | null;
   is_primary: boolean;
+  last_synced_at: string | null;
   created_at: string;
-  network: {
-    id: string;
-    name: string;
-    display_name: string;
-    icon_url: string | null;
-    color_theme: string | null;
-  };
+  updated_at: string;
+  platform_info?: {
+    code: string;
+    label: string;
+    icon_name: string | null;
+  } | null;
+  recent_posts?: CreatorSocialPostPreview[];
+  content_summary?: string | null;
 }
 
 export interface CreatorWithNetworks extends Creator {
@@ -52,7 +66,12 @@ export const useCreators = () => {
         return [];
       }
       
-      return data || [];
+      return (data || []).map((creator: any) => ({
+        ...creator,
+        avatar: creator.avatar ?? creator.avatar_url ?? null,
+        public_bio: creator.public_bio ?? creator.bio ?? null,
+        is_public: creator.is_public ?? false,
+      }));
     },
   });
 };
@@ -67,28 +86,52 @@ export const useCreator = (creatorId: string) => {
         .select('*')
         .eq('id', creatorId)
         .single();
-      
+
       if (creatorError) {
         console.error('Erreur lors de la récupération du créateur:', creatorError);
         return null;
       }
-      
-      // Récupérer ses réseaux sociaux
-      const { data: socialNetworks, error: networksError } = await supabase
-        .from('creator_social_networks')
+
+      // Récupérer ses profils sociaux (nouvelle table)
+      const { data: socialProfiles, error: profilesError } = await supabase
+        .from('creator_social_profiles')
         .select(`
           *,
-          network:social_networks(id, name, display_name, icon_url, color_theme)
+          platform_info:social_platforms(code, label, icon_name)
         `)
-        .eq('creator_id', creatorId)
-        .order('is_primary', { ascending: false });
-      
-      if (networksError) {
-        console.error('Erreur lors de la récupération des réseaux sociaux:', networksError);
+        .eq('creator_id', creatorId);
+
+      if (profilesError) {
+        console.error('Erreur lors de la récupération des réseaux sociaux:', profilesError);
         return { ...creator, social_networks: [] };
       }
-      
-      return { ...creator, social_networks: socialNetworks || [] };
+
+      const sortedProfiles = (socialProfiles || []).sort((a, b) => {
+        const activityDiff = (b.activity_score ?? 0) - (a.activity_score ?? 0);
+        if (activityDiff !== 0) {
+          return activityDiff;
+        }
+
+        const followersDiff = (b.followers_count ?? 0) - (a.followers_count ?? 0);
+        if (followersDiff !== 0) {
+          return followersDiff;
+        }
+
+        if (a.is_primary === b.is_primary) {
+          return 0;
+        }
+
+        return a.is_primary ? -1 : 1;
+      });
+
+      const normalizedCreator: any = {
+        ...creator,
+        avatar: creator.avatar ?? (creator as any).avatar_url ?? null,
+        public_bio: creator.public_bio ?? creator.bio ?? null,
+        is_public: creator.is_public ?? false,
+      };
+
+      return { ...normalizedCreator, social_networks: sortedProfiles.slice(0, 4) };
     },
     enabled: !!creatorId,
   });

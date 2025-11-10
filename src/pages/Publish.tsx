@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Send, Loader2, ArrowLeft, Search, X, Check, AlertTriangle, Eye, FileText, Link, User } from 'lucide-react';
+import { Send, Loader2, ArrowLeft, Search, X, Check, AlertTriangle, Eye, FileText, Link, User, Plus, Trash, Star, StarOff } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useCategories } from '@/hooks/useCategories';
 import { useSubcategories } from '@/hooks/useSubcategories';
@@ -46,13 +46,12 @@ const Publish = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
-    content_type: 'title' as 'category' | 'subcategory' | 'subcategory_level2' | 'title' | 'content' | 'source' | 'account' | 'hooks' | 'pseudo',
+    content_type: 'title' as 'category' | 'subcategory' | 'subcategory_level2' | 'title' | 'content' | 'source' | 'account' | 'creator' | 'hooks' | 'pseudo',
     category_id: '',
     subcategory_id: '',
     subcategory_level2_id: '',
     description: '', // Added for content
-    url: '', // Added for sources and accounts
-    platform: '', // Added for accounts
+    url: '', // Added pour les sources
     theme: '' // Added for content theme
   });
 
@@ -69,6 +68,9 @@ const Publish = () => {
   const { data: subcategoriesLevel2 } = useSubcategoriesLevel2(formData.subcategory_id);
   const { data: subcategoryHierarchy } = useSubcategoryHierarchy();
   const { data: creators } = useCreators();
+  const [creatorNetworks, setCreatorNetworks] = useState<Array<{ networkId: string; username: string; url: string; isPrimary: boolean }>>([
+    { networkId: '', username: '', url: '', isPrimary: true }
+  ]);
   
   // États pour le type "contenu" (taguer un créateur)
   const [wantsToTagCreator, setWantsToTagCreator] = useState<boolean | null>(null);
@@ -140,6 +142,7 @@ const Publish = () => {
     console.log('FormData:', formData);
     console.log('Content Type:', formData.content_type);
     console.log('Selected Network:', selectedNetwork);
+    let validCreatorNetworksForSubmission: Array<{ networkId: string; username: string; url: string; isPrimary: boolean }> = [];
     
     if (!user) {
       toast({
@@ -184,7 +187,7 @@ const Publish = () => {
       return;
     }
 
-    if ((formData.content_type === 'title' || formData.content_type === 'account') && !formData.subcategory_id) {
+    if ((formData.content_type === 'title' || formData.content_type === 'creator') && !formData.subcategory_id) {
       toast({
         title: "Sous-catégorie requise",
         variant: "destructive"
@@ -193,7 +196,7 @@ const Publish = () => {
     }
 
     // Validation conditionnelle pour les sous-catégories de niveau 2
-    if ((formData.content_type === 'title' || formData.content_type === 'account' || formData.content_type === 'source' || formData.content_type === 'hooks') && formData.subcategory_id) {
+    if ((formData.content_type === 'title' || formData.content_type === 'creator' || formData.content_type === 'source' || formData.content_type === 'hooks') && formData.subcategory_id) {
       // Vérifier si la sous-catégorie a des sous-catégories de niveau 2
       const hasLevel2Subcategories = subcategoryHierarchy?.some(config => 
         config.subcategory_id === formData.subcategory_id && config.has_level2 === true
@@ -207,6 +210,51 @@ const Publish = () => {
           variant: "destructive"
         });
         return;
+      }
+    }
+
+    if (formData.content_type === 'creator') {
+      if (!formData.category_id) {
+        toast({
+          title: "Catégorie requise",
+          description: "Veuillez sélectionner une catégorie pour le créateur.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      if (!formData.description || formData.description.trim().length === 0) {
+        toast({
+          title: "Biographie requise",
+          description: "Veuillez ajouter une courte biographie du créateur.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      validCreatorNetworksForSubmission = creatorNetworks
+        .map(network => ({
+          networkId: network.networkId,
+          username: network.username.trim(),
+          url: network.url.trim(),
+          isPrimary: network.isPrimary
+        }))
+        .filter(network => network.networkId && network.url);
+
+      if (validCreatorNetworksForSubmission.length === 0) {
+        toast({
+          title: "Réseau requis",
+          description: "Ajoutez au moins un réseau social avec son lien pour le créateur.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      if (!validCreatorNetworksForSubmission.some(network => network.isPrimary)) {
+        validCreatorNetworksForSubmission[0] = {
+          ...validCreatorNetworksForSubmission[0],
+          isPrimary: true
+        };
       }
     }
 
@@ -245,9 +293,10 @@ const Publish = () => {
       return;
     }
 
-    if (formData.content_type === 'account' && (!formData.platform || !formData.url)) {
+    if (formData.content_type === 'account' && (!formData.description || formData.description.trim().length === 0)) {
       toast({
-        title: "Infos manquantes",
+        title: "Description requise",
+        description: "Veuillez ajouter une description pour ce compte.",
         variant: "destructive"
       });
       return;
@@ -352,36 +401,57 @@ const Publish = () => {
         
         if (error) throw error;
         return data.id;
-      } else if (formData.content_type === 'account') {
+      } else if (formData.content_type === 'creator') {
         const { data, error } = await supabase
           .from('creators')
           .insert({
             name: itemName,
             display_name: itemName,
-            bio: formData.description || 'Créateur publié',
+            bio: formData.description?.trim() || null,
+            public_bio: formData.description?.trim() || null,
             category: null,
             subcategory: null,
             category_id: formData.category_id || null,
             subcategory_id: formData.subcategory_id || null,
-            avatar_url: null
+            avatar_url: null,
+            owner_user_id: user?.id || null
           })
           .select()
           .single();
         
         if (error) throw error;
         
-        // Ajouter le réseau social si fourni (seulement pour le premier créateur)
-        if (formData.platform && formData.url && index === 0) {
-          const socialNetwork = socialNetworks?.find(n => n.name.toLowerCase() === formData.platform.toLowerCase());
-          if (socialNetwork) {
+        const networksToInsert = validCreatorNetworksForSubmission.length > 0
+          ? validCreatorNetworksForSubmission
+          : creatorNetworks
+              .map(network => ({
+                networkId: network.networkId,
+                username: network.username.trim(),
+                url: network.url.trim(),
+                isPrimary: network.isPrimary
+              }))
+              .filter(network => network.networkId && network.url);
+
+        if (networksToInsert.length > 0) {
+          const alreadyHasPrimary = networksToInsert.some(network => network.isPrimary);
+          
+          for (let networkIndex = 0; networkIndex < networksToInsert.length; networkIndex++) {
+            const networkEntry = networksToInsert[networkIndex];
+            const socialNetwork = socialNetworks?.find(n => n.id === networkEntry.networkId || n.name === networkEntry.networkId);
+            if (!socialNetwork) continue;
+
+            const isPrimary =
+              networkEntry.isPrimary ||
+              (!alreadyHasPrimary && networkIndex === 0);
+
             await supabase
               .from('creator_social_networks')
               .insert({
                 creator_id: data.id,
                 social_network_id: socialNetwork.id,
-                username: itemName,
-                profile_url: formData.url,
-                is_primary: true
+                username: networkEntry.username || null,
+                profile_url: networkEntry.url,
+                is_primary: isPrimary
               });
           }
         }
@@ -419,6 +489,35 @@ const Publish = () => {
         
         if (error) throw error;
         return data.id;
+      } else if (formData.content_type === 'account') {
+        console.log('Publication compte...');
+        const { data: challengeData, error: challengeError } = await supabase
+          .from('challenges')
+          .insert({
+            title: itemName,
+            description: formData.description || 'Compte publié',
+            category: 'Communauté',
+            challenge_type: 'account',
+            platform: selectedNetwork,
+            points: 50,
+            difficulty: 'medium',
+            duration_days: 1,
+            is_daily: false,
+            is_active: true
+          })
+          .select()
+          .single();
+        
+        if (challengeError) {
+          console.error('Erreur challenge compte:', challengeError);
+          throw challengeError;
+        }
+
+        toast({
+          title: "Compte publié"
+        });
+
+        return challengeData.id;
       }
       return null;
     };
@@ -443,7 +542,7 @@ const Publish = () => {
       }
       
       // Vérifier les doublons pour chaque élément
-      const supportsMultiple = ['title', 'category', 'subcategory', 'subcategory_level2', 'account', 'hooks', 'source', 'pseudo'].includes(formData.content_type);
+      const supportsMultiple = ['title', 'category', 'subcategory', 'subcategory_level2', 'hooks', 'source', 'pseudo'].includes(formData.content_type);
       if (supportsMultiple && items.length > 1) {
         for (const item of items) {
           const isDuplicate = await checkDuplicate(
@@ -490,7 +589,7 @@ const Publish = () => {
         
         toast({
           title: "Publication réussie",
-          description: `${items.length} ${formData.content_type === 'title' ? 'titres' : formData.content_type === 'category' ? 'catégories' : formData.content_type === 'subcategory' ? 'sous-catégories' : formData.content_type === 'subcategory_level2' ? 'sous-catégories niveau 2' : formData.content_type === 'account' ? 'créateurs' : formData.content_type === 'hooks' ? 'hooks' : 'sources'} créés avec succès.`
+          description: `${items.length} ${formData.content_type === 'title' ? 'titres' : formData.content_type === 'category' ? 'catégories' : formData.content_type === 'subcategory' ? 'sous-catégories' : formData.content_type === 'subcategory_level2' ? 'sous-catégories niveau 2' : formData.content_type === 'account' ? 'comptes' : formData.content_type === 'hooks' ? 'hooks' : 'sources'} créés avec succès.`
         });
       } else {
         // Publication d'un seul élément (logique existante)
@@ -703,77 +802,78 @@ const Publish = () => {
         toast({
           title: "Source publiée"
         });
-      } else if (formData.content_type === 'account') {
-        console.log('Publication compte...');
-        // Créer d'abord un challenge pour le compte
-        const { data: challengeData, error: challengeError } = await supabase
-          .from('challenges')
+      } else if (formData.content_type === 'creator') {
+        console.log('Publication créateur...');
+        const { data: creatorData, error: creatorError } = await supabase
+          .from('creators')
           .insert({
-            title: formData.title,
-            description: formData.description || 'Compte publié',
-            category: 'Communauté',
-            challenge_type: 'account',
-            platform: selectedNetwork,
-            points: 50,
-            difficulty: 'medium',
-            duration_days: 1,
-            is_daily: false,
-            is_active: true
+            name: formData.title,
+            display_name: formData.title,
+            bio: formData.description?.trim() || null,
+            category: null,
+            subcategory: null,
+            category_id: formData.category_id || null,
+            subcategory_id: formData.subcategory_id || null,
+            avatar_url: null
           })
           .select()
           .single();
         
-        if (challengeError) {
-          console.error('Erreur challenge compte:', challengeError);
-          throw challengeError;
+        if (creatorError) {
+          console.error('Erreur créateur:', creatorError);
+          throw creatorError;
         }
-        
-        createdItemId = challengeData.id;
-        console.log('Challenge compte publié avec succès, ID:', createdItemId);
-        
-        // Créer également un créateur si nécessaire
-        if (formData.category_id && formData.subcategory_id) {
-          const { data: creatorData, error: creatorError } = await supabase
-            .from('creators')
-            .insert({
-              name: formData.title,
-              display_name: formData.title,
-              bio: formData.description || 'Créateur publié',
-              category: null,
-              subcategory: null,
-              category_id: formData.category_id || null,
-              subcategory_id: formData.subcategory_id || null,
-              avatar_url: null
+
+        createdItemId = creatorData.id;
+        console.log('Créateur publié avec succès, ID:', createdItemId);
+
+        const networksToInsert = validCreatorNetworksForSubmission.length > 0
+          ? validCreatorNetworksForSubmission
+          : creatorNetworks
+              .map(network => ({
+                networkId: network.networkId,
+                username: network.username.trim(),
+                url: network.url.trim(),
+                isPrimary: network.isPrimary
+              }))
+              .filter(network => network.networkId && network.url);
+
+        if (networksToInsert.length > 0) {
+          const alreadyHasPrimary = networksToInsert.some(network => network.isPrimary);
+
+          const inserts = networksToInsert
+            .map((networkEntry, index) => {
+              const socialNetwork = socialNetworks?.find(n => n.id === networkEntry.networkId || n.name === networkEntry.networkId);
+              if (!socialNetwork) return null;
+
+              const isPrimary =
+                networkEntry.isPrimary ||
+                (!alreadyHasPrimary && index === 0);
+
+              return {
+                creator_id: creatorData.id,
+                social_network_id: socialNetwork.id,
+                username: networkEntry.username || null,
+                profile_url: networkEntry.url,
+                is_primary: isPrimary
+              };
             })
-            .select()
-            .single();
-          
-          if (!creatorError && creatorData) {
-            // Si une plateforme et une URL sont fournies, créer l'entrée dans creator_social_networks
-            if (selectedNetwork && formData.url) {
-              const socialNetwork = socialNetworks?.find(n => n.name === selectedNetwork || n.id === selectedNetwork);
-              if (socialNetwork) {
-                const { error: socialNetworkError } = await supabase
-                  .from('creator_social_networks')
-                  .insert({
-                    creator_id: creatorData.id,
-                    username: formData.title,
-                    profile_url: formData.url,
-                    social_network_id: socialNetwork.id,
-                    is_primary: true
-                  });
-                
-                if (socialNetworkError) {
-                  console.error('Erreur lors de l\'ajout du réseau social:', socialNetworkError);
-                  // On continue quand même, ce n'est pas bloquant
-                }
-              }
-            }
+            .filter((entry): entry is {
+              creator_id: string;
+              social_network_id: string;
+              username: string | null;
+              profile_url: string;
+              is_primary: boolean;
+            } => entry !== null);
+
+          if (inserts.length > 0) {
+            await supabase.from('creator_social_networks').insert(inserts);
           }
         }
-        
+
         toast({
-          title: "Compte publié"
+          title: "Créateur publié",
+          description: "Le profil créateur a été enregistré avec ses réseaux sociaux."
         });
       } else if (formData.content_type === 'hooks') {
         console.log('Publication hook...');
@@ -847,7 +947,17 @@ const Publish = () => {
         console.log('Created Item ID:', createdItemId);
         console.log('Category ID:', formData.category_id);
         console.log('Subcategory ID:', formData.subcategory_id);
-        console.log('Platform:', selectedNetwork || formData.platform);
+        const primaryCreatorNetwork = formData.content_type === 'creator'
+          ? (validCreatorNetworksForSubmission.find(network => network.isPrimary) ||
+             validCreatorNetworksForSubmission[0] ||
+             creatorNetworks.find(network => network.isPrimary) ||
+             creatorNetworks[0])
+          : undefined;
+        const primaryCreatorSocialNetwork = primaryCreatorNetwork
+          ? socialNetworks?.find(n => n.id === primaryCreatorNetwork.networkId || n.name === primaryCreatorNetwork.networkId)
+          : undefined;
+
+        console.log('Platform:', formData.content_type === 'creator' ? primaryCreatorSocialNetwork?.name : selectedNetwork);
         console.log('URL:', formData.url);
         
         // Déterminer les IDs à utiliser selon le type de contenu
@@ -868,7 +978,7 @@ const Publish = () => {
           subcategoryId = formData.subcategory_id;
           subcategoryLevel2Id = formData.subcategory_level2_id;
           categoryId = formData.category_id;
-        } else if (formData.content_type === 'account') {
+        } else if (formData.content_type === 'creator') {
           subcategoryId = formData.subcategory_id;
           subcategoryLevel2Id = formData.subcategory_level2_id;
           categoryId = formData.category_id;
@@ -882,8 +992,12 @@ const Publish = () => {
           category_id: categoryId,
           subcategory_id: subcategoryId,
           subcategory_level2_id: subcategoryLevel2Id || null,
-          platform: selectedNetwork || formData.platform || null,
-          url: formData.url || null,
+          platform: formData.content_type === 'creator'
+            ? primaryCreatorSocialNetwork?.name || null
+            : selectedNetwork || null,
+          url: formData.content_type === 'creator'
+            ? primaryCreatorNetwork?.url || null
+            : formData.url || null,
           status: 'approved'
         };
         
@@ -938,13 +1052,13 @@ const Publish = () => {
         subcategory_level2_id: '',
         description: '',
         url: '',
-        platform: '',
         theme: ''
       });
       setSelectedNetwork('');
       setWantsToTagCreator(null);
       setSelectedCreator(null);
       setCreatorSearch('');
+      setCreatorNetworks([{ networkId: '', username: '', url: '', isPrimary: true }]);
 
       // REDIRIGER VERS MES PUBLICATIONS AU LIEU DE LA PAGE D'ACCUEIL
       toast({
@@ -1002,6 +1116,42 @@ const Publish = () => {
     setShowSubcategoryLevel2Dropdown(false);
   };
 
+  const handleAddCreatorNetwork = () => {
+    setCreatorNetworks(prev => {
+      const hasPrimary = prev.some(network => network.isPrimary);
+      return [
+        ...prev,
+        { networkId: '', username: '', url: '', isPrimary: !hasPrimary && prev.length === 0 }
+      ];
+    });
+  };
+
+  const handleCreatorNetworkChange = (index: number, field: 'networkId' | 'username' | 'url', value: string) => {
+    setCreatorNetworks(prev => prev.map((network, i) => (
+      i === index ? { ...network, [field]: value } : network
+    )));
+  };
+
+  const handleRemoveCreatorNetwork = (index: number) => {
+    setCreatorNetworks(prev => {
+      const updated = prev.filter((_, i) => i !== index);
+      if (updated.length === 0) {
+        return [{ networkId: '', username: '', url: '', isPrimary: true }];
+      }
+      if (!updated.some(network => network.isPrimary)) {
+        updated[0] = { ...updated[0], isPrimary: true };
+      }
+      return updated;
+    });
+  };
+
+  const handleSetPrimaryCreatorNetwork = (index: number) => {
+    setCreatorNetworks(prev => prev.map((network, i) => ({
+      ...network,
+      isPrimary: i === index
+    })));
+  };
+
   // Fonction pour obtenir le label du titre selon le type ET le réseau
   const getTitleLabel = () => {
     switch (formData.content_type) {
@@ -1010,7 +1160,8 @@ const Publish = () => {
       case 'subcategory_level2': return 'Nom de la sous-catégorie de niveau 2';
       case 'content': return 'Nom du contenu';
       case 'source': return 'Titre de la source';
-      case 'account': return 'Nom du créateur';
+      case 'account': return 'Nom du compte';
+      case 'creator': return 'Nom du créateur';
       case 'hooks': return 'Hook vidéo';
       case 'pseudo': return 'Pseudo / Nom d\'utilisateur';
       default: return 'Titre';
@@ -1025,7 +1176,7 @@ const Publish = () => {
       case 'subcategory_level2': return 'Entrez le nom de la sous-catégorie de niveau 2';
       case 'content': return 'Entrez le nom de votre contenu';
       case 'source': return 'Entrez le titre de la source (ex: "TikTok", "Instagram", "YouTube")';
-      case 'account': return 'Entrez le nom du créateur';
+      case 'creator': return 'Entrez le nom du créateur';
       case 'hooks': return 'Entrez votre hook pour captiver l\'audience';
       case 'pseudo': return 'Entrez le pseudo / nom d\'utilisateur';
       default: return 'Entrez le titre de votre contenu';
@@ -1034,12 +1185,12 @@ const Publish = () => {
 
   // Fonction pour déterminer si on doit afficher la sélection de catégorie
   const shouldShowCategorySelection = () => {
-    return ['subcategory', 'subcategory_level2', 'title', 'source', 'account', 'hooks'].includes(formData.content_type);
+    return ['subcategory', 'subcategory_level2', 'title', 'source', 'creator', 'hooks'].includes(formData.content_type);
   };
 
   // Fonction pour déterminer si on doit afficher la sélection de sous-catégorie
   const shouldShowSubcategorySelection = () => {
-    return ['subcategory_level2', 'title', 'source', 'account', 'hooks'].includes(formData.content_type) && formData.category_id;
+    return ['subcategory_level2', 'title', 'source', 'creator', 'hooks'].includes(formData.content_type) && formData.category_id;
   };
 
   // Fonction pour filtrer les sous-catégories qui ont des sous-catégories de niveau 2
@@ -1056,7 +1207,7 @@ const Publish = () => {
 
   // Fonction pour déterminer si on doit afficher la sélection de sous-catégorie de niveau 2
   const shouldShowSubcategoryLevel2Selection = () => {
-    if (!['title', 'source', 'account', 'hooks'].includes(formData.content_type) || !formData.subcategory_id) {
+    if (!['title', 'source', 'creator', 'hooks'].includes(formData.content_type) || !formData.subcategory_id) {
       return false;
     }
     
@@ -1125,7 +1276,7 @@ const Publish = () => {
           .eq('type', 'hook')
           .limit(1);
         return !error && (data?.length || 0) > 0;
-      } else if (contentType === 'account') {
+      } else if (contentType === 'creator') {
         const { data, error } = await supabase
           .from('creators')
           .select('id')
@@ -1145,6 +1296,16 @@ const Publish = () => {
           .eq('social_network_id', socialNetwork.id)
           .limit(1);
         return !error && (data?.length || 0) > 0;
+      } else if (contentType === 'account') {
+        if (!selectedNetwork) return false;
+        const { data, error } = await supabase
+          .from('challenges')
+          .select('id')
+          .ilike('title', itemName)
+          .eq('challenge_type', 'account')
+          .eq('platform', selectedNetwork)
+          .limit(1);
+        return !error && (data?.length || 0) > 0;
       }
       return false;
     } catch (error) {
@@ -1159,7 +1320,7 @@ const Publish = () => {
     if (!supportsMultiple) return '';
     
     const maxItems = 10;
-    let message = `💡 Vous pouvez ajouter jusqu'à ${maxItems} ${formData.content_type === 'title' ? 'titres' : formData.content_type === 'category' ? 'catégories' : formData.content_type === 'subcategory' ? 'sous-catégories' : formData.content_type === 'subcategory_level2' ? 'sous-catégories niveau 2' : formData.content_type === 'account' ? 'créateurs' : formData.content_type === 'hooks' ? 'hooks' : formData.content_type === 'pseudo' ? 'pseudos' : 'sources'} en même temps.`;
+    let message = `💡 Vous pouvez ajouter jusqu'à ${maxItems} ${formData.content_type === 'title' ? 'titres' : formData.content_type === 'category' ? 'catégories' : formData.content_type === 'subcategory' ? 'sous-catégories' : formData.content_type === 'subcategory_level2' ? 'sous-catégories niveau 2' : formData.content_type === 'account' ? 'comptes' : formData.content_type === 'hooks' ? 'hooks' : formData.content_type === 'pseudo' ? 'pseudos' : 'sources'} en même temps.`;
     message += ` Séparez-les par un point-virgule (;).`;
     
     if (formData.content_type === 'subcategory') {
@@ -1210,6 +1371,7 @@ const Publish = () => {
                        formData.content_type === 'content' ? 'Contenu' :
                        formData.content_type === 'source' ? 'Source' :
                        formData.content_type === 'account' ? 'Compte' :
+                       formData.content_type === 'creator' ? 'Créateur' :
                        formData.content_type === 'hooks' ? 'Hooks' :
                        formData.content_type === 'pseudo' ? 'Pseudo' : 'Sélectionner un type'}
                     </span>
@@ -1219,25 +1381,21 @@ const Publish = () => {
                     id="content_type"
                     value={formData.content_type}
                     onChange={(e) => {
-                      const newContentType = e.target.value as 'category' | 'subcategory' | 'title' | 'content' | 'source' | 'account' | 'hooks' | 'pseudo';
+                      const newContentType = e.target.value as 'category' | 'subcategory' | 'title' | 'content' | 'source' | 'account' | 'creator' | 'hooks' | 'pseudo';
                       setFormData(prev => ({
                         ...prev,
                         content_type: newContentType,
-                          category_id: '',
-                          subcategory_id: '',
-                          description: '',
-                          url: '',
-                          platform: '',
-                          theme: ''
-                        }));
-                        setCategorySearch('');
-                        setSubcategorySearch('');
-                      // Réinitialiser les états pour "contenu"
-                      if (newContentType !== 'content') {
-                        setWantsToTagCreator(null);
-                        setSelectedCreator(null);
-                        setCreatorSearch('');
-                      }
+                        category_id: '',
+                        subcategory_id: '',
+                        subcategory_level2_id: '',
+                        description: '',
+                        url: '',
+                        theme: ''
+                      }));
+                      setCategorySearch('');
+                      setSubcategorySearch('');
+                      setSubcategoryLevel2Search('');
+                      setCreatorNetworks([{ networkId: '', username: '', url: '', isPrimary: true }]);
                     }}
                     className="absolute inset-0 opacity-0 cursor-pointer"
                     required
@@ -1248,6 +1406,7 @@ const Publish = () => {
                     <option value="category">Catégorie</option>
                     <option value="content">Contenu</option>
                     <option value="account">Compte</option>
+                    <option value="creator">Créateur</option>
                     <option value="source">Source</option>
                     <option value="hooks">Hooks</option>
                     <option value="pseudo">Pseudo</option>
@@ -1701,90 +1860,188 @@ const Publish = () => {
           )}
 
           {/* Section 11 : Plateforme (pour les créateurs) */}
-          {formData.content_type === 'account' && (
+          {formData.content_type === 'creator' && (
             <div className="mb-3">
-              <div className="rounded-lg border border-gray-700 p-3" style={{ backgroundColor: '#0f0f10' }}>
-                <div className="space-y-1">
-                  <Label htmlFor="platform" className="text-sm text-white">Plateforme *</Label>
-                  <div className="relative group">
-                    <div className="flex items-center justify-between p-3 border border-gray-600 rounded-lg text-white text-sm cursor-pointer hover:bg-gray-800/50 transition-all duration-200" style={{ backgroundColor: '#0f0f10' }}>
-                      <span className="font-medium">
-                        {formData.platform ? 
-                          formData.platform.charAt(0).toUpperCase() + formData.platform.slice(1) : 
-                          'Sélectionnez une plateforme'}
-                      </span>
-                      <div className="w-2 h-2 border-r-2 border-b-2 border-gray-400 transform rotate-45 transition-transform duration-200 group-hover:rotate-[-135deg]"></div>
-                    </div>
-                    <select
-                      id="platform"
-                      value={formData.platform}
-                      onChange={(e) => setFormData(prev => ({ ...prev, platform: e.target.value }))}
-                      className="absolute inset-0 opacity-0 cursor-pointer"
-                      required
-                    >
-                      <option value="">Sélectionnez une plateforme</option>
-                      <option value="tiktok">TikTok</option>
-                      <option value="instagram">Instagram</option>
-                      <option value="youtube">YouTube</option>
-                      <option value="twitter">Twitter/X</option>
-                      <option value="facebook">Facebook</option>
-                      <option value="linkedin">LinkedIn</option>
-                      <option value="twitch">Twitch</option>
-                      <option value="blog">Blog</option>
-                      <option value="article">Article</option>
-                      <option value="other">Autre</option>
-                    </select>
-                  </div>
+              <div className="rounded-lg border border-gray-700 p-3 space-y-3" style={{ backgroundColor: '#0f0f10' }}>
+                <div className="flex items-center justify-between">
+                  <Label className="text-sm text-white">Réseaux sociaux du créateur *</Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="text-xs"
+                    onClick={handleAddCreatorNetwork}
+                  >
+                    <Plus className="h-3 w-3 mr-1" />
+                    Ajouter un réseau
+                  </Button>
+                </div>
+                <p className="text-xs text-gray-400">
+                  Ajoutez un ou plusieurs réseaux. Sélectionnez un réseau principal et renseignez le lien complet.
+                </p>
+                <div className="space-y-3">
+                  {creatorNetworks.map((network, index) => {
+                    const socialNetwork = socialNetworks?.find(n => n.id === network.networkId || n.name === network.networkId);
+                    return (
+                      <div key={index} className="border border-gray-700 rounded-md p-3 space-y-3" style={{ backgroundColor: '#141416' }}>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-white font-medium">Réseau #{index + 1}</span>
+                            {socialNetwork && (
+                              <span className="text-xs px-2 py-1 rounded-full bg-gray-800 text-gray-300">
+                                {socialNetwork.display_name}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              type="button"
+                              variant={network.isPrimary ? 'default' : 'outline'}
+                              size="sm"
+                              className="text-xs"
+                              onClick={() => handleSetPrimaryCreatorNetwork(index)}
+                            >
+                              {network.isPrimary ? (
+                                <>
+                                  <Star className="h-3 w-3 mr-1" />
+                                  Principal
+                                </>
+                              ) : (
+                                <>
+                                  <StarOff className="h-3 w-3 mr-1" />
+                                  Définir principal
+                                </>
+                              )}
+                            </Button>
+                            {creatorNetworks.length > 1 && (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-gray-400 hover:text-red-400"
+                                onClick={() => handleRemoveCreatorNetwork(index)}
+                                aria-label="Supprimer ce réseau"
+                              >
+                                <Trash className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                        <div className="grid gap-2">
+                          <div>
+                            <Label className="text-xs text-gray-300">Réseau social *</Label>
+                            <select
+                              value={network.networkId}
+                              onChange={(e) => handleCreatorNetworkChange(index, 'networkId', e.target.value)}
+                              className="w-full mt-1 p-2 border border-gray-600 rounded-md text-sm text-white"
+                              style={{ backgroundColor: '#0f0f10' }}
+                            >
+                              <option value="">Sélectionnez un réseau</option>
+                              {socialNetworks?.map((networkOption) => (
+                                <option key={networkOption.id} value={networkOption.id}>
+                                  {networkOption.display_name}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          <div className="relative">
+                            <Label htmlFor={`creator-username-${index}`} className="text-xs text-gray-300">
+                              Nom d'utilisateur (optionnel)
+                            </Label>
+                            <div className="relative mt-1">
+                              <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-3 w-3 text-gray-400" />
+                              <Input
+                                id={`creator-username-${index}`}
+                                value={network.username}
+                                onChange={(e) => handleCreatorNetworkChange(index, 'username', e.target.value)}
+                                placeholder="@pseudo"
+                                className="pl-8 text-sm border-gray-600 text-white placeholder-gray-500"
+                                style={{ backgroundColor: '#0f0f10' }}
+                              />
+                            </div>
+                          </div>
+                          <div className="relative">
+                            <Label htmlFor={`creator-url-${index}`} className="text-xs text-gray-300">
+                              Lien du profil *
+                            </Label>
+                            <div className="relative mt-1">
+                              <Link className="absolute left-3 top-1/2 transform -translate-y-1/2 h-3 w-3 text-gray-400" />
+                              <Input
+                                id={`creator-url-${index}`}
+                                type="url"
+                                value={network.url}
+                                onChange={(e) => handleCreatorNetworkChange(index, 'url', e.target.value)}
+                                placeholder="https://"
+                                className="pl-8 text-sm border-gray-600 text-white placeholder-gray-500"
+                                style={{ backgroundColor: '#0f0f10' }}
+                                required
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </div>
           )}
 
-          {/* Section 4 : Description (pour les contenus) */}
-          {formData.content_type === 'content' && (
-            <div className="mb-3">
-              <div className="rounded-lg border border-gray-700 p-3" style={{ backgroundColor: '#0f0f10' }}>
-                <div className="space-y-1">
-                  <Label htmlFor="description" className="text-sm text-white">Description du contenu *</Label>
-                  <textarea
-                    id="description"
-                    value={formData.description || ''}
-                    onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                    placeholder="Décrivez votre contenu en détail..."
-                    className="w-full p-2 border border-gray-600 rounded-md text-white min-h-[80px] resize-vertical text-sm placeholder-gray-400"
-                    style={{ backgroundColor: '#0f0f10' }}
-                    required
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Section 13 : URL (pour les sources et créateurs) */}
-          {(formData.content_type === 'source' || formData.content_type === 'account') && (
-            <div className="mb-3">
-              <div className="rounded-lg border border-gray-700 p-3" style={{ backgroundColor: '#0f0f10' }}>
-                <div className="space-y-1">
-                  <Label htmlFor="url" className="text-sm text-white">
-                    {formData.content_type === 'source' ? 'URL de la source' : 'URL du créateur'} *
+          {/* Section 4 : Description */}
+          {(formData.content_type === 'content' || formData.content_type === 'creator' || formData.content_type === 'account') && (
+             <div className="mb-3">
+               <div className="rounded-lg border border-gray-700 p-3" style={{ backgroundColor: '#0f0f10' }}>
+                 <div className="space-y-1">
+                  <Label htmlFor="description" className="text-sm text-white">
+                    {formData.content_type === 'creator'
+                      ? 'Biographie du créateur *'
+                      : formData.content_type === 'account'
+                        ? 'Description du compte *'
+                        : 'Description du contenu *'}
                   </Label>
-                  <div className="relative">
-                    <Link className="absolute left-3 top-1/2 transform -translate-y-1/2 h-3 w-3 text-gray-400" />
-                    <Input
-                      id="url"
-                      type="url"
-                      value={formData.url || ''}
-                      onChange={(e) => setFormData(prev => ({ ...prev, url: e.target.value }))}
-                      placeholder={formData.content_type === 'source' ? 'https://example.com' : 'https://tiktok.com/@createur'}
-                      className="pl-8 text-sm border-gray-600 text-white placeholder-gray-400"
-                      style={{ backgroundColor: '#0f0f10' }}
-                      required
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
+                   <textarea
+                     id="description"
+                     value={formData.description || ''}
+                     onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                     placeholder={
+                       formData.content_type === 'creator'
+                         ? 'Présentez brièvement le créateur, son style, ses thématiques...'
+                         : formData.content_type === 'account'
+                           ? 'Décrivez le type de compte, son positionnement, ses thématiques...'
+                           : 'Décrivez votre contenu en détail...'
+                     }
+                     className="w-full p-2 border border-gray-600 rounded-md text-white min-h-[80px] resize-vertical text-sm placeholder-gray-400"
+                     style={{ backgroundColor: '#0f0f10' }}
+                     required
+                   />
+                 </div>
+               </div>
+             </div>
+           )}
+
+          {/* Section 13 : URL (pour les sources) */}
+          {formData.content_type === 'source' && (
+             <div className="mb-3">
+               <div className="rounded-lg border border-gray-700 p-3" style={{ backgroundColor: '#0f0f10' }}>
+                 <div className="space-y-1">
+                  <Label htmlFor="url" className="text-sm text-white">URL de la source *</Label>
+                   <div className="relative">
+                     <Link className="absolute left-3 top-1/2 transform -translate-y-1/2 h-3 w-3 text-gray-400" />
+                     <Input
+                       id="url"
+                       type="url"
+                       value={formData.url || ''}
+                       onChange={(e) => setFormData(prev => ({ ...prev, url: e.target.value }))}
+                       placeholder="https://example.com"
+                       className="pl-8 text-sm border-gray-600 text-white placeholder-gray-400"
+                       style={{ backgroundColor: '#0f0f10' }}
+                       required
+                     />
+                   </div>
+                 </div>
+               </div>
+             </div>
+           )}
 
           {/* Section 14 : Soumission */}
           <div className="rounded-lg border border-gray-700 p-3" style={{ backgroundColor: '#0f0f10' }}>
@@ -1796,10 +2053,9 @@ const Publish = () => {
                          !formData.content_type ||
                          (needsNetwork && !selectedNetwork) ||
                          (formData.content_type === 'subcategory' && !formData.category_id) ||
-                         ((formData.content_type === 'title' || formData.content_type === 'account') && (!formData.category_id || !formData.subcategory_id)) ||
+                         ((formData.content_type === 'title' || formData.content_type === 'creator') && (!formData.category_id || !formData.subcategory_id)) ||
                          (formData.content_type === 'content' && (wantsToTagCreator === null || (wantsToTagCreator === true && !selectedCreator) || !formData.description)) ||
                          (formData.content_type === 'source' && !formData.url) ||
-                         (formData.content_type === 'account' && !formData.url) ||
                          (formData.content_type === 'category' && !formData.theme)}
               >
                 {isSubmitting ? (

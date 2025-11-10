@@ -2,10 +2,22 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 
-interface Publication {
+export type PublicationContentType =
+  | 'category'
+  | 'subcategory'
+  | 'subcategory_level2'
+  | 'title'
+  | 'hooks'
+  | 'content'
+  | 'account'
+  | 'source'
+  | 'pseudo'
+  | 'challenge';
+
+export interface Publication {
   id: string;
   user_id: string | null;
-  content_type: 'category' | 'subcategory' | 'title' | 'account' | 'source' | 'challenge' | 'hooks';
+  content_type: PublicationContentType;
   title: string;
   description?: string;
   category_id?: string;
@@ -41,15 +53,9 @@ export const usePublications = () => {
       // Récupérer les publications de l'utilisateur depuis user_publications
       console.log('Récupération des publications utilisateur...');
       
-      // Filtrer par date récente pour exclure les anciennes publications ajoutées manuellement
-      // On prend seulement les publications des 30 derniers jours
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      
       const { data: userPublications, error: publicationsError } = await supabase
         .from('user_publications')
         .select('*')
-        .gte('created_at', thirtyDaysAgo.toISOString())
         .order('created_at', { ascending: false });
 
       console.log('Publications utilisateur récupérées:', userPublications);
@@ -127,3 +133,85 @@ export const usePublications = () => {
     refresh: loadPublications
   };
 }; 
+
+export const useUserPublicationsById = (userId: string | null) => {
+  const [publications, setPublications] = useState<Publication[]>([]);
+  const [loading, setLoading] = useState<boolean>(!!userId);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const load = async () => {
+      if (!userId) {
+        if (isMounted) {
+          setPublications([]);
+          setLoading(false);
+          setError(null);
+        }
+        return;
+      }
+
+      try {
+        setLoading(true);
+        setError(null);
+
+        const { data, error: fetchError } = await supabase
+          .from('user_publications')
+          .select('*')
+          .eq('user_id', userId)
+          .eq('status', 'approved')
+          .order('created_at', { ascending: false });
+
+        if (fetchError) {
+          throw fetchError;
+        }
+
+        if (isMounted) {
+          const formatted: Publication[] = (data || []).map((pub) => ({
+            id: pub.id,
+            user_id: pub.user_id,
+            content_type: pub.content_type as PublicationContentType,
+            title: pub.title,
+            description: pub.description ?? undefined,
+            category_id: pub.category_id ?? undefined,
+            subcategory_id: pub.subcategory_id ?? undefined,
+            subcategory_level2_id: pub.subcategory_level2_id ?? undefined,
+            platform: pub.platform ?? undefined,
+            url: pub.url ?? undefined,
+            status: (pub.status as Publication['status']) || 'approved',
+            rejection_reason: pub.rejection_reason ?? undefined,
+            created_at: pub.created_at,
+            updated_at: pub.updated_at,
+          }));
+          setPublications(formatted);
+        }
+      } catch (err) {
+        console.error('Erreur chargement publications publiques:', err);
+        if (isMounted) {
+          setError(
+            err instanceof Error
+              ? err.message
+              : "Impossible de charger les publications publiques."
+          );
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    load();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [userId]);
+
+  return {
+    publications,
+    loading,
+    error,
+  };
+};
