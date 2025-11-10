@@ -1406,15 +1406,8 @@ const renderNetworkLabel = (label: string, platform: string) => {
               Mode aperçu : connectez-vous pour ajouter ou gérer vos réseaux sociaux.
                 </div>
           )}
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs text-muted-foreground">
-                {socialAccounts.length} réseau{socialAccounts.length > 1 ? 'x' : ''} social{socialAccounts.length > 1 ? 'aux' : ''}
-              </span>
             {user && (
-              <div className="flex items-center gap-2 ml-auto">
-                <p className="text-xs text-muted-foreground">
-                  Bouton “Ajouter” pour connecter un nouveau réseau.
-                </p>
+              <div className="flex justify-end mb-2">
                 <Button
                   variant="ghost"
                   size="sm"
@@ -1432,7 +1425,6 @@ const renderNetworkLabel = (label: string, platform: string) => {
                 </Button>
               </div>
             )}
-            </div>
             <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
               {renderSocialAccountChips()}
             </div>
@@ -1447,13 +1439,8 @@ const renderNetworkLabel = (label: string, platform: string) => {
               Mode aperçu : connectez-vous pour créer ou modifier vos playlists.
                 </div>
           )}
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs text-muted-foreground">
-                {filteredPlaylists.length} playlist{filteredPlaylists.length > 1 ? 's' : ''}
-              </span>
             {user && (
-              <div className="flex items-center gap-2">
-                <p className="text-xs text-muted-foreground">Bouton “Ajouter” pour créer une playlist.</p>
+              <div className="flex justify-end mb-2">
                 <Button
                   variant="ghost"
                   size="sm"
@@ -1471,7 +1458,6 @@ const renderNetworkLabel = (label: string, platform: string) => {
                 </Button>
               </div>
             )}
-            </div>
             
             <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
               {loading ? (
@@ -1575,61 +1561,11 @@ const renderNetworkLabel = (label: string, platform: string) => {
             
             {/* Onglet Contenu */}
             <TabsContent value="publications" className="mt-6">
-              <div className="text-center mb-4">
-                {selectedSocialNetworkId && (
-                  <p className="text-sm text-muted-foreground">
-                    {selectedPlaylistId ? (
-                      `${filteredPosts.length} publication${filteredPosts.length > 1 ? 's' : ''} dans cette playlist`
-                    ) : (
-                      `${filteredPosts.length} publication${filteredPosts.length > 1 ? 's' : ''} sur ${socialAccounts.find(acc => acc.id === selectedSocialNetworkId)?.platform || 'ce réseau'}`
-                    )}
-                  </p>
-                )}
-                {user && (
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Utilisez le bouton “Ajouter” du menu principal pour créer une nouvelle publication.
-                  </p>
-                )}
-              </div>
               {renderPublications()}
             </TabsContent>
             
             {/* Onglet Défis */}
             <TabsContent value="challenges" className="mt-6">
-              {/* En-tête centré */}
-              <div className="text-center mb-4">
-                <div className="flex justify-center gap-2">
-                  {defis.length > 0 && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        if (!ensureAuthenticated("Connectez-vous pour personnaliser votre programme.")) {
-                          return;
-                        }
-                        setShowProgramSettingsDialog(true);
-                      }}
-                      className="w-10 h-10 p-0"
-                      title="Programmer"
-                      disabled={!user}
-                    >
-                      <Edit className="w-4 h-4" />
-                    </Button>
-                  )}
-                  {user ? (
-                    <p className="text-xs text-muted-foreground self-center">
-                      Utilisez le bouton “Ajouter” du menu principal pour créer un nouveau défi.
-                    </p>
-                  ) : (
-                    <p className="text-xs text-muted-foreground self-center">
-                      Connectez-vous puis utilisez le bouton “Ajouter” pour créer vos défis.
-                    </p>
-                  )}
-                </div>
-                </div>
-                
               {/* Liste des défis */}
               <div className="space-y-3">
                 {defis.length === 0 ? (
