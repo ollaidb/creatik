@@ -33,6 +33,26 @@ export interface UpdateNotificationData {
   priority?: Notification['priority'];
 }
 
+export type NotificationCategory = 'all' | 'comments' | 'likes' | 'mentions' | 'others';
+
+export interface NotificationMetadata {
+  [key: string]: unknown;
+}
+
+export const categorizeNotification = (notification: Notification): NotificationCategory => {
+  switch (notification.type) {
+    case 'comment_reaction':
+    case 'publication_reply':
+      return 'comments';
+    case 'challenge_reminder':
+      return 'others';
+    case 'public_challenge':
+      return 'mentions';
+    default:
+      return 'others';
+  }
+};
+
 export const useNotifications = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
