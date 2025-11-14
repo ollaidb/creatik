@@ -45,7 +45,7 @@ const IdeesCompte = () => {
     setShowCreateForm(true);
   };
 
-  const handleAccountCreated = (accountData: any) => {
+  const handleAccountCreated = (accountData: { name: string; theme?: string; network?: string; category?: string; [key: string]: unknown }) => {
     const newAccount: Account = {
       id: Date.now().toString(),
       name: accountData.name,

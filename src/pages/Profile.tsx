@@ -360,15 +360,6 @@ const UserProfile: React.FC = () => {
     }
   }, [user]);
 
-  // Mettre à jour les paramètres de programmation quand la sélection change
-  useEffect(() => {
-    setLocalProgramSettings(prev => ({
-      ...prev,
-      socialNetworkId: selectedSocialNetworkId,
-      playlistId: selectedPlaylistId
-    }));
-  }, [selectedSocialNetworkId, selectedPlaylistId]);
-
 
   // Note: Les défis ont été migrés vers le système de publications
   // Ce code a été supprimé car il référençait l'ancien système de défis

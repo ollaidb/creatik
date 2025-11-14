@@ -171,7 +171,7 @@ export const useTrash = () => {
 
   useEffect(() => {
     loadTrashItems();
-  }, [user]);
+  }, [user, loadTrashItems]);
 
   return {
     trashItems,

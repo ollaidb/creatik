@@ -23,7 +23,7 @@ export interface UserSocialPost {
   scheduled_date?: string;
   published_date?: string;
   status: 'draft' | 'scheduled' | 'published' | 'archived';
-  engagement_data?: any;
+  engagement_data?: Record<string, unknown>;
   created_at: string;
   updated_at: string;
 }

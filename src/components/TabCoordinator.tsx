@@ -91,7 +91,7 @@ export const TabCoordinator = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     // Stocker l'état dans sessionStorage pour que les autres composants puissent y accéder
     if (typeof window !== 'undefined') {
-      (window as any).__CREATIK_IS_PRIMARY_TAB__ = isPrimaryTab;
+      (window as { __CREATIK_IS_PRIMARY_TAB__?: boolean }).__CREATIK_IS_PRIMARY_TAB__ = isPrimaryTab;
     }
   }, [isPrimaryTab]);
 
@@ -104,7 +104,7 @@ export const TabCoordinator = ({ children }: { children: React.ReactNode }) => {
 export const useIsPrimaryTab = (): boolean => {
   const [isPrimary, setIsPrimary] = useState(() => {
     if (typeof window !== 'undefined') {
-      return (window as any).__CREATIK_IS_PRIMARY_TAB__ ?? 
+      return (window as { __CREATIK_IS_PRIMARY_TAB__?: boolean }).__CREATIK_IS_PRIMARY_TAB__ ?? 
              sessionStorage.getItem('tab-primary') === 'true';
     }
     return true;

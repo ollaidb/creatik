@@ -10,7 +10,7 @@ export interface ProfileFilteringState {
   // Données filtrées
   filteredPosts: UserSocialPost[];
   filteredPlaylists: UserContentPlaylist[];
-  filteredChallenges: any[];
+  filteredChallenges: unknown[];
   
   // Paramètres de programmation
   programSettings: {
@@ -27,7 +27,7 @@ export const useProfileFiltering = (
   socialAccounts: UserSocialAccount[],
   socialPosts: UserSocialPost[],
   playlists: UserContentPlaylist[],
-  userChallenges: any[],
+  userChallenges: unknown[],
   userId: string
 ) => {
   const [selectedSocialNetworkId, setSelectedSocialNetworkId] = useState<string>('');

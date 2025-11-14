@@ -79,7 +79,7 @@ const CommunityAccountDetail = () => {
     if (id) {
       loadChallengeAndComments();
     }
-  }, [id]);
+  }, [id, loadChallengeAndComments]);
 
   // Changer le titre de la page
   useEffect(() => {

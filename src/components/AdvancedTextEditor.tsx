@@ -78,7 +78,7 @@ interface AdvancedTextEditorProps {
   initialContent?: string;
   initialTitle?: string;
   documentType: 'content' | 'account_idea';
-  onSave: (title: string, content: string, metadata: any) => void;
+  onSave: (title: string, content: string, metadata: Record<string, unknown>) => void;
   onAutoSave?: (title: string, content: string) => void;
   className?: string;
   placeholder?: string;
@@ -277,7 +277,7 @@ const AdvancedTextEditor: React.FC<AdvancedTextEditorProps> = ({
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [handleSave, applyFormatting]);
 
   const handleSave = useCallback(() => {
     const metadata = {
@@ -558,7 +558,7 @@ const AdvancedTextEditor: React.FC<AdvancedTextEditorProps> = ({
                         <Label className="text-xs">Priorité</Label>
                         <select
                           value={accountSettings.priorityLevel}
-                          onChange={(e) => setAccountSettings(prev => ({ ...prev, priorityLevel: e.target.value as any }))}
+                          onChange={(e) => setAccountSettings(prev => ({ ...prev, priorityLevel: e.target.value as 'low' | 'medium' | 'high' }))}
                           className="w-full p-2 border border-border rounded-md bg-background text-sm"
                         >
                           <option value="low">Faible</option>
@@ -570,7 +570,7 @@ const AdvancedTextEditor: React.FC<AdvancedTextEditorProps> = ({
                         <Label className="text-xs">Statut</Label>
                         <select
                           value={accountSettings.implementationStatus}
-                          onChange={(e) => setAccountSettings(prev => ({ ...prev, implementationStatus: e.target.value as any }))}
+                          onChange={(e) => setAccountSettings(prev => ({ ...prev, implementationStatus: e.target.value as 'idea' | 'planning' | 'in_progress' | 'completed' | 'on_hold' }))}
                           className="w-full p-2 border border-border rounded-md bg-background text-sm"
                         >
                           <option value="idea">Idée</option>

@@ -94,25 +94,25 @@ const IntelligentSearchBar: React.FC<IntelligentSearchBarProps> = ({
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
-  // Rechercher du contenu
-  const searchContentWithDebounce = async (searchQuery: string) => {
-    if (searchQuery.length < 2) {
-      setSearchResults([]);
-      return;
-    }
-    setLoading(true);
-    try {
-      const results = await searchContent(searchQuery);
-      setSearchResults(results);
-    } catch (error) {
-      console.error('Erreur de recherche:', error);
-      setSearchResults([]);
-    } finally {
-      setLoading(false);
-    }
-  };
   // Debounce pour la recherche
   useEffect(() => {
+    const searchContentWithDebounce = async (searchQuery: string) => {
+      if (searchQuery.length < 2) {
+        setSearchResults([]);
+        return;
+      }
+      setLoading(true);
+      try {
+        const results = await searchContent(searchQuery);
+        setSearchResults(results);
+      } catch (error) {
+        console.error('Erreur de recherche:', error);
+        setSearchResults([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     const timeoutId = setTimeout(() => {
       if (query.trim()) {
         searchContentWithDebounce(query.trim());
@@ -121,7 +121,7 @@ const IntelligentSearchBar: React.FC<IntelligentSearchBarProps> = ({
       }
     }, 300);
     return () => clearTimeout(timeoutId);
-  }, [query, searchContentWithDebounce]);
+  }, [query, searchContent]);
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setQuery(value);

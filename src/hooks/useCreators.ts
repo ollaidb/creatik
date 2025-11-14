@@ -66,7 +66,7 @@ export const useCreators = () => {
         return [];
       }
       
-      return (data || []).map((creator: any) => ({
+      return (data || []).map((creator: Creator) => ({
         ...creator,
         avatar: creator.avatar ?? creator.avatar_url ?? null,
         public_bio: creator.public_bio ?? creator.bio ?? null,
@@ -124,9 +124,9 @@ export const useCreator = (creatorId: string) => {
         return a.is_primary ? -1 : 1;
       });
 
-      const normalizedCreator: any = {
+      const normalizedCreator: Creator = {
         ...creator,
-        avatar: creator.avatar ?? (creator as any).avatar_url ?? null,
+        avatar: creator.avatar ?? (creator as Creator & { avatar_url?: string }).avatar_url ?? null,
         public_bio: creator.public_bio ?? creator.bio ?? null,
         is_public: creator.is_public ?? false,
       };

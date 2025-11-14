@@ -100,7 +100,7 @@ const queryClient = new QueryClient({
                            errorMessage.includes('JWT') ||
                            errorMessage.includes('401') ||
                            errorMessage.includes('403') ||
-                           ('code' in error && (error as any).code === 'PGRST301');
+                           ('code' in error && (error as { code?: string }).code === 'PGRST301');
           
           if (isAuthErr && failureCount === 0) {
             // Première tentative : essayer de rafraîchir la session

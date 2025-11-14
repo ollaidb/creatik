@@ -118,7 +118,7 @@ const AccountDetail = () => {
     setShowCreateForm(true);
   };
 
-  const handleContentCreated = (contentData: any) => {
+  const handleContentCreated = (contentData: { title: string; [key: string]: unknown }) => {
     const newContent = {
       id: Date.now().toString(),
       title: contentData.title,

@@ -114,7 +114,7 @@ const AccountManagement = () => {
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive' | 'archived'>('all');
   const [showArchived, setShowArchived] = useState(false);
 
-  const handleCreateAccount = (accountData: any) => {
+  const handleCreateAccount = (accountData: Record<string, unknown>) => {
     const newAccount: Account = {
       id: Date.now().toString(),
       ...accountData,
@@ -222,7 +222,7 @@ const AccountManagement = () => {
           </div>
           
           <div className="flex items-center gap-2">
-            <Tabs value={filterStatus} onValueChange={(value) => setFilterStatus(value as any)}>
+            <Tabs value={filterStatus} onValueChange={(value) => setFilterStatus(value as 'all' | 'active' | 'inactive' | 'archived')}>
               <TabsList>
                 <TabsTrigger value="all">Tous</TabsTrigger>
                 <TabsTrigger value="active">Actifs</TabsTrigger>

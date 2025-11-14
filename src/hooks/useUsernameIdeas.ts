@@ -45,7 +45,7 @@ export const useUsernameIdeas = (networkId?: string) => {
         }
 
         // Récupérer tous les réseaux sociaux en une seule requête
-        const networkIds = [...new Set(usernameIdeasData.map((item: any) => item.social_network_id))];
+        const networkIds = [...new Set(usernameIdeasData.map((item: { social_network_id: string }) => item.social_network_id))];
         const { data: networksData } = await supabase
           .from('social_networks')
           .select('id, name, display_name, icon_url, color_theme')
@@ -53,11 +53,11 @@ export const useUsernameIdeas = (networkId?: string) => {
 
         // Créer un map pour accéder rapidement aux réseaux
         const networksMap = new Map(
-          (networksData || []).map((net: any) => [net.id, net])
+          (networksData || []).map((net: { id: string; name: string; display_name: string; icon_url: string | null; color_theme: string | null }) => [net.id, net])
         );
 
         // Combiner les données
-        const result = usernameIdeasData.map((item: any) => ({
+        const result = usernameIdeasData.map((item: { social_network_id: string; [key: string]: unknown }) => ({
           ...item,
           network: networksMap.get(item.social_network_id) || null
         })) as UsernameIdea[];

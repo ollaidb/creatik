@@ -398,7 +398,7 @@ export interface EditorPlugin {
   description: string;
   author: string;
   enabled: boolean;
-  settings: Record<string, any>;
+  settings: Record<string, unknown>;
   commands: EditorCommand[];
   shortcuts: KeyboardShortcut[];
 }
@@ -407,6 +407,6 @@ export interface EditorCommand {
   id: string;
   name: string;
   description: string;
-  execute: (editor: any, params?: any) => void;
-  canExecute?: (editor: any, params?: any) => boolean;
+  execute: (editor: unknown, params?: unknown) => void;
+  canExecute?: (editor: unknown, params?: unknown) => boolean;
 }

@@ -37,7 +37,7 @@ const Creators = () => {
     if (selectedTheme) params.set('theme', selectedTheme);
     if (selectedNetwork !== 'all') params.set('network', selectedNetwork);
     setSearchParams(params, { replace: true });
-  }, [selectedTheme, selectedNetwork]);
+  }, [selectedTheme, selectedNetwork, setSearchParams]);
 
   // Fonction pour changer le tri
   const handleSortChange = () => {

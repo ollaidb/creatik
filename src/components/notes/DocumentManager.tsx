@@ -749,7 +749,7 @@ const DocumentManager: React.FC<DocumentManagerProps> = ({
         </div>
         
         <div className="flex items-center gap-2">
-          <Tabs value={filterBy} onValueChange={(value) => setFilterBy(value as any)}>
+          <Tabs value={filterBy} onValueChange={(value) => setFilterBy(value as 'all' | 'favorites' | 'pinned' | 'recent')}>
             <TabsList>
               <TabsTrigger value="all">Tous</TabsTrigger>
               <TabsTrigger value="favorites">
@@ -788,7 +788,7 @@ const DocumentManager: React.FC<DocumentManagerProps> = ({
                       key={option.value}
                       variant={sortBy === option.value ? 'default' : 'ghost'}
                       size="sm"
-                      onClick={() => setSortBy(option.value as any)}
+                      onClick={() => setSortBy(option.value as 'title' | 'created_at' | 'updated_at' | 'word_count')}
                       className="w-full justify-start"
                     >
                       {option.label}

@@ -108,7 +108,7 @@ export const AddPublicationModal: React.FC<AddPublicationModalProps> = ({
     } else {
       setFilteredPlaylists([]);
     }
-  }, [formData.social_account_id, playlists]);
+  }, [formData.social_account_id, formData.playlist_id, playlists]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

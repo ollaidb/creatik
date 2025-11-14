@@ -34,12 +34,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             try {
               const { data: profile, error: profileError } = await supabase
                 .from('profiles')
-                .select('user_type')
+                .select('*')
                 .eq('id', session.user.id)
                 .single();
               
-              if (!profileError && profile?.user_type) {
-                localStorage.setItem('userProfileType', profile.user_type);
+              if (!profileError && profile) {
+                const userType = (profile as any)?.user_type;
+                if (userType) {
+                  localStorage.setItem('userProfileType', userType);
+                }
               }
             } catch (error) {
               console.warn('Erreur lors du chargement du type d\'utilisateur:', error);
@@ -82,12 +85,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             try {
               const { data: profile, error } = await supabase
                 .from('profiles')
-                .select('user_type')
+                .select('*')
                 .eq('id', session.user.id)
                 .single();
               
-              if (!error && profile?.user_type) {
-                localStorage.setItem('userProfileType', profile.user_type);
+              if (!error && profile) {
+                const userType = (profile as any)?.user_type;
+                if (userType) {
+                  localStorage.setItem('userProfileType', userType);
+                }
               }
             } catch (error) {
               console.warn('Erreur lors du chargement du type d\'utilisateur:', error);
@@ -112,12 +118,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             try {
               const { data: profile, error: profileError } = await supabase
                 .from('profiles')
-                .select('user_type')
+                .select('*')
                 .eq('id', session.user.id)
                 .single();
               
-              if (!profileError && profile?.user_type) {
-                localStorage.setItem('userProfileType', profile.user_type);
+              if (!profileError && profile) {
+                const userType = (profile as any)?.user_type;
+                if (userType) {
+                  localStorage.setItem('userProfileType', userType);
+                }
               }
             } catch (error) {
               console.warn('Erreur lors du chargement du type d\'utilisateur:', error);

@@ -162,7 +162,7 @@ const Events: React.FC = () => {
     if (showCalendar) {
       loadEventsForCalendar();
     }
-  }, [currentMonth, showCalendar]);
+  }, [currentMonth, showCalendar, loadEventsForCalendar]);
 
   // Réinitialiser le type d'événement quand la catégorie change
   useEffect(() => {

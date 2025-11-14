@@ -647,9 +647,9 @@ const Titles = () => {
                     >
                       <div className="flex items-center gap-3">
                         <div className="flex-shrink-0">
-                          {(creator as any).avatar_url || creator.avatar ? (
+                          {(creator as { avatar_url?: string }).avatar_url || creator.avatar ? (
                             <img 
-                              src={(creator as any).avatar_url || creator.avatar || ''} 
+                              src={(creator as { avatar_url?: string }).avatar_url || creator.avatar || ''} 
                               alt={creator.display_name || creator.name}
                               className="w-12 h-12 rounded-full object-cover"
                             />

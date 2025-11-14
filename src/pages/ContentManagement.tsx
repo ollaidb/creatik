@@ -188,7 +188,7 @@ const ContentManagement = () => {
           </div>
           
           <div className="flex items-center gap-2">
-            <Tabs value={filterStatus} onValueChange={(value) => setFilterStatus(value as any)}>
+            <Tabs value={filterStatus} onValueChange={(value) => setFilterStatus(value as 'all' | 'draft' | 'published' | 'archived')}>
               <TabsList>
                 <TabsTrigger value="all">Tous</TabsTrigger>
                 <TabsTrigger value="draft">Brouillons</TabsTrigger>

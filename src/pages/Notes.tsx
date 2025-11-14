@@ -198,20 +198,23 @@ const Notes = () => {
     }
   };
 
-  // Swipe handlers pour mobile
-  const createSwipeHandlers = (note: UserNote) => useSwipeable({
-    onSwipedLeft: () => {
-      // Swipe gauche → Supprimer
-      handleDeleteNote(note.id);
-    },
-    onSwipedRight: () => {
-      // Swipe droite → Épingler/Désépingler
-      handleTogglePin(note.id, note.is_pinned || false);
-    },
-    trackMouse: true, // Permet aussi le swipe avec la souris pour le développement
-    preventScrollOnSwipe: true,
-    delta: 50 // Distance minimale pour déclencher le swipe
-  });
+  // Swipe handlers pour mobile - composant séparé pour respecter les règles des hooks
+  const SwipeableNote: React.FC<{ note: UserNote; children: React.ReactNode }> = ({ note, children }) => {
+    const handlers = useSwipeable({
+      onSwipedLeft: () => {
+        // Swipe gauche → Supprimer
+        handleDeleteNote(note.id);
+      },
+      onSwipedRight: () => {
+        // Swipe droite → Épingler/Désépingler
+        handleTogglePin(note.id, note.is_pinned || false);
+      },
+      trackMouse: true, // Permet aussi le swipe avec la souris pour le développement
+      preventScrollOnSwipe: true,
+      delta: 50 // Distance minimale pour déclencher le swipe
+    });
+    return <div {...handlers}>{children}</div>;
+  };
 
   if (!user) {
     return (
@@ -317,15 +320,13 @@ const Notes = () => {
             onReorder={handleReorder}
             className="space-y-3"
           >
-            {notes.map((note) => {
-              const swipeHandlers = createSwipeHandlers(note);
-              return (
-                <Reorder.Item
-                  key={note.id}
-                  value={note}
-                  {...swipeHandlers}
-                  className="cursor-grab active:cursor-grabbing"
-                >
+            {notes.map((note) => (
+              <Reorder.Item
+                key={note.id}
+                value={note}
+                className="cursor-grab active:cursor-grabbing"
+              >
+                <SwipeableNote note={note}>
                   <Card className="hover:shadow-md transition-shadow">
                     <CardContent className="p-4">
                       <div className="flex items-start gap-3">
@@ -381,9 +382,9 @@ const Notes = () => {
                       </div>
                     </CardContent>
                   </Card>
-                </Reorder.Item>
-              );
-            })}
+                </SwipeableNote>
+              </Reorder.Item>
+            ))}
           </Reorder.Group>
         )}
       </main>

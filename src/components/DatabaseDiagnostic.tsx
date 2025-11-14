@@ -96,6 +96,7 @@ export const DatabaseDiagnostic: React.FC = () => {
   useEffect(() => {
     // Exécuter le diagnostic au montage
     runDiagnostic();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const successCount = tables.filter(t => t.status === 'success').length;

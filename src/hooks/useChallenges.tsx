@@ -437,7 +437,7 @@ export const useChallenges = () => {
         }
       }
     };
-  }, [user?.id, userChallenges, stats, debouncedSave]);
+  }, [user?.id, userChallenges, stats, debouncedSave, user]);
 
   // Filtrer les défis par statut
   const challenges = userChallenges.filter(c => c.status === 'pending');

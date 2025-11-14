@@ -32,7 +32,7 @@ const SearchResults = () => {
     if (query) {
       searchContent(query);
     }
-  }, [query]);
+  }, [query, searchContent]);
   const handleSearch = (newQuery: string) => {
     navigate(`/search?search=${encodeURIComponent(newQuery)}`);
   };

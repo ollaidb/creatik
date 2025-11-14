@@ -114,7 +114,7 @@ const CommunityAccounts = () => {
     }
   };
 
-  const getCreatorName = (creator: any) => {
+  const getCreatorName = (creator: { user_metadata?: { first_name?: string; last_name?: string } } | null) => {
     if (!creator) return 'Utilisateur';
     const firstName = creator.user_metadata?.first_name;
     const lastName = creator.user_metadata?.last_name;
@@ -167,7 +167,7 @@ const CommunityAccounts = () => {
           <div className="flex items-start justify-between mb-3">
             <div className="flex items-center gap-3">
               <Avatar className="w-10 h-10 ring-2 ring-primary/20">
-                <AvatarImage src={(challenge.creator?.user_metadata as any)?.avatar_url} />
+                <AvatarImage src={(challenge.creator?.user_metadata as { avatar_url?: string })?.avatar_url} />
                 <AvatarFallback className="bg-gradient-to-r from-primary to-secondary text-white">
                   <User className="w-5 h-5" />
                 </AvatarFallback>

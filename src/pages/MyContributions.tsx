@@ -66,7 +66,7 @@ const MyContributions: React.FC = () => {
     { key: 'challenges', label: 'Communauté', icon: Target, count: userContributions.challenges.length, color: 'text-pink-500' }
   ];
 
-  const renderContributionList = (contributions: any[], type: string) => {
+  const renderContributionList = (contributions: unknown[], type: string) => {
     if (contributions.length === 0) {
       return (
         <div className="text-center py-8">

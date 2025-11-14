@@ -96,7 +96,7 @@ const Publish = () => {
   const filteredSubcategories = (() => {
     if (!subcategories) return [];
     
-    let baseSubcategories = subcategories.filter(subcategory => 
+    const baseSubcategories = subcategories.filter(subcategory => 
       subcategory.name.toLowerCase().includes(subcategorySearch.toLowerCase()) &&
       subcategory.category_id === formData.category_id
     );
@@ -564,7 +564,7 @@ const Publish = () => {
       }
       
       // Publication directe selon le type de contenu
-      let createdItemIds: string[] = [];
+      const createdItemIds: string[] = [];
       let createdItemId = null;
       
       // Si plusieurs éléments, créer chacun d'eux
@@ -1504,9 +1504,9 @@ const Publish = () => {
                             }}
                           >
                             <div className="flex items-center gap-2">
-                              {(creator as any).avatar_url && (
+                              {(creator as { avatar_url?: string }).avatar_url && (
                                 <img 
-                                  src={(creator as any).avatar_url} 
+                                  src={(creator as { avatar_url?: string }).avatar_url} 
                                   alt={creator.name}
                                   className="w-6 h-6 rounded-full"
                                 />
@@ -1526,9 +1526,9 @@ const Publish = () => {
                     )}
                     {selectedCreator && (
                       <div className="mt-2 p-2 bg-gray-800 rounded-md flex items-center gap-2">
-                        {(selectedCreator as any).avatar_url && (
+                        {(selectedCreator as { avatar_url?: string }).avatar_url && (
                           <img 
-                            src={(selectedCreator as any).avatar_url} 
+                            src={(selectedCreator as { avatar_url?: string }).avatar_url} 
                             alt={selectedCreator.name}
                             className="w-8 h-8 rounded-full"
                           />

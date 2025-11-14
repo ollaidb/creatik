@@ -615,7 +615,7 @@ const FolderManager: React.FC<FolderManagerProps> = ({
                     key={option.value}
                     variant={sortBy === option.value ? 'default' : 'ghost'}
                     size="sm"
-                    onClick={() => setSortBy(option.value as any)}
+                    onClick={() => setSortBy(option.value as 'name' | 'created_at' | 'updated_at')}
                     className="w-full justify-start"
                   >
                     {option.label}

@@ -79,7 +79,7 @@ const ChallengeDetail = () => {
     if (id) {
       loadChallengeAndComments();
     }
-  }, [id]);
+  }, [id, loadChallengeAndComments]);
 
   // Changer le titre de la page
   useEffect(() => {
@@ -392,7 +392,7 @@ const ChallengeDetail = () => {
         onTouchStart={(e) => {
           // Appui long sur mobile (300ms)
           const timer = setTimeout(() => {
-            handleCommentLongPress(e as any, comment.id);
+            handleCommentLongPress(e as React.TouchEvent, comment.id);
           }, 300);
           
           const handleTouchEnd = () => {
