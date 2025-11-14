@@ -86,13 +86,14 @@ export const useSocialNetworks = () => {
         'instagram': 3,
         'facebook': 4,
         'twitter': 5,
-        'linkedin': 6,
-        'twitch': 7,
-        'snapchat': 8,
-        'pinterest': 9,
-        'blog': 10,
-        'article': 11,
-        'podcasts': 12
+        'reddit': 6,
+        'linkedin': 7,
+        'twitch': 8,
+        'snapchat': 9,
+        'pinterest': 10,
+        'blog': 11,
+        'article': 12,
+        'podcasts': 13
       };
       
       const sortedData = (data || TEMP_SOCIAL_NETWORKS).sort((a, b) => {
