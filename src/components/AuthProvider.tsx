@@ -128,7 +128,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
         // Vérifier si on est l'onglet principal pour éviter les requêtes multiples
         const isPrimaryTab = typeof window !== 'undefined' 
-          ? ((window as any).__CREATIK_IS_PRIMARY_TAB__ ?? sessionStorage.getItem('tab-primary') === 'true')
+          ? ((window as { __CREATIK_IS_PRIMARY_TAB__?: boolean }).__CREATIK_IS_PRIMARY_TAB__ ?? sessionStorage.getItem('tab-primary') === 'true')
           : true;
 
         // Traiter les événements de connexion/déconnexion
@@ -142,18 +142,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           // pour éviter les requêtes multiples
           if (session?.user?.id && isPrimaryTab) {
             try {
+              // Vérifier si la colonne user_type existe avant de la sélectionner
               const { data: profile, error } = await supabase
                 .from('profiles')
-                .select('user_type')
+                .select('*')
                 .eq('id', session.user.id)
                 .single();
               
-              if (!error && profile?.user_type) {
-                // Sauvegarder le type d'utilisateur dans localStorage pour adapter le profil
-                // Les autres onglets utiliseront cette valeur depuis localStorage
-                localStorage.setItem('userProfileType', profile.user_type);
+              if (!error && profile) {
+                // Vérifier si user_type existe dans les données
+                const userType = (profile as any)?.user_type;
+                if (userType) {
+                  // Sauvegarder le type d'utilisateur dans localStorage pour adapter le profil
+                  // Les autres onglets utiliseront cette valeur depuis localStorage
+                  localStorage.setItem('userProfileType', userType);
+                }
               }
             } catch (error) {
+              // Ignorer silencieusement si la colonne n'existe pas
               console.warn('Erreur lors du chargement du type d\'utilisateur:', error);
             }
           } else if (session?.user?.id && !isPrimaryTab) {

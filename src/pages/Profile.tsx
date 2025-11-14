@@ -63,22 +63,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import Navigation from '@/components/Navigation';
 import { UserProfileService, UserSocialAccount, UserSocialPost, UserContentPlaylist } from '@/services/userProfileService';
 import { ProgramSettingsService, ProgramSettingsInput } from '@/services/programSettingsService';
-import { useChallenges } from '@/hooks/useChallenges';
 import { useUserProfile } from '@/hooks/useUserProfile';
 
-// Type pour les défis (importé depuis useChallenges)
-interface UserChallenge {
-  id: string;
-  user_id: string;
-  title: string;
-  status: 'pending' | 'completed' | 'deleted';
-  created_at: string;
-  updated_at: string;
-  completed_at?: string;
-  social_account_id?: string;
-  playlist_id?: string;
-  is_custom?: boolean;
-}
 import { useProfileFiltering } from '@/hooks/useProfileFiltering';
 import { useNetworkStats } from '@/hooks/useNetworkStats';
 import { AddSocialAccountModal } from '@/components/modals/AddSocialAccountModal';
@@ -169,65 +155,6 @@ const GUEST_PLAYLISTS: UserContentPlaylist[] = [
   }
 ];
 
-const GUEST_PENDING_CHALLENGES: UserChallenge[] = [
-  {
-    id: 'guest-challenge-1',
-    user_id: 'guest',
-    title: 'Publier un tutoriel Reels de 30 secondes',
-    status: 'pending',
-    created_at: '2024-01-25T09:00:00.000Z',
-    updated_at: '2024-01-25T09:00:00.000Z',
-    social_account_id: 'guest-instagram',
-    playlist_id: 'guest-playlist-1',
-    is_custom: true
-  },
-  {
-    id: 'guest-challenge-2',
-    user_id: 'guest',
-    title: 'Préparer le script d’une vidéo YouTube inspirante',
-    status: 'pending',
-    created_at: '2024-01-28T10:00:00.000Z',
-    updated_at: '2024-01-28T10:00:00.000Z',
-    social_account_id: 'guest-youtube',
-    playlist_id: 'guest-playlist-2',
-    is_custom: true
-  }
-];
-
-const GUEST_COMPLETED_CHALLENGES: UserChallenge[] = [
-  {
-    id: 'guest-challenge-completed-1',
-    user_id: 'guest',
-    title: 'Planifier la grille Instagram du mois',
-    status: 'completed',
-    created_at: '2024-01-05T09:00:00.000Z',
-    updated_at: '2024-01-08T09:00:00.000Z',
-    completed_at: '2024-01-08T09:00:00.000Z',
-    social_account_id: 'guest-instagram',
-    is_custom: true
-  }
-];
-
-const GUEST_DELETED_CHALLENGES: UserChallenge[] = [
-  {
-    id: 'guest-challenge-archived-1',
-    user_id: 'guest',
-    title: 'Préparer une campagne LinkedIn',
-    status: 'deleted',
-    created_at: '2023-12-20T08:00:00.000Z',
-    updated_at: '2023-12-25T08:00:00.000Z',
-    social_account_id: 'guest-instagram',
-    is_custom: true
-  }
-];
-
-const GUEST_CHALLENGE_STATS = {
-  total_challenges: GUEST_PENDING_CHALLENGES.length + GUEST_COMPLETED_CHALLENGES.length,
-  completed_challenges: GUEST_COMPLETED_CHALLENGES.length,
-  pending_challenges: GUEST_PENDING_CHALLENGES.length,
-  program_duration: '3months',
-  contents_per_day: 1
-};
 
 const UserProfile: React.FC = () => {
   const navigate = useNavigate();
@@ -323,9 +250,6 @@ const UserProfile: React.FC = () => {
       case 'publication':
         message = "Connectez-vous pour ajouter une publication.";
         break;
-      case 'challenge':
-        message = "Connectez-vous pour créer un défi.";
-        break;
     }
     if (!ensureAuthenticated(message)) {
       return;
@@ -341,32 +265,9 @@ const UserProfile: React.FC = () => {
       case 'publication':
         setIsAddPublicationModalOpen(true);
         break;
-      case 'challenge':
-        setShowAddDialog(true);
-        break;
     }
   };
   
-  // Hook pour les défis
-  const {
-    challenges,
-    userChallenges,
-    deletedChallenges,
-    stats,
-    leaderboard,
-    loading: challengesLoading,
-    error: challengesError,
-    addChallenge,
-    completeChallenge,
-    deleteChallenge,
-    updateChallengeTitle,
-    restoreChallenge,
-    reorderChallenges,
-    updateProgramDuration,
-    restoreDeletedChallenge,
-    permanentlyDeleteChallenge,
-    updateContentsPerDay
-  } = useChallenges();
   
   // États pour les données réelles
   const [socialAccounts, setSocialAccounts] = useState<UserSocialAccount[]>([]);
@@ -388,7 +289,7 @@ const UserProfile: React.FC = () => {
   const [isDeletePlaylistModalOpen, setIsDeletePlaylistModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isQuickAddDialogOpen, setIsQuickAddDialogOpen] = useState(false);
-  type QuickAddTarget = 'network' | 'playlist' | 'publication' | 'challenge';
+  type QuickAddTarget = 'network' | 'playlist' | 'publication';
   
   // États pour le renommage
   const [renamingAccountId, setRenamingAccountId] = useState<string | null>(null);
@@ -412,49 +313,13 @@ const UserProfile: React.FC = () => {
     selectPlaylist,
     resetFilters,
     getFilteredStats
-  } = useProfileFiltering(socialAccounts, socialPosts, playlists, userChallenges, user?.id || '');
+  } = useProfileFiltering(socialAccounts, socialPosts, playlists, [], user?.id || '');
 
   // Hook pour les statistiques du réseau sélectionné
   const { stats: networkStats, loading: statsLoading, refreshStats } = useNetworkStats(selectedSocialNetworkId);
   
-  // États pour le système de défis
+  // États pour les onglets
   const [activeTab, setActiveTab] = useState('publications');
-  const [selectedDuration, setSelectedDuration] = useState('3months');
-  const [contentsPerDay, setContentsPerDay] = useState(1);
-  const [showDurationConfirm, setShowDurationConfirm] = useState(false);
-  const [showContentsConfirm, setShowContentsConfirm] = useState(false);
-  const [pendingDuration, setPendingDuration] = useState('');
-  const [pendingContents, setPendingContents] = useState(0);
-  
-  // États pour l'édition et le drag & drop des défis
-  const [editingChallengeId, setEditingChallengeId] = useState<string | null>(null);
-  const [editingTitle, setEditingTitle] = useState('');
-  const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
-  const [reorderedChallenges, setReorderedChallenges] = useState<UserChallenge[]>([]);
-  const [currentDay, setCurrentDay] = useState(1);
-  const [isEditModeCompleted, setIsEditModeCompleted] = useState(false);
-  const [challengesToDelete, setChallengesToDelete] = useState<Set<string>>(new Set());
-  const [validatingChallenges, setValidatingChallenges] = useState<Set<string>>(new Set());
-  
-  // États pour les modales de défis
-  const [showAddDialog, setShowAddDialog] = useState(false);
-  const [newChallengeTitle, setNewChallengeTitle] = useState('');
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [challengeToDelete, setChallengeToDelete] = useState<string | null>(null);
-  const [showRestoreConfirm, setShowRestoreConfirm] = useState(false);
-  const [challengeToRestore, setChallengeToRestore] = useState<string | null>(null);
-  const [restoreType, setRestoreType] = useState<'completed' | 'pending'>('pending');
-  const [showRestoreOptions, setShowRestoreOptions] = useState(false);
-  const [challengeToRestoreOptions, setChallengeToRestoreOptions] = useState<string | null>(null);
-  
-  // États pour la programmation par réseau/playlist
-  const [showProgramSettingsDialog, setShowProgramSettingsDialog] = useState(false);
-  const [localProgramSettings, setLocalProgramSettings] = useState({
-    socialNetworkId: selectedSocialNetworkId,
-    playlistId: selectedPlaylistId,
-    duration: '3months',
-    contentsPerDay: 1
-  });
 
   // Fermer le menu quand on clique en dehors
   useEffect(() => {
@@ -505,30 +370,8 @@ const UserProfile: React.FC = () => {
   }, [selectedSocialNetworkId, selectedPlaylistId]);
 
 
-  // useEffect pour les défis
-  useEffect(() => {
-    const completedCount = userChallenges.filter(c => c.status === 'completed').length;
-    setCurrentDay(completedCount + 1);
-  }, [userChallenges]);
-
-  // Charger les valeurs initiales depuis les statistiques
-  useEffect(() => {
-    if (stats) {
-      if (stats.program_duration) {
-        setSelectedDuration(stats.program_duration);
-      }
-      if (stats.contents_per_day) {
-        setContentsPerDay(stats.contents_per_day);
-      }
-    }
-  }, [stats]);
-
-  useEffect(() => {
-    if (!user) {
-      setSelectedDuration(GUEST_CHALLENGE_STATS.program_duration);
-      setContentsPerDay(GUEST_CHALLENGE_STATS.contents_per_day);
-    }
-  }, [user]);
+  // Note: Les défis ont été migrés vers le système de publications
+  // Ce code a été supprimé car il référençait l'ancien système de défis
 
   // Fonction pour recharger les données après ajout
   const refreshData = async () => {
@@ -880,34 +723,6 @@ const UserProfile: React.FC = () => {
     }
   };
 
-  // Fonctions utilitaires pour les défis
-  const getDurationText = (duration: string) => {
-    switch (duration) {
-      case '1month': return '1 mois';
-      case '2months': return '2 mois';
-      case '3months': return '3 mois';
-      case '6months': return '6 mois';
-      case '1year': return '1 an';
-      case '2years': return '2 ans';
-      case '3years': return '3 ans';
-      default: return '3 mois';
-    }
-  };
-
-  const getDurationDays = (duration: string) => {
-    switch (duration) {
-      case '1month': return 30;
-      case '2months': return 60;
-      case '3months': return 90;
-      case '6months': return 180;
-      case '1year': return 365;
-      case '2years': return 730;
-      case '3years': return 1095;
-      default: return 90;
-    }
-  };
-
-  const displayedStats = stats ?? GUEST_CHALLENGE_STATS;
 
 const getNetworkIcon = (platform: string) => {
   switch ((platform || '').toLowerCase()) {
@@ -938,137 +753,43 @@ const getNetworkIcon = (platform: string) => {
   }
 };
 
+// Fonction pour obtenir la couleur du réseau social
+const getNetworkColor = (platform: string) => {
+  switch ((platform || '').toLowerCase()) {
+    case 'instagram':
+      return 'text-[#E4405F]';
+    case 'youtube':
+      return 'text-[#FF0000]';
+    case 'tiktok':
+      return 'text-[#000000]';
+    case 'facebook':
+      return 'text-[#1877F2]';
+    case 'linkedin':
+      return 'text-[#0077B5]';
+    case 'twitter':
+    case 'x':
+      return 'text-[#1DA1F2]';
+    case 'twitch':
+      return 'text-[#9146FF]';
+    case 'podcasts':
+    case 'podcast':
+      return 'text-[#993399]';
+    default:
+      return 'text-gray-500';
+  }
+};
+
 const renderNetworkLabel = (label: string, platform: string) => {
   const Icon = getNetworkIcon(platform);
+  const iconColor = getNetworkColor(platform);
   return (
     <span className="flex items-center gap-2 truncate">
-      <Icon className="w-3.5 h-3.5 shrink-0" />
-      <span className="truncate capitalize">{label}</span>
+      <Icon className={`w-3.5 h-3.5 shrink-0 ${iconColor}`} />
+      <span className="truncate">{label}</span>
     </span>
   );
 };
 
-  const getTotalContents = () => {
-    const days = getDurationDays(selectedDuration);
-    return days * contentsPerDay;
-  };
-
-  const getRemainingContents = () => {
-    const total = getTotalContents();
-    const completed = displayedStats.completed_challenges || 0;
-    return Math.max(0, total - completed);
-  };
-
-  const getProgressPercentage = () => {
-    const total = getTotalContents();
-    if (total === 0) return 0;
-    const completed = displayedStats.completed_challenges || 0;
-    return Math.min(100, (completed / total) * 100);
-  };
-
-  const getRemainingDays = () => {
-    const totalDays = getDurationDays(selectedDuration);
-    const completed = displayedStats.completed_challenges || 0;
-    const completedDays = Math.floor(completed / contentsPerDay);
-    return Math.max(0, totalDays - completedDays);
-  };
-
-  // Fonctions pour la gestion des défis
-  const handleCompleteChallenge = async (id: string) => {
-    if (!ensureAuthenticated("Connectez-vous pour mettre à jour vos défis.")) {
-      return;
-    }
-    setValidatingChallenges(prev => new Set([...prev, id]));
-    
-    setTimeout(async () => {
-      try {
-        const result = await completeChallenge(id);
-        
-        if (result?.error) {
-      toast({
-        title: "Erreur",
-            description: result.error,
-            variant: "destructive",
-          });
-        } else {
-      toast({
-            title: "Défi accompli !",
-            description: "",
-      });
-        }
-    } catch (error) {
-        console.error('Erreur lors de la validation:', error);
-      toast({
-        title: "Erreur",
-          description: "",
-          variant: "destructive",
-      });
-    } finally {
-        setValidatingChallenges(prev => {
-          const newSet = new Set(prev);
-          newSet.delete(id);
-          return newSet;
-        });
-      }
-    }, 100);
-  };
-
-  const handleAddChallenge = async () => {
-    if (!ensureAuthenticated("Connectez-vous pour créer vos propres défis.")) {
-      return;
-    }
-    if (!newChallengeTitle.trim()) return;
-    
-    // Vérifier qu'un réseau social est sélectionné
-    if (!selectedSocialNetworkId) {
-      toast({
-        title: "Erreur",
-        description: "Veuillez d'abord sélectionner un réseau social",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    try {
-      // Créer un défi personnalisé lié au réseau social et à la playlist sélectionnés
-      const challengeData = {
-        title: newChallengeTitle.trim(),
-        social_account_id: selectedSocialNetworkId,
-        playlist_id: selectedPlaylistId || null, // null si pas de playlist sélectionnée
-        is_custom: true
-      };
-      
-      const result = await addChallenge(newChallengeTitle.trim(), challengeData);
-      if (result?.error) {
-        toast({
-          title: "Erreur",
-          description: result.error,
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Défi ajouté",
-          description: `Défi ajouté pour ${socialAccounts.find(acc => acc.id === selectedSocialNetworkId)?.platform || 'ce réseau'}`,
-        });
-        setNewChallengeTitle('');
-        setShowAddDialog(false);
-      }
-    } catch (error) {
-      toast({
-        title: "Erreur",
-        description: "Erreur lors de l'ajout du défi",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const guestChallenges = [...GUEST_PENDING_CHALLENGES, ...GUEST_COMPLETED_CHALLENGES];
-  const challengesForDisplay = user ? filteredChallenges : guestChallenges;
-  const defis = challengesForDisplay.filter((c) => c.status === "pending");
-  const accomplis = challengesForDisplay.filter((c) => c.status === "completed");
-  const corbeille = user
-    ? deletedChallenges.filter((challenge) => challenge.title && challenge.user_id)
-    : GUEST_DELETED_CHALLENGES;
 
   // Données du profil utilisateur
   const userProfile = {
@@ -1116,12 +837,6 @@ const renderNetworkLabel = (label: string, platform: string) => {
       label: 'Publication',
       description: 'Ajouter un contenu publié',
       icon: FileText
-    },
-    {
-      id: 'challenge',
-      label: 'Défi',
-      description: 'Créer un nouveau défi à réaliser',
-      icon: Target
     }
   ];
 
@@ -1234,29 +949,42 @@ const renderNetworkLabel = (label: string, platform: string) => {
           const date = publishedDate.toLocaleDateString('fr-FR');
           const time = publishedDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
           
+          // Trouver le compte social associé à la publication
+          const account = socialAccounts.find(acc => acc.id === post.social_account_id);
+          const Icon = account ? getNetworkIcon(account.platform) : Globe;
+          const iconColor = account ? getNetworkColor(account.platform) : 'text-gray-500';
+          const accountName = account ? (account.custom_name || account.display_name || account.platform) : 'Réseau inconnu';
+          
           return (
             <div key={post.id} className="group relative p-3 bg-card border border-border rounded-lg hover:shadow-sm transition-all">
-              <div className="flex-1">
-                <h3 className="font-medium text-foreground">{post.title}</h3>
-                <p className="text-sm text-muted-foreground">
-                  {date} à {time}
-                </p>
+              <div className="flex items-start gap-3">
+                <Icon className={`w-5 h-5 ${iconColor} mt-0.5 shrink-0`} />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1">
+                      <h3 className="font-medium text-foreground">{post.title}</h3>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {accountName} • {date} à {time}
+                      </p>
+                    </div>
+                    {user && (
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        className="h-8 w-8 p-0 bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity rounded-full shrink-0"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleDeletePublication(post.id, post.title);
+                        }}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
               </div>
-          {user && (
-          <Button 
-            variant="ghost" 
-                size="sm"
-                className="absolute top-2 right-2 h-8 w-8 p-0 bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity rounded-full"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  handleDeletePublication(post.id, post.title);
-                }}
-              >
-                <Trash2 className="w-4 h-4" />
-          </Button>
-          )}
-        </div>
+            </div>
           );
         })}
       </div>
@@ -1401,64 +1129,15 @@ const renderNetworkLabel = (label: string, platform: string) => {
       {/* Section 2: Réseaux sociaux */}
       <div className="bg-card border-b">
         <div className="container mx-auto px-4 py-2">
-          {!user && (
-            <div className="mb-3 text-center text-xs text-muted-foreground">
-              Mode aperçu : connectez-vous pour ajouter ou gérer vos réseaux sociaux.
-                </div>
-          )}
-            {user && (
-              <div className="flex justify-end mb-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="p-1 h-6 w-6 hover:bg-gray-100 dark:hover:bg-gray-800"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setIsEditSocialModalOpen(true);
-                  }}
-                  title="Options d'édition"
-                >
-                  <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M3 10a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zM8.5 10a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zM14 10a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0z" />
-                  </svg>
-                </Button>
-              </div>
-            )}
             <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
               {renderSocialAccountChips()}
             </div>
         </div>
       </div>
-```
+
       {/* Section 3: Playlists */}
       <div className="bg-card border-b">
         <div className="container mx-auto px-4 py-2">
-          {!user && (
-            <div className="mb-3 text-center text-xs text-muted-foreground">
-              Mode aperçu : connectez-vous pour créer ou modifier vos playlists.
-                </div>
-          )}
-            {user && (
-              <div className="flex justify-end mb-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="p-1 h-6 w-6 hover:bg-gray-100 dark:hover:bg-gray-800"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setIsEditPlaylistModalOpen(true);
-                  }}
-                  title="Options d'édition des playlists"
-                >
-                  <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M3 10a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zM8.5 10a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zM14 10a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0z" />
-                  </svg>
-                </Button>
-              </div>
-            )}
-            
             <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
               {loading ? (
                 <>
@@ -1544,9 +1223,6 @@ const renderNetworkLabel = (label: string, platform: string) => {
                 <TabsTrigger value="publications" className="text-xs sm:text-sm px-3 py-2 whitespace-nowrap">
                   Contenu
                 </TabsTrigger>
-                <TabsTrigger value="challenges" className="text-xs sm:text-sm px-3 py-2 whitespace-nowrap">
-                  Défis
-                </TabsTrigger>
                 <TabsTrigger value="completed" className="text-xs sm:text-sm px-3 py-2 whitespace-nowrap">
                   Accomplis
                 </TabsTrigger>
@@ -1564,115 +1240,57 @@ const renderNetworkLabel = (label: string, platform: string) => {
               {renderPublications()}
             </TabsContent>
             
-            {/* Onglet Défis */}
-            <TabsContent value="challenges" className="mt-6">
-              {/* Liste des défis */}
-              <div className="space-y-3">
-                {defis.length === 0 ? (
-                  <Card className="text-center py-12">
-                    <CardContent>
-                      <Target className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                      <h3 className="text-lg font-medium mb-2">Aucun défi</h3>
-                      <p className="text-muted-foreground">
-                        Créez votre premier défi pour commencer votre programme
-                      </p>
-                    </CardContent>
-          </Card>
-                ) : (
-                  defis.map((challenge) => (
-                    <Card key={challenge.id} className="hover:shadow-md transition-shadow">
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                            <h3 className="font-semibold text-lg">{challenge.title}</h3>
-                            <p className="text-sm text-muted-foreground">
-                              Jour {currentDay}
-                            </p>
-                </div>
-                          <div className="flex items-center gap-2">
-                            <button 
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                handleCompleteChallenge(challenge.id);
-                              }}
-                              disabled={!user || validatingChallenges.has(challenge.id)}
-                              className={`p-2 rounded transition-all duration-700 ease-in-out ${
-                                validatingChallenges.has(challenge.id)
-                                  ? 'bg-green-500 border-2 border-green-600 scale-150 shadow-xl animate-pulse'
-                                  : 'hover:bg-gray-100 hover:scale-105'
-                              }`}
-                              title="Marquer comme accompli"
-                            >
-                              {userChallenges.some(uc => uc.id === challenge.id && uc.status === 'completed') || validatingChallenges.has(challenge.id) ? (
-                                <CheckSquare className="w-6 h-6 text-white transition-all duration-700 ease-in-out" />
-                              ) : (
-                                <Square className="w-6 h-6 text-gray-400 transition-all duration-300" />
-                              )}
-                            </button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-                  ))
-                )}
-              </div>
-            </TabsContent>
-            
             {/* Onglet Accomplis */}
             <TabsContent value="completed" className="mt-6">
-              <div className="flex items-center justify-end mb-4">
-                <Button
-                  variant={isEditModeCompleted ? "default" : "outline"}
-                  size="sm"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    if (!ensureAuthenticated("Connectez-vous pour organiser vos défis accomplis.")) {
-                      return;
-                    }
-                    setIsEditModeCompleted(!isEditModeCompleted);
-                  }}
-                  className="flex items-center gap-2"
-                  disabled={!user}
-                >
-                  <Edit className="w-4 h-4" />
-                  {isEditModeCompleted ? "Terminer" : "Éditer"}
-                </Button>
-                </div>
-              
               <div className="space-y-3">
-                {accomplis.length === 0 ? (
-                  <Card className="text-center py-12">
-                    <CardContent>
-                      <CheckCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                      <h3 className="text-lg font-medium mb-2">Aucun défi accompli</h3>
-                      <p className="text-muted-foreground">
-                        Vous n'avez pas encore accompli de défis
-                      </p>
-                    </CardContent>
-                  </Card>
-                ) : (
-                  accomplis.map((challenge) => (
-                    <Card key={challenge.id} className="hover:shadow-md transition-shadow">
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1">
-                            <h3 className="font-semibold text-lg">{challenge.title}</h3>
-                            <p className="text-sm text-muted-foreground">
-                              Accompli le {new Date(challenge.completed_at).toLocaleDateString()}
-                            </p>
-              </div>
-                          <div className="flex items-center gap-2">
-                            <div className="ml-2">
-                              <CheckCircle className="w-6 h-6 text-green-600" />
+                {(() => {
+                  const completedPosts = filteredPosts.filter(post => post.status === 'published');
+                  if (completedPosts.length === 0) {
+                    return (
+                      <Card className="text-center py-12">
+                        <CardContent>
+                          <CheckCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                          <h3 className="text-lg font-medium mb-2">Aucune publication accomplie</h3>
+                          <p className="text-muted-foreground">
+                            Vous n'avez pas encore publié de contenu
+                          </p>
+                        </CardContent>
+                      </Card>
+                    );
+                  }
+                  return completedPosts.map((post) => {
+                    const publishedDate = post.published_date ? new Date(post.published_date) : new Date(post.created_at);
+                    const date = publishedDate.toLocaleDateString('fr-FR');
+                    const time = publishedDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+                    
+                    // Trouver le compte social associé à la publication
+                    const account = socialAccounts.find(acc => acc.id === post.social_account_id);
+                    const Icon = account ? getNetworkIcon(account.platform) : Globe;
+                    const iconColor = account ? getNetworkColor(account.platform) : 'text-gray-500';
+                    const accountName = account ? (account.custom_name || account.display_name || account.platform) : 'Réseau inconnu';
+                    
+                    return (
+                      <Card key={post.id} className="hover:shadow-md transition-shadow">
+                        <CardContent className="p-4">
+                          <div className="flex items-start gap-3">
+                            <Icon className={`w-6 h-6 ${iconColor} mt-0.5 shrink-0`} />
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="flex-1">
+                                  <h3 className="font-semibold text-lg">{post.title}</h3>
+                                  <p className="text-sm text-muted-foreground mt-1">
+                                    {accountName} • Publié le {date} à {time}
+                                  </p>
+                                </div>
+                                <CheckCircle className="w-6 h-6 text-green-600 shrink-0" />
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))
-                )}
+                        </CardContent>
+                      </Card>
+                    );
+                  });
+                })()}
               </div>
             </TabsContent>
             
@@ -1736,7 +1354,18 @@ const renderNetworkLabel = (label: string, platform: string) => {
                         <div className="bg-muted rounded-lg p-3">
                           <div className="text-sm text-muted-foreground mb-1">Configuration du programme</div>
                           <div className="text-xs text-muted-foreground">
-                            {getDurationText(networkStats.program_duration)} • {networkStats.contents_per_day} contenu(s) par jour • {networkStats.required_publications} publications au total
+                            {(() => {
+                              const durationText = {
+                                '1month': '1 mois',
+                                '2months': '2 mois',
+                                '3months': '3 mois',
+                                '6months': '6 mois',
+                                '1year': '1 an',
+                                '2years': '2 ans',
+                                '3years': '3 ans'
+                              }[networkStats.program_duration] || '3 mois';
+                              return `${durationText} • ${networkStats.contents_per_day} contenu(s) par jour • ${networkStats.required_publications} publications au total`;
+                            })()}
                           </div>
                         </div>
                       </div>
@@ -1763,36 +1392,8 @@ const renderNetworkLabel = (label: string, platform: string) => {
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-4">
-                        <div>
-                          <div className="flex justify-between text-sm mb-2">
-                            <span>Progression du programme</span>
-                            <span>{Math.round(getProgressPercentage())}%</span>
-                          </div>
-                          <Progress value={getProgressPercentage()} className="h-3" />
-                        </div>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                          <div className="text-center">
-                            <div className="text-2xl font-bold text-blue-600">{getTotalContents()}</div>
-                            <div className="text-sm text-muted-foreground">Publications prévues</div>
-                          </div>
-                          <div className="text-center">
-                            <div className="text-2xl font-bold text-green-600">{displayedStats.completed_challenges}</div>
-                            <div className="text-sm text-muted-foreground">Défis accomplis</div>
-                          </div>
-                          <div className="text-center">
-                            <div className="text-2xl font-bold text-orange-600">{getRemainingContents()}</div>
-                            <div className="text-sm text-muted-foreground">Défis restants</div>
-                          </div>
-                          <div className="text-center">
-                            <div className="text-2xl font-bold text-purple-600">{getRemainingDays()}</div>
-                            <div className="text-sm text-muted-foreground">Jours restants estimés</div>
-                          </div>
-                        </div>
-                        <div className="bg-muted rounded-lg p-3">
-                          <div className="text-sm text-muted-foreground mb-1">Configuration du programme</div>
-                          <div className="text-xs text-muted-foreground">
-                            {getDurationText(displayedStats.program_duration)} • {displayedStats.contents_per_day} contenu(s) par jour • {getTotalContents()} publications au total
-                          </div>
+                        <div className="text-center text-muted-foreground">
+                          Connectez-vous pour voir vos statistiques détaillées
                         </div>
                     </div>
                     </CardContent>
@@ -1804,32 +1405,54 @@ const renderNetworkLabel = (label: string, platform: string) => {
             {/* Onglet Corbeille */}
             <TabsContent value="trash" className="mt-6">
               <div className="space-y-3">
-                {corbeille.length === 0 ? (
-                  <Card className="text-center py-12">
-                    <CardContent>
-                      <Trash2 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                      <h3 className="text-lg font-medium mb-2">Corbeille vide</h3>
-                      <p className="text-muted-foreground">
-                        Aucun défi personnel supprimé pour le moment
-                      </p>
-                    </CardContent>
-                  </Card>
-                ) : (
-                  corbeille.map((challenge) => (
-                    <Card key={challenge.id} className="hover:shadow-md transition-shadow border-red-200">
-            <CardContent className="p-4">
-                        <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                            <h3 className="font-semibold text-lg text-foreground">{challenge.title}</h3>
-                            <p className="text-sm text-muted-foreground">
-                              Supprimé le {new Date(challenge.updated_at || challenge.created_at || Date.now()).toLocaleDateString()}
-                            </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-                  ))
-                )}
+                {(() => {
+                  const archivedPosts = filteredPosts.filter(post => post.status === 'archived');
+                  if (archivedPosts.length === 0) {
+                    return (
+                      <Card className="text-center py-12">
+                        <CardContent>
+                          <Trash2 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                          <h3 className="text-lg font-medium mb-2">Corbeille vide</h3>
+                          <p className="text-muted-foreground">
+                            Aucune publication supprimée pour le moment
+                          </p>
+                        </CardContent>
+                      </Card>
+                    );
+                  }
+                  return archivedPosts.map((post) => {
+                    const deletedDate = new Date(post.updated_at || post.created_at || Date.now());
+                    const date = deletedDate.toLocaleDateString('fr-FR');
+                    const time = deletedDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+                    
+                    // Trouver le compte social associé à la publication
+                    const account = socialAccounts.find(acc => acc.id === post.social_account_id);
+                    const Icon = account ? getNetworkIcon(account.platform) : Globe;
+                    const iconColor = account ? getNetworkColor(account.platform) : 'text-gray-500';
+                    const accountName = account ? (account.custom_name || account.display_name || account.platform) : 'Réseau inconnu';
+                    
+                    return (
+                      <Card key={post.id} className="hover:shadow-md transition-shadow border-red-200">
+                        <CardContent className="p-4">
+                          <div className="flex items-start gap-3">
+                            <Icon className={`w-6 h-6 ${iconColor} mt-0.5 shrink-0`} />
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="flex-1">
+                                  <h3 className="font-semibold text-lg text-foreground">{post.title}</h3>
+                                  <p className="text-sm text-muted-foreground mt-1">
+                                    {accountName} • Supprimé le {date} à {time}
+                                  </p>
+                                </div>
+                                <Trash2 className="w-6 h-6 text-red-600 shrink-0" />
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  });
+                })()}
               </div>
             </TabsContent>
           </Tabs>
@@ -1864,50 +1487,6 @@ const renderNetworkLabel = (label: string, platform: string) => {
         socialAccounts={socialAccounts}
         playlists={playlists}
       />
-
-      <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Ajouter un nouveau défi</DialogTitle>
-            <DialogDescription>
-              Créez un nouveau défi personnel pour votre programme de création de contenu.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="challenge-title">Titre du défi</Label>
-              <Input
-                id="challenge-title"
-                value={newChallengeTitle}
-                onChange={(e) => setNewChallengeTitle(e.target.value)}
-                placeholder="Ex: Créer un post sur l'environnement"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    handleAddChallenge();
-                  }
-                }}
-              />
-            </div>
-            <div className="flex gap-2 justify-end">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setShowAddDialog(false);
-                  setNewChallengeTitle('');
-                }}
-              >
-                Annuler
-              </Button>
-              <Button
-                onClick={handleAddChallenge}
-                disabled={!newChallengeTitle.trim()}
-              >
-                Ajouter
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
 
       {/* Modal de partage */}
       <Dialog open={isShareModalOpen} onOpenChange={setIsShareModalOpen}>
@@ -1983,144 +1562,6 @@ const renderNetworkLabel = (label: string, platform: string) => {
             >
               Partager
             </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Modal de programmation par réseau/playlist */}
-      <Dialog open={showProgramSettingsDialog} onOpenChange={setShowProgramSettingsDialog}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Programmer les défis</DialogTitle>
-            <DialogDescription>
-              Configurez la durée et le nombre de contenus par réseau social et playlist.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="social-network">Réseau social</Label>
-              <Select
-                value={localProgramSettings.socialNetworkId}
-                onValueChange={(value) => setLocalProgramSettings(prev => ({ ...prev, socialNetworkId: value, playlistId: '' }))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Sélectionner un réseau social" />
-                </SelectTrigger>
-                <SelectContent>
-                  {socialAccounts.map((account) => (
-                    <SelectItem key={account.id} value={account.id}>
-                      <div className="flex items-center gap-2">
-                        <span className="capitalize">{account.platform}</span>
-                        <span className="text-muted-foreground">- {account.custom_name || account.username}</span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="playlist">Portée de la programmation</Label>
-              <div className="text-sm text-muted-foreground p-3 bg-muted rounded-lg">
-                <p>La programmation s'applique à <strong>toutes les playlists</strong> de ce réseau social.</p>
-                <p className="text-xs mt-1">Les paramètres de durée et de contenus par jour seront utilisés pour toutes vos playlists {socialAccounts.find(acc => acc.id === localProgramSettings.socialNetworkId)?.platform || 'de ce réseau'}.</p>
-              </div>
-            </div>
-
-            <div>
-              <Label htmlFor="duration">Durée du programme</Label>
-              <Select
-                value={localProgramSettings.duration}
-                onValueChange={(value) => setLocalProgramSettings(prev => ({ ...prev, duration: value }))}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1month">1 mois</SelectItem>
-                  <SelectItem value="2months">2 mois</SelectItem>
-                  <SelectItem value="3months">3 mois</SelectItem>
-                  <SelectItem value="6months">6 mois</SelectItem>
-                  <SelectItem value="1year">1 an</SelectItem>
-                  <SelectItem value="2years">2 ans</SelectItem>
-                  <SelectItem value="3years">3 ans</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="contents-per-day">Contenus par jour</Label>
-              <div className="flex items-center gap-3">
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => setLocalProgramSettings(prev => ({ 
-                    ...prev, 
-                    contentsPerDay: Math.max(1, prev.contentsPerDay - 1) 
-                  }))}
-                  className="w-10 h-10 p-0"
-                >
-                  -
-                </Button>
-                <div className="flex-1 text-center">
-                  <span className="text-lg font-semibold">{localProgramSettings.contentsPerDay}</span>
-                </div>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => setLocalProgramSettings(prev => ({ 
-                    ...prev, 
-                    contentsPerDay: prev.contentsPerDay + 1 
-                  }))}
-                  className="w-10 h-10 p-0"
-                >
-                  +
-                </Button>
-              </div>
-            </div>
-
-            <div className="flex gap-2 pt-4">
-              <Button
-                variant="outline"
-                onClick={() => setShowProgramSettingsDialog(false)}
-                className="flex-1"
-              >
-                Annuler
-              </Button>
-              <Button
-                onClick={async () => {
-                  if (!user?.id || !localProgramSettings.socialNetworkId) return;
-                  
-                  try {
-                    const settingsInput: ProgramSettingsInput = {
-                      social_account_id: localProgramSettings.socialNetworkId,
-                      playlist_id: null, // Paramètres généraux du réseau, pas d'une playlist spécifique
-                      duration: localProgramSettings.duration,
-                      contents_per_day: localProgramSettings.contentsPerDay
-                    };
-
-                    await ProgramSettingsService.upsertProgramSettings(user.id, settingsInput);
-                    
-                    setShowProgramSettingsDialog(false);
-                    toast({
-                      title: "Programme configuré",
-                      description: `Les paramètres ont été sauvegardés pour ${socialAccounts.find(acc => acc.id === localProgramSettings.socialNetworkId)?.platform || 'ce réseau'}.`,
-                    });
-                  } catch (error) {
-                    console.error('Erreur lors de la sauvegarde:', error);
-                    toast({
-                      title: "Erreur",
-                      description: "Impossible de sauvegarder les paramètres.",
-                      variant: "destructive",
-                    });
-                  }
-                }}
-                disabled={!localProgramSettings.socialNetworkId}
-                className="flex-1"
-              >
-                Sauvegarder
-              </Button>
-            </div>
           </div>
         </DialogContent>
       </Dialog>
