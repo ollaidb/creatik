@@ -82,7 +82,7 @@ const SearchBar: React.FC = () => {
         <Input
           type="text"
           placeholder="Rechercher des idées de contenu..."
-          className="pl-9 pr-4 py-2 rounded-full w-full bg-white dark:bg-gray-800/60 border-0 shadow-sm"
+          className="pl-9 pr-4 py-2 rounded-full w-full bg-card shadow-sm"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleSearch()}
@@ -91,7 +91,7 @@ const SearchBar: React.FC = () => {
       <div className="flex items-center gap-2">
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="outline" size="sm" className="rounded-full bg-white dark:bg-gray-800/60 border-0 shadow-sm">Filtres</Button>
+            <Button variant="outline" size="sm" className="rounded-full bg-card shadow-sm">Filtres</Button>
           </PopoverTrigger>
           <PopoverContent className="w-96 max-h-[80vh] overflow-y-auto">
             <div className="space-y-6">

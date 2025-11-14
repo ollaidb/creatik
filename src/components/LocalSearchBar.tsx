@@ -23,7 +23,7 @@ const LocalSearchBar: React.FC<LocalSearchBarProps> = ({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+        className="pl-10 pr-4 py-2 w-full bg-card"
       />
     </div>
   );

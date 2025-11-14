@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Heart, Target, Plus, User, Clock, Star, Calendar, Trophy, Eye, ChevronDown, ChevronUp, MessageCircle, ThumbsUp, AtSign } from 'lucide-react';
+import { ArrowLeft, Heart, Target, Plus, User, Clock, Star, Calendar, Trophy, Eye, ChevronDown, ChevronUp, MessageCircle, ThumbsUp, AtSign, Copy } from 'lucide-react';
 import { usePublicChallenges } from '@/hooks/usePublicChallenges';
 import { useFavorites } from '@/hooks/useFavorites';
 import { useAuth } from '@/hooks/useAuth';
@@ -54,6 +54,7 @@ const PublicChallenges = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const { favorites: favoriteChallenges, toggleFavorite, isFavorite } = useFavorites('challenge');
+  const { favorites: favoriteUsernames, toggleFavorite: toggleUsernameFavorite, isFavorite: isUsernameFavorite } = useFavorites('username');
   const [expandedChallenges, setExpandedChallenges] = useState<Set<string>>(new Set());
   const [activeTab, setActiveTab] = useState('content');
   
@@ -178,7 +179,7 @@ const PublicChallenges = () => {
       transition={{ duration: 0.3 }}
     >
       <Card 
-        className="hover:shadow-lg transition-all duration-300 border-0 shadow-md bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 cursor-pointer hover:scale-[1.02]"
+        className="hover:shadow-lg transition-all duration-300 shadow-md cursor-pointer hover:scale-[1.02]"
         onClick={() => navigate(getChallengeRoute())}
       >
         <CardContent className="p-4">
@@ -522,65 +523,132 @@ const PublicChallenges = () => {
 
           <TabsContent value="usernames" className="space-y-4">
             {usernamesLoading ? (
-              <Card className="text-center py-12">
-                <CardContent>
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-gray-100 mx-auto mb-4"></div>
-                  <p className="text-muted-foreground">Chargement des pseudos...</p>
-                </CardContent>
-              </Card>
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-gray-100 mx-auto mb-4"></div>
+                <p className="text-muted-foreground">Chargement des pseudos...</p>
+              </div>
             ) : displayedUsernames.length === 0 ? (
-              <Card className="text-center py-12">
-                <CardContent>
-                  <AtSign className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                  <h3 className="text-lg font-medium mb-2">Aucun pseudo disponible</h3>
-                  <p className="text-muted-foreground mb-4">
-                    Soyez le premier à publier un pseudo !
-                  </p>
-                  {user && (
-                    <Button onClick={() => navigate('/publish')}>
-                      Publier
-                    </Button>
-                  )}
-                </CardContent>
-              </Card>
+              <div className="text-center py-12">
+                <AtSign className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                <h3 className="text-lg font-medium mb-2">Aucun pseudo disponible</h3>
+                <p className="text-muted-foreground mb-4">
+                  Soyez le premier à publier un pseudo !
+                </p>
+                {user && (
+                  <Button onClick={() => navigate('/publish')}>
+                    Publier
+                  </Button>
+                )}
+              </div>
             ) : (
-              displayedUsernames.map((username) => (
-                <Card
-                  key={username.id}
-                  className="cursor-pointer hover:shadow-md transition-shadow"
-                  onClick={() => navigate('/community/usernames')}
-                >
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <div className="flex-shrink-0">
-                          <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                            <User size={20} className="text-gray-500" />
+              displayedUsernames.map((username) => {
+                const handleCopy = async (pseudo: string) => {
+                  try {
+                    await navigator.clipboard.writeText(pseudo);
+                    toast({
+                      title: "Pseudo copié",
+                      description: `"${pseudo}" a été copié dans le presse-papiers`
+                    });
+                  } catch (err) {
+                    console.error('Erreur lors de la copie:', err);
+                    toast({
+                      title: "Erreur copie",
+                      variant: "destructive",
+                    });
+                  }
+                };
+
+                const handleLike = async (ideaId: string) => {
+                  if (!user) {
+                    toast({
+                      title: "Connexion requise",
+                      variant: "destructive"
+                    });
+                    return;
+                  }
+                  try {
+                    await toggleUsernameFavorite(ideaId);
+                    toast({
+                      title: isUsernameFavorite(ideaId) ? "Retiré des favoris" : "Ajouté aux favoris"
+                    });
+                  } catch (error) {
+                    console.error('Erreur lors du like:', error);
+                    toast({
+                      title: "Erreur",
+                      variant: "destructive"
+                    });
+                  }
+                };
+
+                return (
+                  <motion.div
+                    key={username.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <Card
+                      className="cursor-pointer hover:shadow-md transition-all duration-200"
+                      onClick={() => navigate('/community/usernames')}
+                    >
+                      <CardContent className="p-4">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-3 mb-2">
+                            <div className="flex-shrink-0">
+                              <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                                <User size={20} className="text-gray-500" />
+                              </div>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h3 className="text-gray-900 dark:text-white font-medium text-base">
+                                {username.pseudo}
+                              </h3>
+                              {username.network && (
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                  {username.network.display_name}
+                                </p>
+                              )}
+                            </div>
                           </div>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-medium text-gray-900 dark:text-white text-base">
-                            {username.pseudo}
-                          </h3>
-                          {username.network && (
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                              {username.network.display_name}
-                            </p>
-                          )}
+                        <div className="flex items-center gap-2 ml-4" onClick={(e) => e.stopPropagation()}>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleCopy(username.pseudo)}
+                            className="p-2 h-8 w-8"
+                            title="Copier"
+                          >
+                            <Copy size={16} />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleLike(username.id)}
+                            className={`p-2 h-8 w-8 transition-all duration-200 ${
+                              isUsernameFavorite(username.id) 
+                                ? 'text-red-500 hover:text-red-600' 
+                                : 'text-gray-400 hover:text-red-400'
+                            }`}
+                            title={isUsernameFavorite(username.id) ? "Retirer des favoris" : "Ajouter aux favoris"}
+                          >
+                            <Heart 
+                              size={16} 
+                              className={`transition-all duration-200 ${
+                                isUsernameFavorite(username.id) 
+                                  ? 'fill-red-500 text-red-500' 
+                                  : 'fill-transparent text-current'
+                              }`}
+                            />
+                          </Button>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        {username.network && username.network.color_theme && (
-                          <div 
-                            className="w-3 h-3 rounded-full"
-                            style={{ backgroundColor: username.network.color_theme }}
-                          />
-                        )}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                );
+              })
             )}
           </TabsContent>
         </Tabs>

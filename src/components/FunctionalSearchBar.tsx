@@ -58,7 +58,7 @@ const FunctionalSearchBar: React.FC<FunctionalSearchBarProps> = ({
   return (
     <div ref={containerRef} className={`relative ${className}`}>
       <form onSubmit={handleSubmit} className="relative">
-        <div className="flex items-center bg-background border border-border rounded-lg shadow-sm">
+        <div className="flex items-center bg-card border border-border rounded-lg shadow-sm">
           <Button
             type="submit"
             variant="ghost"

@@ -9,6 +9,7 @@ import { useFavorites } from '@/hooks/useFavorites';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import Navigation from '@/components/Navigation';
 import { getNetworkDisplayName } from '@/utils/networkUtils';
 import LocalSearchBar from '@/components/LocalSearchBar';
@@ -224,7 +225,8 @@ const UsernameIdeas = () => {
           >
             {filteredIdeas.map((idea, index) => (
               <motion.div key={idea.id} variants={itemVariants}>
-                <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all duration-200">
+                <Card className="hover:shadow-md transition-all duration-200">
+                  <CardContent className="p-4">
                   <div className="flex items-start justify-between">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-3 mb-2">
@@ -277,7 +279,8 @@ const UsernameIdeas = () => {
                       </Button>
                     </div>
                   </div>
-                </div>
+                  </CardContent>
+                </Card>
               </motion.div>
             ))}
           </motion.div>
