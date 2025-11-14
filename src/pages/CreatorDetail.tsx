@@ -85,28 +85,28 @@ const CreatorDetail = () => {
         </div>
       </div>
 
-             {/* Profil horizontal compact */}
-       <div className="max-w-4xl mx-auto px-4 py-4">
-         <div className="flex items-center gap-4 mb-6">
-           {/* Photo de profil en cercle */}
-           <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full shadow-lg border-2 border-white dark:border-gray-800 overflow-hidden flex-shrink-0">
-             <img 
-               src={creator.avatar || '/placeholder.svg'} 
-               alt={creator.name}
-               className="w-full h-full object-cover"
-             />
-           </div>
-           
-           {/* Nom et pseudo */}
-           <div className="flex-1 min-w-0">
-             <h1 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white mb-1 leading-tight">
-               {creator.name}
-             </h1>
-             <p className="text-sm sm:text-base text-purple-600 dark:text-purple-400 leading-tight">
-               {creator.display_name}
-             </p>
-           </div>
-         </div>
+      {/* Profil horizontal compact */}
+      <div className="max-w-4xl mx-auto px-4 py-4">
+        <div className="flex items-center gap-4 mb-6">
+          {/* Photo de profil en cercle */}
+          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full shadow-lg border-2 border-white dark:border-gray-800 overflow-hidden flex-shrink-0">
+            <img 
+              src={creator.avatar || '/placeholder.svg'} 
+              alt={creator.name}
+              className="w-full h-full object-cover"
+            />
+          </div>
+          
+          {/* Nom et pseudo */}
+          <div className="flex-1 min-w-0">
+            <h1 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white mb-1 leading-tight">
+              {creator.name}
+            </h1>
+            <p className="text-sm sm:text-base text-purple-600 dark:text-purple-400 leading-tight">
+              {creator.display_name}
+            </p>
+          </div>
+        </div>
 
         {/* Premier menu horizontal : Wiki et Défis (toujours visible) */}
         <div className="flex gap-2 mb-4">
@@ -288,7 +288,6 @@ const CreatorDetail = () => {
         {/* Contenu : Change selon la sélection (réseau OU Wiki/Défis) */}
         <div className="mt-6">
           {selectedNetwork ? (
-            /* Afficher les publications du réseau sélectionné */
             <>
               {publicationsLoading ? (
                 <div className="text-center py-12">
@@ -360,7 +359,6 @@ const CreatorDetail = () => {
               )}
             </>
           ) : (
-            /* Afficher le contenu Wiki/Défis si aucun réseau n'est sélectionné */
             <>
           {activeSection === 'wiki' && (
             <motion.div
