@@ -160,7 +160,7 @@ const CommunityContent = () => {
       variants={itemVariants}
     >
       <Card 
-        className="hover:shadow-lg transition-all duration-300 border-0 shadow-md bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 cursor-pointer hover:scale-[1.02]"
+        className="hover:shadow-lg transition-all duration-300 shadow-md cursor-pointer hover:scale-[1.02]"
         onClick={() => navigate(`/community/content/${challenge.id}`)}
       >
         <CardContent className="p-4">

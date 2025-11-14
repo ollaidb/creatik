@@ -1,23 +1,24 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
 import { useSmartNavigation } from '@/hooks/useNavigation';
+import { useTheme } from '@/hooks/use-theme';
 import { ArrowLeft, Sun, Moon, Monitor, Check, Palette } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
 import Navigation from '@/components/Navigation';
+import type { ThemeMode } from '@/types/theme';
 
 const DisplayMode = () => {
-  const navigate = useNavigate();
   const { navigateBack } = useSmartNavigation();
+  const { themeMode, setThemeMode } = useTheme();
   
-  const [selectedMode, setSelectedMode] = useState('system');
-  const [autoSwitch, setAutoSwitch] = useState(true);
-  const [reduceMotion, setReduceMotion] = useState(false);
-  const [highContrast, setHighContrast] = useState(false);
+  const [selectedMode, setSelectedMode] = useState<ThemeMode>(themeMode);
+
+  // Synchroniser avec le thème actuel au chargement
+  useEffect(() => {
+    setSelectedMode(themeMode);
+  }, [themeMode]);
 
   const displayModes = [
     {
@@ -47,23 +48,19 @@ const DisplayMode = () => {
   ];
 
   const handleModeSelect = (modeId: string) => {
-    setSelectedMode(modeId);
-    // Ici vous pouvez appliquer immédiatement le thème
-    console.log('Mode sélectionné:', modeId);
-  };
-
-  const handleSave = () => {
-    // Ici vous pouvez sauvegarder les préférences
-    console.log('Préférences sauvegardées:', {
-      mode: selectedMode,
-      autoSwitch,
-      reduceMotion,
-      highContrast
-    });
+    const newMode = modeId as ThemeMode;
+    setSelectedMode(newMode);
+    // Appliquer immédiatement le thème
+    setThemeMode(newMode);
+    
+    // Sauvegarder dans localStorage
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('displayMode_selectedMode', newMode);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-20">
       <div className="container mx-auto px-4 py-6">
         {/* Header */}
         <div className="flex items-center gap-4 mb-6">
@@ -144,91 +141,6 @@ const DisplayMode = () => {
               </div>
             </CardContent>
           </Card>
-
-          {/* Options avancées */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Options d'affichage</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label htmlFor="auto-switch">Changement automatique</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Basculer automatiquement selon l'heure (clair le jour, sombre la nuit)
-                  </p>
-                </div>
-                <Switch
-                  id="auto-switch"
-                  checked={autoSwitch}
-                  onCheckedChange={setAutoSwitch}
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label htmlFor="reduce-motion">Réduire les animations</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Désactiver les animations pour améliorer les performances
-                  </p>
-                </div>
-                <Switch
-                  id="reduce-motion"
-                  checked={reduceMotion}
-                  onCheckedChange={setReduceMotion}
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label htmlFor="high-contrast">Contraste élevé</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Améliorer la lisibilité avec des contrastes plus marqués
-                  </p>
-                </div>
-                <Switch
-                  id="high-contrast"
-                  checked={highContrast}
-                  onCheckedChange={setHighContrast}
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Informations */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Conseils d'utilisation</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="grid gap-3 md:grid-cols-2">
-                <div className="p-3 bg-blue-50 dark:bg-blue-950 rounded-lg">
-                  <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-1">
-                    💡 Mode Clair
-                  </h4>
-                  <p className="text-sm text-blue-700 dark:text-blue-300">
-                    Idéal pour une utilisation en journée ou dans des environnements bien éclairés.
-                  </p>
-                </div>
-                
-                <div className="p-3 bg-purple-50 dark:bg-purple-950 rounded-lg">
-                  <h4 className="font-medium text-purple-900 dark:text-purple-100 mb-1">
-                    🌙 Mode Sombre
-                  </h4>
-                  <p className="text-sm text-purple-700 dark:text-purple-300">
-                    Parfait pour une utilisation nocturne ou dans des environnements sombres.
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Bouton de sauvegarde */}
-          <div className="flex justify-end">
-            <Button onClick={handleSave} className="px-8">
-              Appliquer les paramètres
-            </Button>
-          </div>
         </div>
       </div>
 
