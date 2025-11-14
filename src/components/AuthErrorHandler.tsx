@@ -33,9 +33,10 @@ export const AuthErrorHandler = ({ children }: { children: React.ReactNode }) =>
         const refreshed = await refreshSession();
         
         if (refreshed) {
-          console.log('✅ Session rafraîchie avec succès, invalidation du cache...');
-          // Invalider seulement les requêtes qui ont échoué avec erreur d'autorisation
-          queryClient.invalidateQueries({
+          console.log('✅ Session rafraîchie avec succès, refetch des requêtes en erreur...');
+          // Refetch seulement les requêtes qui ont échoué avec erreur d'autorisation
+          // Ne pas invalider pour éviter de perdre les données en cache
+          queryClient.refetchQueries({
             predicate: (query) => {
               const error = query.state.error;
               return error ? isAuthError(error) : false;
@@ -44,7 +45,8 @@ export const AuthErrorHandler = ({ children }: { children: React.ReactNode }) =>
         } else {
           console.warn('⚠️ Impossible de rafraîchir la session');
           // Ne pas invalider tout le cache si le refresh échoue
-          // L'utilisateur devra peut-être se reconnecter
+          // Garder les données en cache pour éviter de perdre l'information
+          // L'utilisateur devra peut-être se reconnecter, mais les données restent visibles
         }
       } catch (refreshError) {
         console.error('❌ Erreur lors du rafraîchissement:', refreshError);

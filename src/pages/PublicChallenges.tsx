@@ -157,7 +157,20 @@ const PublicChallenges = () => {
     return description.substring(0, maxLength) + '...';
   };
 
-  const renderChallengeCard = (challenge: PublicChallenge, isAccountType: boolean = false) => (
+  const renderChallengeCard = (challenge: PublicChallenge, isAccountType: boolean = false) => {
+    // Déterminer la route de navigation selon le type de défi
+    const getChallengeRoute = () => {
+      if (isAccountType || challenge.challenge_type === 'account') {
+        return `/community/account/${challenge.id}`;
+      } else if (challenge.challenge_type === 'content') {
+        return `/community/content/${challenge.id}`;
+      } else {
+        // Par défaut, utiliser la route générique pour les défis sans type spécifique
+        return `/challenge/${challenge.id}`;
+      }
+    };
+
+    return (
     <motion.div
       key={challenge.id}
       initial={{ opacity: 0, y: 20 }}
@@ -166,7 +179,7 @@ const PublicChallenges = () => {
     >
       <Card 
         className="hover:shadow-lg transition-all duration-300 border-0 shadow-md bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 cursor-pointer hover:scale-[1.02]"
-        onClick={() => navigate(`/challenge/${challenge.id}`)}
+        onClick={() => navigate(getChallengeRoute())}
       >
         <CardContent className="p-4">
           {/* En-tête avec type de challenge */}
@@ -327,7 +340,8 @@ const PublicChallenges = () => {
         </CardContent>
       </Card>
     </motion.div>
-  );
+    );
+  };
 
   if (loading) {
     return (

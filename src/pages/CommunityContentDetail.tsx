@@ -79,7 +79,8 @@ const CommunityContentDetail = () => {
     if (id) {
       loadChallengeAndComments();
     }
-  }, [id, loadChallengeAndComments]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
 
   // Changer le titre de la page
   useEffect(() => {
@@ -103,6 +104,7 @@ const CommunityContentDetail = () => {
   const loadChallengeAndComments = async () => {
     try {
       setLoading(true);
+      setChallenge(null); // Réinitialiser le challenge
       
       // Charger le challenge
       const { data: challengeData, error: challengeError } = await supabase
@@ -111,10 +113,25 @@ const CommunityContentDetail = () => {
         .eq('id', id)
         .single();
 
-      if (challengeError) throw challengeError;
+      if (challengeError) {
+        // Si le défi n'existe pas (code PGRST116), définir challenge à null
+        if (challengeError.code === 'PGRST116' || challengeError.message?.includes('No rows')) {
+          setChallenge(null);
+          setComments([]);
+          return; // Sortir de la fonction, loading sera défini à false dans finally
+        }
+        throw challengeError;
+      }
+
+      if (!challengeData) {
+        setChallenge(null);
+        setComments([]);
+        return;
+      }
+
       setChallenge(challengeData);
 
-      // Charger les commentaires
+      // Charger les commentaires seulement si le défi existe
       const { data: commentsData, error: commentsError } = await supabase
         .from('challenge_comments')
         .select('*')
@@ -122,28 +139,33 @@ const CommunityContentDetail = () => {
         .is('parent_comment_id', null)
         .order('created_at', { ascending: false });
 
-      if (commentsError) throw commentsError;
+      if (commentsError) {
+        console.error('Erreur lors du chargement des commentaires:', commentsError);
+        setComments([]); // Continuer même si les commentaires ne peuvent pas être chargés
+      } else {
+        // Charger les réponses pour chaque commentaire
+        const commentsWithReplies = await Promise.all(
+          (commentsData || []).map(async (comment) => {
+            const { data: repliesData } = await supabase
+              .from('challenge_comments')
+              .select('*')
+              .eq('parent_comment_id', comment.id)
+              .order('created_at', { ascending: true });
 
-      // Charger les réponses pour chaque commentaire
-      const commentsWithReplies = await Promise.all(
-        (commentsData || []).map(async (comment) => {
-          const { data: repliesData } = await supabase
-            .from('challenge_comments')
-            .select('*')
-            .eq('parent_comment_id', comment.id)
-            .order('created_at', { ascending: true });
+            return {
+              ...comment,
+              replies: repliesData || []
+            };
+          })
+        );
 
-          return {
-            ...comment,
-            replies: repliesData || []
-          };
-        })
-      );
-
-      setComments(commentsWithReplies);
+        setComments(commentsWithReplies);
+      }
       
     } catch (error) {
       console.error('Erreur lors du chargement:', error);
+      setChallenge(null);
+      setComments([]);
       toast({
         title: "Erreur",
         description: "Impossible de charger le contenu",

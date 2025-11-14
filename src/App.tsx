@@ -83,15 +83,28 @@ const LoadingFallback = () => (
   </div>
 );
 
+// Restaurer le cache depuis localStorage au démarrage
+const restoreCache = () => {
+  try {
+    const { queryCachePersister } = require('@/utils/queryCachePersister');
+    const restoredCache = queryCachePersister.load();
+    if (restoredCache) {
+      console.log('✅ Cache restauré depuis localStorage');
+    }
+  } catch (error) {
+    console.warn('Erreur lors de la restauration du cache:', error);
+  }
+};
+
 // Configuration optimisée du QueryClient pour de meilleures performances
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 1000 * 60 * 15, // 15 minutes - données considérées fraîches plus longtemps
-      gcTime: 1000 * 60 * 30, // 30 minutes - garder en cache plus longtemps
+      gcTime: 1000 * 60 * 60, // 1 heure - garder en cache plus longtemps
       refetchOnWindowFocus: false, // Ne pas refetch au focus
-      refetchOnReconnect: false, // Ne pas refetch à la reconnexion
-      refetchOnMount: false, // Ne pas refetch au montage si données en cache
+      refetchOnReconnect: false, // Ne pas refetch automatiquement à la reconnexion
+      refetchOnMount: false, // Ne pas refetch au montage - utiliser le cache immédiatement
       retry: async (failureCount, error) => {
         // Si c'est une erreur d'autorisation, essayer de rafraîchir la session une fois
         if (error && typeof error === 'object') {
@@ -121,8 +134,8 @@ const queryClient = new QueryClient({
             return false;
           }
         }
-        // Maximum 0 retry pour les autres erreurs
-        return false;
+        // Maximum 1 retry pour les erreurs réseau
+        return failureCount < 1;
       },
       retryDelay: 2000,
       // Optimisation réseau
@@ -231,14 +244,67 @@ const AppContent = () => {
   );
 };
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <ThemeProvider>
-      <AuthProvider>
-        <AppContent />
-      </AuthProvider>
-    </ThemeProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  // Sauvegarder le cache périodiquement et lors des changements
+  React.useEffect(() => {
+    const saveCache = () => {
+      try {
+        const { queryCachePersister } = require('@/utils/queryCachePersister');
+        const queryCache = queryClient.getQueryCache();
+        const queries = queryCache.getAll();
+        const cacheMap = new Map();
+        
+        queries.forEach((query) => {
+          if (query.state.data !== undefined) {
+            const queryKey = JSON.stringify(query.queryKey);
+            cacheMap.set(queryKey, {
+              state: {
+                data: query.state.data,
+                dataUpdatedAt: query.state.dataUpdatedAt,
+                error: query.state.error,
+                errorUpdatedAt: query.state.errorUpdatedAt,
+                status: query.state.status,
+              },
+            });
+          }
+        });
+        
+        queryCachePersister.save(cacheMap);
+      } catch (error) {
+        console.warn('Erreur lors de la sauvegarde du cache:', error);
+      }
+    };
+    
+    // Écouter les changements du cache
+    const unsubscribe = queryClient.getQueryCache().subscribe(() => {
+      // Debounce pour éviter trop de sauvegardes
+      clearTimeout((window as any).__cacheSaveTimeout);
+      (window as any).__cacheSaveTimeout = setTimeout(saveCache, 1000);
+    });
+    
+    // Sauvegarder toutes les 30 secondes
+    const interval = setInterval(saveCache, 30000);
+    
+    // Sauvegarder avant de quitter la page
+    window.addEventListener('beforeunload', saveCache);
+    
+    return () => {
+      unsubscribe();
+      clearInterval(interval);
+      window.removeEventListener('beforeunload', saveCache);
+      saveCache(); // Sauvegarder une dernière fois
+    };
+  }, []);
+  
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider>
+        <AuthProvider>
+          <AppContent />
+        </AuthProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;

@@ -41,6 +41,17 @@ const CreatorDetail = () => {
   const { data: creator, isLoading: creatorLoading } = useCreator(creatorId || '');
   const { data: creatorChallenges, isLoading: challengesLoading } = useCreatorChallenges(creatorId || '');
   const { data: allSocialNetworks = [] } = useSocialNetworks();
+
+  // Fonction pour obtenir le nom de l'utilisateur qui a publié le défi
+  const getCreatorName = (userInfo: { first_name?: string; last_name?: string } | null) => {
+    if (!userInfo) return null;
+    const firstName = userInfo.first_name;
+    const lastName = userInfo.last_name;
+    if (firstName && lastName) return `${firstName} ${lastName}`;
+    if (firstName) return firstName;
+    if (lastName) return lastName;
+    return null;
+  };
   
   // Utiliser tous les réseaux de la table social_networks (exclure "all" qui est un filtre spécial)
   const displayedNetworks = allSocialNetworks.filter(network => 
@@ -328,7 +339,10 @@ const CreatorDetail = () => {
                           {challenge.content || 'Aucun contenu disponible'}
                         </p>
                         <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
-                          <span>Par utilisateur</span>
+                          {(() => {
+                            const userName = getCreatorName(challenge.user_info);
+                            return userName ? <span>{userName}</span> : null;
+                          })()}
                           <span>{new Date(challenge.created_at).toLocaleDateString('fr-FR')}</span>
                         </div>
                       </div>
@@ -373,7 +387,10 @@ const CreatorDetail = () => {
                         </span>
                       </div>
                       <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
-                        <span>Par utilisateur</span>
+                        {(() => {
+                          const userName = getCreatorName(challenge.user_info);
+                          return userName ? <span>{userName}</span> : null;
+                        })()}
                         <span>{new Date(challenge.created_at).toLocaleDateString('fr-FR')}</span>
                       </div>
                     </div>

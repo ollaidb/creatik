@@ -336,20 +336,75 @@ const UserProfile: React.FC = () => {
   }, []);
 
   // Utiliser React Query pour charger les données du profil avec cache
-  const { data: profileData, isLoading: profileLoading, error: profileError } = useUserProfile(user?.id);
+  const { data: profileData, isLoading: profileLoading, error: profileError, isFetching } = useUserProfile(user?.id);
+  
+  // Conserver les données précédentes pendant le chargement pour éviter la disparition
+  const previousDataRef = useRef<typeof profileData>(null);
+  
+  // Initialiser avec les données du cache persistant si disponibles
+  useEffect(() => {
+    if (!profileData && user?.id && !profileLoading) {
+      try {
+        const { queryCachePersister } = require('@/utils/queryCachePersister');
+        const cachedData = queryCachePersister.getInitialData<typeof profileData>(['user-profile', user.id]);
+        if (cachedData) {
+          previousDataRef.current = cachedData;
+          setSocialAccounts(cachedData.socialAccounts);
+          setSocialPosts(cachedData.socialPosts);
+          setPlaylists(cachedData.playlists);
+        }
+      } catch (error) {
+        console.warn('Erreur lors de la récupération du cache:', error);
+      }
+    }
+  }, [user?.id, profileLoading]);
   
   useEffect(() => {
     if (profileData) {
-      setSocialAccounts(profileData.socialAccounts);
-      setSocialPosts(profileData.socialPosts);
-      setPlaylists(profileData.playlists);
+      // Sauvegarder les données pour les réutiliser si nécessaire
+      previousDataRef.current = profileData;
+      
+      // Mettre à jour les données seulement si elles sont différentes pour éviter les re-renders inutiles
+      setSocialAccounts(prev => {
+        const newAccounts = profileData.socialAccounts;
+        if (JSON.stringify(prev) !== JSON.stringify(newAccounts)) {
+          return newAccounts;
+        }
+        return prev;
+      });
+      setSocialPosts(prev => {
+        const newPosts = profileData.socialPosts;
+        if (JSON.stringify(prev) !== JSON.stringify(newPosts)) {
+          return newPosts;
+        }
+        return prev;
+      });
+      setPlaylists(prev => {
+        const newPlaylists = profileData.playlists;
+        if (JSON.stringify(prev) !== JSON.stringify(newPlaylists)) {
+          return newPlaylists;
+        }
+        return prev;
+      });
+    } else if (previousDataRef.current && !isFetching) {
+      // Si les données disparaissent mais qu'on a des données précédentes, les réutiliser
+      // Cela évite la disparition des données pendant le rechargement
+      const prev = previousDataRef.current;
+      setSocialAccounts(prev.socialAccounts);
+      setSocialPosts(prev.socialPosts);
+      setPlaylists(prev.playlists);
     }
-  }, [profileData]);
+  }, [profileData, isFetching]);
   
   // Combiner le loading du profil avec les autres états de chargement
+  // Ne pas mettre loading à true si on a déjà des données en cache ou des données précédentes
   useEffect(() => {
-    setLoading(profileLoading);
-  }, [profileLoading]);
+    if (profileLoading && !profileData && !previousDataRef.current) {
+      setLoading(true);
+    } else {
+      setLoading(false);
+    }
+  }, [profileLoading, profileData]);
 
   useEffect(() => {
     if (!user) {
@@ -357,6 +412,7 @@ const UserProfile: React.FC = () => {
       setSocialPosts(GUEST_SOCIAL_POSTS);
       setPlaylists(GUEST_PLAYLISTS);
       setLoading(false);
+      previousDataRef.current = null; // Réinitialiser les données précédentes
     }
   }, [user]);
 

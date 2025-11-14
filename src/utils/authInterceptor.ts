@@ -41,7 +41,7 @@ export const refreshSession = async (): Promise<boolean> => {
       return false;
     }
     
-    if (!session) {
+    if (!session || !session.user) {
       // Pas de session, rien à rafraîchir
       return false;
     }
@@ -62,11 +62,21 @@ export const refreshSession = async (): Promise<boolean> => {
     
     if (refreshError) {
       console.warn('Erreur lors du refresh du token:', refreshError);
-      // Ne pas déconnecter automatiquement, laisser l'utilisateur continuer avec le cache
+      // Si le refresh échoue, vérifier si c'est une erreur récupérable
+      // Certaines erreurs peuvent être temporaires (réseau, etc.)
+      if (refreshError.message?.includes('network') || refreshError.message?.includes('timeout')) {
+        // Erreur réseau, la session peut encore être valide
+        return true;
+      }
       return false;
     }
     
-    return !!refreshedSession;
+    // Vérifier que la session rafraîchie est valide
+    if (!refreshedSession || !refreshedSession.user) {
+      return false;
+    }
+    
+    return true;
   } catch (error) {
     console.error('Exception lors du rafraîchissement de la session:', error);
     return false;

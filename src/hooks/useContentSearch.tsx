@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 interface SearchResult {
   content_type: 'title' | 'category' | 'subcategory';
@@ -38,15 +38,40 @@ export const useContentSearch = () => {
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Garder une référence aux résultats pour éviter de les perdre lors de la navigation
+  const resultsCacheRef = useRef<Map<string, SearchResult[]>>(new Map());
+  const lastSearchRef = useRef<string>('');
+  
+  // Restaurer les résultats depuis le cache si disponibles
+  useEffect(() => {
+    if (lastSearchRef.current && resultsCacheRef.current.has(lastSearchRef.current)) {
+      const cachedResults = resultsCacheRef.current.get(lastSearchRef.current);
+      if (cachedResults && cachedResults.length > 0) {
+        setSearchResults(cachedResults);
+      }
+    }
+  }, []);
   const searchContent = async (searchTerm: string): Promise<SearchResult[]> => {
     if (!searchTerm.trim()) {
       setSearchResults([]);
       return [];
     }
+    
+    const searchTermLower = searchTerm.toLowerCase();
+    
+    // Vérifier si on a déjà des résultats en cache pour ce terme
+    if (resultsCacheRef.current.has(searchTermLower)) {
+      const cachedResults = resultsCacheRef.current.get(searchTermLower);
+      if (cachedResults && cachedResults.length > 0) {
+        setSearchResults(cachedResults);
+        lastSearchRef.current = searchTermLower;
+        return cachedResults;
+      }
+    }
+    
     setLoading(true);
     setError(null);
     try {
-      const searchTermLower = searchTerm.toLowerCase();
       const results: SearchResult[] = [];
       // 1. Rechercher dans les titres
       const { data: titlesData, error: titlesError } = await supabase
@@ -129,6 +154,11 @@ export const useContentSearch = () => {
       const sortedResults = results
         .sort((a, b) => b.relevance - a.relevance)
         .slice(0, 20);
+      
+      // Mettre en cache les résultats
+      resultsCacheRef.current.set(searchTermLower, sortedResults);
+      lastSearchRef.current = searchTermLower;
+      
       setSearchResults(sortedResults);
       return sortedResults;
     } catch (err) {
@@ -162,6 +192,8 @@ export const useContentSearch = () => {
   const clearSearch = () => {
     setSearchResults([]);
     setError(null);
+    lastSearchRef.current = '';
+    // Ne pas vider le cache pour permettre la restauration si nécessaire
   };
   return {
     searchResults,

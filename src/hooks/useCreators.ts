@@ -141,20 +141,34 @@ export const useCreatorChallenges = (creatorId: string) => {
   return useQuery({
     queryKey: ['creator-challenges', creatorId],
     queryFn: async () => {
+      // Utiliser la fonction RPC pour récupérer les défis avec les informations de l'utilisateur
       const { data, error } = await supabase
-        .from('creator_challenges')
-        .select(`
-          *,
-          challenge:challenges(title, description, category),
-          network:social_networks(name, display_name)
-        `)
-        .eq('creator_id', creatorId)
-        .eq('status', 'active')
-        .order('created_at', { ascending: false });
+        .rpc('get_creator_challenges_with_user', { p_creator_id: creatorId });
       
       if (error) {
         console.error('Erreur lors de la récupération des défis:', error);
-        return [];
+        // Fallback vers l'ancienne méthode si la fonction RPC n'existe pas encore
+        const { data: fallbackData, error: fallbackError } = await supabase
+          .from('creator_challenges')
+          .select(`
+            *,
+            challenge:challenges(title, description, category),
+            network:social_networks(name, display_name)
+          `)
+          .eq('creator_id', creatorId)
+          .eq('status', 'active')
+          .order('created_at', { ascending: false });
+        
+        if (fallbackError) {
+          console.error('Erreur lors de la récupération des défis (fallback):', fallbackError);
+          return [];
+        }
+        
+        // Ajouter user_info vide pour la compatibilité
+        return (fallbackData || []).map((item: any) => ({
+          ...item,
+          user_info: null
+        }));
       }
       
       return data || [];

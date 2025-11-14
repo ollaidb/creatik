@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { UserProfileService } from '@/services/userProfileService';
 import { useIsPrimaryTab } from '@/components/TabCoordinator';
 import { useEffect, useRef } from 'react';
+import { queryCachePersister } from '@/utils/queryCachePersister';
 
 export const useUserProfile = (userId: string | undefined) => {
   const isPrimaryTab = useIsPrimaryTab();
@@ -23,6 +24,9 @@ export const useUserProfile = (userId: string | undefined) => {
     }
   }, [isPrimaryTab, userId]);
   
+  // Récupérer les données initiales depuis le cache persistant
+  const initialData = queryCachePersister.getInitialData<Awaited<ReturnType<typeof UserProfileService.getUserProfileData>>>(['user-profile', userId]);
+  
   return useQuery({
     queryKey: ['user-profile', userId],
     queryFn: async () => {
@@ -31,18 +35,23 @@ export const useUserProfile = (userId: string | undefined) => {
     },
     // Activer seulement si on a un userId et si le délai est passé (pour les onglets secondaires)
     enabled: !!userId && (isPrimaryTab || delayRef.current),
-    staleTime: 1000 * 60 * 10, // 10 minutes - plus long pour éviter les refetch
-    gcTime: 1000 * 60 * 30, // 30 minutes
+    staleTime: 1000 * 60 * 15, // 15 minutes - données considérées fraîches plus longtemps
+    gcTime: 1000 * 60 * 60, // 1 heure - garder en cache plus longtemps
     refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
-    refetchOnMount: false, // Ne pas refetch si déjà en cache
+    refetchOnReconnect: false, // Ne pas refetch automatiquement à la reconnexion pour éviter la perte de données
+    refetchOnMount: false, // Ne pas refetch au montage - utiliser le cache si disponible
+    // Utiliser les données initiales depuis le cache persistant pour un affichage immédiat
+    initialData: initialData,
+    // Utiliser les données en cache même si elles sont considérées comme stale
+    placeholderData: (previousData) => previousData || initialData,
     retry: (failureCount, error) => {
       // Ne pas retry si c'est une erreur de permission ou client
       if (error && typeof error === 'object') {
         const errorMessage = String(error);
         if (errorMessage.includes('permission denied') || 
             errorMessage.includes('does not exist') ||
-            errorMessage.includes('JWT')) {
+            errorMessage.includes('JWT') ||
+            errorMessage.includes('42501')) {
           return false;
         }
       }
