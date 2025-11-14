@@ -73,22 +73,22 @@ const Subcategories = () => {
     if (hierarchyConfig?.has_level2) {
       console.log('✅ Catégorie a le niveau 2, vérification sous-catégorie...');
       
-      // Si la catégorie a le niveau 2, vérifier la configuration de la sous-catégorie
-      const { data: subcategoryConfig, error } = await supabase
-        .from('subcategory_hierarchy_config')
-        .select('*')
+      // Vérifier directement si la sous-catégorie a des sous-catégories niveau 2 existantes
+      const { data: level2Subcategories, error: level2Error } = await supabase
+        .from('subcategories_level2')
+        .select('id')
         .eq('subcategory_id', subcategoryId)
-        .single();
+        .limit(1);
 
-      console.log('🔍 Debug - Configuration sous-catégorie:', subcategoryConfig);
-      console.log('🔍 Debug - Erreur sous-catégorie:', error);
+      console.log('🔍 Debug - Sous-catégories niveau 2 trouvées:', level2Subcategories);
+      console.log('🔍 Debug - Erreur niveau 2:', level2Error);
 
-      if (subcategoryConfig?.has_level2) {
-        console.log('✅ Sous-catégorie a le niveau 2, navigation vers subcategories-level2');
-        // La sous-catégorie a besoin du niveau 2
+      // Si des sous-catégories niveau 2 existent, naviguer vers la page niveau 2
+      if (level2Subcategories && level2Subcategories.length > 0) {
+        console.log('✅ Sous-catégorie a des sous-catégories niveau 2, navigation vers subcategories-level2');
         navigate(`/category/${categoryId}/subcategory/${subcategoryId}/subcategories-level2?network=${selectedNetwork}`);
       } else {
-        console.log('❌ Sous-catégorie n\'a pas le niveau 2, navigation vers titres');
+        console.log('❌ Sous-catégorie n\'a pas de sous-catégories niveau 2, navigation vers titres');
         // La sous-catégorie va directement aux titres
         navigate(`/category/${categoryId}/subcategory/${subcategoryId}?network=${selectedNetwork}`);
       }

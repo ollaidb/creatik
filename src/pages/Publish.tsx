@@ -198,9 +198,8 @@ const Publish = () => {
     // Validation conditionnelle pour les sous-catégories de niveau 2
     if ((formData.content_type === 'title' || formData.content_type === 'creator' || formData.content_type === 'source' || formData.content_type === 'hooks') && formData.subcategory_id) {
       // Vérifier si la sous-catégorie a des sous-catégories de niveau 2
-      const hasLevel2Subcategories = subcategoryHierarchy?.some(config => 
-        config.subcategory_id === formData.subcategory_id && config.has_level2 === true
-      );
+      // On vérifie d'abord si des sous-catégories niveau 2 existent
+      const hasLevel2Subcategories = subcategoriesLevel2 && subcategoriesLevel2.length > 0;
       
       // Si la sous-catégorie a des sous-catégories de niveau 2, alors subcategory_level2_id est requis
       if (hasLevel2Subcategories && !formData.subcategory_level2_id) {
@@ -1207,16 +1206,25 @@ const Publish = () => {
 
   // Fonction pour déterminer si on doit afficher la sélection de sous-catégorie de niveau 2
   const shouldShowSubcategoryLevel2Selection = () => {
-    if (!['title', 'source', 'creator', 'hooks'].includes(formData.content_type) || !formData.subcategory_id) {
+    if (!['title', 'source', 'creator', 'hooks'].includes(formData.content_type) || !formData.subcategory_id || !formData.category_id) {
       return false;
     }
     
-    // Vérifier si la sous-catégorie a des sous-catégories de niveau 2
-    const hasLevel2Subcategories = subcategoryHierarchy?.some(config => 
+    // Vérifier d'abord si la catégorie a le niveau 2 activé
+    // On vérifie si la sous-catégorie a des sous-catégories niveau 2 existantes
+    const hasLevel2Subcategories = subcategoriesLevel2 && subcategoriesLevel2.length > 0;
+    
+    // Si on a des sous-catégories niveau 2, on affiche le champ
+    if (hasLevel2Subcategories) {
+      return true;
+    }
+    
+    // Sinon, vérifier la configuration de la sous-catégorie
+    const hasLevel2Config = subcategoryHierarchy?.some(config => 
       config.subcategory_id === formData.subcategory_id && config.has_level2 === true
     );
     
-    return hasLevel2Subcategories;
+    return hasLevel2Config;
   };
 
   // Fonction pour déterminer si le réseau social est requis
