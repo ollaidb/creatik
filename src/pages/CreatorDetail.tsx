@@ -10,14 +10,24 @@ import { useSocialNetworks } from '@/hooks/useSocialNetworks';
 
 // Fonction pour obtenir la description par défaut selon le réseau
 const getDefaultDescription = (networkName: string | null, creatorName: string): string => {
+  if (!networkName) {
+    return `${creatorName} est actif sur les réseaux sociaux et partage régulièrement du contenu avec sa communauté.`;
+  }
+  
+  const networkLower = networkName.toLowerCase();
   const descriptions: Record<string, string> = {
     youtube: `${creatorName} publie régulièrement des vidéos sur YouTube, couvrant des sujets variés et engageants pour sa communauté.`,
     tiktok: `${creatorName} crée du contenu court et dynamique sur TikTok, partageant des moments authentiques et des tendances actuelles.`,
     instagram: `${creatorName} partage des photos, stories et reels sur Instagram, offrant un aperçu de son univers créatif et personnel.`,
     twitter: `${creatorName} publie des tweets réguliers sur Twitter, partageant ses pensées, actualités et interactions avec sa communauté.`,
+    facebook: `${creatorName} partage du contenu sur Facebook, interagissant avec sa communauté et partageant des moments de sa vie.`,
+    linkedin: `${creatorName} publie du contenu professionnel sur LinkedIn, partageant ses expertises et actualités professionnelles.`,
+    twitch: `${creatorName} diffuse en direct sur Twitch, créant du contenu interactif et engageant pour sa communauté.`,
+    blog: `${creatorName} publie des articles de blog, partageant ses réflexions et expertises sur différents sujets.`,
+    article: `${creatorName} écrit des articles approfondis, offrant des analyses détaillées et des perspectives uniques.`,
   };
   
-  return descriptions[networkName || ''] || `${creatorName} est actif sur ce réseau social et partage régulièrement du contenu avec sa communauté.`;
+  return descriptions[networkLower] || `${creatorName} est actif sur ${networkName} et partage régulièrement du contenu avec sa communauté.`;
 };
 
 const CreatorDetail = () => {
@@ -27,17 +37,14 @@ const CreatorDetail = () => {
   const [activeSection, setActiveSection] = useState<'wiki' | 'challenges'>('wiki');
   const [selectedNetwork, setSelectedNetwork] = useState<string | null>(null);
 
-  // Réseaux par défaut : YouTube, TikTok, Instagram, Twitter
-  const defaultNetworks = ['youtube', 'tiktok', 'instagram', 'twitter'];
-
   // Récupérer les vraies données du créateur
   const { data: creator, isLoading: creatorLoading } = useCreator(creatorId || '');
   const { data: creatorChallenges, isLoading: challengesLoading } = useCreatorChallenges(creatorId || '');
   const { data: allSocialNetworks = [] } = useSocialNetworks();
   
-  // Filtrer pour n'afficher que les 4 réseaux par défaut
+  // Utiliser tous les réseaux de la table social_networks (exclure "all" qui est un filtre spécial)
   const displayedNetworks = allSocialNetworks.filter(network => 
-    defaultNetworks.includes(network.name.toLowerCase())
+    network.name.toLowerCase() !== 'all'
   );
   
   // Récupérer les publications du créateur pour le réseau sélectionné (seulement si un réseau est sélectionné)
@@ -48,7 +55,7 @@ const CreatorDetail = () => {
 
   if (creatorLoading || !creator) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+      <div className="min-h-screen bg-background">
         <div className="flex items-center justify-center h-screen">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
@@ -60,27 +67,26 @@ const CreatorDetail = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+    <div className="min-h-screen pb-20 bg-background" style={{ 
+      WebkitOverflowScrolling: 'touch',
+      overscrollBehavior: 'contain'
+    }}>
       {/* Header simplifié */}
-      <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={navigateBack}
-                className="p-2 h-10 w-10 rounded-full"
-              >
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
-              <div className="flex items-center space-x-3">
-                <Users className="h-6 w-6 text-purple-600 dark:text-purple-400" />
-                <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
-                  Profil créateur
-                </h1>
-              </div>
-            </div>
+      <div className="sticky top-0 z-50 bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border px-4 py-3">
+        <div className="flex items-center gap-3">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={navigateBack}
+            className="p-2 h-10 w-10 rounded-full text-foreground hover:bg-accent touch-manipulation"
+            style={{ WebkitTapHighlightColor: 'transparent' }}
+          >
+            <ArrowLeft size={20} />
+          </Button>
+          <div className="flex-1 min-w-0">
+            <h1 className="text-lg font-semibold text-foreground truncate">
+              Profil créateur
+            </h1>
           </div>
         </div>
       </div>
@@ -88,14 +94,8 @@ const CreatorDetail = () => {
       {/* Profil horizontal compact */}
       <div className="max-w-4xl mx-auto px-4 py-4">
         <div className="flex items-center gap-4 mb-6">
-          {/* Photo de profil en cercle */}
-          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full shadow-lg border-2 border-white dark:border-gray-800 overflow-hidden flex-shrink-0">
-            <img 
-              src={creator.avatar || '/placeholder.svg'} 
-              alt={creator.name}
-              className="w-full h-full object-cover"
-            />
-          </div>
+          {/* Zone de profil avec fond blanc */}
+          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 flex-shrink-0"></div>
           
           {/* Nom et pseudo */}
           <div className="flex-1 min-w-0">
@@ -146,7 +146,7 @@ const CreatorDetail = () => {
         </div>
 
         {/* Deuxième menu : Réseaux sociaux */}
-        <div className="mb-6">
+        <div className="mb-4">
           <div className="overflow-x-auto scrollbar-hide">
             <div className="flex gap-2 pb-2 min-w-max">
               {displayedNetworks.map((network) => {
@@ -156,68 +156,7 @@ const CreatorDetail = () => {
                         cn.network?.id === network.id || 
                         cn.network?.name === network.name
                 );
-                const isConfigured = !!configuredNetwork;
                 const isSelected = selectedNetwork === network.name;
-                
-                // Formater le nombre d'abonnés
-                const formatFollowers = (count: number | null | undefined) => {
-                  const num = count || 0;
-                  if (num >= 1000000) {
-                    return `${(num / 1000000).toFixed(1)}M abonnés`;
-                  } else if (num >= 1000) {
-                    return `${(num / 1000).toFixed(1)}K abonnés`;
-                  }
-                  return `${num.toLocaleString()} abonnés`;
-                };
-                
-                // Toujours afficher le nombre d'abonnés (0 si non configuré)
-                const followersCount = configuredNetwork?.followers_count ?? 0;
-                const followersText = formatFollowers(followersCount);
-                
-                // Construire l'URL du profil (utiliser profile_url si disponible, sinon construire une URL par défaut)
-                const getProfileUrl = () => {
-                  if (configuredNetwork?.profile_url) {
-                    return configuredNetwork.profile_url;
-                  }
-                  // Si pas d'URL mais un username, construire une URL par défaut
-                  if (configuredNetwork?.username) {
-                    const username = configuredNetwork.username;
-                    switch (network.name.toLowerCase()) {
-                      case 'youtube':
-                        return `https://youtube.com/@${username}`;
-                      case 'tiktok':
-                        return `https://tiktok.com/@${username}`;
-                      case 'instagram':
-                        return `https://instagram.com/${username}`;
-                      case 'twitter':
-                        return `https://twitter.com/${username}`;
-                      default:
-                        return null;
-                    }
-                  }
-                  // Si aucun URL ni username, rediriger vers la page d'accueil du réseau
-                  switch (network.name.toLowerCase()) {
-                    case 'youtube':
-                      return 'https://youtube.com';
-                    case 'tiktok':
-                      return 'https://tiktok.com';
-                    case 'instagram':
-                      return 'https://instagram.com';
-                    case 'twitter':
-                      return 'https://twitter.com';
-                    default:
-                      return null;
-                  }
-                };
-                
-                const profileUrl = getProfileUrl();
-                
-                const handleExternalLinkClick = (e: React.MouseEvent) => {
-                  e.stopPropagation();
-                  if (profileUrl) {
-                    window.open(profileUrl, '_blank', 'noopener,noreferrer');
-                  }
-                };
                 
                 return (
                   <button
@@ -231,12 +170,10 @@ const CreatorDetail = () => {
                       }
                     }}
                     className={`
-                      flex items-center gap-3 p-3 rounded-lg border transition-all duration-300
+                      px-4 py-2 rounded-lg transition-all duration-300 flex items-center space-x-2
                       ${isSelected
-                        ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg scale-105 border-transparent'
-                        : isConfigured
-                          ? 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700'
-                          : 'bg-gray-50 dark:bg-gray-900 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-700 opacity-60'
+                        ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg scale-105'
+                        : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700'
                       }
                     `}
                   >
@@ -248,36 +185,9 @@ const CreatorDetail = () => {
                           : (network.color_theme || '#6B7280') 
                       }}
                     ></div>
-                    <div className="flex flex-col items-start min-w-0 flex-1">
-                      <span className="text-sm font-medium whitespace-nowrap">
-                        {network.display_name}
-                      </span>
-                      <span className="text-xs whitespace-nowrap opacity-90">
-                        {followersText}
-                      </span>
-                    </div>
-                    {/* Toujours afficher l'icône ExternalLink à droite (comme pour les sources) */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleExternalLinkClick(e);
-                      }}
-                      className={`flex-shrink-0 p-1 rounded transition-colors ${
-                        profileUrl 
-                          ? isSelected
-                            ? 'hover:bg-white/20 cursor-pointer'
-                            : 'hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer'
-                          : 'cursor-default opacity-50'
-                      }`}
-                      title={profileUrl ? `Aller sur ${network.display_name}` : `${network.display_name} - Non configuré`}
-                      disabled={!profileUrl}
-                    >
-                      <ExternalLink className={`w-4 h-4 ${
-                        isSelected
-                          ? 'text-white'
-                          : 'text-gray-400 dark:text-gray-500'
-                      }`} />
-                    </button>
+                    <span className="font-medium whitespace-nowrap">
+                      {network.display_name}
+                    </span>
                   </button>
                 );
               })}

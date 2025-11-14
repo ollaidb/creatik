@@ -373,24 +373,13 @@ const Creators = () => {
                   className="flex flex-col items-center justify-center text-center transform transition-all duration-300 cursor-pointer hover:scale-105"
                   onClick={() => navigate(`/creator/${creator.id}`)}
                 >
-                  {/* Photo de profil en cercle (le bloc entier) */}
-                  <div className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 rounded-full shadow-lg hover:shadow-xl border-2 border-white dark:border-gray-700 overflow-hidden mb-2">
-                    <img 
-                      src={creator.avatar || '/placeholder.svg'} 
-                      alt={creator.name}
-                      className="w-full h-full rounded-full object-cover"
-                    />
-                  </div>
+                  {/* Zone de profil avec fond blanc */}
+                  <div className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 rounded-full bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 mb-2"></div>
                   
                   {/* Nom du créateur */}
                   <h3 className="font-bold text-gray-900 dark:text-white text-xs sm:text-sm md:text-base leading-tight">
                     {creator.name}
                   </h3>
-                  {!creator.is_public && (
-                    <span className="mt-1 text-[10px] uppercase tracking-wide text-muted-foreground">
-                      Profil privé (accès restreint sur certains contenus)
-                    </span>
-                  )}
                 </div>
               </motion.div>
             ))}
