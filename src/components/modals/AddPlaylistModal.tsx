@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { X } from 'lucide-react';
+import { X, Instagram, Youtube, Facebook, Twitter, Linkedin, Twitch, Music2, Podcast, Globe, BookOpen, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { UserProfileService, UserSocialAccount } from '@/services/userProfileService';
 import { ProgramSettingsService } from '@/services/programSettingsService';
+import { AddSocialAccountModal } from './AddSocialAccountModal';
 
 interface AddPlaylistModalProps {
   isOpen: boolean;
@@ -27,6 +28,61 @@ export const AddPlaylistModal: React.FC<AddPlaylistModalProps> = ({
   const [playlistName, setPlaylistName] = useState('');
   const [selectedSocialNetwork, setSelectedSocialNetwork] = useState('');
   const [loading, setLoading] = useState(false);
+  const [isAddSocialModalOpen, setIsAddSocialModalOpen] = useState(false);
+
+  // Fonction pour obtenir l'icône du réseau social
+  const getNetworkIcon = (platform: string) => {
+    switch ((platform || '').toLowerCase()) {
+      case 'instagram':
+        return Instagram;
+      case 'youtube':
+        return Youtube;
+      case 'tiktok':
+        return Music2;
+      case 'facebook':
+        return Facebook;
+      case 'linkedin':
+        return Linkedin;
+      case 'twitter':
+      case 'x':
+        return Twitter;
+      case 'twitch':
+        return Twitch;
+      case 'podcasts':
+      case 'podcast':
+        return Podcast;
+      case 'blog':
+        return BookOpen;
+      default:
+        return Globe;
+    }
+  };
+
+  // Fonction pour obtenir la couleur du réseau social
+  const getNetworkColor = (platform: string) => {
+    switch ((platform || '').toLowerCase()) {
+      case 'instagram':
+        return 'text-[#E4405F]';
+      case 'youtube':
+        return 'text-[#FF0000]';
+      case 'tiktok':
+        return 'text-[#000000]';
+      case 'facebook':
+        return 'text-[#1877F2]';
+      case 'linkedin':
+        return 'text-[#0077B5]';
+      case 'twitter':
+      case 'x':
+        return 'text-[#1DA1F2]';
+      case 'twitch':
+        return 'text-[#9146FF]';
+      case 'podcasts':
+      case 'podcast':
+        return 'text-[#993399]';
+      default:
+        return 'text-gray-500';
+    }
+  };
 
   // Pré-sélectionner le réseau social quand la modal s'ouvre
   React.useEffect(() => {
@@ -87,7 +143,13 @@ export const AddPlaylistModal: React.FC<AddPlaylistModalProps> = ({
   const handleClose = () => {
     setPlaylistName('');
     setSelectedSocialNetwork('');
+    setIsAddSocialModalOpen(false);
     onClose();
+  };
+
+  const handleAddSocialAccountSuccess = () => {
+    setIsAddSocialModalOpen(false);
+    onSuccess(); // Rafraîchir les données pour obtenir les nouveaux comptes sociaux
   };
 
   if (!isOpen) return null;
@@ -108,39 +170,76 @@ export const AddPlaylistModal: React.FC<AddPlaylistModalProps> = ({
         </div>
 
         <form onSubmit={handleSubmit} className="p-4 space-y-4">
-          {socialAccounts.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <p>Vous devez d'abord ajouter un réseau social</p>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleClose}
-                className="mt-4"
-              >
-                Fermer
-              </Button>
-            </div>
-          ) : (
-            <>
+          <div className="space-y-2">
+            <Label htmlFor="social_network">Réseau social *</Label>
+            {socialAccounts.length === 0 ? (
+              <div className="space-y-3">
+                <div className="text-center py-4 text-muted-foreground border border-dashed rounded-lg p-4">
+                  <p className="mb-3">Aucun réseau social disponible</p>
+                  <Button
+                    type="button"
+                    variant="default"
+                    onClick={() => setIsAddSocialModalOpen(true)}
+                    className="gap-2"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Créer un réseau social
+                  </Button>
+                </div>
+              </div>
+            ) : (
               <div className="space-y-2">
-                <Label htmlFor="social_network">Réseau social *</Label>
                 <Select
                   value={selectedSocialNetwork}
                   onValueChange={setSelectedSocialNetwork}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Sélectionner un réseau social" />
+                    <SelectValue placeholder="Sélectionner un réseau social">
+                      {selectedSocialNetwork && (() => {
+                        const selectedAccount = socialAccounts.find(acc => acc.id === selectedSocialNetwork);
+                        if (!selectedAccount) return null;
+                        const Icon = getNetworkIcon(selectedAccount.platform);
+                        const iconColor = getNetworkColor(selectedAccount.platform);
+                        return (
+                          <div className="flex items-center gap-2">
+                            <Icon className={`w-4 h-4 ${iconColor}`} />
+                            <span>{selectedAccount.custom_name || selectedAccount.display_name || selectedAccount.platform}</span>
+                          </div>
+                        );
+                      })()}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
-                    {socialAccounts.map((account) => (
-                      <SelectItem key={account.id} value={account.id}>
-                        {account.display_name || account.platform}
-                      </SelectItem>
-                    ))}
+                    {socialAccounts.map((account) => {
+                      const Icon = getNetworkIcon(account.platform);
+                      const iconColor = getNetworkColor(account.platform);
+                      return (
+                        <SelectItem key={account.id} value={account.id}>
+                          <div className="flex items-center gap-2">
+                            <Icon className={`w-4 h-4 ${iconColor}`} />
+                            <span className="font-medium">{account.custom_name || account.display_name || account.platform}</span>
+                          </div>
+                        </SelectItem>
+                      );
+                    })}
                   </SelectContent>
                 </Select>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsAddSocialModalOpen(true)}
+                  className="w-full gap-2 mt-2"
+                >
+                  <Plus className="w-4 h-4" />
+                  Créer un nouveau réseau social
+                </Button>
               </div>
+            )}
+          </div>
 
+          {socialAccounts.length > 0 && (
+            <>
               <div className="space-y-2">
                 <Label htmlFor="name">Nom de la playlist *</Label>
                 <Input
@@ -173,6 +272,15 @@ export const AddPlaylistModal: React.FC<AddPlaylistModalProps> = ({
             </>
           )}
         </form>
+
+        {/* Modale pour créer un nouveau réseau social */}
+        <AddSocialAccountModal
+          isOpen={isAddSocialModalOpen}
+          onClose={() => setIsAddSocialModalOpen(false)}
+          onSuccess={handleAddSocialAccountSuccess}
+          userId={userId}
+          existingPlatforms={socialAccounts.map(account => account.platform)}
+        />
       </div>
     </div>
   );

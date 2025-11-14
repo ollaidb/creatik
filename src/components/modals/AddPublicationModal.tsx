@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, FileText } from 'lucide-react';
+import { X, FileText, Instagram, Youtube, Facebook, Twitter, Linkedin, Twitch, Music2, Podcast, Globe, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -31,6 +31,60 @@ export const AddPublicationModal: React.FC<AddPublicationModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [filteredPlaylists, setFilteredPlaylists] = useState<UserContentPlaylist[]>([]);
 
+  // Fonction pour obtenir l'icône du réseau social
+  const getNetworkIcon = (platform: string) => {
+    switch ((platform || '').toLowerCase()) {
+      case 'instagram':
+        return Instagram;
+      case 'youtube':
+        return Youtube;
+      case 'tiktok':
+        return Music2;
+      case 'facebook':
+        return Facebook;
+      case 'linkedin':
+        return Linkedin;
+      case 'twitter':
+      case 'x':
+        return Twitter;
+      case 'twitch':
+        return Twitch;
+      case 'podcasts':
+      case 'podcast':
+        return Podcast;
+      case 'blog':
+        return BookOpen;
+      default:
+        return Globe;
+    }
+  };
+
+  // Fonction pour obtenir la couleur du réseau social
+  const getNetworkColor = (platform: string) => {
+    switch ((platform || '').toLowerCase()) {
+      case 'instagram':
+        return 'text-[#E4405F]';
+      case 'youtube':
+        return 'text-[#FF0000]';
+      case 'tiktok':
+        return 'text-[#000000]';
+      case 'facebook':
+        return 'text-[#1877F2]';
+      case 'linkedin':
+        return 'text-[#0077B5]';
+      case 'twitter':
+      case 'x':
+        return 'text-[#1DA1F2]';
+      case 'twitch':
+        return 'text-[#9146FF]';
+      case 'podcasts':
+      case 'podcast':
+        return 'text-[#993399]';
+      default:
+        return 'text-gray-500';
+    }
+  };
+
   // Reset form when modal opens
   useEffect(() => {
     if (isOpen) {
@@ -58,7 +112,7 @@ export const AddPublicationModal: React.FC<AddPublicationModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.social_account_id || !formData.playlist_id || !formData.title.trim()) return;
+    if (!formData.social_account_id || !formData.title.trim()) return;
 
     try {
       setLoading(true);
@@ -77,8 +131,10 @@ export const AddPublicationModal: React.FC<AddPublicationModalProps> = ({
 
       const newPost = await UserProfileService.addSocialPost(publicationData);
       
-      // Ajouter la publication à la playlist
-      await UserProfileService.addPostToPlaylist(formData.playlist_id, newPost.id);
+      // Ajouter la publication à la playlist seulement si une playlist est sélectionnée
+      if (formData.playlist_id) {
+        await UserProfileService.addPostToPlaylist(formData.playlist_id, newPost.id);
+      }
       
       onSuccess();
       onClose();
@@ -138,38 +194,56 @@ export const AddPublicationModal: React.FC<AddPublicationModalProps> = ({
                   onValueChange={(value) => setFormData(prev => ({ ...prev, social_account_id: value, playlist_id: '' }))}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Sélectionner un réseau social" />
+                    <SelectValue placeholder="Sélectionner un réseau social">
+                      {formData.social_account_id && (() => {
+                        const selectedAccount = socialAccounts.find(acc => acc.id === formData.social_account_id);
+                        if (!selectedAccount) return null;
+                        const Icon = getNetworkIcon(selectedAccount.platform);
+                        const iconColor = getNetworkColor(selectedAccount.platform);
+                        return (
+                          <div className="flex items-center gap-2">
+                            <Icon className={`w-4 h-4 ${iconColor}`} />
+                            <span>{selectedAccount.custom_name || selectedAccount.display_name || selectedAccount.platform}</span>
+                          </div>
+                        );
+                      })()}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
-                    {socialAccounts.map((account) => (
-                      <SelectItem key={account.id} value={account.id}>
-                        <div className="flex items-center gap-2">
-                          <span className="capitalize">{account.platform}</span>
-                          <span className="text-muted-foreground">- {account.display_name || account.username}</span>
-                        </div>
-                      </SelectItem>
-                    ))}
+                    {socialAccounts.map((account) => {
+                      const Icon = getNetworkIcon(account.platform);
+                      const iconColor = getNetworkColor(account.platform);
+                      return (
+                        <SelectItem key={account.id} value={account.id}>
+                          <div className="flex items-center gap-2">
+                            <Icon className={`w-4 h-4 ${iconColor}`} />
+                            <span className="font-medium">{account.custom_name || account.display_name || account.platform}</span>
+                          </div>
+                        </SelectItem>
+                      );
+                    })}
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="playlist">Playlist *</Label>
+                <Label htmlFor="playlist">Playlist (optionnel)</Label>
                 <Select
                   value={formData.playlist_id}
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, playlist_id: value }))}
-                  disabled={!formData.social_account_id || filteredPlaylists.length === 0}
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, playlist_id: value === 'none' ? '' : value }))}
+                  disabled={!formData.social_account_id}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder={
                       !formData.social_account_id 
                         ? "Sélectionnez d'abord un réseau social" 
                         : filteredPlaylists.length === 0 
-                          ? "Aucune playlist disponible" 
-                          : "Sélectionner une playlist"
+                          ? "Aucune playlist disponible (optionnel)" 
+                          : "Sélectionner une playlist (optionnel)"
                     } />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="none">Aucune playlist</SelectItem>
                     {filteredPlaylists.map((playlist) => (
                       <SelectItem key={playlist.id} value={playlist.id}>
                         <div className="flex items-center gap-2">
@@ -207,7 +281,7 @@ export const AddPublicationModal: React.FC<AddPublicationModalProps> = ({
                 </Button>
                 <Button
                   type="submit"
-                  disabled={loading || !formData.social_account_id || !formData.playlist_id || !formData.title.trim()}
+                  disabled={loading || !formData.social_account_id || !formData.title.trim()}
                   className="flex-1"
                 >
                   {loading ? 'Création...' : 'Créer'}

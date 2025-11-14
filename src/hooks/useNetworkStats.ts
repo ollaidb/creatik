@@ -5,14 +5,14 @@ import { ProgramSettingsService } from '@/services/programSettingsService';
 
 interface NetworkStats {
   // Données réelles
-  actual_publications: number;
-  actual_challenges: number;
-  actual_completed_challenges: number;
+  actual_publications: number; // Total des publications créées
+  completed_publications: number; // Publications publiées (status = 'published')
+  pending_publications: number; // Publications en brouillon (status = 'draft')
+  scheduled_publications: number; // Publications programmées (status = 'scheduled')
   
   // Calculs de progression
   required_publications: number;
-  required_challenges: number;
-  remaining_challenges: number;
+  remaining_publications: number; // Publications restantes à publier
   remaining_days: number;
   progress_percentage: number;
   
@@ -81,8 +81,8 @@ export const useNetworkStats = (selectedSocialNetworkId: string) => {
       const totalDays = getDurationDays(duration);
       const requiredPublications = totalDays * contentsPerDay;
 
-      // Charger les données réelles
-      const [publicationsResult, challengesResult, completedChallengesResult] = await Promise.all([
+      // Charger les données réelles des publications
+      const [totalPublicationsResult, publishedPublicationsResult, draftPublicationsResult, scheduledPublicationsResult] = await Promise.all([
         supabase
           .from('user_social_posts')
           .select('*', { count: 'exact', head: true })
@@ -90,46 +90,54 @@ export const useNetworkStats = (selectedSocialNetworkId: string) => {
           .eq('social_account_id', selectedSocialNetworkId),
         
         supabase
-          .from('user_challenges')
-          .select('*', { count: 'exact', head: true })
-          .eq('user_id', user.id)
-          .eq('social_account_id', selectedSocialNetworkId),
-        
-        supabase
-          .from('user_challenges')
+          .from('user_social_posts')
           .select('*', { count: 'exact', head: true })
           .eq('user_id', user.id)
           .eq('social_account_id', selectedSocialNetworkId)
-          .eq('status', 'completed')
+          .eq('status', 'published'),
+        
+        supabase
+          .from('user_social_posts')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+          .eq('social_account_id', selectedSocialNetworkId)
+          .eq('status', 'draft'),
+        
+        supabase
+          .from('user_social_posts')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+          .eq('social_account_id', selectedSocialNetworkId)
+          .eq('status', 'scheduled')
       ]);
 
-      const actualPublications = publicationsResult.count || 0;
-      const actualChallenges = challengesResult.count || 0;
-      const actualCompletedChallenges = completedChallengesResult.count || 0;
+      const actualPublications = totalPublicationsResult.count || 0;
+      const completedPublications = publishedPublicationsResult.count || 0;
+      const pendingPublications = draftPublicationsResult.count || 0;
+      const scheduledPublications = scheduledPublicationsResult.count || 0;
 
-      // Calculs de progression
-      const requiredChallenges = requiredPublications; // Un défi par publication
-      const remainingChallenges = Math.max(0, requiredChallenges - actualCompletedChallenges);
+      // Calculs de progression basés sur les publications publiées
+      const remainingPublications = Math.max(0, requiredPublications - completedPublications);
       
-      // Calculer les jours restants basés sur la progression
-      const daysElapsed = Math.floor(actualCompletedChallenges / contentsPerDay);
+      // Calculer les jours restants basés sur la progression des publications publiées
+      const daysElapsed = Math.floor(completedPublications / contentsPerDay);
       const remainingDays = Math.max(0, totalDays - daysElapsed);
       
-      // Pourcentage de progression
-      const progressPercentage = requiredChallenges > 0 
-        ? Math.min(100, Math.round((actualCompletedChallenges / requiredChallenges) * 100))
+      // Pourcentage de progression basé sur les publications publiées
+      const progressPercentage = requiredPublications > 0 
+        ? Math.min(100, Math.round((completedPublications / requiredPublications) * 100))
         : 0;
 
       setStats({
         // Données réelles
         actual_publications: actualPublications,
-        actual_challenges: actualChallenges,
-        actual_completed_challenges: actualCompletedChallenges,
+        completed_publications: completedPublications,
+        pending_publications: pendingPublications,
+        scheduled_publications: scheduledPublications,
         
         // Calculs de progression
         required_publications: requiredPublications,
-        required_challenges: requiredChallenges,
-        remaining_challenges: remainingChallenges,
+        remaining_publications: remainingPublications,
         remaining_days: remainingDays,
         progress_percentage: progressPercentage,
         

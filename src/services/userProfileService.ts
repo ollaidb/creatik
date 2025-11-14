@@ -58,7 +58,7 @@ export class UserProfileService {
       .select('*')
       .eq('user_id', userId)
       .eq('is_active', true)
-      .order('order', { ascending: true });
+      .order('created_at', { ascending: true });
 
     if (error) {
       console.error('❌ Erreur lors de la récupération des comptes sociaux:', error);
@@ -171,14 +171,37 @@ export class UserProfileService {
         .from('user_content_playlists')
         .select('*')
         .eq('user_id', userId)
-        .order('order', { ascending: true });
+        .order('created_at', { ascending: true });
 
       if (error) {
         console.error('Erreur lors de la récupération des playlists:', error);
+        // Si l'erreur est liée à la colonne order, essayer avec created_at
+        if (error.message && error.message.includes('order')) {
+          const { data: fallbackData, error: fallbackError } = await supabase
+            .from('user_content_playlists')
+            .select('*')
+            .eq('user_id', userId)
+            .order('created_at', { ascending: true });
+          
+          if (fallbackError) {
+            console.error('Erreur lors de la récupération des playlists (fallback):', fallbackError);
+            return [];
+          }
+          
+          return fallbackData || [];
+        }
         throw error;
       }
       
-      return data || [];
+      // Trier par order si disponible, sinon par created_at
+      const sortedData = (data || []).sort((a, b) => {
+        if (a.order !== undefined && b.order !== undefined) {
+          return a.order - b.order;
+        }
+        return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+      });
+      
+      return sortedData;
     } catch (error) {
       console.error('Erreur lors de la récupération des playlists:', error);
       return [];
@@ -197,10 +220,18 @@ export class UserProfileService {
 
       if (error) {
         console.error('Erreur lors de la récupération des playlists par réseau:', error);
-        throw error;
+        return [];
       }
       
-      return data || [];
+      // Trier par order si disponible, sinon par created_at
+      const sortedData = (data || []).sort((a, b) => {
+        if (a.order !== undefined && b.order !== undefined) {
+          return a.order - b.order;
+        }
+        return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+      });
+      
+      return sortedData;
     } catch (error) {
       console.error('Erreur lors de la récupération des playlists par réseau:', error);
       return [];

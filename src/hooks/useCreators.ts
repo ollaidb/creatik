@@ -162,3 +162,46 @@ export const useCreatorChallenges = (creatorId: string) => {
     enabled: !!creatorId,
   });
 };
+
+export interface CreatorPublication {
+  id: string;
+  title: string;
+  description?: string;
+  url?: string;
+  published_at: string;
+  network_name: string;
+}
+
+export const useCreatorPublications = (creatorId: string, networkName: string | null) => {
+  return useQuery({
+    queryKey: ['creator-publications', creatorId, networkName],
+    queryFn: async (): Promise<CreatorPublication[]> => {
+      // Pour l'instant, on retourne des données mockées
+      // TODO: Créer une table creator_publications dans la base de données
+      if (!networkName) return [];
+      
+      // Simuler un délai de chargement
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      // Retourner des données mockées selon le réseau
+      const mockPublications: CreatorPublication[] = [];
+      
+      // Pour YouTube, on peut avoir un titre de vidéo
+      if (networkName === 'youtube') {
+        mockPublications.push({
+          id: '1',
+          title: 'Dernière vidéo YouTube',
+          description: 'Contenu de la dernière vidéo publiée sur YouTube',
+          url: '#',
+          published_at: new Date().toISOString(),
+          network_name: 'youtube'
+        });
+      }
+      // Pour les autres réseaux, on retourne un tableau vide (sera géré par le texte descriptif)
+      
+      return mockPublications;
+    },
+    enabled: !!creatorId && !!networkName,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+};
