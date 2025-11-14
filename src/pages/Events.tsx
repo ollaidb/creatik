@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useSmartNavigation } from '@/hooks/useNavigation';
 import { motion } from 'framer-motion';
@@ -62,7 +62,8 @@ const Events: React.FC = () => {
     };
 
     loadEventsForDate();
-  }, [selectedDate, getEventsForDate, toast]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDate]); // getEventsForDate est mémorisé, toast est stable
 
   const formatDate = (date: Date): string => {
     return date.toLocaleDateString('fr-FR', {
@@ -135,19 +136,44 @@ const Events: React.FC = () => {
   };
 
   // Fonction pour charger les événements par date pour le calendrier
-  const loadEventsForCalendar = async () => {
+  // Optimisée : charge uniquement quand nécessaire et avec délai pour éviter la surcharge
+  const loadEventsForCalendar = useCallback(async () => {
+    if (!showCalendar) return;
+    
     try {
       const startDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
       const endDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0);
       
       const eventsMap: Record<string, number> = {};
       
-      // Charger les événements pour chaque jour du mois
+      // Optimisation : charger les événements avec un petit délai entre chaque requête
+      // pour éviter de surcharger le navigateur
+      const days: Date[] = [];
       for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-        const dateString = d.toISOString().split('T')[0];
-        const eventsForDate = await getEventsForDate(d);
-        if (eventsForDate.length > 0) {
-          eventsMap[dateString] = eventsForDate.length;
+        days.push(new Date(d));
+      }
+      
+      // Limiter le nombre de requêtes simultanées
+      const batchSize = 5;
+      for (let i = 0; i < days.length; i += batchSize) {
+        const batch = days.slice(i, i + batchSize);
+        await Promise.all(
+          batch.map(async (day) => {
+            try {
+              const dateString = day.toISOString().split('T')[0];
+              const eventsForDate = await getEventsForDate(day);
+              if (eventsForDate.length > 0) {
+                eventsMap[dateString] = eventsForDate.length;
+              }
+            } catch (error) {
+              console.error(`Erreur lors du chargement des événements pour ${day.toISOString()}:`, error);
+            }
+          })
+        );
+        
+        // Petit délai entre les batches pour éviter ERR_INSUFFICIENT_RESOURCES
+        if (i + batchSize < days.length) {
+          await new Promise(resolve => setTimeout(resolve, 100));
         }
       }
       
@@ -155,14 +181,14 @@ const Events: React.FC = () => {
     } catch (error) {
       console.error('Erreur lors du chargement des événements pour le calendrier:', error);
     }
-  };
+  }, [currentMonth, showCalendar, getEventsForDate]);
 
   // Charger les événements du calendrier quand le mois change
   useEffect(() => {
     if (showCalendar) {
       loadEventsForCalendar();
     }
-  }, [currentMonth, showCalendar, loadEventsForCalendar]);
+  }, [showCalendar, loadEventsForCalendar]);
 
   // Réinitialiser le type d'événement quand la catégorie change
   useEffect(() => {

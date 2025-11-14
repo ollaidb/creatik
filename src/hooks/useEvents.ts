@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface Event {
@@ -42,7 +42,7 @@ export const useEvents = (): UseEventsReturn => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchEvents = async () => {
+  const fetchEvents = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -95,9 +95,9 @@ export const useEvents = (): UseEventsReturn => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const getEventsForDate = async (date: Date): Promise<Event[]> => {
+  const getEventsForDate = useCallback(async (date: Date): Promise<Event[]> => {
     try {
       const dateString = date.toISOString().split('T')[0];
       
@@ -186,17 +186,18 @@ export const useEvents = (): UseEventsReturn => {
       console.error('Erreur dans getEventsForDate:', err);
       return [];
     }
-  };
+  }, []);
 
-  const refreshEvents = async () => {
+  const refreshEvents = useCallback(async () => {
     await fetchEvents();
-  };
+  }, [fetchEvents]);
 
   useEffect(() => {
     // Charger les événements une seule fois au montage
     // Ne pas recharger automatiquement pour éviter la saturation
     fetchEvents();
-  }, [fetchEvents]); // Seulement au montage
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Seulement au montage, fetchEvents est mémorisé
 
   return {
     events,
