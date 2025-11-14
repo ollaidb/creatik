@@ -165,7 +165,7 @@ export const useCreatorChallenges = (creatorId: string) => {
         }
         
         // Ajouter user_info vide pour la compatibilité
-        return (fallbackData || []).map((item: any) => ({
+        return (fallbackData || []).map((item: Creator) => ({
           ...item,
           user_info: null
         }));

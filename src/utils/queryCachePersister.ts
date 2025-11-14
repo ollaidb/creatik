@@ -12,24 +12,35 @@ interface CacheEntry {
   errorUpdatedAt: number | null;
 }
 
+interface QueryState {
+  state?: {
+    data?: unknown;
+    dataUpdatedAt?: number;
+    error?: unknown | null;
+    errorUpdatedAt?: number | null;
+    status?: string;
+  };
+}
+
 export const queryCachePersister = {
   // Sauvegarder le cache dans localStorage
   save: (queryCache: Map<string, unknown>) => {
     try {
       const cacheEntries: CacheEntry[] = [];
       
-      queryCache.forEach((queryState: any, queryKey: string) => {
-        if (queryState?.state?.data !== undefined && queryState.state.status === 'success') {
+      queryCache.forEach((queryState: QueryState | unknown, queryKey: string) => {
+        const state = (queryState as QueryState)?.state;
+        if (state?.data !== undefined && state.status === 'success') {
           try {
             // Vérifier que les données peuvent être sérialisées
-            JSON.stringify(queryState.state.data);
+            JSON.stringify(state.data);
             
             cacheEntries.push({
               queryKey: typeof queryKey === 'string' ? JSON.parse(queryKey) : queryKey,
-              data: queryState.state.data,
-              dataUpdatedAt: queryState.state.dataUpdatedAt || Date.now(),
-              error: queryState.state.error || null,
-              errorUpdatedAt: queryState.state.errorUpdatedAt || null,
+              data: state.data,
+              dataUpdatedAt: state.dataUpdatedAt || Date.now(),
+              error: state.error || null,
+              errorUpdatedAt: state.errorUpdatedAt || null,
             });
           } catch (e) {
             // Ignorer les données non sérialisables

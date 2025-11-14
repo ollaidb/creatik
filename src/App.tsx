@@ -14,6 +14,7 @@ import WelcomeMessage from "@/components/WelcomeMessage";
 import LogoutMessage from "@/components/LogoutMessage";
 import { TabCoordinator } from "@/components/TabCoordinator";
 import { AuthErrorHandler } from "@/components/AuthErrorHandler";
+import { queryCachePersister } from "@/utils/queryCachePersister";
 
 // Composants critiques chargés immédiatement
 import Index from "./pages/Index";
@@ -86,7 +87,6 @@ const LoadingFallback = () => (
 // Restaurer le cache depuis localStorage au démarrage
 const restoreCache = () => {
   try {
-    const { queryCachePersister } = require('@/utils/queryCachePersister');
     const restoredCache = queryCachePersister.load();
     if (restoredCache) {
       console.log('✅ Cache restauré depuis localStorage');
@@ -249,7 +249,6 @@ const App = () => {
   React.useEffect(() => {
     const saveCache = () => {
       try {
-        const { queryCachePersister } = require('@/utils/queryCachePersister');
         const queryCache = queryClient.getQueryCache();
         const queries = queryCache.getAll();
         const cacheMap = new Map();
@@ -275,11 +274,19 @@ const App = () => {
       }
     };
     
+    // Type pour window avec la propriété __cacheSaveTimeout
+    interface WindowWithCacheTimeout extends Window {
+      __cacheSaveTimeout?: ReturnType<typeof setTimeout>;
+    }
+    
     // Écouter les changements du cache
     const unsubscribe = queryClient.getQueryCache().subscribe(() => {
       // Debounce pour éviter trop de sauvegardes
-      clearTimeout((window as any).__cacheSaveTimeout);
-      (window as any).__cacheSaveTimeout = setTimeout(saveCache, 1000);
+      const windowWithTimeout = window as WindowWithCacheTimeout;
+      if (windowWithTimeout.__cacheSaveTimeout) {
+        clearTimeout(windowWithTimeout.__cacheSaveTimeout);
+      }
+      windowWithTimeout.__cacheSaveTimeout = setTimeout(saveCache, 1000);
     });
     
     // Sauvegarder toutes les 30 secondes

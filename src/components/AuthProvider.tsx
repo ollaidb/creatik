@@ -2,6 +2,12 @@ import { useState, useEffect, useRef } from 'react';
 import { User, Session, AuthError } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { AuthContext, type AuthContextType } from '@/contexts/AuthContext';
+import type { Database } from '@/types/supabase';
+
+// Type étendu pour le profil incluant user_type
+type ProfileRow = Database['public']['Tables']['profiles']['Row'] & {
+  user_type?: 'creator' | 'contributor';
+};
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -105,7 +111,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                   console.warn('Erreur lors du chargement du type d\'utilisateur:', profileError);
                 }
               } else if (profile) {
-                const userType = (profile as any)?.user_type;
+                const userType = (profile as ProfileRow)?.user_type;
                 if (userType) {
                   localStorage.setItem('userProfileType', userType);
                 }
@@ -171,7 +177,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                   console.warn('Erreur lors du chargement du type d\'utilisateur:', error);
                 }
               } else if (profile) {
-                const userType = (profile as any)?.user_type;
+                const userType = (profile as ProfileRow)?.user_type;
                 if (userType) {
                   localStorage.setItem('userProfileType', userType);
                 }
@@ -248,7 +254,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                   console.warn('Erreur lors du chargement du type d\'utilisateur:', profileError);
                 }
               } else if (profile) {
-                const userType = (profile as any)?.user_type;
+                const userType = (profile as ProfileRow)?.user_type;
                 if (userType) {
                   localStorage.setItem('userProfileType', userType);
                 }
@@ -300,7 +306,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 }
               } else if (profile) {
                 // Vérifier si user_type existe dans les données
-                const userType = (profile as any)?.user_type;
+                const userType = (profile as ProfileRow)?.user_type;
                 if (userType) {
                   // Sauvegarder le type d'utilisateur dans localStorage pour adapter le profil
                   // Les autres onglets utiliseront cette valeur depuis localStorage

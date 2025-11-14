@@ -55,6 +55,7 @@ import { useToast } from '@/hooks/use-toast';
 import AuthModal from '@/components/AuthModal';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { queryCachePersister } from '@/utils/queryCachePersister';
 import { Progress } from '@/components/ui/progress';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
@@ -345,7 +346,6 @@ const UserProfile: React.FC = () => {
   useEffect(() => {
     if (!profileData && user?.id && !profileLoading) {
       try {
-        const { queryCachePersister } = require('@/utils/queryCachePersister');
         const cachedData = queryCachePersister.getInitialData<typeof profileData>(['user-profile', user.id]);
         if (cachedData) {
           previousDataRef.current = cachedData;
