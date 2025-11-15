@@ -4,7 +4,7 @@ import { useSmartNavigation } from '@/hooks/useNavigation';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { ArrowLeft, Settings, FileText, Target, Bell, Receipt, History } from 'lucide-react';
+import { ArrowLeft, Settings, FileText, Target, Bell, Receipt, History, Calculator, Shield, Globe, GraduationCap, Handshake } from 'lucide-react';
 import Navigation from '@/components/Navigation';
 
 interface MenuItem {
@@ -47,6 +47,41 @@ const ProfileDetails = () => {
       icon: Receipt,
       path: '/profile/resources',
       color: 'text-emerald-500'
+    },
+    {
+      title: 'Impôts',
+      description: 'Calculez vos impôts selon votre pays',
+      icon: Calculator,
+      path: '/profile/taxes',
+      color: 'text-amber-500'
+    },
+    {
+      title: 'Aide',
+      description: 'Sécurité, cyber harcèlement et droits légaux',
+      icon: Shield,
+      path: '/profile/help',
+      color: 'text-red-500'
+    },
+    {
+      title: 'Compte international',
+      description: 'Guide pour créer un compte bancaire',
+      icon: Globe,
+      path: '/profile/international-account',
+      color: 'text-indigo-500'
+    },
+    {
+      title: 'Ressources de formation',
+      description: 'Formations et cours pour créateurs',
+      icon: GraduationCap,
+      path: '/profile/training',
+      color: 'text-teal-500'
+    },
+    {
+      title: 'Collaboration',
+      description: 'Outils et guides pour collaborations',
+      icon: Handshake,
+      path: '/profile/collaboration',
+      color: 'text-pink-500'
     },
     {
       title: 'Historique',

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, FileText, Receipt, Type, Mail, Package, AppWindow, Sparkles } from 'lucide-react';
+import { ArrowLeft, FileText, Receipt, Type, Mail, Package, AppWindow, Sparkles, Calculator, Shield, Globe, GraduationCap, Handshake } from 'lucide-react';
 import { useSmartNavigation } from '@/hooks/useNavigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,7 +12,12 @@ const resourceTabs = [
   { key: 'captions', label: 'Légendes', gradient: 'from-purple-500 to-fuchsia-500', icon: Type },
   { key: 'emails', label: 'Mails', gradient: 'from-orange-500 to-amber-500', icon: Mail },
   { key: 'equipment', label: 'Matériel', gradient: 'from-teal-500 to-emerald-500', icon: Package },
-  { key: 'apps', label: 'Apps', gradient: 'from-rose-500 to-pink-500', icon: AppWindow }
+  { key: 'apps', label: 'Apps', gradient: 'from-rose-500 to-pink-500', icon: AppWindow },
+  { key: 'taxes', label: 'Impôts', gradient: 'from-amber-500 to-yellow-500', icon: Calculator },
+  { key: 'help', label: 'Aide', gradient: 'from-red-500 to-rose-500', icon: Shield },
+  { key: 'international-account', label: 'Compte international', gradient: 'from-indigo-500 to-blue-500', icon: Globe },
+  { key: 'training', label: 'Formation', gradient: 'from-teal-500 to-cyan-500', icon: GraduationCap },
+  { key: 'collaboration', label: 'Collaboration', gradient: 'from-pink-500 to-rose-500', icon: Handshake }
 ] as const;
 
 const resourceDescriptions: Record<typeof resourceTabs[number]['key'], string[]> = {
@@ -34,17 +39,42 @@ const resourceDescriptions: Record<typeof resourceTabs[number]['key'], string[]>
   emails: [
     'Templates pour démarcher les marques et répondre aux briefings.',
     'Ton ajustable (professionnel, friendly, urgent).',
-    'Proposition de séquences d’emails complètes.'
+    'Proposition de séquences d\'emails complètes.'
   ],
   equipment: [
-    'Listes d’équipement recommandées selon votre budget.',
-    'Fiches pratiques d’installation et d’entretien.',
-    'Liens d’achat vérifiés et comparatifs (à venir).'
+    'Listes d\'équipement recommandées selon votre budget.',
+    'Fiches pratiques d\'installation et d\'entretien.',
+    'Liens d\'achat vérifiés et comparatifs (à venir).'
   ],
   apps: [
-    'Sélection d’apps pour planifier, filmer, monter et analyser.',
+    'Sélection d\'apps pour planifier, filmer, monter et analyser.',
     'Filtres par plateforme, prix et niveau.',
     'Intégration avec Creatik pour synchroniser vos workflows (vision future).'
+  ],
+  taxes: [
+    'Calculatrice d\'impôts adaptée à votre pays.',
+    'Guide pour déclarer vos revenus d\'influenceur.',
+    'Informations sur les statuts fiscaux et charges déductibles.'
+  ],
+  help: [
+    'Ressources sur la sécurité et le cyber harcèlement.',
+    'Informations sur vos droits et devoirs en tant que créateur.',
+    'Guides légaux et contacts d\'urgence.'
+  ],
+  'international-account': [
+    'Guide pour créer un compte bancaire américain.',
+    'Solutions pour recevoir des paiements internationaux.',
+    'Informations sur les comptes multi-devises et services bancaires.'
+  ],
+  training: [
+    'Ressources de formation pour améliorer vos compétences.',
+    'Cours et tutoriels pour créateurs de contenu.',
+    'Guides pratiques et bonnes pratiques du secteur.'
+  ],
+  collaboration: [
+    'Outils pour gérer vos collaborations avec les marques.',
+    'Templates de contrats et guides de négociation.',
+    'Conseils pour établir des partenariats durables.'
   ]
 };
 

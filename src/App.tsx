@@ -72,6 +72,11 @@ const Account = lazy(() => import("./pages/profile/Account"));
 const PrivacySettings = lazy(() => import("./pages/profile/PrivacySettings"));
 const ConditionsPolicies = lazy(() => import("./pages/profile/ConditionsPolicies"));
 const Support = lazy(() => import("./pages/profile/Support"));
+const Taxes = lazy(() => import("./pages/profile/Taxes"));
+const Help = lazy(() => import("./pages/profile/Help"));
+const InternationalAccount = lazy(() => import("./pages/profile/InternationalAccount"));
+const Training = lazy(() => import("./pages/profile/Training"));
+const Collaboration = lazy(() => import("./pages/profile/Collaboration"));
 const DatabaseDiagnosticPage = lazy(() => import("./pages/DatabaseDiagnosticPage"));
 
 // Composant de chargement optimisé
@@ -205,6 +210,11 @@ const AppContent = () => {
                   <Route path="/profile/notifications" element={<Notifications />} />
                   <Route path="/profile/settings" element={<Settings />} />
                   <Route path="/profile/resources" element={<Resources />} />
+                  <Route path="/profile/taxes" element={<Taxes />} />
+                  <Route path="/profile/help" element={<Help />} />
+                  <Route path="/profile/international-account" element={<InternationalAccount />} />
+                  <Route path="/profile/training" element={<Training />} />
+                  <Route path="/profile/collaboration" element={<Collaboration />} />
                   <Route path="/profile/personalization" element={<Personalization />} />
                   <Route path="/profile/language" element={<Language />} />
                   <Route path="/profile/display-mode" element={<DisplayMode />} />
