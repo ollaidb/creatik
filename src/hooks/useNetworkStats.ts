@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { ProgramSettingsService } from '@/services/programSettingsService';
 
-interface NetworkStats {
+export interface NetworkStats {
   // Données réelles
   actual_publications: number; // Total des publications créées
   completed_publications: number; // Publications publiées (status = 'published')

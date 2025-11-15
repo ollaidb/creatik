@@ -17,13 +17,18 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Target, Trophy, Clock, ArrowRight, Heart, User, Star, Plus, Calendar, CheckCircle } from "lucide-react";
+import { Target, Trophy, Clock, ArrowRight, Heart, User, Star, Plus, Calendar, CheckCircle, BarChart3, TrendingUp, CheckCircle2, Sparkles, Lightbulb } from "lucide-react";
 import { usePublicChallenges } from "@/hooks/usePublicChallenges";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useEvents } from "@/hooks/useEvents";
 import { useSocialTrends } from "@/hooks/useSocialTrends";
 import { useChallenges } from "@/hooks/useChallenges";
 import type { Event } from "@/hooks/useEvents";
+import { UserProfileService, type UserSocialAccount } from "@/services/userProfileService";
+import { useNetworkStats, type NetworkStats } from "@/hooks/useNetworkStats";
+import { usePersonalizedRecommendations } from "@/hooks/usePersonalizedRecommendations";
+import { Progress } from "@/components/ui/progress";
+import { supabase } from "@/integrations/supabase/client";
 
 type UserMeta = {
   first_name?: string;
@@ -47,6 +52,14 @@ const Index: React.FC = () => {
   // Utiliser useEvents avec mémorisation de la date pour éviter les rechargements
   const { getEventsForDate } = useEvents();
   const [todayEvents, setTodayEvents] = useState<Event[]>([]);
+  
+  // États pour les statistiques par compte
+  const [socialAccounts, setSocialAccounts] = useState<UserSocialAccount[]>([]);
+  const [accountsStats, setAccountsStats] = useState<Record<string, NetworkStats>>({});
+  const [loadingAccounts, setLoadingAccounts] = useState(false);
+  
+  // Hook pour les recommandations personnalisées
+  const { recommendations, loading: loadingRecommendations } = usePersonalizedRecommendations();
   
   // Mémoïser la date d'aujourd'hui pour éviter les rechargements
   const today = useMemo(() => {
@@ -80,6 +93,123 @@ const Index: React.FC = () => {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Seulement au montage, la date est mémorisée
+
+  // Fonction pour charger les stats d'un compte
+  const loadAccountStats = async (accountId: string): Promise<NetworkStats | null> => {
+    if (!user) return null;
+    
+    try {
+      // Charger les paramètres de programmation
+      const { data: programSettings } = await supabase
+        .from('user_program_settings')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('social_account_id', accountId)
+        .is('playlist_id', null)
+        .single();
+
+      const duration = programSettings?.duration || '3months';
+      const contentsPerDay = programSettings?.contents_per_day || 1;
+      
+      const getDurationDays = (dur: string): number => {
+        switch (dur) {
+          case '1month': return 30;
+          case '2months': return 60;
+          case '3months': return 90;
+          case '6months': return 180;
+          case '1year': return 365;
+          case '2years': return 730;
+          case '3years': return 1095;
+          default: return 90;
+        }
+      };
+      
+      const totalDays = getDurationDays(duration);
+      const requiredPublications = totalDays * contentsPerDay;
+
+      // Charger les publications
+      const [totalResult, publishedResult] = await Promise.all([
+        supabase
+          .from('user_social_posts')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+          .eq('social_account_id', accountId),
+        supabase
+          .from('user_social_posts')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+          .eq('social_account_id', accountId)
+          .eq('status', 'published')
+      ]);
+
+      const totalPublications = totalResult.count || 0;
+      const completedPublications = publishedResult.count || 0;
+      const progressPercentage = requiredPublications > 0 
+        ? Math.min(100, Math.round((completedPublications / requiredPublications) * 100))
+        : 0;
+
+      return {
+        actual_publications: totalPublications,
+        completed_publications: completedPublications,
+        pending_publications: 0,
+        scheduled_publications: 0,
+        required_publications: requiredPublications,
+        remaining_publications: Math.max(0, requiredPublications - completedPublications),
+        remaining_days: Math.max(0, totalDays - Math.floor(completedPublications / contentsPerDay)),
+        progress_percentage: progressPercentage,
+        program_duration: duration,
+        contents_per_day: contentsPerDay
+      };
+    } catch (error) {
+      console.error('Erreur lors du chargement des stats:', error);
+      return null;
+    }
+  };
+
+  // Charger les comptes sociaux et leurs statistiques
+  useEffect(() => {
+    const loadSocialAccounts = async () => {
+      if (!user) {
+        setSocialAccounts([]);
+        setAccountsStats({});
+        return;
+      }
+      
+      try {
+        setLoadingAccounts(true);
+        const accounts = await UserProfileService.getSocialAccounts(user.id);
+        setSocialAccounts(accounts);
+        
+        // Charger les stats pour chaque compte
+        const statsPromises = accounts.map(async (account) => {
+          const stats = await loadAccountStats(account.id);
+          return { accountId: account.id, stats };
+        });
+        
+        const statsResults = await Promise.all(statsPromises);
+        const statsMap: Record<string, NetworkStats> = {};
+        statsResults.forEach(({ accountId, stats }) => {
+          if (stats) statsMap[accountId] = stats;
+        });
+        setAccountsStats(statsMap);
+      } catch (error) {
+        console.error('Erreur lors du chargement des comptes:', error);
+      } finally {
+        setLoadingAccounts(false);
+      }
+    };
+    
+    loadSocialAccounts();
+  }, [user]);
+
+  // Fonction pour calculer le niveau basé sur le pourcentage
+  const getLevel = (percentage: number): { level: number; label: string } => {
+    if (percentage >= 100) return { level: 5, label: 'Expert' };
+    if (percentage >= 75) return { level: 4, label: 'Avancé' };
+    if (percentage >= 50) return { level: 3, label: 'Intermédiaire' };
+    if (percentage >= 25) return { level: 2, label: 'Débutant' };
+    return { level: 1, label: 'Nouveau' };
+  };
 
   // Simuler des idées favorites (mémoïsé pour éviter les recalculs)
   useEffect(() => {
@@ -391,6 +521,167 @@ const Index: React.FC = () => {
         </motion.div>
       </section>
 
+      {/* Section Statistiques d'avancement */}
+      {user && socialAccounts.length > 0 && (
+        <section className="container mx-auto px-4 py-2">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <div className="flex justify-between items-center mb-3">
+              <h2 className="text-lg font-semibold text-foreground">
+                Statistiques d'avancement
+              </h2>
+            </div>
+            
+            <div className="flex overflow-x-auto gap-2 pb-2 scrollbar-hide">
+              {loadingAccounts ? (
+                <Card className="w-64 h-40 flex-shrink-0">
+                  <CardContent className="p-4 flex items-center justify-center h-full">
+                    <div className="text-center text-muted-foreground text-sm">Chargement...</div>
+                  </CardContent>
+                </Card>
+              ) : (
+                socialAccounts.map((account) => {
+                  const stats = accountsStats[account.id];
+                  if (!stats) return null;
+                  
+                  const { level, label } = getLevel(stats.progress_percentage);
+                  const accountName = account.custom_name || account.display_name || account.username || account.platform;
+                  
+                  return (
+                    <motion.div
+                      key={`stats-${account.id}`}
+                      className="flex-shrink-0"
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <Card className="w-64 h-40 hover:shadow-md transition-shadow bg-card flex flex-col">
+                        <CardContent className="p-3 flex flex-col h-full">
+                          <div className="space-y-2 flex-1">
+                            {/* En-tête avec nom du compte et niveau */}
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <div className="p-1.5 bg-primary/10 rounded-lg">
+                                  <TrendingUp className="w-3 h-3 text-primary" />
+                                </div>
+                                <div className="min-w-0">
+                                  <h3 className="font-semibold text-xs text-foreground truncate">
+                                    {accountName}
+                                  </h3>
+                                  <p className="text-[10px] text-muted-foreground capitalize">
+                                    {account.platform}
+                                  </p>
+                                </div>
+                              </div>
+                              <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5">
+                                N{level}
+                              </Badge>
+                            </div>
+                            
+                            {/* Barre de progression */}
+                            <div className="space-y-1">
+                              <div className="flex items-center justify-between text-[10px]">
+                                <span className="text-muted-foreground">Progression</span>
+                                <span className="font-semibold text-foreground">
+                                  {stats.progress_percentage}%
+                                </span>
+                              </div>
+                              <Progress value={stats.progress_percentage} className="h-1.5" />
+                            </div>
+                            
+                            {/* Statistiques détaillées */}
+                            <div className="grid grid-cols-2 gap-2 pt-1.5 border-t border-border">
+                              <div className="flex items-center gap-1.5">
+                                <CheckCircle2 className="w-3 h-3 text-green-500 flex-shrink-0" />
+                                <div className="min-w-0">
+                                  <p className="text-[10px] text-muted-foreground">Créées</p>
+                                  <p className="text-xs font-semibold text-foreground">
+                                    {stats.actual_publications}
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-1.5">
+                                <CheckCircle2 className="w-3 h-3 text-blue-500 flex-shrink-0" />
+                                <div className="min-w-0">
+                                  <p className="text-[10px] text-muted-foreground">Accomplies</p>
+                                  <p className="text-xs font-semibold text-foreground">
+                                    {stats.completed_publications}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </motion.div>
+                  );
+                })
+              )}
+            </div>
+          </motion.div>
+        </section>
+      )}
+
+      {/* Section Recommandations de titres */}
+      {user && recommendations.length > 0 && (
+        <section className="container mx-auto px-4 py-2">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                <Sparkles className="w-5 h-5" />
+                Recommandations pour vous
+              </h2>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate('/categories')}
+                className="text-xs"
+              >
+                Voir plus
+                <ArrowRight className="w-3 h-3 ml-1" />
+              </Button>
+            </div>
+            
+            {loadingRecommendations ? (
+              <Card>
+                <CardContent className="p-6">
+                  <div className="text-center text-muted-foreground">Chargement des recommandations...</div>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="max-h-96 overflow-y-auto space-y-3 pr-2 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
+                {recommendations.map((rec) => (
+                  <motion.div
+                    key={`rec-${rec.id}`}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="bg-card border border-border rounded-lg p-4 hover:shadow-md transition-all duration-200 cursor-pointer"
+                    onClick={() => {
+                      if (rec.category_id && rec.subcategory_id) {
+                        navigate(`/category/${rec.category_id}/subcategory/${rec.subcategory_id}`);
+                      } else if (rec.category_id) {
+                        navigate(`/category/${rec.category_id}/subcategories`);
+                      }
+                    }}
+                  >
+                    <h3 className="text-foreground font-medium text-base leading-relaxed">
+                      {rec.title}
+                    </h3>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </motion.div>
+        </section>
+      )}
 
       {/* <TrendingSection /> */}
 
