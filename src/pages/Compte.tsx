@@ -6,16 +6,7 @@ import {
   ArrowLeft, 
   User, 
   Settings, 
-  Bell, 
-  Heart, 
-  FileText, 
-  Calendar,
-  MessageSquare,
-  Shield,
   Palette,
-  BookOpen,
-  Users,
-  Receipt,
   LogOut,
   Eye,
   HelpCircle,
@@ -57,27 +48,6 @@ const Compte = () => {
   // Section 2: CONTENU
   const contentItems = [
     {
-      title: 'Notifications',
-      description: 'Gérer vos notifications et alertes',
-      icon: Bell,
-      path: '/profile/notifications',
-      color: 'bg-orange-500'
-    },
-    {
-      title: 'Historique',
-      description: 'Votre activité récente',
-      icon: Calendar,
-      path: '/profile/history',
-      color: 'bg-green-500'
-    },
-    {
-      title: 'Publications',
-      description: 'Gérer vos publications',
-      icon: FileText,
-      path: '/profile/publications',
-      color: 'bg-purple-500'
-    },
-    {
       title: 'Mode d\'affichage',
       description: 'Light/Dark mode',
       icon: Palette,
@@ -97,13 +67,6 @@ const Compte = () => {
       icon: Palette,
       path: '/profile/personalization',
       color: 'bg-cyan-500'
-    },
-    {
-      title: 'Ressources',
-      description: 'Ressources et guides',
-      icon: BookOpen,
-      path: '/profile/resources',
-      color: 'bg-emerald-500'
     }
   ];
 
