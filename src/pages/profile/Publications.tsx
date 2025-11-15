@@ -17,10 +17,14 @@ const PUBLICATION_TABS = [
   { key: 'all', label: 'Toutes' },
   { key: 'category', label: 'Catégories' },
   { key: 'subcategory', label: 'Sous-catégories' },
+  { key: 'subcategory_level2', label: 'Sous-catégories Niveau 2' },
   { key: 'title', label: 'Titres' },
+  { key: 'hooks', label: 'Hooks' },
+  { key: 'content', label: 'Contenus' },
+  { key: 'creator', label: 'Créateurs' },
   { key: 'account', label: 'Comptes' },
   { key: 'source', label: 'Sources' },
-  { key: 'challenge', label: 'Challenges' },
+  { key: 'pseudo', label: 'Pseudos' },
 ];
 
 const Publications = () => {
@@ -34,7 +38,7 @@ const Publications = () => {
   const [itemToDelete, setItemToDelete] = useState<{
     id: string;
     title: string;
-    type: 'category' | 'subcategory' | 'title' | 'account' | 'source' | 'challenge';
+    type: 'category' | 'subcategory' | 'subcategory_level2' | 'title' | 'hooks' | 'content' | 'creator' | 'account' | 'source' | 'pseudo';
   } | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [activeTab, setActiveTab] = useState('all');
@@ -227,8 +231,16 @@ const Publications = () => {
                           return 'from-orange-500 to-red-500';
                         case 'source':
                           return 'from-indigo-500 to-purple-500';
-                        case 'challenge':
-                          return 'from-yellow-500 to-orange-500';
+                        case 'subcategory_level2':
+                          return 'from-teal-500 to-cyan-500';
+                        case 'hooks':
+                          return 'from-pink-500 to-rose-500';
+                        case 'content':
+                          return 'from-violet-500 to-purple-500';
+                        case 'creator':
+                          return 'from-amber-500 to-yellow-500';
+                        case 'pseudo':
+                          return 'from-slate-500 to-gray-500';
                         default:
                           return 'from-gray-500 to-gray-600';
                       }
@@ -294,17 +306,27 @@ const Publications = () => {
                     {activeTab === 'all' ? 'Aucune publication' : 
                      activeTab === 'category' ? 'Aucune catégorie' :
                      activeTab === 'subcategory' ? 'Aucune sous-catégorie' :
+                     activeTab === 'subcategory_level2' ? 'Aucune sous-catégorie niveau 2' :
                      activeTab === 'title' ? 'Aucun titre' :
+                     activeTab === 'hooks' ? 'Aucun hook' :
+                     activeTab === 'content' ? 'Aucun contenu' :
+                     activeTab === 'creator' ? 'Aucun créateur' :
                      activeTab === 'account' ? 'Aucun compte' :
-                     activeTab === 'source' ? 'Aucune source' : 'Aucun challenge'}
+                     activeTab === 'source' ? 'Aucune source' :
+                     activeTab === 'pseudo' ? 'Aucun pseudo' : 'Aucune publication'}
                   </h3>
                   <p>
                     {activeTab === 'all' ? 'Vous n\'avez pas encore publié de contenu.' :
                      activeTab === 'category' ? 'Vous n\'avez pas encore publié de catégorie.' :
                      activeTab === 'subcategory' ? 'Vous n\'avez pas encore publié de sous-catégorie.' :
+                     activeTab === 'subcategory_level2' ? 'Vous n\'avez pas encore publié de sous-catégorie niveau 2.' :
                      activeTab === 'title' ? 'Vous n\'avez pas encore publié de titre.' :
+                     activeTab === 'hooks' ? 'Vous n\'avez pas encore publié de hook.' :
+                     activeTab === 'content' ? 'Vous n\'avez pas encore publié de contenu.' :
+                     activeTab === 'creator' ? 'Vous n\'avez pas encore publié de créateur.' :
                      activeTab === 'account' ? 'Vous n\'avez pas encore publié de compte.' :
-                     activeTab === 'source' ? 'Vous n\'avez pas encore publié de source.' : 'Vous n\'avez pas encore publié de challenge.'}
+                     activeTab === 'source' ? 'Vous n\'avez pas encore publié de source.' :
+                     activeTab === 'pseudo' ? 'Vous n\'avez pas encore publié de pseudo.' : 'Vous n\'avez pas encore publié de contenu.'}
                   </p>
                 </div>
                 <Button onClick={() => navigate('/publish')}>

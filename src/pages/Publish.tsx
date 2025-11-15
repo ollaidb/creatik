@@ -983,6 +983,27 @@ const Publish = () => {
           subcategoryId = formData.subcategory_id;
           subcategoryLevel2Id = formData.subcategory_level2_id;
           categoryId = formData.category_id;
+        } else if (formData.content_type === 'content') {
+          // Pour les contenus, on utilise les IDs du créateur sélectionné ou ceux du formulaire
+          if (selectedCreator) {
+            categoryId = selectedCreator.category_id || formData.category_id;
+            subcategoryId = selectedCreator.subcategory_id || formData.subcategory_id;
+            subcategoryLevel2Id = formData.subcategory_level2_id;
+          } else {
+            categoryId = formData.category_id;
+            subcategoryId = formData.subcategory_id;
+            subcategoryLevel2Id = formData.subcategory_level2_id;
+          }
+        } else if (formData.content_type === 'pseudo') {
+          // Pour les pseudos, on utilise les IDs du formulaire si disponibles
+          categoryId = formData.category_id;
+          subcategoryId = formData.subcategory_id;
+          subcategoryLevel2Id = formData.subcategory_level2_id;
+        } else if (formData.content_type === 'account' || formData.content_type === 'source') {
+          // Pour les comptes et sources, on utilise les IDs du formulaire si disponibles
+          categoryId = formData.category_id;
+          subcategoryId = formData.subcategory_id;
+          subcategoryLevel2Id = formData.subcategory_level2_id;
         }
         
         const publicationData = {

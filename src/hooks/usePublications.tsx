@@ -12,7 +12,7 @@ export type PublicationContentType =
   | 'account'
   | 'source'
   | 'pseudo'
-  | 'challenge';
+  | 'creator';
 
 export interface Publication {
   id: string;
@@ -56,6 +56,7 @@ export const usePublications = () => {
       const { data: userPublications, error: publicationsError } = await supabase
         .from('user_publications')
         .select('*')
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
       console.log('Publications utilisateur récupérées:', userPublications);
@@ -69,7 +70,7 @@ export const usePublications = () => {
         const formattedPublications: Publication[] = userPublications.map(pub => ({
           id: pub.id,
           user_id: pub.user_id,
-          content_type: pub.content_type as 'category' | 'subcategory' | 'title' | 'account' | 'source' | 'challenge' | 'hooks',
+          content_type: pub.content_type as PublicationContentType,
           title: pub.title,
           description: pub.description,
           category_id: pub.category_id,
