@@ -375,6 +375,7 @@ const Publish = () => {
           .from('content_titles')
           .insert({
             title: itemName,
+            category_id: formData.category_id,
             subcategory_id: formData.subcategory_id,
             subcategory_level2_id: formData.subcategory_level2_id || null,
             platform: selectedNetwork,
@@ -390,6 +391,7 @@ const Publish = () => {
           .from('content_titles')
           .insert({
             title: itemName,
+            category_id: formData.category_id,
             subcategory_id: formData.subcategory_id,
             subcategory_level2_id: formData.subcategory_level2_id || null,
             platform: selectedNetwork,
@@ -1042,6 +1044,13 @@ const Publish = () => {
         });
       }
 
+      // Sauvegarder les valeurs avant réinitialisation pour la navigation
+      const savedCategoryId = formData.category_id;
+      const savedSubcategoryId = formData.subcategory_id;
+      const savedSubcategoryLevel2Id = formData.subcategory_level2_id;
+      const savedContentType = formData.content_type;
+      const savedNetwork = selectedNetwork;
+
       // Réinitialiser le formulaire
       setFormData({
         title: '',
@@ -1059,16 +1068,29 @@ const Publish = () => {
       setCreatorSearch('');
       setCreatorNetworks([{ networkId: '', username: '', url: '', isPrimary: true }]);
 
-      // REDIRIGER VERS MES PUBLICATIONS AU LIEU DE LA PAGE D'ACCUEIL
+      // Rediriger selon le type de contenu publié
       toast({
         title: "Publication réussie !",
-        description: "Votre publication a été ajoutée. Redirection vers vos publications...",
+        description: "Votre publication a été ajoutée.",
       });
       
-      // Rediriger vers la page "Mes publications" après un délai
-      setTimeout(() => {
-        navigate('/profile/publications');
-      }, 1500);
+      // Si c'est un hook ou un titre, rediriger vers la page Titles avec le réseau sélectionné
+      if ((savedContentType === 'hooks' || savedContentType === 'title') && savedSubcategoryId && savedCategoryId) {
+        setTimeout(() => {
+          if (savedSubcategoryLevel2Id) {
+            // Navigation vers la page Titles avec niveau 2
+            navigate(`/category/${savedCategoryId}/subcategory/${savedSubcategoryId}/subcategory-level2/${savedSubcategoryLevel2Id}?network=${savedNetwork}`);
+          } else {
+            // Navigation vers la page Titles sans niveau 2
+            navigate(`/category/${savedCategoryId}/subcategory/${savedSubcategoryId}?network=${savedNetwork}`);
+          }
+        }, 1000);
+      } else {
+        // Pour les autres types, rediriger vers la page "Mes publications"
+        setTimeout(() => {
+          navigate('/profile/publications');
+        }, 1500);
+      }
 
     } catch (error: unknown) {
       console.error('=== ERREUR DE PUBLICATION ===');

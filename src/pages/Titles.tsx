@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useSmartNavigation } from '@/hooks/useNavigation';
 import { motion } from 'framer-motion';
@@ -20,6 +20,8 @@ import { useHooks } from '@/hooks/useHooks';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useFavorites } from '@/hooks/useFavorites';
+import { useAuth } from '@/hooks/useAuth';
+import { UserProfileService, type UserSocialAccount, type UserSocialPost } from '@/services/userProfileService';
 import LocalSearchBar from '@/components/LocalSearchBar';
 import SubcategoryTabs from '@/components/SubcategoryTabs';
 import HashtagsSection from '@/components/HashtagsSection';
@@ -36,6 +38,8 @@ const Titles = () => {
   const selectedNetwork = searchParams.get('network') || 'all';
   const [searchTerm, setSearchTerm] = useState('');
   const { toast } = useToast();
+  const { user } = useAuth();
+  const [socialAccounts, setSocialAccounts] = useState<UserSocialAccount[]>([]);
   
   // Détecter si nous sommes dans un contexte de niveau 2
   const isLevel2 = !!subcategoryLevel2Id;
@@ -236,9 +240,27 @@ const Titles = () => {
 
   const handleLikeTitle = async (titleId: string) => {
     try {
+      const wasFavorite = isTitleFavorite(titleId);
       await toggleTitleFavorite(titleId);
       toast({
-        title: isTitleFavorite(titleId) ? "Retiré" : "Ajouté"
+        title: wasFavorite ? "Retiré" : "Ajouté"
+      });
+    } catch (error) {
+      console.error('Erreur lors du like:', error);
+      toast({
+        title: "Erreur",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Fonction pour liker un hook
+  const handleLikeHook = async (hookId: string) => {
+    try {
+      const wasFavorite = isHookFavorite(hookId);
+      await toggleHookFavorite(hookId);
+      toast({
+        title: wasFavorite ? "Retiré" : "Ajouté"
       });
     } catch (error) {
       console.error('Erreur lors du like:', error);
@@ -369,11 +391,113 @@ const Titles = () => {
     }
   };
 
-  const handleAddToChallenge = (titleId: string) => {
-    // Logique pour ajouter à une communauté
-    console.log('Adding to challenge:', titleId);
+  // Charger les comptes sociaux de l'utilisateur
+  useEffect(() => {
+    const loadSocialAccounts = async () => {
+      if (!user) {
+        setSocialAccounts([]);
+        return;
+      }
+      
+      try {
+        const accounts = await UserProfileService.getSocialAccounts(user.id);
+        setSocialAccounts(accounts);
+      } catch (error) {
+        console.error('Erreur lors du chargement des comptes:', error);
+      }
+    };
+    
+    loadSocialAccounts();
+  }, [user]);
+
+  // Fonction pour ajouter un titre aux publications
+  const handleAddToPublications = async (title: string, titleId: string) => {
+    if (!user || socialAccounts.length === 0) {
+      toast({
+        title: "Erreur",
+        description: "Vous devez avoir au moins un compte social pour ajouter une publication",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      // Utiliser le premier compte social disponible
+      const firstAccount = socialAccounts[0];
+      
+      const publicationData: Omit<UserSocialPost, 'id' | 'created_at' | 'updated_at'> = {
+        user_id: user.id,
+        social_account_id: firstAccount.id,
+        title: title,
+        content: undefined,
+        status: 'draft',
+        scheduled_date: undefined,
+        published_date: undefined,
+        engagement_data: null
+      };
+
+      await UserProfileService.addSocialPost(publicationData);
+      
+      toast({
+        title: "Ajouté",
+        description: "Le titre a été ajouté à vos publications",
+      });
+    } catch (error) {
+      console.error('Erreur lors de l\'ajout de la publication:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible d'ajouter le titre aux publications",
+        variant: "destructive",
+      });
+    }
   };
 
+  // Fonction pour ajouter un hook aux publications
+  const handleAddHookToPublications = async (hookTitle: string, hookId: string) => {
+    if (!user || socialAccounts.length === 0) {
+      toast({
+        title: "Erreur",
+        description: "Vous devez avoir au moins un compte social pour ajouter une publication",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      // Utiliser le premier compte social disponible
+      const firstAccount = socialAccounts[0];
+      
+      const publicationData: Omit<UserSocialPost, 'id' | 'created_at' | 'updated_at'> = {
+        user_id: user.id,
+        social_account_id: firstAccount.id,
+        title: hookTitle,
+        content: undefined,
+        status: 'draft',
+        scheduled_date: undefined,
+        published_date: undefined,
+        engagement_data: null
+      };
+
+      await UserProfileService.addSocialPost(publicationData);
+      
+      toast({
+        title: "Ajouté",
+        description: "Le hook a été ajouté à vos publications",
+      });
+    } catch (error) {
+      console.error('Erreur lors de l\'ajout de la publication:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible d'ajouter le hook aux publications",
+        variant: "destructive",
+      });
+    }
+  };
+
+
+  const handleCreatorClick = (creator: { id: string }) => {
+    navigate(`/creator/${creator.id}`);
+  };
 
   const handleSourceClick = (source: {
     id: string;
@@ -592,15 +716,22 @@ const Titles = () => {
                         <Button
                           variant="ghost"
                           size="sm"
-                            onClick={() => handleAddToChallenge(title.id)}
-                          className="p-2 h-8 w-8"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleAddToPublications(title.title, title.id);
+                          }}
+                          className="p-2 h-8 w-8 text-gray-400 hover:text-primary transition-all duration-200"
+                          title="Ajouter aux publications"
                         >
-                            <Plus size={16} />
+                          <Plus size={16} />
                         </Button>
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleLikeTitle(title.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleLikeTitle(title.id);
+                          }}
                           className={`p-2 h-8 w-8 transition-all duration-200 ${
                             isTitleFavorite(title.id) 
                               ? 'text-red-500 hover:text-red-600' 
@@ -1101,59 +1232,70 @@ const Titles = () => {
           )}
 
           {activeTab === 'hooks' && isHooksAvailableForNetwork(detectedNetwork) && (
-            <div className="space-y-3">
-              {hooks.length > 0 ? (
+            <motion.div 
+              className="space-y-4"
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+            >
+              {hooks.length === 0 ? (
+                <div className="text-center py-12">
+                  <p className="text-gray-500 dark:text-gray-400 mb-4">
+                    Aucun hook disponible pour {getNetworkDisplayName(detectedNetwork)}
+                  </p>
+                </div>
+              ) : (
                 hooks.map((hook, index) => (
-                  <motion.div
-                    key={hook.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                    className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all duration-200 cursor-pointer"
-                  >
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center text-white text-lg">
-                          🎣
-                        </div>
+                  <motion.div key={hook.id} variants={itemVariants}>
+                    <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all duration-200">
+                      <div className="flex items-start justify-between">
                         <div className="flex-1 min-w-0">
-                          <h3 className="font-medium text-gray-900 dark:text-white text-base truncate">
+                          <h3 className="text-gray-900 dark:text-white font-medium text-base leading-relaxed">
                             {hook.title}
                           </h3>
-                          <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
-                            {hook.description || 'Hook vidéo'}
-                          </p>
                         </div>
-                      </div>
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleCopyTitle(hook.title)}
-                          className="p-2 h-10 w-10 rounded-full"
-                        >
-                          <Copy size={18} />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => toggleHookFavorite(hook.id)}
-                          className="p-2 h-10 w-10 rounded-full"
-                        >
-                          <Heart className={`w-3 h-3 sm:w-4 sm:h-4 ${isHookFavorite(hook.id) ? 'text-red-500 fill-red-500' : ''}`} />
-                        </Button>
+                        <div className="flex items-center gap-2 ml-4">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleAddHookToPublications(hook.title, hook.id);
+                            }}
+                            className="p-2 h-8 w-8 text-gray-400 hover:text-primary transition-all duration-200"
+                            title="Ajouter aux publications"
+                          >
+                            <Plus size={16} />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleLikeHook(hook.id);
+                            }}
+                            className={`p-2 h-8 w-8 transition-all duration-200 ${
+                              isHookFavorite(hook.id) 
+                                ? 'text-red-500 hover:text-red-600' 
+                                : 'text-gray-400 hover:text-red-400'
+                            }`}
+                          >
+                            <Heart 
+                              size={16} 
+                              className={`transition-all duration-200 ${
+                                isHookFavorite(hook.id) 
+                                  ? 'fill-red-500 text-red-500' 
+                                  : 'fill-transparent text-current'
+                              }`}
+                            />
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </motion.div>
                 ))
-              ) : (
-                <div className="text-center py-12">
-                  <p className="text-gray-500 dark:text-gray-400">
-                    Aucun hook disponible pour {getNetworkDisplayName(detectedNetwork)}
-                  </p>
-                </div>
               )}
-            </div>
+            </motion.div>
           )}
         </div>
       </div>

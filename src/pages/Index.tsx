@@ -45,6 +45,7 @@ const Index: React.FC = () => {
   const { data: categories } = useCategories();
   const { user } = useAuth();
   const { favorites, isLoading } = useFavorites('category');
+  const { favorites: titleFavorites, toggleFavorite: toggleTitleFavorite, isFavorite: isTitleFavorite } = useFavorites('title');
   const { challenges: publicChallenges, addToPersonalChallenges } = usePublicChallenges();
   const { trends, getTopTrends } = useSocialTrends();
   const { userChallenges, stats, completeChallenge } = useChallenges();
@@ -209,6 +210,65 @@ const Index: React.FC = () => {
     if (percentage >= 50) return { level: 3, label: 'Intermédiaire' };
     if (percentage >= 25) return { level: 2, label: 'Débutant' };
     return { level: 1, label: 'Nouveau' };
+  };
+
+  // Fonction pour ajouter un titre aux publications
+  const handleAddToPublications = async (title: string, titleId: string) => {
+    if (!user || socialAccounts.length === 0) {
+      toast({
+        title: "Erreur",
+        description: "Vous devez avoir au moins un compte social pour ajouter une publication",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      // Utiliser le premier compte social disponible
+      const firstAccount = socialAccounts[0];
+      
+      const publicationData: Omit<UserSocialPost, 'id' | 'created_at' | 'updated_at'> = {
+        user_id: user.id,
+        social_account_id: firstAccount.id,
+        title: title,
+        content: undefined,
+        status: 'draft',
+        scheduled_date: undefined,
+        published_date: undefined,
+        engagement_data: null
+      };
+
+      await UserProfileService.addSocialPost(publicationData);
+      
+      toast({
+        title: "Ajouté",
+        description: "Le titre a été ajouté à vos publications",
+      });
+    } catch (error) {
+      console.error('Erreur lors de l\'ajout de la publication:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible d'ajouter le titre aux publications",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Fonction pour liker un titre
+  const handleLikeTitle = async (titleId: string) => {
+    try {
+      const wasFavorite = isTitleFavorite(titleId);
+      await toggleTitleFavorite(titleId);
+      toast({
+        title: wasFavorite ? "Retiré des favoris" : "Ajouté aux favoris",
+      });
+    } catch (error) {
+      console.error('Erreur lors du like:', error);
+      toast({
+        title: "Erreur",
+        variant: "destructive",
+      });
+    }
   };
 
   // Simuler des idées favorites (mémoïsé pour éviter les recalculs)
@@ -663,18 +723,60 @@ const Index: React.FC = () => {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3 }}
-                    className="bg-card border border-border rounded-lg p-4 hover:shadow-md transition-all duration-200 cursor-pointer"
-                    onClick={() => {
-                      if (rec.category_id && rec.subcategory_id) {
-                        navigate(`/category/${rec.category_id}/subcategory/${rec.subcategory_id}`);
-                      } else if (rec.category_id) {
-                        navigate(`/category/${rec.category_id}/subcategories`);
-                      }
-                    }}
+                    className="bg-card border border-border rounded-lg p-4 hover:shadow-md transition-all duration-200"
                   >
-                    <h3 className="text-foreground font-medium text-base leading-relaxed">
-                      {rec.title}
-                    </h3>
+                    <div className="flex items-start justify-between gap-3">
+                      <div 
+                        className="flex-1 min-w-0 cursor-pointer"
+                        onClick={() => {
+                          if (rec.category_id && rec.subcategory_id) {
+                            navigate(`/category/${rec.category_id}/subcategory/${rec.subcategory_id}`);
+                          } else if (rec.category_id) {
+                            navigate(`/category/${rec.category_id}/subcategories`);
+                          }
+                        }}
+                      >
+                        <h3 className="text-foreground font-medium text-base leading-relaxed">
+                          {rec.title}
+                        </h3>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleLikeTitle(rec.id);
+                          }}
+                          className={`p-2 h-8 w-8 transition-all duration-200 ${
+                            isTitleFavorite(rec.id) 
+                              ? 'text-red-500 hover:text-red-600' 
+                              : 'text-gray-400 hover:text-red-400'
+                          }`}
+                        >
+                          <Heart 
+                            size={16} 
+                            className={`transition-all duration-200 ${
+                              isTitleFavorite(rec.id) 
+                                ? 'fill-red-500 text-red-500' 
+                                : 'fill-transparent text-current'
+                            }`}
+                          />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleAddToPublications(rec.title, rec.id);
+                          }}
+                          className="p-2 h-8 w-8 text-gray-400 hover:text-primary transition-all duration-200"
+                          title="Ajouter aux publications"
+                        >
+                          <Plus size={16} />
+                        </Button>
+                      </div>
+                    </div>
                   </motion.div>
                 ))}
               </div>
