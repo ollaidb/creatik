@@ -6,10 +6,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ArrowLeft, Heart, User, Clock, MessageCircle, ThumbsUp, ChevronDown, ChevronUp, Reply, Send, Trash2 } from 'lucide-react';
+import { ArrowLeft, Heart, User, Clock, MessageCircle, ThumbsUp, ChevronDown, ChevronUp, Reply, Send, Trash2, Plus } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { UserProfileService, type UserSocialAccount, type UserSocialPost, type UserContentPlaylist } from '@/services/userProfileService';
+import { SelectNetworkPlaylistModal } from '@/components/modals/SelectNetworkPlaylistModal';
 import Navigation from '@/components/Navigation';
 
 interface Challenge {
@@ -73,6 +75,16 @@ const CommunityAccountDetail = () => {
     y: number;
     commentId: string;
   } | null>(null);
+  const [creatorInfo, setCreatorInfo] = useState<{
+    first_name?: string;
+    last_name?: string;
+    avatar_url?: string;
+    email?: string;
+  } | null>(null);
+  const [socialAccounts, setSocialAccounts] = useState<UserSocialAccount[]>([]);
+  const [playlists, setPlaylists] = useState<UserContentPlaylist[]>([]);
+  const [isSelectModalOpen, setIsSelectModalOpen] = useState(false);
+  const [selectedTitle, setSelectedTitle] = useState<{ title: string; challengeId: string } | null>(null);
 
   // Charger le challenge et ses commentaires
   useEffect(() => {
@@ -81,6 +93,30 @@ const CommunityAccountDetail = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
+
+  // Charger les comptes sociaux et les playlists de l'utilisateur
+  useEffect(() => {
+    const loadUserData = async () => {
+      if (!user) {
+        setSocialAccounts([]);
+        setPlaylists([]);
+        return;
+      }
+      
+      try {
+        const [accounts, userPlaylists] = await Promise.all([
+          UserProfileService.getSocialAccounts(user.id),
+          UserProfileService.getPlaylists(user.id)
+        ]);
+        setSocialAccounts(accounts);
+        setPlaylists(userPlaylists);
+      } catch (error) {
+        console.error('Erreur lors du chargement des données:', error);
+      }
+    };
+    
+    loadUserData();
+  }, [user]);
 
   // Changer le titre de la page
   useEffect(() => {
@@ -131,6 +167,30 @@ const CommunityAccountDetail = () => {
 
       setChallenge(challengeData);
 
+      // Charger les informations du créateur depuis la table profiles
+      if (challengeData.created_by) {
+        try {
+          const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .select('first_name, last_name, email, avatar_url')
+            .eq('id', challengeData.created_by)
+            .single();
+          
+          if (!profileError && profileData) {
+            setCreatorInfo({
+              first_name: profileData.first_name,
+              last_name: profileData.last_name,
+              avatar_url: profileData.avatar_url || undefined,
+              email: profileData.email || undefined
+            });
+          } else {
+            console.error('Erreur lors du chargement du profil:', profileError);
+          }
+        } catch (error) {
+          console.error('Erreur lors du chargement du créateur:', error);
+        }
+      }
+
       // Charger les commentaires seulement si le défi existe
       const { data: commentsData, error: commentsError } = await supabase
         .from('challenge_comments')
@@ -177,6 +237,16 @@ const CommunityAccountDetail = () => {
   };
 
   const getCreatorName = (userId: string) => {
+    // Si c'est le créateur du challenge et qu'on a les infos
+    if (challenge && challenge.created_by === userId && creatorInfo) {
+      const firstName = creatorInfo.first_name;
+      const lastName = creatorInfo.last_name;
+      if (firstName && lastName) return `${firstName} ${lastName}`;
+      if (firstName) return firstName;
+      return creatorInfo.email?.split('@')[0] || 'Utilisateur';
+    }
+    
+    // Si c'est l'utilisateur connecté
     if (user && user.id === userId) {
       const firstName = user.user_metadata?.first_name;
       const lastName = user.user_metadata?.last_name;
@@ -184,13 +254,21 @@ const CommunityAccountDetail = () => {
       if (firstName) return firstName;
       return user.email?.split('@')[0] || 'Utilisateur';
     }
+    
     return 'Utilisateur';
   };
 
   const getCreatorAvatar = (userId: string) => {
+    // Si c'est le créateur du challenge et qu'on a les infos
+    if (challenge && challenge.created_by === userId && creatorInfo) {
+      return creatorInfo.avatar_url;
+    }
+    
+    // Si c'est l'utilisateur connecté
     if (user && user.id === userId) {
       return user.user_metadata?.avatar_url;
     }
+    
     return null;
   };
 
@@ -382,6 +460,72 @@ const CommunityAccountDetail = () => {
     setContextMenu(null);
   };
 
+  // Fonction pour ouvrir la modale de sélection réseau/playlist
+  const handleAddToPublications = () => {
+    if (!challenge) return;
+    
+    if (!user) {
+      toast({
+        title: "Connexion requise",
+        description: "Connectez-vous pour ajouter des publications",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (socialAccounts.length === 0) {
+      toast({
+        title: "Aucun réseau social",
+        description: "Vous devez d'abord ajouter un réseau social dans votre profil",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Ouvrir la modale de sélection
+    setSelectedTitle({ title: challenge.title, challengeId: challenge.id });
+    setIsSelectModalOpen(true);
+  };
+
+  // Fonction pour confirmer l'ajout avec réseau et playlist sélectionnés
+  const handleConfirmAddToPublications = async (socialAccountId: string, playlistId?: string) => {
+    if (!user || !selectedTitle) return;
+
+    try {
+      const publicationData: Omit<UserSocialPost, 'id' | 'created_at' | 'updated_at'> = {
+        user_id: user.id,
+        social_account_id: socialAccountId,
+        title: selectedTitle.title,
+        content: undefined,
+        status: 'draft',
+        scheduled_date: undefined,
+        published_date: undefined,
+        engagement_data: null
+      };
+
+      const newPost = await UserProfileService.addSocialPost(publicationData);
+      
+      // Ajouter à la playlist si sélectionnée
+      if (playlistId) {
+        await UserProfileService.addPostToPlaylist(playlistId, newPost.id);
+      }
+
+      toast({
+        title: "Ajouté",
+        description: "Le contenu a été ajouté à vos publications",
+      });
+      
+      setSelectedTitle(null);
+    } catch (error) {
+      console.error('Erreur lors de l\'ajout de la publication:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible d'ajouter le contenu aux publications",
+        variant: "destructive",
+      });
+    }
+  };
+
   const renderComment = (comment: Comment, isReply: boolean = false, level: number = 0) => (
     <motion.div
       key={comment.id}
@@ -571,6 +715,20 @@ const CommunityAccountDetail = () => {
                 <p className="text-muted-foreground text-lg leading-relaxed">{challenge.description}</p>
               </div>
               <div className="flex items-center gap-2 ml-4">
+                {user && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleAddToPublications();
+                    }}
+                    className="text-primary hover:text-primary/80"
+                    title="Ajouter aux publications"
+                  >
+                    <Plus className="w-6 h-6" />
+                  </Button>
+                )}
                 <Button
                   variant="ghost"
                   size="icon"
@@ -585,9 +743,9 @@ const CommunityAccountDetail = () => {
             {/* Créateur et date */}
             <div className="flex items-center gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
               <Avatar className="w-10 h-10">
-                <AvatarImage src={challenge.creator?.user_metadata?.avatar_url} />
+                <AvatarImage src={getCreatorAvatar(challenge.created_by) || challenge.creator?.user_metadata?.avatar_url} />
                 <AvatarFallback className="bg-gradient-to-r from-primary to-secondary text-white">
-                  <User className="w-5 h-5" />
+                  {getCreatorName(challenge.created_by).charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1">
@@ -683,6 +841,22 @@ const CommunityAccountDetail = () => {
             )}
           </div>
         </div>
+      )}
+
+      {/* Modale de sélection réseau/playlist */}
+      {selectedTitle && user && (
+        <SelectNetworkPlaylistModal
+          isOpen={isSelectModalOpen}
+          onClose={() => {
+            setIsSelectModalOpen(false);
+            setSelectedTitle(null);
+          }}
+          onConfirm={handleConfirmAddToPublications}
+          userId={user.id}
+          socialAccounts={socialAccounts}
+          playlists={playlists}
+          title={selectedTitle.title}
+        />
       )}
 
       <Navigation />

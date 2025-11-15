@@ -24,11 +24,12 @@ import { useEvents } from "@/hooks/useEvents";
 import { useSocialTrends } from "@/hooks/useSocialTrends";
 import { useChallenges } from "@/hooks/useChallenges";
 import type { Event } from "@/hooks/useEvents";
-import { UserProfileService, type UserSocialAccount } from "@/services/userProfileService";
+import { UserProfileService, type UserSocialAccount, type UserSocialPost, type UserContentPlaylist } from "@/services/userProfileService";
 import { useNetworkStats, type NetworkStats } from "@/hooks/useNetworkStats";
 import { usePersonalizedRecommendations } from "@/hooks/usePersonalizedRecommendations";
 import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
+import { SelectNetworkPlaylistModal } from "@/components/modals/SelectNetworkPlaylistModal";
 
 type UserMeta = {
   first_name?: string;
@@ -56,8 +57,11 @@ const Index: React.FC = () => {
   
   // États pour les statistiques par compte
   const [socialAccounts, setSocialAccounts] = useState<UserSocialAccount[]>([]);
+  const [playlists, setPlaylists] = useState<UserContentPlaylist[]>([]);
   const [accountsStats, setAccountsStats] = useState<Record<string, NetworkStats>>({});
   const [loadingAccounts, setLoadingAccounts] = useState(false);
+  const [isSelectModalOpen, setIsSelectModalOpen] = useState(false);
+  const [selectedTitle, setSelectedTitle] = useState<{ title: string; titleId: string } | null>(null);
   
   // Hook pour les recommandations personnalisées
   const { recommendations, loading: loadingRecommendations } = usePersonalizedRecommendations();
@@ -167,19 +171,24 @@ const Index: React.FC = () => {
     }
   };
 
-  // Charger les comptes sociaux et leurs statistiques
+  // Charger les comptes sociaux, les playlists et leurs statistiques
   useEffect(() => {
     const loadSocialAccounts = async () => {
       if (!user) {
         setSocialAccounts([]);
+        setPlaylists([]);
         setAccountsStats({});
         return;
       }
       
       try {
         setLoadingAccounts(true);
-        const accounts = await UserProfileService.getSocialAccounts(user.id);
+        const [accounts, userPlaylists] = await Promise.all([
+          UserProfileService.getSocialAccounts(user.id),
+          UserProfileService.getPlaylists(user.id)
+        ]);
         setSocialAccounts(accounts);
+        setPlaylists(userPlaylists);
         
         // Charger les stats pour chaque compte
         const statsPromises = accounts.map(async (account) => {
@@ -194,7 +203,7 @@ const Index: React.FC = () => {
         });
         setAccountsStats(statsMap);
       } catch (error) {
-        console.error('Erreur lors du chargement des comptes:', error);
+        console.error('Erreur lors du chargement des données:', error);
       } finally {
         setLoadingAccounts(false);
       }
@@ -212,25 +221,41 @@ const Index: React.FC = () => {
     return { level: 1, label: 'Nouveau' };
   };
 
-  // Fonction pour ajouter un titre aux publications
-  const handleAddToPublications = async (title: string, titleId: string) => {
-    if (!user || socialAccounts.length === 0) {
+  // Fonction pour ouvrir la modale de sélection réseau/playlist
+  const handleAddToPublications = (title: string, titleId: string) => {
+    if (!user) {
       toast({
-        title: "Erreur",
-        description: "Vous devez avoir au moins un compte social pour ajouter une publication",
+        title: "Connexion requise",
+        description: "Connectez-vous pour ajouter des publications",
         variant: "destructive",
       });
       return;
     }
 
+    if (socialAccounts.length === 0) {
+      // Si aucun réseau n'est disponible, ajouter directement
+      toast({
+        title: "Aucun réseau social",
+        description: "Vous devez d'abord ajouter un réseau social dans votre profil",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Ouvrir la modale de sélection
+    setSelectedTitle({ title, titleId });
+    setIsSelectModalOpen(true);
+  };
+
+  // Fonction pour confirmer l'ajout avec réseau et playlist sélectionnés
+  const handleConfirmAddToPublications = async (socialAccountId: string, playlistId?: string) => {
+    if (!user || !selectedTitle) return;
+
     try {
-      // Utiliser le premier compte social disponible
-      const firstAccount = socialAccounts[0];
-      
       const publicationData: Omit<UserSocialPost, 'id' | 'created_at' | 'updated_at'> = {
         user_id: user.id,
-        social_account_id: firstAccount.id,
-        title: title,
+        social_account_id: socialAccountId,
+        title: selectedTitle.title,
         content: undefined,
         status: 'draft',
         scheduled_date: undefined,
@@ -238,12 +263,19 @@ const Index: React.FC = () => {
         engagement_data: null
       };
 
-      await UserProfileService.addSocialPost(publicationData);
+      const newPost = await UserProfileService.addSocialPost(publicationData);
       
+      // Ajouter à la playlist si sélectionnée
+      if (playlistId) {
+        await UserProfileService.addPostToPlaylist(playlistId, newPost.id);
+      }
+
       toast({
         title: "Ajouté",
         description: "Le titre a été ajouté à vos publications",
       });
+      
+      setSelectedTitle(null);
     } catch (error) {
       console.error('Erreur lors de l\'ajout de la publication:', error);
       toast({
@@ -790,6 +822,22 @@ const Index: React.FC = () => {
       
 
       
+
+      {/* Modale de sélection réseau/playlist */}
+      {selectedTitle && user && (
+        <SelectNetworkPlaylistModal
+          isOpen={isSelectModalOpen}
+          onClose={() => {
+            setIsSelectModalOpen(false);
+            setSelectedTitle(null);
+          }}
+          onConfirm={handleConfirmAddToPublications}
+          userId={user.id}
+          socialAccounts={socialAccounts}
+          playlists={playlists}
+          title={selectedTitle.title}
+        />
+      )}
 
       <Navigation />
     </div>
