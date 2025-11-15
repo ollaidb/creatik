@@ -2,7 +2,7 @@ import React from "react";
 import { motion } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
 import CategoryCard from "./CategoryCard";
-import IntelligentSearchBar from "./IntelligentSearchBar";
+import GlobalIntelligentSearchBar from "./GlobalIntelligentSearchBar";
 import { useCategories } from "@/hooks/useCategories";
 import { 
   Carousel, 
@@ -55,9 +55,9 @@ const Hero: React.FC = () => {
             </h1>
             <div className="flex items-center gap-3">
               <div className="w-[600px]">
-                <IntelligentSearchBar 
+                <GlobalIntelligentSearchBar 
                   onSearch={handleSearch}
-                  placeholder="Rechercher des idées de contenu..."
+                  placeholder="Rechercher dans toute l'application..."
                   className="w-full"
                 />
               </div>
@@ -113,9 +113,9 @@ const Hero: React.FC = () => {
               </div>
             </div>
             <div className="w-full">
-              <IntelligentSearchBar 
+              <GlobalIntelligentSearchBar 
                 onSearch={handleSearch}
-                placeholder="Rechercher..."
+                placeholder="Rechercher dans toute l'application..."
                 className="w-full"
               />
             </div>
