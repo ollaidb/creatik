@@ -9,6 +9,7 @@ import { Send, Loader2, ArrowLeft, Search, X, Check, AlertTriangle, Eye, FileTex
 import { useToast } from '@/hooks/use-toast';
 import { useCategories } from '@/hooks/useCategories';
 import { useSubcategories } from '@/hooks/useSubcategories';
+import { useAllSubcategories } from '@/hooks/useAllSubcategories';
 import { useSubcategoriesLevel2 } from '@/hooks/useSubcategoriesLevel2';
 import { useSubcategoryHierarchy } from '@/hooks/useSubcategoryHierarchy';
 import { useAuth } from '@/hooks/useAuth';
@@ -68,9 +69,18 @@ const Publish = () => {
   const { data: subcategoriesLevel2 } = useSubcategoriesLevel2(formData.subcategory_id);
   const { data: subcategoryHierarchy } = useSubcategoryHierarchy();
   const { data: creators } = useCreators();
-  const [creatorNetworks, setCreatorNetworks] = useState<Array<{ networkId: string; username: string; url: string; isPrimary: boolean }>>([
-    { networkId: '', username: '', url: '', isPrimary: true }
+  const [creatorNetworks, setCreatorNetworks] = useState<Array<{ networkId: string; url: string; isPrimary: boolean }>>([
+    { networkId: '', url: '', isPrimary: true }
   ]);
+  
+  // États pour les catégories et sous-catégories multiples (pour les créateurs)
+  // Structure : [{ categoryId, subcategoryIds: [] }]
+  const [categorySubcategoryPairs, setCategorySubcategoryPairs] = useState<Array<{
+    categoryId: string;
+    subcategoryIds: string[];
+  }>>([]);
+  const [currentCategorySelection, setCurrentCategorySelection] = useState<string>('');
+  const [tempSelectedCategory, setTempSelectedCategory] = useState<string>('');
   
   // États pour le type "contenu" (taguer un créateur)
   const [wantsToTagCreator, setWantsToTagCreator] = useState<boolean | null>(null);
@@ -86,6 +96,7 @@ const Publish = () => {
   // Récupérer les données
   const { data: categories } = useCategories();
   const { data: subcategories } = useSubcategories(formData.category_id);
+  const { data: allSubcategories } = useAllSubcategories();
 
   // Filtrer les catégories selon la recherche
   const filteredCategories = categories?.filter(category =>
@@ -187,16 +198,39 @@ const Publish = () => {
       return;
     }
 
-    if ((formData.content_type === 'title' || formData.content_type === 'creator') && !formData.subcategory_id) {
+    if (formData.content_type === 'title' && !formData.subcategory_id) {
       toast({
         title: "Sous-catégorie requise",
         variant: "destructive"
       });
       return;
     }
+    
+    // Pour les créateurs, on valide les catégories et sous-catégories multiples
+    if (formData.content_type === 'creator') {
+      if (categorySubcategoryPairs.length === 0) {
+        toast({
+          title: "Au moins une catégorie requise",
+          description: "Veuillez ajouter au moins une catégorie avec ses sous-catégories.",
+          variant: "destructive"
+        });
+        return;
+      }
+      // Vérifier que chaque catégorie a au moins une sous-catégorie
+      const hasEmptySubcategories = categorySubcategoryPairs.some(pair => pair.subcategoryIds.length === 0);
+      if (hasEmptySubcategories) {
+        toast({
+          title: "Sous-catégories requises",
+          description: "Chaque catégorie doit avoir au moins une sous-catégorie sélectionnée.",
+          variant: "destructive"
+        });
+        return;
+      }
+    }
 
     // Validation conditionnelle pour les sous-catégories de niveau 2
-    if ((formData.content_type === 'title' || formData.content_type === 'creator' || formData.content_type === 'source' || formData.content_type === 'hooks') && formData.subcategory_id) {
+    // Ne pas appliquer cette validation aux créateurs (ils utilisent categorySubcategoryPairs)
+    if ((formData.content_type === 'title' || formData.content_type === 'source' || formData.content_type === 'hooks') && formData.subcategory_id) {
       // Vérifier si la sous-catégorie a des sous-catégories de niveau 2
       // On vérifie d'abord si des sous-catégories niveau 2 existent
       const hasLevel2Subcategories = subcategoriesLevel2 && subcategoriesLevel2.length > 0;
@@ -213,15 +247,8 @@ const Publish = () => {
     }
 
     if (formData.content_type === 'creator') {
-      if (!formData.category_id) {
-        toast({
-          title: "Catégorie requise",
-          description: "Veuillez sélectionner une catégorie pour le créateur.",
-          variant: "destructive"
-        });
-        return;
-      }
-
+      // La validation des catégories est déjà faite plus haut avec categorySubcategoryPairs
+      
       if (!formData.description || formData.description.trim().length === 0) {
         toast({
           title: "Biographie requise",
@@ -234,7 +261,6 @@ const Publish = () => {
       validCreatorNetworksForSubmission = creatorNetworks
         .map(network => ({
           networkId: network.networkId,
-          username: network.username.trim(),
           url: network.url.trim(),
           isPrimary: network.isPrimary
         }))
@@ -403,31 +429,44 @@ const Publish = () => {
         if (error) throw error;
         return data.id;
       } else if (formData.content_type === 'creator') {
+        const creatorInsertData: any = {
+          name: itemName,
+          display_name: itemName,
+          bio: formData.description?.trim() || null,
+          public_bio: formData.description?.trim() || null,
+          category: null,
+          subcategory: null,
+          avatar_url: null
+        };
+        
+        // Ajouter owner_user_id seulement si la colonne existe
+        // On essaie d'abord sans, puis avec si nécessaire
         const { data, error } = await supabase
           .from('creators')
-          .insert({
-            name: itemName,
-            display_name: itemName,
-            bio: formData.description?.trim() || null,
-            public_bio: formData.description?.trim() || null,
-            category: null,
-            subcategory: null,
-            category_id: formData.category_id || null,
-            subcategory_id: formData.subcategory_id || null,
-            avatar_url: null,
-            owner_user_id: user?.id || null
-          })
+          .insert(creatorInsertData)
           .select()
           .single();
         
-        if (error) throw error;
+        if (error) {
+          // Si l'erreur est due à owner_user_id manquant, réessayer avec
+          if (error.message.includes('owner_user_id') && user?.id) {
+            creatorInsertData.owner_user_id = user.id;
+            const { data: retryData, error: retryError } = await supabase
+              .from('creators')
+              .insert(creatorInsertData)
+              .select()
+              .single();
+            if (retryError) throw retryError;
+            return retryData.id;
+          }
+          throw error;
+        }
         
         const networksToInsert = validCreatorNetworksForSubmission.length > 0
           ? validCreatorNetworksForSubmission
           : creatorNetworks
               .map(network => ({
                 networkId: network.networkId,
-                username: network.username.trim(),
                 url: network.url.trim(),
                 isPrimary: network.isPrimary
               }))
@@ -450,11 +489,27 @@ const Publish = () => {
               .insert({
                 creator_id: data.id,
                 social_network_id: socialNetwork.id,
-                username: networkEntry.username || null,
                 profile_url: networkEntry.url,
                 is_primary: isPrimary
               });
           }
+        }
+        
+        // Ajouter les catégories et sous-catégories multiples
+        if (categorySubcategoryPairs.length > 0) {
+          const categoryInserts = categorySubcategoryPairs.map(pair => ({
+            creator_id: data.id,
+            category_id: pair.categoryId
+          }));
+          await supabase.from('creator_categories').insert(categoryInserts);
+          
+          const subcategoryInserts = categorySubcategoryPairs.flatMap(pair =>
+            pair.subcategoryIds.map(subcategoryId => ({
+              creator_id: data.id,
+              subcategory_id: subcategoryId
+            }))
+          );
+          await supabase.from('creator_subcategories').insert(subcategoryInserts);
         }
         
         return data.id;
@@ -805,35 +860,56 @@ const Publish = () => {
         });
       } else if (formData.content_type === 'creator') {
         console.log('Publication créateur...');
+        const creatorInsertData: any = {
+          name: formData.title,
+          display_name: formData.title,
+          bio: formData.description?.trim() || null,
+          public_bio: formData.description?.trim() || null,
+          category: null,
+          subcategory: null,
+          avatar_url: null
+        };
+        
+        // Ajouter owner_user_id seulement si la colonne existe
+        if (user?.id) {
+          creatorInsertData.owner_user_id = user.id;
+        }
+        
         const { data: creatorData, error: creatorError } = await supabase
           .from('creators')
-          .insert({
-            name: formData.title,
-            display_name: formData.title,
-            bio: formData.description?.trim() || null,
-            category: null,
-            subcategory: null,
-            category_id: formData.category_id || null,
-            subcategory_id: formData.subcategory_id || null,
-            avatar_url: null
-          })
+          .insert(creatorInsertData)
           .select()
           .single();
         
         if (creatorError) {
           console.error('Erreur créateur:', creatorError);
-          throw creatorError;
+          // Si l'erreur est due à owner_user_id manquant, réessayer sans
+          if (creatorError.message.includes('owner_user_id')) {
+            delete creatorInsertData.owner_user_id;
+            const { data: retryData, error: retryError } = await supabase
+              .from('creators')
+              .insert(creatorInsertData)
+              .select()
+              .single();
+            if (retryError) {
+              console.error('Erreur créateur (retry):', retryError);
+              throw retryError;
+            }
+            createdItemId = retryData.id;
+            console.log('Créateur publié avec succès (sans owner_user_id), ID:', createdItemId);
+          } else {
+            throw creatorError;
+          }
+        } else {
+          createdItemId = creatorData.id;
+          console.log('Créateur publié avec succès, ID:', createdItemId);
         }
-
-        createdItemId = creatorData.id;
-        console.log('Créateur publié avec succès, ID:', createdItemId);
 
         const networksToInsert = validCreatorNetworksForSubmission.length > 0
           ? validCreatorNetworksForSubmission
           : creatorNetworks
               .map(network => ({
                 networkId: network.networkId,
-                username: network.username.trim(),
                 url: network.url.trim(),
                 isPrimary: network.isPrimary
               }))
@@ -854,7 +930,6 @@ const Publish = () => {
               return {
                 creator_id: creatorData.id,
                 social_network_id: socialNetwork.id,
-                username: networkEntry.username || null,
                 profile_url: networkEntry.url,
                 is_primary: isPrimary
               };
@@ -862,7 +937,6 @@ const Publish = () => {
             .filter((entry): entry is {
               creator_id: string;
               social_network_id: string;
-              username: string | null;
               profile_url: string;
               is_primary: boolean;
             } => entry !== null);
@@ -870,6 +944,23 @@ const Publish = () => {
           if (inserts.length > 0) {
             await supabase.from('creator_social_networks').insert(inserts);
           }
+        }
+        
+        // Ajouter les catégories et sous-catégories multiples
+        if (categorySubcategoryPairs.length > 0) {
+          const categoryInserts = categorySubcategoryPairs.map(pair => ({
+            creator_id: creatorData.id,
+            category_id: pair.categoryId
+          }));
+          await supabase.from('creator_categories').insert(categoryInserts);
+          
+          const subcategoryInserts = categorySubcategoryPairs.flatMap(pair =>
+            pair.subcategoryIds.map(subcategoryId => ({
+              creator_id: creatorData.id,
+              subcategory_id: subcategoryId
+            }))
+          );
+          await supabase.from('creator_subcategories').insert(subcategoryInserts);
         }
 
         toast({
@@ -980,9 +1071,14 @@ const Publish = () => {
           subcategoryLevel2Id = formData.subcategory_level2_id;
           categoryId = formData.category_id;
         } else if (formData.content_type === 'creator') {
-          subcategoryId = formData.subcategory_id;
+          // Pour les créateurs, utiliser la première catégorie et sous-catégorie des pairs
+          if (categorySubcategoryPairs.length > 0) {
+            categoryId = categorySubcategoryPairs[0].categoryId;
+            if (categorySubcategoryPairs[0].subcategoryIds.length > 0) {
+              subcategoryId = categorySubcategoryPairs[0].subcategoryIds[0];
+            }
+          }
           subcategoryLevel2Id = formData.subcategory_level2_id;
-          categoryId = formData.category_id;
         } else if (formData.content_type === 'content') {
           // Pour les contenus, on utilise les IDs du créateur sélectionné ou ceux du formulaire
           if (selectedCreator) {
@@ -1087,7 +1183,9 @@ const Publish = () => {
       setWantsToTagCreator(null);
       setSelectedCreator(null);
       setCreatorSearch('');
-      setCreatorNetworks([{ networkId: '', username: '', url: '', isPrimary: true }]);
+      setCreatorNetworks([{ networkId: '', url: '', isPrimary: true }]);
+      setCategorySubcategoryPairs([]);
+      setCurrentCategorySelection('');
 
       // Rediriger selon le type de contenu publié
       toast({
@@ -1163,15 +1261,71 @@ const Publish = () => {
       const hasPrimary = prev.some(network => network.isPrimary);
       return [
         ...prev,
-        { networkId: '', username: '', url: '', isPrimary: !hasPrimary && prev.length === 0 }
+        { networkId: '', url: '', isPrimary: !hasPrimary && prev.length === 0 }
       ];
     });
   };
 
-  const handleCreatorNetworkChange = (index: number, field: 'networkId' | 'username' | 'url', value: string) => {
+  const handleCreatorNetworkChange = (index: number, field: 'networkId' | 'url', value: string) => {
     setCreatorNetworks(prev => prev.map((network, i) => (
       i === index ? { ...network, [field]: value } : network
     )));
+  };
+  
+  // Fonctions pour gérer les catégories et sous-catégories multiples
+  const handleSelectCategory = (categoryId: string) => {
+    // Vérifier si la catégorie n'est pas déjà ajoutée
+    if (categorySubcategoryPairs.some(pair => pair.categoryId === categoryId)) {
+      // Si la catégorie existe déjà, on active juste la sélection temporaire pour choisir ses sous-catégories
+      setTempSelectedCategory(categoryId);
+      setCurrentCategorySelection(categoryId);
+      setCategorySearch('');
+      setShowCategoryDropdown(false);
+      return;
+    }
+    
+    // Nouvelle catégorie : on l'ajoute avec un tableau vide de sous-catégories
+    setCategorySubcategoryPairs(prev => [...prev, { categoryId, subcategoryIds: [] }]);
+    setTempSelectedCategory(categoryId);
+    setCurrentCategorySelection(categoryId);
+    setCategorySearch('');
+    setShowCategoryDropdown(false);
+  };
+  
+  const handleRemoveCategory = (categoryId: string) => {
+    setCategorySubcategoryPairs(prev => prev.filter(pair => pair.categoryId !== categoryId));
+    if (currentCategorySelection === categoryId) {
+      setCurrentCategorySelection('');
+      setTempSelectedCategory('');
+    }
+  };
+  
+  const handleSubcategoryToggle = (subcategoryId: string) => {
+    if (!tempSelectedCategory) return;
+    
+    setCategorySubcategoryPairs(prev => prev.map(pair => {
+      if (pair.categoryId === tempSelectedCategory) {
+        const isSelected = pair.subcategoryIds.includes(subcategoryId);
+        return {
+          ...pair,
+          subcategoryIds: isSelected
+            ? pair.subcategoryIds.filter(id => id !== subcategoryId)
+            : [...pair.subcategoryIds, subcategoryId]
+        };
+      }
+      return pair;
+    }));
+  };
+  
+  const handleFinishCategorySelection = () => {
+    setTempSelectedCategory('');
+    setCurrentCategorySelection('');
+    setSubcategorySearch('');
+    setShowSubcategoryDropdown(false);
+  };
+  
+  const getSubcategoriesForCategory = (categoryId: string) => {
+    return allSubcategories?.filter(sub => sub.category_id === categoryId) || [];
   };
 
   const handleRemoveCreatorNetwork = (index: number) => {
@@ -1446,7 +1600,9 @@ const Publish = () => {
                       setCategorySearch('');
                       setSubcategorySearch('');
                       setSubcategoryLevel2Search('');
-                      setCreatorNetworks([{ networkId: '', username: '', url: '', isPrimary: true }]);
+                      setCreatorNetworks([{ networkId: '', url: '', isPrimary: true }]);
+                      setCategorySubcategoryPairs([]);
+                      setCurrentCategorySelection('');
                     }}
                     className="absolute inset-0 opacity-0 cursor-pointer"
                     required
@@ -1698,7 +1854,7 @@ const Publish = () => {
           </div>
 
           {/* Section 8 : Catégorie (si nécessaire) */}
-          {shouldShowCategorySelection() && (
+          {shouldShowCategorySelection() && formData.content_type !== 'creator' && (
             <div className="mb-3">
               <div className="rounded-lg border border-gray-700 p-3" style={{ backgroundColor: '#0f0f10' }}>
                 <div className="space-y-1">
@@ -1760,8 +1916,231 @@ const Publish = () => {
             </div>
           )}
 
+          {/* Section 8b : Catégories et sous-catégories pour les créateurs */}
+          {formData.content_type === 'creator' && (
+            <div className="mb-3">
+              <div className="rounded-lg border border-gray-700 p-3" style={{ backgroundColor: '#0f0f10' }}>
+                <div className="space-y-3">
+                  {/* Barre de recherche catégorie */}
+                  <div className="space-y-1">
+                    <Label className="text-sm text-white">Catégorie *</Label>
+                    <div className="relative" ref={categoryDropdownRef}>
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-3 w-3 text-gray-400" />
+                        <Input
+                          type="text"
+                          placeholder="Rechercher une catégorie..."
+                          value={categorySearch}
+                          onChange={(e) => {
+                            setCategorySearch(e.target.value);
+                            setShowCategoryDropdown(true);
+                          }}
+                          onFocus={() => setShowCategoryDropdown(true)}
+                          className="pl-8 pr-8 text-sm border-gray-600 text-white placeholder-gray-400"
+                          style={{ backgroundColor: '#0f0f10' }}
+                        />
+                        {categorySearch && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="absolute right-1 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 hover:text-white"
+                            onClick={() => {
+                              setCategorySearch('');
+                            }}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        )}
+                      </div>
+                      {showCategoryDropdown && filteredCategories.length > 0 && (
+                        <div className="absolute z-10 w-full mt-1 bg-gray-800 border border-gray-600 rounded-md shadow-lg max-h-40 overflow-y-auto">
+                          {filteredCategories.map((category) => {
+                            const isAlreadyAdded = categorySubcategoryPairs.some(pair => pair.categoryId === category.id);
+                            return (
+                              <button
+                                key={category.id}
+                                type="button"
+                                className={`w-full px-3 py-2 text-left hover:bg-gray-700 focus:bg-gray-700 focus:outline-none text-sm flex items-center gap-2 ${
+                                  isAlreadyAdded ? 'opacity-50' : 'text-white'
+                                }`}
+                                onClick={() => !isAlreadyAdded && handleSelectCategory(category.id)}
+                                disabled={isAlreadyAdded}
+                              >
+                                <div 
+                                  className="w-2 h-2 rounded-full" 
+                                  style={{ backgroundColor: category.color }}
+                                />
+                                <span>{category.name}</span>
+                                {isAlreadyAdded && <span className="text-xs text-gray-400 ml-auto">(déjà ajoutée)</span>}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Barre de recherche sous-catégorie (apparaît quand une catégorie est sélectionnée) */}
+                  {tempSelectedCategory && (
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-sm text-white">
+                          Sous-catégories pour {categories?.find(c => c.id === tempSelectedCategory)?.name}
+                        </Label>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="text-xs text-gray-400 hover:text-white"
+                          onClick={handleFinishCategorySelection}
+                        >
+                          Terminer
+                        </Button>
+                      </div>
+                      <div className="relative" ref={subcategoryDropdownRef}>
+                        <div className="relative">
+                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-3 w-3 text-gray-400" />
+                          <Input
+                            type="text"
+                            placeholder="Rechercher des sous-catégories..."
+                            value={subcategorySearch}
+                            onChange={(e) => {
+                              setSubcategorySearch(e.target.value);
+                              setShowSubcategoryDropdown(true);
+                            }}
+                            onFocus={() => {
+                              setShowSubcategoryDropdown(true);
+                            }}
+                            className="pl-8 pr-8 text-sm border-gray-600 text-white placeholder-gray-400"
+                            style={{ backgroundColor: '#0f0f10' }}
+                          />
+                          {subcategorySearch && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="absolute right-1 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 hover:text-white"
+                              onClick={() => {
+                                setSubcategorySearch('');
+                              }}
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          )}
+                        </div>
+                        {showSubcategoryDropdown && tempSelectedCategory && getSubcategoriesForCategory(tempSelectedCategory).length > 0 && (
+                          <div className="absolute z-10 w-full mt-1 bg-gray-800 border border-gray-600 rounded-md shadow-lg max-h-40 overflow-y-auto">
+                            {getSubcategoriesForCategory(tempSelectedCategory)
+                              .filter(subcategory => 
+                                subcategory.name.toLowerCase().includes(subcategorySearch.toLowerCase())
+                              )
+                              .map((subcategory) => {
+                                const currentPair = categorySubcategoryPairs.find(p => p.categoryId === tempSelectedCategory);
+                                const isSelected = currentPair?.subcategoryIds.includes(subcategory.id) || false;
+                                return (
+                                  <button
+                                    key={subcategory.id}
+                                    type="button"
+                                    className={`w-full px-3 py-2 text-left hover:bg-gray-700 focus:bg-gray-700 focus:outline-none text-sm flex items-center gap-2 ${
+                                      isSelected ? 'bg-gray-700' : 'text-white'
+                                    }`}
+                                    onClick={() => handleSubcategoryToggle(subcategory.id)}
+                                  >
+                                    <div 
+                                      className={`w-4 h-4 border-2 rounded flex items-center justify-center ${
+                                        isSelected ? 'bg-purple-500 border-purple-500' : 'border-gray-400'
+                                      }`}
+                                    >
+                                      {isSelected && <Check className="h-3 w-3 text-white" />}
+                                    </div>
+                                    <div>
+                                      <div className="font-medium text-white">{subcategory.name}</div>
+                                      {subcategory.description && (
+                                        <div className="text-xs text-gray-400 truncate">
+                                          {subcategory.description}
+                                        </div>
+                                      )}
+                                    </div>
+                                  </button>
+                                );
+                              })}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Affichage des choix en bas (tags) */}
+                  {categorySubcategoryPairs.length > 0 && (
+                    <div className="space-y-2 pt-2 border-t border-gray-700">
+                      <Label className="text-xs text-gray-400">Choix effectués :</Label>
+                      <div className="flex flex-wrap gap-2">
+                        {categorySubcategoryPairs.map((pair) => {
+                          const category = categories?.find(c => c.id === pair.categoryId);
+                          if (!category) return null;
+                          const subcategoriesForThisCategory = getSubcategoriesForCategory(pair.categoryId);
+                          
+                          return (
+                            <React.Fragment key={pair.categoryId}>
+                              {/* Tag catégorie */}
+                              <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-gray-800 text-white text-xs">
+                                <div 
+                                  className="w-2 h-2 rounded-full" 
+                                  style={{ backgroundColor: category.color }}
+                                />
+                                <span>{category.name}</span>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-4 w-4 ml-1 text-gray-400 hover:text-red-400"
+                                  onClick={() => handleRemoveCategory(pair.categoryId)}
+                                >
+                                  <X className="h-3 w-3" />
+                                </Button>
+                              </div>
+                              {/* Tags sous-catégories */}
+                              {pair.subcategoryIds.map(subcategoryId => {
+                                const subcategory = subcategoriesForThisCategory.find(s => s.id === subcategoryId);
+                                if (!subcategory) return null;
+                                return (
+                                  <div
+                                    key={subcategoryId}
+                                    className="flex items-center gap-1 px-2 py-1 rounded-full bg-gray-800 text-white text-xs"
+                                  >
+                                    <span>{subcategory.name}</span>
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-4 w-4 ml-1 text-gray-400 hover:text-white"
+                                      onClick={() => {
+                                        const currentPair = categorySubcategoryPairs.find(p => p.categoryId === pair.categoryId);
+                                        if (currentPair) {
+                                          setTempSelectedCategory(pair.categoryId);
+                                          handleSubcategoryToggle(subcategoryId);
+                                        }
+                                      }}
+                                    >
+                                      <X className="h-3 w-3" />
+                                    </Button>
+                                  </div>
+                                );
+                              })}
+                            </React.Fragment>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Section 9 : Sous-catégorie (si nécessaire) */}
-          {shouldShowSubcategorySelection() && (
+          {shouldShowSubcategorySelection() && formData.content_type !== 'creator' && (
             <div className="mb-3">
               <div className="rounded-lg border border-gray-700 p-3" style={{ backgroundColor: '#0f0f10' }}>
                 <div className="space-y-1">
@@ -1996,22 +2375,6 @@ const Publish = () => {
                             </select>
                           </div>
                           <div className="relative">
-                            <Label htmlFor={`creator-username-${index}`} className="text-xs text-gray-300">
-                              Nom d'utilisateur (optionnel)
-                            </Label>
-                            <div className="relative mt-1">
-                              <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-3 w-3 text-gray-400" />
-                              <Input
-                                id={`creator-username-${index}`}
-                                value={network.username}
-                                onChange={(e) => handleCreatorNetworkChange(index, 'username', e.target.value)}
-                                placeholder="@pseudo"
-                                className="pl-8 text-sm border-gray-600 text-white placeholder-gray-500"
-                                style={{ backgroundColor: '#0f0f10' }}
-                              />
-                            </div>
-                          </div>
-                          <div className="relative">
                             <Label htmlFor={`creator-url-${index}`} className="text-xs text-gray-300">
                               Lien du profil *
                             </Label>
@@ -2104,7 +2467,8 @@ const Publish = () => {
                          !formData.content_type ||
                          (needsNetwork && !selectedNetwork) ||
                          (formData.content_type === 'subcategory' && !formData.category_id) ||
-                         ((formData.content_type === 'title' || formData.content_type === 'creator') && (!formData.category_id || !formData.subcategory_id)) ||
+                         (formData.content_type === 'title' && (!formData.category_id || !formData.subcategory_id)) ||
+                         (formData.content_type === 'creator' && (categorySubcategoryPairs.length === 0 || categorySubcategoryPairs.some(pair => pair.subcategoryIds.length === 0))) ||
                          (formData.content_type === 'content' && (wantsToTagCreator === null || (wantsToTagCreator === true && !selectedCreator) || !formData.description)) ||
                          (formData.content_type === 'source' && !formData.url) ||
                          (formData.content_type === 'category' && !formData.theme)}

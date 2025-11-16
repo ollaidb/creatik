@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { motion, Reorder } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import { Reorder } from 'framer-motion';
 import { useSmartNavigation } from '@/hooks/useNavigation';
 import { useSwipeable } from 'react-swipeable';
 import { 
@@ -10,8 +9,7 @@ import {
   PinOff, 
   Edit, 
   Trash2, 
-  GripVertical,
-  X
+  GripVertical
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -22,10 +20,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import Navigation from '@/components/Navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
-import { UserNotesService, UserNote, CreateNoteData } from '@/services/userNotesService';
+import { UserNotesService, UserNote } from '@/services/userNotesService';
 
 const Notes = () => {
-  const navigate = useNavigate();
   const { navigateBack } = useSmartNavigation();
   const { user } = useAuth();
   const { toast } = useToast();
