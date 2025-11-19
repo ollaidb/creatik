@@ -1,7 +1,7 @@
 -- Script SIMPLE et DIRECT pour corriger les erreurs 403 sur la table profiles
 -- Copiez-collez ce script dans Supabase SQL Editor et exécutez-le
 
--- ÉTAPE 1: Supprimer toutes les politiques existantes
+-- ÉTAPE 1: Supprimer TOUTES les politiques existantes (y compris celles que nous allons créer)
 DROP POLICY IF EXISTS "Users can view own profile" ON public.profiles;
 DROP POLICY IF EXISTS "Users can update own profile" ON public.profiles;
 DROP POLICY IF EXISTS "Users can insert own profile" ON public.profiles;
@@ -12,6 +12,10 @@ DROP POLICY IF EXISTS "profiles_select_own" ON public.profiles;
 DROP POLICY IF EXISTS "profiles_insert_own" ON public.profiles;
 DROP POLICY IF EXISTS "profiles_update_own" ON public.profiles;
 DROP POLICY IF EXISTS "profiles_delete_own" ON public.profiles;
+DROP POLICY IF EXISTS "profiles_select_policy" ON public.profiles;
+DROP POLICY IF EXISTS "profiles_insert_policy" ON public.profiles;
+DROP POLICY IF EXISTS "profiles_update_policy" ON public.profiles;
+DROP POLICY IF EXISTS "profiles_delete_policy" ON public.profiles;
 
 -- ÉTAPE 2: S'assurer que RLS est activé
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;

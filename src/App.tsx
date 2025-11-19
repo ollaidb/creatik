@@ -38,6 +38,7 @@ const Categories = lazy(() => import("./pages/Categories"));
 const Subcategories = lazy(() => import("./pages/Subcategories"));
 const SubcategoriesLevel2 = lazy(() => import("./pages/SubcategoriesLevel2"));
 const Titles = lazy(() => import("./pages/Titles"));
+const Exemples = lazy(() => import("./pages/Exemples"));
 const Hooks = lazy(() => import("./pages/Hooks"));
 const PublicChallenges = lazy(() => import("./pages/PublicChallenges"));
 const UsernameIdeas = lazy(() => import("./pages/UsernameIdeas"));
@@ -55,6 +56,9 @@ const Events = lazy(() => import("./pages/Events"));
 const Creators = lazy(() => import("./pages/Creators"));
 const CreatorDetail = lazy(() => import("./pages/CreatorDetail"));
 const Notes = lazy(() => import("./pages/Notes"));
+const NotesFolders = lazy(() => import("./pages/NotesFolders"));
+const NotesInFolder = lazy(() => import("./pages/NotesInFolder"));
+const NoteEditor = lazy(() => import("./pages/NoteEditor"));
 const Compte = lazy(() => import("./pages/Compte"));
 const Contenu = lazy(() => import("./pages/Contenu"));
 const IdeesCompte = lazy(() => import("./pages/IdeesCompte"));
@@ -172,7 +176,9 @@ const AppContent = () => {
                   <Route path="/category/:categoryId/subcategories" element={<Subcategories />} />
                   <Route path="/category/:categoryId/subcategory/:subcategoryId/subcategories-level2" element={<SubcategoriesLevel2 />} />
                   <Route path="/category/:categoryId/subcategory/:subcategoryId/subcategory-level2/:subcategoryLevel2Id" element={<Titles />} />
+                  <Route path="/category/:categoryId/subcategory/:subcategoryId/subcategory-level2/:subcategoryLevel2Id/exemples" element={<Exemples />} />
                   <Route path="/category/:categoryId/subcategory/:subcategoryId" element={<Titles />} />
+                  <Route path="/category/:categoryId/subcategory/:subcategoryId/exemples" element={<Exemples />} />
                   <Route path="/category/:categoryId/info" element={<CategoryInfo />} />
                   <Route path="/category/:categoryId/subcategory/:subcategoryId/hooks" element={<Hooks />} />
                   {/* Communauté Routes */}
@@ -229,6 +235,11 @@ const AppContent = () => {
                   <Route path="/search" element={<SearchResults />} />
                   {/* Notes Route - Accessible to all users */}
                   <Route path="/notes" element={<Notes />} />
+                  <Route path="/notes/content" element={<NotesFolders />} />
+                  <Route path="/notes/account-ideas" element={<NotesFolders />} />
+                  <Route path="/notes/:type/:folderId" element={<NotesInFolder />} />
+                  <Route path="/notes/editor/:documentId" element={<NoteEditor />} />
+                  <Route path="/notes/editor/new" element={<NoteEditor />} />
                   <Route path="/compte" element={<Compte />} />
                   <Route path="/contenu" element={<Contenu />} />
                   <Route path="/idees-compte" element={<IdeesCompte />} />

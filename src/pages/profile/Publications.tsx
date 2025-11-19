@@ -25,6 +25,7 @@ const PUBLICATION_TABS = [
   { key: 'account', label: 'Comptes' },
   { key: 'source', label: 'Sources' },
   { key: 'pseudo', label: 'Pseudos' },
+  { key: 'exemple-media', label: 'Exemples' },
 ];
 
 const Publications = () => {
@@ -38,7 +39,7 @@ const Publications = () => {
   const [itemToDelete, setItemToDelete] = useState<{
     id: string;
     title: string;
-    type: 'category' | 'subcategory' | 'subcategory_level2' | 'title' | 'hooks' | 'content' | 'creator' | 'account' | 'source' | 'pseudo';
+    type: 'category' | 'subcategory' | 'subcategory_level2' | 'title' | 'hooks' | 'content' | 'creator' | 'account' | 'source' | 'pseudo' | 'exemple-media';
   } | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [activeTab, setActiveTab] = useState('all');

@@ -34,7 +34,7 @@ const Legal = () => {
             <div>
               <h3 className="font-semibold mb-2">1. Acceptation des conditions</h3>
               <p className="text-muted-foreground">
-                En utilisant CréaTik, vous acceptez d'être lié par ces conditions d'utilisation. 
+                En utilisant Kreea, vous acceptez d'être lié par ces conditions d'utilisation. 
                 Si vous n'acceptez pas ces conditions, veuillez ne pas utiliser notre service.
               </p>
             </div>
@@ -42,7 +42,7 @@ const Legal = () => {
             <div>
               <h3 className="font-semibold mb-2">2. Description du service</h3>
               <p className="text-muted-foreground">
-                CréaTik est une plateforme d'inspiration pour créateurs de contenu, offrant des idées, 
+                Kreea est une plateforme d'inspiration pour créateurs de contenu, offrant des idées, 
                 des catégories et des outils pour stimuler la créativité.
               </p>
             </div>
@@ -94,7 +94,7 @@ const Legal = () => {
             <div>
               <h3 className="font-semibold mb-2">Éditeur</h3>
               <p className="text-muted-foreground">
-                CréaTik<br />
+                Kreea<br />
                 Plateforme d'inspiration créative
               </p>
             </div>

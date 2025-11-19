@@ -18,7 +18,7 @@ const WelcomeMessage: React.FC = () => {
       
       // Afficher un toast de bienvenue
       toast({
-        title: "Bienvenue sur Creatik !",
+        title: "Bienvenue sur Kreea !",
         description: `Bonjour ${user.email}, vous êtes maintenant connecté.`,
       });
     }
@@ -38,7 +38,7 @@ const WelcomeMessage: React.FC = () => {
             </div>
             <div className="flex-1 min-w-0">
               <h3 className="text-sm font-semibold text-foreground">
-                Bienvenue sur Creatik !
+                Bienvenue sur Kreea !
               </h3>
               <p className="text-xs text-muted-foreground mt-1">
                 Vous êtes maintenant connecté et pouvez accéder à toutes les fonctionnalités.

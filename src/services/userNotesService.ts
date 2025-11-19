@@ -27,15 +27,39 @@ export interface CreateNoteData {
 export class UserNotesService {
   // Récupérer toutes les notes d'un utilisateur
   static async getNotes(userId: string): Promise<UserNote[]> {
-    const { data, error } = await supabase
+    let query = supabase
       .from('user_notes')
       .select('*')
       .eq('user_id', userId)
-      .eq('is_archived', false)
-      .order('is_pinned', { ascending: false })
-      .order('order_index', { ascending: true });
+      .eq('is_archived', false);
+
+    // Essayer d'ajouter le tri par is_pinned et order_index si les colonnes existent
+    try {
+      query = query.order('is_pinned', { ascending: false }).order('order_index', { ascending: true });
+    } catch (error) {
+      // Si le tri échoue, trier par updated_at à la place
+      query = query.order('updated_at', { ascending: false });
+    }
+
+    const { data, error } = await query;
 
     if (error) {
+      // Si l'erreur est due à is_pinned ou order_index manquants, réessayer sans tri
+      if (error.message?.includes('is_pinned') || error.message?.includes('order_index')) {
+        console.warn('⚠️ Colonnes is_pinned/order_index manquantes, récupération sans tri...');
+        const { data: retryData, error: retryError } = await supabase
+          .from('user_notes')
+          .select('*')
+          .eq('user_id', userId)
+          .eq('is_archived', false)
+          .order('updated_at', { ascending: false });
+        
+        if (retryError) {
+          console.error('❌ Erreur lors de la récupération des notes:', retryError);
+          throw retryError;
+        }
+        return retryData || [];
+      }
       console.error('❌ Erreur lors de la récupération des notes:', error);
       throw error;
     }
@@ -45,34 +69,72 @@ export class UserNotesService {
 
   // Créer une nouvelle note
   static async createNote(userId: string, noteData: CreateNoteData): Promise<UserNote> {
-    // Calculer le prochain order_index
-    const { count } = await supabase
-      .from('user_notes')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', userId)
-      .eq('is_archived', false)
-      .eq('is_pinned', false);
+    // Calculer le prochain order_index (si la colonne existe)
+    let orderIndex = 1;
+    try {
+      const { count } = await supabase
+        .from('user_notes')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId)
+        .eq('is_archived', false);
+      
+      orderIndex = (count || 0) + 1;
+    } catch (error) {
+      // Si la requête échoue (colonne is_pinned n'existe pas), on continue avec orderIndex = 1
+      console.warn('⚠️ Colonne is_pinned non trouvée, utilisation de la valeur par défaut');
+    }
 
-    const orderIndex = (count || 0) + 1;
+    // Préparer les données à insérer
+    const insertData: any = {
+      user_id: userId,
+      title: noteData.title,
+      content: noteData.content || '',
+      category: noteData.category || 'Général',
+      tags: noteData.tags || [],
+      color: noteData.color || '#3B82F6',
+      is_favorite: false,
+      is_archived: false
+    };
+
+    // Ajouter is_pinned et order_index seulement si les colonnes existent
+    // (Supabase les ignorera si elles n'existent pas, mais on les inclut pour compatibilité)
+    try {
+      insertData.is_pinned = false;
+      insertData.order_index = orderIndex;
+    } catch (error) {
+      // Ignorer si les colonnes n'existent pas
+    }
 
     const { data, error } = await supabase
       .from('user_notes')
-      .insert({
-        user_id: userId,
-        title: noteData.title,
-        content: noteData.content || '',
-        category: noteData.category || 'Général',
-        tags: noteData.tags || [],
-        color: noteData.color || '#3B82F6',
-        is_pinned: false,
-        order_index: orderIndex,
-        is_favorite: false,
-        is_archived: false
-      })
+      .insert(insertData)
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      // Si l'erreur est due à is_pinned ou order_index manquants, réessayer sans ces colonnes
+      if (error.message?.includes('is_pinned') || error.message?.includes('order_index')) {
+        console.warn('⚠️ Colonnes is_pinned/order_index manquantes, réessai sans ces colonnes...');
+        const { data: retryData, error: retryError } = await supabase
+          .from('user_notes')
+          .insert({
+            user_id: userId,
+            title: noteData.title,
+            content: noteData.content || '',
+            category: noteData.category || 'Général',
+            tags: noteData.tags || [],
+            color: noteData.color || '#3B82F6',
+            is_favorite: false,
+            is_archived: false
+          })
+          .select()
+          .single();
+        
+        if (retryError) throw retryError;
+        return retryData;
+      }
+      throw error;
+    }
     return data;
   }
 

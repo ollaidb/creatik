@@ -642,7 +642,7 @@ const CommunityContentDetail = () => {
           <Button 
             variant="ghost" 
             size="icon" 
-            onClick={() => navigate('/community/content')} 
+            onClick={() => navigateBack()} 
             className="mr-2"
           >
             <ArrowLeft className="h-5 w-5" />
@@ -666,7 +666,7 @@ const CommunityContentDetail = () => {
           <Button 
             variant="ghost" 
             size="icon" 
-            onClick={() => navigate('/community/content')} 
+            onClick={() => navigateBack()} 
             className="mr-2"
           >
             <ArrowLeft className="h-5 w-5" />
@@ -680,8 +680,8 @@ const CommunityContentDetail = () => {
               <p className="text-muted-foreground mb-4">
                 Le contenu que vous recherchez n'existe pas ou a été supprimé.
               </p>
-              <Button onClick={() => navigate('/community/content')}>
-                Retour aux contenus
+              <Button onClick={() => navigateBack()}>
+                Retour
               </Button>
             </CardContent>
           </Card>
@@ -697,7 +697,7 @@ const CommunityContentDetail = () => {
         <Button 
           variant="ghost" 
           size="icon" 
-          onClick={() => navigate('/community/content')} 
+          onClick={() => navigateBack()} 
           className="mr-2"
         >
           <ArrowLeft className="h-5 w-5" />

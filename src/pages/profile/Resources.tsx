@@ -52,7 +52,7 @@ const resourceDescriptions: Record<typeof resourceTabs[number]['key'], string[]>
   apps: [
     'Sélection d\'apps pour planifier, filmer, monter et analyser.',
     'Filtres par plateforme, prix et niveau.',
-    'Intégration avec Creatik pour synchroniser vos workflows (vision future).'
+    'Intégration avec Kreea pour synchroniser vos workflows (vision future).'
   ],
   taxes: [
     'Calculatrice d\'impôts adaptée à votre pays.',

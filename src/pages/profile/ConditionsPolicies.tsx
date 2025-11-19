@@ -133,7 +133,7 @@ const ConditionsPolicies = () => {
                   <p className="text-muted-foreground">
                     Retrouvez ici toutes les informations légales, conditions d'utilisation, 
                     politiques de confidentialité et autres documents importants concernant 
-                    l'utilisation de l'application Creatik.
+                    l'utilisation de l'application Kreea.
                   </p>
                 </div>
               </div>
@@ -219,7 +219,7 @@ const ConditionsPolicies = () => {
                     Informations importantes
                   </h3>
                   <p className="text-sm text-amber-700 dark:text-amber-300">
-                    En utilisant l'application Creatik, vous acceptez automatiquement 
+                    En utilisant l'application Kreea, vous acceptez automatiquement 
                     nos conditions d'utilisation et notre politique de confidentialité. 
                     Nous vous recommandons de lire attentivement ces documents pour 
                     comprendre vos droits et obligations.

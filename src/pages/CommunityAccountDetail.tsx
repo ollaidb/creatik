@@ -642,7 +642,7 @@ const CommunityAccountDetail = () => {
           <Button 
             variant="ghost" 
             size="icon" 
-            onClick={() => navigate('/community/accounts')} 
+            onClick={() => navigateBack()} 
             className="mr-2"
           >
             <ArrowLeft className="h-5 w-5" />
@@ -666,7 +666,7 @@ const CommunityAccountDetail = () => {
           <Button 
             variant="ghost" 
             size="icon" 
-            onClick={() => navigate('/community/accounts')} 
+            onClick={() => navigateBack()} 
             className="mr-2"
           >
             <ArrowLeft className="h-5 w-5" />
@@ -680,8 +680,8 @@ const CommunityAccountDetail = () => {
               <p className="text-muted-foreground mb-4">
                 Le compte que vous recherchez n'existe pas ou a été supprimé.
               </p>
-              <Button onClick={() => navigate('/community/accounts')}>
-                Retour aux comptes
+              <Button onClick={() => navigateBack()}>
+                Retour
               </Button>
             </CardContent>
           </Card>
@@ -697,7 +697,7 @@ const CommunityAccountDetail = () => {
         <Button 
           variant="ghost" 
           size="icon" 
-          onClick={() => navigate('/community/accounts')} 
+          onClick={() => navigateBack()} 
           className="mr-2"
         >
           <ArrowLeft className="h-5 w-5" />

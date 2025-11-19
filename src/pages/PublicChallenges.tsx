@@ -59,7 +59,6 @@ const PublicChallenges = () => {
   const { favorites: favoriteChallenges, toggleFavorite, isFavorite } = useFavorites('challenge');
   const { favorites: favoriteUsernames, toggleFavorite: toggleUsernameFavorite, isFavorite: isUsernameFavorite } = useFavorites('username');
   const [expandedChallenges, setExpandedChallenges] = useState<Set<string>>(new Set());
-  const [activeTab, setActiveTab] = useState('content');
   const [socialAccounts, setSocialAccounts] = useState<UserSocialAccount[]>([]);
   const [playlists, setPlaylists] = useState<UserContentPlaylist[]>([]);
   const [isSelectModalOpen, setIsSelectModalOpen] = useState(false);
@@ -70,6 +69,21 @@ const PublicChallenges = () => {
     avatar_url?: string;
     email?: string;
   }>>({});
+  
+  // Déterminer l'onglet actif depuis l'URL ou les paramètres
+  const getActiveTab = () => {
+    const tab = searchParams.get('tab');
+    if (tab === 'accounts') return 'accounts';
+    if (tab === 'usernames') return 'usernames';
+    return 'content'; // Par défaut
+  };
+  const [activeTab, setActiveTab] = useState(getActiveTab());
+  
+  // Mettre à jour l'onglet actif si l'URL change
+  useEffect(() => {
+    setActiveTab(getActiveTab());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
   
   // Gérer la navigation vers les pseudos
   const handlePseudosClick = () => {
@@ -353,9 +367,6 @@ const PublicChallenges = () => {
                   <div className="font-medium text-sm">
                     {getCreatorName(challenge)}
                   </div>
-                  <Badge variant="secondary" className="text-xs">
-                    {isAccountType ? 'Compte' : 'Contenu'}
-                  </Badge>
                 </div>
                 <div className="text-xs text-muted-foreground">
                   {formatDate(challenge.created_at)}
@@ -447,13 +458,13 @@ const PublicChallenges = () => {
                             e.stopPropagation(); // Empêcher la navigation de la carte
                             toggleFavorite(challenge.id);
                           }}
-                          className={`flex items-center gap-1 px-3 py-1 rounded-full transition-all duration-200 text-xs ${
-                            isFavorite(challenge.id) 
-                              ? 'text-red-500 bg-red-50 dark:bg-red-900/20' 
-                              : 'text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20'
-                          }`}
+                          className="flex items-center gap-1 px-3 py-1 rounded-full transition-all duration-200 text-xs text-muted-foreground hover:text-muted-foreground focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 active:scale-95"
                         >
-                          <Heart className={`w-3 h-3 sm:w-4 sm:h-4 ${isFavorite(challenge.id) ? 'fill-current' : ''}`} />
+                          <Heart className={`w-3 h-3 sm:w-4 sm:h-4 transition-all ${
+                            isFavorite(challenge.id) 
+                              ? 'text-red-500 fill-red-500' 
+                              : 'text-muted-foreground hover:text-red-500'
+                          }`} />
                           <span>{challenge.likes_count || 0}</span>
                         </Button>
             </div>
@@ -588,12 +599,28 @@ const PublicChallenges = () => {
       </header>
 
       <main className="max-w-4xl mx-auto p-4">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <Tabs value={activeTab} onValueChange={(value) => {
+          setActiveTab(value);
+          // Mettre à jour l'URL avec le paramètre tab sans recharger
+          const params = new URLSearchParams(searchParams);
+          if (value === 'content') {
+            params.delete('tab');
+          } else {
+            params.set('tab', value);
+          }
+          navigate(`/public-challenges?${params.toString()}`, { replace: true });
+        }} className="w-full">
           <TabsList className="grid w-full grid-cols-3 mb-6">
             <TabsTrigger 
               value="content" 
               className="flex items-center gap-2"
-              onClick={() => navigate('/community/content')}
+              onClick={(e) => {
+                // Si on est déjà sur l'onglet, permettre la navigation vers la page détaillée
+                if (activeTab === 'content') {
+                  e.stopPropagation();
+                  navigate('/community/content');
+                }
+              }}
             >
               <Target className="w-4 h-4" />
               Contenu
@@ -601,12 +628,28 @@ const PublicChallenges = () => {
             <TabsTrigger 
               value="accounts" 
               className="flex items-center gap-2"
-              onClick={() => navigate('/community/accounts')}
+              onClick={(e) => {
+                // Si on est déjà sur l'onglet, permettre la navigation vers la page détaillée
+                if (activeTab === 'accounts') {
+                  e.stopPropagation();
+                  navigate('/community/accounts');
+                }
+              }}
             >
               <User className="w-4 h-4" />
               Comptes
             </TabsTrigger>
-            <TabsTrigger value="usernames" className="flex items-center gap-2">
+            <TabsTrigger 
+              value="usernames" 
+              className="flex items-center gap-2"
+              onClick={(e) => {
+                // Navigation vers la page complète des pseudos
+                if (activeTab === 'usernames') {
+                  e.stopPropagation();
+                  navigate('/community/usernames');
+                }
+              }}
+            >
               <AtSign className="w-4 h-4" />
               Pseudos
             </TabsTrigger>
@@ -725,9 +768,7 @@ const PublicChallenges = () => {
                   }
                   try {
                     await toggleUsernameFavorite(ideaId);
-                    toast({
-                      title: isUsernameFavorite(ideaId) ? "Retiré des favoris" : "Ajouté aux favoris"
-                    });
+                    // Pas de toast - même comportement que les catégories
                   } catch (error) {
                     console.error('Erreur lors du like:', error);
                     toast({

@@ -1,4 +1,4 @@
-# CréaTik - Plateforme d'idées de contenu
+# Kreea - Plateforme d'idées de contenu
 
 Une application moderne pour découvrir et organiser des idées de contenu créatif.
 

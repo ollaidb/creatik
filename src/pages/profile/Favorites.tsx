@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useSmartNavigation } from '@/hooks/useNavigation';
 import { motion } from 'framer-motion';
@@ -15,6 +15,10 @@ import { usePublicChallenges } from '@/hooks/usePublicChallenges';
 import { useUsernameIdeas } from '@/hooks/useUsernameIdeas';
 import { useFavorites } from '@/hooks/useFavorites'; 
 import { useAuth } from '@/hooks/useAuth';
+import { useAllExemplesMedia } from '@/hooks/useAllExemplesMedia';
+import { UserProfileService, type UserSocialAccount, type UserSocialPost, type UserContentPlaylist } from '@/services/userProfileService';
+import { SelectNetworkPlaylistModal } from '@/components/modals/SelectNetworkPlaylistModal';
+import { supabase } from '@/integrations/supabase/client';
 import CategoryCard from '@/components/CategoryCard';
 import SubcategoryCard from '@/components/SubcategoryCard';
 import Navigation from '@/components/Navigation';
@@ -41,6 +45,7 @@ const FAVORITE_TABS = [
   { key: 'comptes', label: 'Créateurs' },
   { key: 'sources', label: 'Sources' },
   { key: 'hooks', label: 'Hooks' },
+  { key: 'exemples', label: 'Exemples' },
   { key: 'challenges-content', label: 'Contenu' },
   { key: 'challenges-accounts', label: 'Compte' },
   { key: 'usernames', label: 'Pseudos' },
@@ -61,8 +66,18 @@ const Favorites = () => {
   const { favorites: favoriteAccounts, toggleFavorite: toggleAccountFavorite, isFavorite: isAccountFavorite } = useFavorites('account');
   const { favorites: favoriteSources, toggleFavorite: toggleSourceFavorite, isFavorite: isSourceFavorite } = useFavorites('source');
   const { favorites: favoriteHooks, toggleFavorite: toggleHookFavorite, isFavorite: isHookFavorite } = useFavorites('hook');
+  const { favorites: favoriteExemples, toggleFavorite: toggleExempleFavorite, isFavorite: isExempleFavorite } = useFavorites('exemple-media');
   const { favorites: favoriteChallenges, toggleFavorite: toggleChallengeFavorite, isFavorite: isChallengeFavorite } = useFavorites('challenge');
   const { favorites: favoriteUsernames, toggleFavorite: toggleUsernameFavorite, isFavorite: isUsernameFavorite } = useFavorites('username');
+  
+  // Récupérer tous les exemples média
+  const { data: allExemplesMedia } = useAllExemplesMedia();
+  
+  // États pour la publication
+  const [socialAccounts, setSocialAccounts] = useState<UserSocialAccount[]>([]);
+  const [playlists, setPlaylists] = useState<UserContentPlaylist[]>([]);
+  const [isSelectModalOpen, setIsSelectModalOpen] = useState(false);
+  const [selectedExemple, setSelectedExemple] = useState<{ title: string; id: string } | null>(null);
   const { data: allCategories = [] } = useCategoriesByTheme('all');
   const { data: allSubcategories = [] } = useAllSubcategories();
   const { data: allSubcategoriesLevel2 = [] } = useAllSubcategoriesLevel2();
@@ -87,6 +102,109 @@ const Favorites = () => {
       navigate('/');
     } else {
       navigateBack();
+    }
+  };
+
+  // Charger les comptes sociaux et les playlists de l'utilisateur
+  useEffect(() => {
+    const loadUserData = async () => {
+      if (!user) {
+        setSocialAccounts([]);
+        setPlaylists([]);
+        return;
+      }
+      
+      try {
+        const [accounts, userPlaylists] = await Promise.all([
+          UserProfileService.getSocialAccounts(user.id),
+          UserProfileService.getPlaylists(user.id)
+        ]);
+        setSocialAccounts(accounts);
+        setPlaylists(userPlaylists);
+      } catch (error) {
+        console.error('Erreur lors du chargement des données:', error);
+      }
+    };
+    
+    loadUserData();
+  }, [user]);
+
+  // Fonction pour ajouter un exemple aux publications
+  const handleAddExempleToPublications = (exemple: { id: string; title: string; media_type: string }) => {
+    if (!user) {
+      toast({
+        title: "Connexion requise",
+        description: "Connectez-vous pour ajouter des publications",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (socialAccounts.length === 0) {
+      toast({
+        title: "Aucun réseau social",
+        description: "Vous devez d'abord ajouter un réseau social dans votre profil",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const titleWithMedia = `${exemple.title}${exemple.media_type === 'video' ? ' [Vidéo]' : ' [Image]'}`;
+    setSelectedExemple({ title: titleWithMedia, id: exemple.id });
+    setIsSelectModalOpen(true);
+  };
+
+  const handleConfirmAddToPublications = async (socialAccountId: string, playlistId?: string) => {
+    if (!user || !selectedExemple) return;
+
+    try {
+      // Créer le post social
+      const publicationData: Omit<UserSocialPost, 'id' | 'created_at' | 'updated_at'> = {
+        user_id: user.id,
+        social_account_id: socialAccountId,
+        title: selectedExemple.title,
+        content: undefined,
+        status: 'draft',
+        scheduled_date: undefined,
+        published_date: undefined,
+        engagement_data: null
+      };
+
+      const newPost = await UserProfileService.addSocialPost(publicationData);
+      
+      if (playlistId) {
+        await UserProfileService.addPostToPlaylist(playlistId, newPost.id);
+      }
+
+      // Créer aussi une entrée dans user_publications pour l'affichage dans la page Publications
+      const { error: pubError } = await supabase
+        .from('user_publications')
+        .insert({
+          user_id: user.id,
+          content_type: 'exemple-media',
+          title: selectedExemple.title,
+          description: `Exemple média ajouté aux publications`,
+          status: 'approved',
+        });
+
+      if (pubError) {
+        console.error('Erreur lors de la création de la publication:', pubError);
+        // Ne pas bloquer si cette insertion échoue
+      }
+
+      toast({
+        title: "Ajouté",
+        description: "L'exemple a été ajouté à vos publications",
+      });
+      
+      setSelectedExemple(null);
+    } catch (error) {
+      console.error('Erreur lors de l\'ajout de la publication:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible d'ajouter l'exemple aux publications",
+        variant: "destructive",
+      });
     }
   };
 
@@ -117,6 +235,9 @@ const Favorites = () => {
   const contentChallengesToShow = challengesToShow.filter(challenge => challenge.challenge_type !== 'account');
   const accountChallengesToShow = challengesToShow.filter(challenge => challenge.challenge_type === 'account');
   const usernamesToShow = allUsernames.filter(username => favoriteUsernames.includes(username.id));
+  
+  // Filtrer les exemples favoris
+  const exemplesToShow = allExemplesMedia?.all?.filter(exemple => favoriteExemples.includes(exemple.id)) || [];
 
   // Logs de débogage
   console.log('🔍 Debug Favorites:', {
@@ -926,6 +1047,121 @@ const Favorites = () => {
           </>
         )}
 
+        {selectedTab === 'exemples' && (
+          <>
+            {exemplesToShow.length > 0 ? (
+              <motion.div
+                className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4"
+                variants={containerVariants}
+                initial="hidden"
+                animate="visible"
+              >
+                {exemplesToShow.map((exemple, index) => (
+                  <motion.div
+                    key={exemple.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    className="relative group"
+                  >
+                    <div className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all duration-200">
+                      <div className="aspect-square relative">
+                        {exemple.media_type === 'image' ? (
+                          <img
+                            src={exemple.media_url}
+                            alt={exemple.title}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = 'https://via.placeholder.com/300x300?text=Image';
+                            }}
+                          />
+                        ) : (
+                          <>
+                            {exemple.thumbnail_url ? (
+                              <img
+                                src={exemple.thumbnail_url}
+                                alt={exemple.title}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).src = 'https://via.placeholder.com/300x300?text=Video';
+                                }}
+                              />
+                            ) : (
+                              <div className="w-full h-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                                <span className="text-4xl">▶️</span>
+                              </div>
+                            )}
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <div className="w-12 h-12 rounded-full bg-white/90 dark:bg-gray-800/90 flex items-center justify-center">
+                                <span className="text-xl">▶</span>
+                              </div>
+                            </div>
+                          </>
+                        )}
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-200" />
+                      </div>
+                      <div className="p-3">
+                        <p className="text-sm text-gray-900 dark:text-white font-medium line-clamp-2 mb-1">
+                          {exemple.title}
+                        </p>
+                        {exemple.creator_name && (
+                          <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-1">
+                            {exemple.creator_name}
+                          </p>
+                        )}
+                      </div>
+                      <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleAddExempleToPublications(exemple);
+                          }}
+                          className="p-1.5 h-7 w-7 bg-white/90 dark:bg-gray-800/90 hover:bg-white dark:hover:bg-gray-800"
+                          title="Ajouter aux publications"
+                        >
+                          <Plus size={14} />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleExempleFavorite(exemple.id);
+                            toast({
+                              title: isExempleFavorite(exemple.id) ? "Retiré" : "Ajouté"
+                            });
+                          }}
+                          className={`p-1.5 h-7 w-7 bg-white/90 dark:bg-gray-800/90 hover:bg-white dark:hover:bg-gray-800 ${
+                            isExempleFavorite(exemple.id) 
+                              ? 'text-red-500' 
+                              : 'text-gray-400'
+                          }`}
+                          title="Retirer des favoris"
+                        >
+                          <Heart 
+                            size={14} 
+                            className={isExempleFavorite(exemple.id) ? 'fill-current' : ''}
+                          />
+                        </Button>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </motion.div>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-60 text-center px-4">
+                <Heart className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 mb-4" />
+                <h3 className="text-base sm:text-lg font-medium">Aucun favori trouvé</h3>
+                <p className="text-muted-foreground mt-2 text-sm sm:text-base">
+                  Vous n'avez pas encore ajouté d'exemples en favoris
+                </p>
+              </div>
+            )}
+          </>
+        )}
+
         {selectedTab === 'challenges-content' && (
           <>
             {contentChallengesToShow.length > 0 ? (
@@ -1124,6 +1360,23 @@ const Favorites = () => {
           </>
         )}
       </main>
+
+      {/* Modale de sélection réseau/playlist */}
+      {selectedExemple && user && (
+        <SelectNetworkPlaylistModal
+          isOpen={isSelectModalOpen}
+          onClose={() => {
+            setIsSelectModalOpen(false);
+            setSelectedExemple(null);
+          }}
+          onConfirm={handleConfirmAddToPublications}
+          userId={user.id}
+          socialAccounts={socialAccounts}
+          playlists={playlists}
+          title={selectedExemple.title}
+        />
+      )}
+
       <Navigation />
     </div>
   );

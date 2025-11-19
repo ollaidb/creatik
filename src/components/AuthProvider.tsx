@@ -103,9 +103,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     profileError.code === '42501' ||
                     profileError.message?.includes('403') ||
                     profileError.message?.includes('permission denied')) {
-                  console.warn('⚠️ Erreur d\'autorisation lors du chargement du profil (RLS):', profileError);
-                  console.warn('Code d\'erreur:', profileError.code, '- Message:', profileError.message);
-                  console.warn('💡 Solution: Exécutez le script fix-profiles-rls-simple.sql dans Supabase SQL Editor');
+                  // Ne logger qu'une seule fois pour éviter le spam console
+                  if (!localStorage.getItem('rls_error_logged')) {
+                    console.warn('⚠️ Erreur RLS détectée. Exécutez fix-profiles-rls-simple.sql dans Supabase SQL Editor');
+                    localStorage.setItem('rls_error_logged', 'true');
+                  }
                   // Ne pas bloquer l'application, continuer sans le user_type
                 } else {
                   console.warn('Erreur lors du chargement du type d\'utilisateur:', profileError);
@@ -246,9 +248,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     profileError.code === '42501' ||
                     profileError.message?.includes('403') ||
                     profileError.message?.includes('permission denied')) {
-                  console.warn('⚠️ Erreur d\'autorisation lors du chargement du profil (RLS):', profileError);
-                  console.warn('Code d\'erreur:', profileError.code, '- Message:', profileError.message);
-                  console.warn('💡 Solution: Exécutez le script fix-profiles-rls-simple.sql dans Supabase SQL Editor');
+                  // Ne logger qu'une seule fois pour éviter le spam console
+                  if (!localStorage.getItem('rls_error_logged')) {
+                    console.warn('⚠️ Erreur RLS détectée. Exécutez fix-profiles-rls-simple.sql dans Supabase SQL Editor');
+                    localStorage.setItem('rls_error_logged', 'true');
+                  }
                   // Ne pas bloquer l'application, continuer sans le user_type
                 } else {
                   console.warn('Erreur lors du chargement du type d\'utilisateur:', profileError);

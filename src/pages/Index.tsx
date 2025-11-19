@@ -26,10 +26,10 @@ import { useChallenges } from "@/hooks/useChallenges";
 import type { Event } from "@/hooks/useEvents";
 import { UserProfileService, type UserSocialAccount, type UserSocialPost, type UserContentPlaylist } from "@/services/userProfileService";
 import { useNetworkStats, type NetworkStats } from "@/hooks/useNetworkStats";
-import { usePersonalizedRecommendations } from "@/hooks/usePersonalizedRecommendations";
 import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { SelectNetworkPlaylistModal } from "@/components/modals/SelectNetworkPlaylistModal";
+import { RecommendationsSection } from "@/components/RecommendationsSection";
 
 type UserMeta = {
   first_name?: string;
@@ -63,8 +63,6 @@ const Index: React.FC = () => {
   const [isSelectModalOpen, setIsSelectModalOpen] = useState(false);
   const [selectedTitle, setSelectedTitle] = useState<{ title: string; titleId: string } | null>(null);
   
-  // Hook pour les recommandations personnalisées
-  const { recommendations, loading: loadingRecommendations } = usePersonalizedRecommendations();
   
   // Mémoïser la date d'aujourd'hui pour éviter les rechargements
   const today = useMemo(() => {
@@ -717,104 +715,13 @@ const Index: React.FC = () => {
         </section>
       )}
 
-      {/* Section Recommandations de titres */}
-      {user && recommendations.length > 0 && (
-        <section className="container mx-auto px-4 py-2">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
-                <Sparkles className="w-5 h-5" />
-                Recommandations pour vous
-              </h2>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate('/categories')}
-                className="text-xs"
-              >
-                Voir plus
-                <ArrowRight className="w-3 h-3 ml-1" />
-              </Button>
-            </div>
-            
-            {loadingRecommendations ? (
-              <Card>
-                <CardContent className="p-6">
-                  <div className="text-center text-muted-foreground">Chargement des recommandations...</div>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="max-h-96 overflow-y-auto space-y-3 pr-2 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
-                {recommendations.map((rec) => (
-                  <motion.div
-                    key={`rec-${rec.id}`}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3 }}
-                    className="bg-card border border-border rounded-lg p-4 hover:shadow-md transition-all duration-200"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div 
-                        className="flex-1 min-w-0 cursor-pointer"
-                        onClick={() => {
-                          if (rec.category_id && rec.subcategory_id) {
-                            navigate(`/category/${rec.category_id}/subcategory/${rec.subcategory_id}`);
-                          } else if (rec.category_id) {
-                            navigate(`/category/${rec.category_id}/subcategories`);
-                          }
-                        }}
-                      >
-                        <h3 className="text-foreground font-medium text-base leading-relaxed">
-                          {rec.title}
-                        </h3>
-                      </div>
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleLikeTitle(rec.id);
-                          }}
-                          className={`p-2 h-8 w-8 transition-all duration-200 ${
-                            isTitleFavorite(rec.id) 
-                              ? 'text-red-500 hover:text-red-600' 
-                              : 'text-gray-400 hover:text-red-400'
-                          }`}
-                        >
-                          <Heart 
-                            size={16} 
-                            className={`transition-all duration-200 ${
-                              isTitleFavorite(rec.id) 
-                                ? 'fill-red-500 text-red-500' 
-                                : 'fill-transparent text-current'
-                            }`}
-                          />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleAddToPublications(rec.title, rec.id);
-                          }}
-                          className="p-2 h-8 w-8 text-gray-400 hover:text-primary transition-all duration-200"
-                          title="Ajouter aux publications"
-                        >
-                          <Plus size={16} />
-                        </Button>
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            )}
-          </motion.div>
-        </section>
+      {/* Section Recommandations de titres avec scroll infini et glissement vertical */}
+      {user && (
+        <RecommendationsSection
+          onAddToPublications={handleAddToPublications}
+          onLikeTitle={handleLikeTitle}
+          isTitleFavorite={isTitleFavorite}
+        />
       )}
 
       {/* <TrendingSection /> */}

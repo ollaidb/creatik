@@ -12,7 +12,8 @@ export type PublicationContentType =
   | 'account'
   | 'source'
   | 'pseudo'
-  | 'creator';
+  | 'creator'
+  | 'exemple-media';
 
 export interface Publication {
   id: string;

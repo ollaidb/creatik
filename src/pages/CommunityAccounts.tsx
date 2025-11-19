@@ -352,9 +352,6 @@ const CommunityAccounts = () => {
                   <div className="font-medium text-sm">
                     {getCreatorName(challenge)}
                   </div>
-                  <Badge variant="secondary" className="text-xs">
-                    Compte
-                  </Badge>
                 </div>
                 <div className="text-xs text-muted-foreground">
                   {formatDate(challenge.created_at)}
@@ -442,13 +439,13 @@ const CommunityAccounts = () => {
                   e.stopPropagation();
                   toggleFavorite(challenge.id);
                 }}
-                className={`flex items-center gap-1 px-3 py-1 rounded-full transition-all duration-200 text-xs ${
-                  isFavorite(challenge.id) 
-                    ? 'text-red-500 bg-red-50 dark:bg-red-900/20' 
-                    : 'text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20'
-                }`}
+                className="flex items-center gap-1 px-3 py-1 rounded-full transition-all duration-200 text-xs text-muted-foreground hover:text-muted-foreground focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 active:scale-95"
               >
-                <Heart className={`w-3 h-3 sm:w-4 sm:h-4 ${isFavorite(challenge.id) ? 'fill-current' : ''}`} />
+                <Heart className={`w-3 h-3 sm:w-4 sm:h-4 transition-all ${
+                  isFavorite(challenge.id) 
+                    ? 'text-red-500 fill-red-500' 
+                    : 'text-muted-foreground hover:text-red-500'
+                }`} />
                 <span>{challenge.likes_count || 0}</span>
               </Button>
             </div>
@@ -501,7 +498,7 @@ const CommunityAccounts = () => {
             <Button 
               variant="ghost" 
               size="sm"
-              onClick={() => navigate('/public-challenges')} 
+              onClick={() => navigateBack()} 
               className="p-2 h-10 w-10 rounded-full text-foreground hover:bg-accent"
             >
               <ArrowLeft size={20} />
@@ -533,7 +530,7 @@ const CommunityAccounts = () => {
             <Button 
               variant="ghost" 
               size="sm"
-              onClick={() => navigate('/public-challenges')} 
+              onClick={() => navigateBack()} 
               className="p-2 h-10 w-10 rounded-full text-foreground hover:bg-accent"
             >
               <ArrowLeft size={20} />
@@ -570,7 +567,7 @@ const CommunityAccounts = () => {
           <Button 
             variant="ghost" 
             size="sm"
-            onClick={() => navigate('/public-challenges')} 
+            onClick={() => navigateBack()} 
             className="p-2 h-10 w-10 rounded-full text-foreground hover:bg-accent"
           >
             <ArrowLeft size={20} />

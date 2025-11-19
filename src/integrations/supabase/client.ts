@@ -16,7 +16,7 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
   // Configuration globale pour gérer les erreurs
   global: {
     headers: {
-      'x-client-info': 'creatik-web',
+      'x-client-info': 'kreea-web',
     },
   },
 });

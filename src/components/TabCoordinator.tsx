@@ -12,7 +12,7 @@ export const TabCoordinator = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     // Utiliser BroadcastChannel pour la communication entre onglets
     if (typeof BroadcastChannel !== 'undefined') {
-      channelRef.current = new BroadcastChannel('creatik-tab-coordinator');
+      channelRef.current = new BroadcastChannel('kreea-tab-coordinator');
 
       // Vérifier si on est l'onglet principal
       const checkPrimaryTab = () => {
@@ -91,7 +91,7 @@ export const TabCoordinator = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     // Stocker l'état dans sessionStorage pour que les autres composants puissent y accéder
     if (typeof window !== 'undefined') {
-      (window as { __CREATIK_IS_PRIMARY_TAB__?: boolean }).__CREATIK_IS_PRIMARY_TAB__ = isPrimaryTab;
+      (window as { __KREEA_IS_PRIMARY_TAB__?: boolean }).__KREEA_IS_PRIMARY_TAB__ = isPrimaryTab;
     }
   }, [isPrimaryTab]);
 
@@ -104,7 +104,7 @@ export const TabCoordinator = ({ children }: { children: React.ReactNode }) => {
 export const useIsPrimaryTab = (): boolean => {
   const [isPrimary, setIsPrimary] = useState(() => {
     if (typeof window !== 'undefined') {
-      return (window as { __CREATIK_IS_PRIMARY_TAB__?: boolean }).__CREATIK_IS_PRIMARY_TAB__ ?? 
+      return (window as { __KREEA_IS_PRIMARY_TAB__?: boolean }).__KREEA_IS_PRIMARY_TAB__ ?? 
              sessionStorage.getItem('tab-primary') === 'true';
     }
     return true;

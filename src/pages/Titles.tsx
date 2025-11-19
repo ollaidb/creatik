@@ -89,6 +89,7 @@ const Titles = () => {
   const { data: articles = [], isLoading: articlesLoading } = useArticles(currentSubcategoryId, detectedNetwork);
   const { data: motsCles = [], isLoading: motsClesLoading } = useMotsCles(currentSubcategoryId, detectedNetwork);
   const { data: exemples = [], isLoading: exemplesLoading } = useExemples(currentSubcategoryId, detectedNetwork);
+  
   const { data: idees = [], isLoading: ideesLoading } = useIdees(currentSubcategoryId, detectedNetwork);
   const { data: podcasts = [], isLoading: podcastsLoading } = usePodcasts(currentSubcategoryId, detectedNetwork);
   
@@ -364,6 +365,7 @@ const Titles = () => {
       });
     }
   };
+
 
   const handleLikeIdee = async (ideeId: string) => {
     try {
@@ -680,15 +682,31 @@ const Titles = () => {
 
       {/* Contenu principal */}
       <div className="px-4 py-4">
-        {/* Barre de recherche intelligente */}
+        {/* Barre de recherche intelligente avec bouton Exemple */}
         <div className="mb-6">
           <div className="max-w-lg mx-auto md:max-w-2xl">
-            <LocalSearchBar 
-              value={searchTerm}
-              onChange={setSearchTerm}
-              placeholder="Rechercher tous les titres..."
-              className="w-full"
-            />
+            <div className="flex items-center gap-2">
+              <LocalSearchBar 
+                value={searchTerm}
+                onChange={setSearchTerm}
+                placeholder="Rechercher tous les titres..."
+                className="flex-1"
+              />
+              <Button 
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  if (isLevel2) {
+                    navigate(`/category/${categoryId}/subcategory/${subcategoryId}/subcategory-level2/${subcategoryLevel2Id}/exemples?network=${selectedNetwork}`);
+                  } else {
+                    navigate(`/category/${categoryId}/subcategory/${subcategoryId}/exemples?network=${selectedNetwork}`);
+                  }
+                }}
+                className="px-4 py-1.5 rounded-full text-sm whitespace-nowrap"
+              >
+                Exemple
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -1058,63 +1076,6 @@ const Titles = () => {
                               size={16} 
                               className={`transition-all duration-200 ${
                                 isMotsClesFavorite(motsCle.id) 
-                                  ? 'fill-red-500 text-red-500' 
-                                  : 'fill-transparent text-current'
-                              }`}
-                            />
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
-                ))
-              )}
-            </motion.div>
-          )}
-
-          {activeTab === 'exemple' && (
-            <motion.div 
-              className="space-y-4"
-              variants={containerVariants}
-              initial="hidden"
-              animate="visible"
-            >
-              {exemples.length === 0 ? (
-                <div className="text-center py-12">
-                  <p className="text-gray-500 dark:text-gray-400 mb-4">
-                    Aucun exemple disponible pour {getNetworkDisplayName(detectedNetwork)}
-                  </p>
-                </div>
-              ) : (
-                exemples.map((exemple) => (
-                  <motion.div key={exemple.id} variants={itemVariants}>
-                    <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all duration-200">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1 min-w-0">
-                          <h3 className="text-gray-900 dark:text-white font-medium text-base leading-relaxed">
-                            {exemple.title}
-                          </h3>
-                          {exemple.content && (
-                            <p className="text-gray-600 dark:text-gray-400 text-sm mt-2">
-                              {exemple.content}
-                            </p>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-2 ml-4">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleLikeExemple(exemple.id)}
-                            className={`p-2 h-8 w-8 transition-all duration-200 ${
-                              isExempleFavorite(exemple.id) 
-                                ? 'text-red-500 hover:text-red-600' 
-                                : 'text-gray-400 hover:text-red-400'
-                            }`}
-                          >
-                            <Heart 
-                              size={16} 
-                              className={`transition-all duration-200 ${
-                                isExempleFavorite(exemple.id) 
                                   ? 'fill-red-500 text-red-500' 
                                   : 'fill-transparent text-current'
                               }`}

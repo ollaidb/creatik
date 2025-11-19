@@ -11,7 +11,7 @@ import {
   CarouselNext, 
   CarouselPrevious 
 } from "@/components/ui/carousel";
-import { Heart } from "lucide-react";
+import { Heart, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const Hero: React.FC = () => {
@@ -51,7 +51,7 @@ const Hero: React.FC = () => {
           {/* Version Desktop - Titre et barre sur même ligne */}
           <div className="hidden md:flex items-center justify-between px-8">
             <h1 className="text-2xl md:text-3xl font-bold text-foreground">
-              Creatik
+              Kreea
             </h1>
             <div className="flex items-center gap-3">
               <div className="w-[600px]">
@@ -73,6 +73,16 @@ const Hero: React.FC = () => {
               <Button
                 variant="ghost"
                 size="icon"
+                onClick={() => navigate('/notes')}
+                className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-accent"
+                title="Notes"
+              >
+                <BookOpen className="h-5 w-5" />
+              </Button>
+
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={() => navigate('/profile/notifications')}
                 className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-accent"
                 title="Notifications"
@@ -87,7 +97,7 @@ const Hero: React.FC = () => {
           <div className="md:hidden">
             <div className="flex items-center justify-between mb-6">
               <h1 className="text-2xl font-bold text-foreground">
-                Creatik
+                Kreea
               </h1>
               <div className="flex items-center gap-2">
                 <Button
@@ -97,6 +107,16 @@ const Hero: React.FC = () => {
                   className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-accent"
                 >
                   <Heart className="h-5 w-5" />
+                </Button>
+
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => navigate('/notes')}
+                  className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-accent"
+                  title="Notes"
+                >
+                  <BookOpen className="h-5 w-5" />
                 </Button>
 
                 <Button

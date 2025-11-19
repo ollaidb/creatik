@@ -34,7 +34,7 @@ const Contact = () => {
     {
       icon: MessageCircle,
       title: 'Question générale',
-      description: 'Pour toute question sur CréaTik'
+      description: 'Pour toute question sur Kreea'
     },
     {
       icon: Bug,

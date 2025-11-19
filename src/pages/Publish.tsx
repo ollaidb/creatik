@@ -47,19 +47,36 @@ const Publish = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
-    content_type: 'title' as 'category' | 'subcategory' | 'subcategory_level2' | 'title' | 'content' | 'source' | 'account' | 'creator' | 'hooks' | 'pseudo',
+    content_type: 'title' as 'category' | 'subcategory' | 'subcategory_level2' | 'title' | 'content' | 'source' | 'account' | 'creator' | 'hooks' | 'pseudo' | 'exemple-media',
     category_id: '',
     subcategory_id: '',
     subcategory_level2_id: '',
     description: '', // Added for content
     url: '', // Added pour les sources
-    theme: '' // Added for content theme
+    theme: '', // Added for content theme
+    media_url: '', // Added for exemple-media
+    media_type: 'image' as 'image' | 'video', // Added for exemple-media
+    thumbnail_url: '', // Added for exemple-media
+    creator_name: '', // Added for exemple-media
+    platform: '' // Added for exemple-media
   });
 
   // États pour les barres de recherche
   const [categorySearch, setCategorySearch] = useState('');
   const [subcategorySearch, setSubcategorySearch] = useState('');
   const [subcategoryLevel2Search, setSubcategoryLevel2Search] = useState('');
+  
+  // État pour proposer d'ajouter un exemple après création d'une sous-catégorie
+  const [showAddExempleAfterSubcategory, setShowAddExempleAfterSubcategory] = useState(false);
+  const [newSubcategoryId, setNewSubcategoryId] = useState<string | null>(null);
+  const [newSubcategoryLevel2Id, setNewSubcategoryLevel2Id] = useState<string | null>(null);
+  const [newCategoryId, setNewCategoryId] = useState<string | null>(null);
+  
+  // États pour l'upload de fichiers
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedThumbnailFile, setSelectedThumbnailFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   const [showSubcategoryDropdown, setShowSubcategoryDropdown] = useState(false);
   const [showSubcategoryLevel2Dropdown, setShowSubcategoryLevel2Dropdown] = useState(false);
@@ -163,9 +180,18 @@ const Publish = () => {
       return;
     }
 
-    if (!formData.title || !formData.content_type) {
+    // Le titre n'est pas obligatoire pour les exemples
+    if (!formData.content_type) {
       toast({
-        title: "Champs manquants",
+        title: "Type de contenu requis",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if (formData.content_type !== 'exemple-media' && !formData.title) {
+      toast({
+        title: "Titre requis",
         variant: "destructive"
       });
       return;
@@ -316,6 +342,34 @@ const Publish = () => {
         variant: "destructive"
       });
       return;
+    }
+
+    // Validation pour exemple-media
+    if (formData.content_type === 'exemple-media') {
+      if (!formData.subcategory_id && !formData.subcategory_level2_id) {
+        toast({
+          title: "Sous-catégorie requise",
+          description: "Veuillez sélectionner une sous-catégorie ou sous-catégorie niveau 2",
+          variant: "destructive"
+        });
+        return;
+      }
+      if (!formData.media_url) {
+        toast({
+          title: "URL média requise",
+          description: "Veuillez ajouter l'URL de l'image ou de la vidéo",
+          variant: "destructive"
+        });
+        return;
+      }
+      if (!formData.platform) {
+        toast({
+          title: "Plateforme requise",
+          description: "Veuillez sélectionner une plateforme (Instagram, TikTok, etc.)",
+          variant: "destructive"
+        });
+        return;
+      }
     }
 
     if (formData.content_type === 'account' && (!formData.description || formData.description.trim().length === 0)) {
@@ -700,8 +754,32 @@ const Publish = () => {
         
         createdItemId = subcategoryData.id;
         console.log('Sous-catégorie publiée avec succès, ID:', createdItemId);
+        
+        // Proposer d'ajouter un exemple
+        setNewSubcategoryId(createdItemId);
+        setNewCategoryId(formData.category_id);
+        setNewSubcategoryLevel2Id(null);
+        setShowAddExempleAfterSubcategory(true);
+        
+        // Pré-remplir le formulaire pour l'exemple
+        setFormData(prev => ({
+          ...prev,
+          content_type: 'exemple-media',
+          category_id: formData.category_id,
+          subcategory_id: createdItemId,
+          subcategory_level2_id: '',
+          title: '',
+          media_type: 'image',
+          media_url: '',
+          thumbnail_url: '',
+          creator_name: '',
+          platform: ''
+        }));
+        
         toast({
-          title: "Sous-catégorie publiée"
+          title: "Sous-catégorie publiée",
+          description: "Voulez-vous ajouter un exemple pour cette sous-catégorie ?",
+          duration: 5000
         });
       } else if (formData.content_type === 'subcategory_level2') {
         console.log('Publication sous-catégorie niveau 2...');
@@ -749,9 +827,32 @@ const Publish = () => {
         
         createdItemId = subcategoryLevel2Data.id;
         console.log('Sous-catégorie niveau 2 publiée avec succès, ID:', createdItemId);
+        
+        // Proposer d'ajouter un exemple
+        setNewSubcategoryLevel2Id(createdItemId);
+        setNewSubcategoryId(formData.subcategory_id);
+        setNewCategoryId(formData.category_id);
+        setShowAddExempleAfterSubcategory(true);
+        
+        // Pré-remplir le formulaire pour l'exemple
+        setFormData(prev => ({
+          ...prev,
+          content_type: 'exemple-media',
+          category_id: formData.category_id,
+          subcategory_id: formData.subcategory_id,
+          subcategory_level2_id: createdItemId,
+          title: '',
+          media_type: 'image',
+          media_url: '',
+          thumbnail_url: '',
+          creator_name: '',
+          platform: ''
+        }));
+        
         toast({
           title: "Sous-catégorie niveau 2 publiée",
-          description: "La page des sous-catégories de niveau 2 a été automatiquement activée pour cette sous-catégorie"
+          description: "Voulez-vous ajouter un exemple pour cette sous-catégorie ?",
+          duration: 5000
         });
       } else if (formData.content_type === 'title') {
         console.log('Publication titre...');
@@ -1024,6 +1125,84 @@ const Publish = () => {
         toast({
           title: "Pseudo publié"
         });
+      } else if (formData.content_type === 'exemple-media') {
+        console.log('Publication exemple média...');
+        
+        // Vérifier le nombre d'exemples existants pour cette sous-catégorie
+        const targetSubcategoryId = formData.subcategory_level2_id || formData.subcategory_id;
+        const { data: existingExemples, error: countError } = await supabase
+          .from('content_exemples_media')
+          .select('id, media_type')
+          .eq(formData.subcategory_level2_id ? 'subcategory_level2_id' : 'subcategory_id', targetSubcategoryId);
+        
+        if (countError) {
+          console.error('Erreur lors de la vérification des exemples:', countError);
+          throw countError;
+        }
+        
+        const existingImages = existingExemples?.filter(e => e.media_type === 'image').length || 0;
+        const existingVideos = existingExemples?.filter(e => e.media_type === 'video').length || 0;
+        
+        if (formData.media_type === 'image' && existingImages >= 5) {
+          toast({
+            title: "Limite atteinte",
+            description: "Maximum 5 images par sous-catégorie",
+            variant: "destructive"
+          });
+          setIsSubmitting(false);
+          return;
+        }
+        
+        if (formData.media_type === 'video' && existingVideos >= 5) {
+          toast({
+            title: "Limite atteinte",
+            description: "Maximum 5 vidéos par sous-catégorie",
+            variant: "destructive"
+          });
+          setIsSubmitting(false);
+          return;
+        }
+        
+        // Déterminer l'order_index (max + 1)
+        const maxOrderIndex = existingExemples?.reduce((max, e) => Math.max(max, (e as any).order_index || 0), -1) ?? -1;
+        
+        // Utiliser un titre par défaut si non fourni
+        const exempleTitle = formData.title || `Exemple ${formData.media_type === 'image' ? 'd\'image' : 'de vidéo'}`;
+        
+        const exempleData: any = {
+          title: exempleTitle,
+          description: formData.description || undefined,
+          media_type: formData.media_type,
+          media_url: formData.media_url,
+          thumbnail_url: formData.thumbnail_url || undefined,
+          creator_name: formData.creator_name || undefined,
+          platform: formData.platform,
+          order_index: maxOrderIndex + 1
+        };
+        
+        if (formData.subcategory_level2_id) {
+          exempleData.subcategory_level2_id = formData.subcategory_level2_id;
+        } else {
+          exempleData.subcategory_id = formData.subcategory_id;
+        }
+        
+        const { data: exempleMediaData, error } = await supabase
+          .from('content_exemples_media')
+          .insert(exempleData)
+          .select()
+          .single();
+        
+        if (error) {
+          console.error('Erreur exemple média:', error);
+          throw error;
+        }
+        
+        createdItemId = exempleMediaData.id;
+        console.log('Exemple média publié avec succès, ID:', createdItemId);
+        toast({
+          title: "Exemple publié",
+          description: `L'exemple ${formData.media_type === 'image' ? 'd\'image' : 'de vidéo'} a été ajouté avec succès.`
+        });
       }
       }
 
@@ -1100,6 +1279,11 @@ const Publish = () => {
           categoryId = formData.category_id;
           subcategoryId = formData.subcategory_id;
           subcategoryLevel2Id = formData.subcategory_level2_id;
+        } else if (formData.content_type === 'exemple-media') {
+          // Pour les exemples, on utilise les IDs du formulaire
+          categoryId = formData.category_id;
+          subcategoryId = formData.subcategory_id;
+          subcategoryLevel2Id = formData.subcategory_level2_id;
         }
         
         const publicationData = {
@@ -1112,6 +1296,8 @@ const Publish = () => {
           subcategory_level2_id: subcategoryLevel2Id || null,
           platform: formData.content_type === 'creator'
             ? primaryCreatorSocialNetwork?.name || null
+            : formData.content_type === 'exemple-media'
+            ? formData.platform || null
             : selectedNetwork || null,
           url: formData.content_type === 'creator'
             ? primaryCreatorNetwork?.url || null
@@ -1168,17 +1354,46 @@ const Publish = () => {
       const savedContentType = formData.content_type;
       const savedNetwork = selectedNetwork;
 
-      // Réinitialiser le formulaire
-      setFormData({
-        title: '',
-        content_type: 'title',
-        category_id: '',
-        subcategory_id: '',
-        subcategory_level2_id: '',
-        description: '',
-        url: '',
-        theme: ''
-      });
+      // Si on vient d'ajouter un exemple après une sous-catégorie, ne pas réinitialiser complètement
+      if (showAddExempleAfterSubcategory && savedContentType === 'exemple-media') {
+        // Réinitialiser seulement les champs d'exemple, garder la sous-catégorie
+        setFormData(prev => ({
+          ...prev,
+          content_type: 'title',
+          title: '',
+          media_url: '',
+          media_type: 'image',
+          thumbnail_url: '',
+          creator_name: '',
+          platform: '',
+          description: ''
+        }));
+        setShowAddExempleAfterSubcategory(false);
+        setNewSubcategoryId(null);
+        setNewSubcategoryLevel2Id(null);
+        setNewCategoryId(null);
+      } else {
+        // Réinitialiser le formulaire complètement
+        setFormData({
+          title: '',
+          content_type: 'title',
+          category_id: '',
+          subcategory_id: '',
+          subcategory_level2_id: '',
+          description: '',
+          url: '',
+          theme: '',
+          media_url: '',
+          media_type: 'image',
+          thumbnail_url: '',
+          creator_name: '',
+          platform: ''
+        });
+        setShowAddExempleAfterSubcategory(false);
+        setNewSubcategoryId(null);
+        setNewSubcategoryLevel2Id(null);
+        setNewCategoryId(null);
+      }
       setSelectedNetwork('');
       setWantsToTagCreator(null);
       setSelectedCreator(null);
@@ -1375,18 +1590,27 @@ const Publish = () => {
       case 'creator': return 'Entrez le nom du créateur';
       case 'hooks': return 'Entrez votre hook pour captiver l\'audience';
       case 'pseudo': return 'Entrez le pseudo / nom d\'utilisateur';
+      case 'exemple-media': return 'Entrez le titre de l\'exemple';
       default: return 'Entrez le titre de votre contenu';
     }
   };
 
   // Fonction pour déterminer si on doit afficher la sélection de catégorie
   const shouldShowCategorySelection = () => {
-    return ['subcategory', 'subcategory_level2', 'title', 'source', 'creator', 'hooks'].includes(formData.content_type);
+    // Ne pas afficher si on vient de créer une sous-catégorie et qu'on ajoute un exemple
+    if (showAddExempleAfterSubcategory && formData.content_type === 'exemple-media') {
+      return false;
+    }
+    return ['subcategory', 'subcategory_level2', 'title', 'source', 'creator', 'hooks', 'exemple-media'].includes(formData.content_type);
   };
 
   // Fonction pour déterminer si on doit afficher la sélection de sous-catégorie
   const shouldShowSubcategorySelection = () => {
-    return ['subcategory_level2', 'title', 'source', 'creator', 'hooks'].includes(formData.content_type) && formData.category_id;
+    // Ne pas afficher si on vient de créer une sous-catégorie et qu'on ajoute un exemple
+    if (showAddExempleAfterSubcategory && formData.content_type === 'exemple-media') {
+      return false;
+    }
+    return ['subcategory_level2', 'title', 'source', 'creator', 'hooks', 'exemple-media'].includes(formData.content_type) && formData.category_id;
   };
 
   // Fonction pour filtrer les sous-catégories qui ont des sous-catégories de niveau 2
@@ -1403,7 +1627,11 @@ const Publish = () => {
 
   // Fonction pour déterminer si on doit afficher la sélection de sous-catégorie de niveau 2
   const shouldShowSubcategoryLevel2Selection = () => {
-    if (!['title', 'source', 'creator', 'hooks'].includes(formData.content_type) || !formData.subcategory_id || !formData.category_id) {
+    // Ne pas afficher si on vient de créer une sous-catégorie et qu'on ajoute un exemple
+    if (showAddExempleAfterSubcategory && formData.content_type === 'exemple-media') {
+      return false;
+    }
+    if (!['title', 'source', 'creator', 'hooks', 'exemple-media'].includes(formData.content_type) || !formData.subcategory_id || !formData.category_id) {
       return false;
     }
     
@@ -1578,7 +1806,8 @@ const Publish = () => {
                        formData.content_type === 'account' ? 'Compte' :
                        formData.content_type === 'creator' ? 'Créateur' :
                        formData.content_type === 'hooks' ? 'Hooks' :
-                       formData.content_type === 'pseudo' ? 'Pseudo' : 'Sélectionner un type'}
+                       formData.content_type === 'pseudo' ? 'Pseudo' :
+                       formData.content_type === 'exemple-media' ? 'Exemple' : 'Sélectionner un type'}
                     </span>
                     <div className="w-2 h-2 border-r-2 border-b-2 border-gray-400 transform rotate-45 transition-transform duration-200 group-hover:rotate-[-135deg]"></div>
                   </div>
@@ -1586,7 +1815,7 @@ const Publish = () => {
                     id="content_type"
                     value={formData.content_type}
                     onChange={(e) => {
-                      const newContentType = e.target.value as 'category' | 'subcategory' | 'title' | 'content' | 'source' | 'account' | 'creator' | 'hooks' | 'pseudo';
+                      const newContentType = e.target.value as 'category' | 'subcategory' | 'subcategory_level2' | 'title' | 'content' | 'source' | 'account' | 'creator' | 'hooks' | 'pseudo' | 'exemple-media';
                       setFormData(prev => ({
                         ...prev,
                         content_type: newContentType,
@@ -1595,7 +1824,12 @@ const Publish = () => {
                         subcategory_level2_id: '',
                         description: '',
                         url: '',
-                        theme: ''
+                        theme: '',
+                        media_url: '',
+                        media_type: 'image',
+                        thumbnail_url: '',
+                        creator_name: '',
+                        platform: ''
                       }));
                       setCategorySearch('');
                       setSubcategorySearch('');
@@ -1613,6 +1847,7 @@ const Publish = () => {
                     <option value="category">Catégorie</option>
                     <option value="content">Contenu</option>
                     <option value="account">Compte</option>
+                    <option value="exemple-media">Exemple</option>
                     <option value="creator">Créateur</option>
                     <option value="source">Source</option>
                     <option value="hooks">Hooks</option>
@@ -1834,7 +2069,9 @@ const Publish = () => {
           <div className="mb-3">
             <div className="rounded-lg border border-gray-700 p-3" style={{ backgroundColor: '#0f0f10' }}>
               <div className="space-y-1">
-                <Label htmlFor="title" className="text-sm text-white">{getTitleLabel()} *</Label>
+                <Label htmlFor="title" className="text-sm text-white">
+                  {getTitleLabel()} {formData.content_type !== 'exemple-media' ? '*' : '(optionnel)'}
+                </Label>
                 <Input
                   id="title"
                   value={formData.title}
@@ -2289,7 +2526,146 @@ const Publish = () => {
             </div>
           )}
 
-          {/* Section 11 : Plateforme (pour les créateurs) */}
+          {/* Section 11 : Formulaire pour publier un exemple */}
+          {formData.content_type === 'exemple-media' && (
+            <div className="mb-3 space-y-3">
+              {showAddExempleAfterSubcategory && (
+                <div className="rounded-lg border border-blue-500 bg-blue-500/10 p-3 mb-3">
+                  <p className="text-sm text-blue-300">
+                    💡 Ajout d'un exemple pour la sous-catégorie {newSubcategoryLevel2Id ? 'niveau 2' : ''} que vous venez de créer
+                  </p>
+                </div>
+              )}
+              
+              {/* Type de média */}
+              <div className="rounded-lg border border-gray-700 p-3" style={{ backgroundColor: '#0f0f10' }}>
+                <Label htmlFor="media_type" className="text-sm text-white">Type de contenu *</Label>
+                <select
+                  id="media_type"
+                  value={formData.media_type}
+                  onChange={(e) => setFormData(prev => ({ ...prev, media_type: e.target.value as 'image' | 'video' }))}
+                  className="w-full mt-2 p-2 border border-gray-600 rounded-lg text-white text-sm"
+                  style={{ backgroundColor: '#141416' }}
+                >
+                  <option value="image">Image</option>
+                  <option value="video">Vidéo</option>
+                </select>
+              </div>
+
+              {/* Upload du média */}
+              <div className="rounded-lg border border-gray-700 p-3" style={{ backgroundColor: '#0f0f10' }}>
+                <Label htmlFor="media_file" className="text-sm text-white">
+                  {formData.media_type === 'image' ? 'Image' : 'Vidéo'} *
+                </Label>
+                <div className="mt-2 space-y-2">
+                  <Input
+                    id="media_file"
+                    type="file"
+                    accept={formData.media_type === 'image' ? 'image/*' : 'video/*'}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        setSelectedFile(file);
+                        // Créer une URL de prévisualisation locale
+                        const localUrl = URL.createObjectURL(file);
+                        setFormData(prev => ({ ...prev, media_url: localUrl }));
+                      }
+                    }}
+                    className="text-sm border-gray-600 text-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-500 file:text-white hover:file:bg-blue-600"
+                    style={{ backgroundColor: '#141416' }}
+                  />
+                  {selectedFile && (
+                    <div className="text-xs text-gray-400">
+                      Fichier sélectionné : {selectedFile.name} ({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
+                    </div>
+                  )}
+                  {formData.media_url && formData.media_url.startsWith('blob:') && (
+                    <div className="mt-2">
+                      {formData.media_type === 'image' ? (
+                        <img 
+                          src={formData.media_url} 
+                          alt="Aperçu" 
+                          className="max-w-full h-48 object-cover rounded-lg border border-gray-600"
+                        />
+                      ) : (
+                        <video 
+                          src={formData.media_url} 
+                          controls 
+                          className="max-w-full h-48 rounded-lg border border-gray-600"
+                        />
+                      )}
+                    </div>
+                  )}
+                </div>
+                <p className="text-xs text-gray-400 mt-2">
+                  Ou utilisez une URL :
+                </p>
+                <Input
+                  id="media_url"
+                  type="url"
+                  placeholder="https://example.com/image.jpg ou https://example.com/video.mp4"
+                  value={formData.media_url && !formData.media_url.startsWith('blob:') ? formData.media_url : ''}
+                  onChange={(e) => {
+                    setFormData(prev => ({ ...prev, media_url: e.target.value }));
+                    setSelectedFile(null);
+                  }}
+                  className="mt-2 text-sm border-gray-600 text-white placeholder-gray-400"
+                  style={{ backgroundColor: '#141416' }}
+                />
+              </div>
+
+              {/* URL de la miniature (optionnel) */}
+              <div className="rounded-lg border border-gray-700 p-3" style={{ backgroundColor: '#0f0f10' }}>
+                <Label htmlFor="thumbnail_url" className="text-sm text-white">URL de la miniature (optionnel)</Label>
+                <Input
+                  id="thumbnail_url"
+                  type="url"
+                  placeholder="https://example.com/thumbnail.jpg"
+                  value={formData.thumbnail_url}
+                  onChange={(e) => setFormData(prev => ({ ...prev, thumbnail_url: e.target.value }))}
+                  className="mt-2 text-sm border-gray-600 text-white placeholder-gray-400"
+                  style={{ backgroundColor: '#141416' }}
+                />
+                <p className="text-xs text-gray-400 mt-1">Recommandé pour les vidéos</p>
+              </div>
+
+              {/* Plateforme */}
+              <div className="rounded-lg border border-gray-700 p-3" style={{ backgroundColor: '#0f0f10' }}>
+                <Label htmlFor="platform" className="text-sm text-white">Plateforme *</Label>
+                <select
+                  id="platform"
+                  value={formData.platform}
+                  onChange={(e) => setFormData(prev => ({ ...prev, platform: e.target.value }))}
+                  className="w-full mt-2 p-2 border border-gray-600 rounded-lg text-white text-sm"
+                  style={{ backgroundColor: '#141416' }}
+                >
+                  <option value="">Sélectionner une plateforme</option>
+                  <option value="instagram">Instagram</option>
+                  <option value="tiktok">TikTok</option>
+                  <option value="youtube">YouTube</option>
+                  <option value="twitter">Twitter/X</option>
+                  <option value="facebook">Facebook</option>
+                  <option value="pinterest">Pinterest</option>
+                </select>
+              </div>
+
+              {/* Nom du créateur (optionnel) */}
+              <div className="rounded-lg border border-gray-700 p-3" style={{ backgroundColor: '#0f0f10' }}>
+                <Label htmlFor="creator_name" className="text-sm text-white">Nom du créateur (optionnel)</Label>
+                <Input
+                  id="creator_name"
+                  type="text"
+                  placeholder="Nom du créateur de l'exemple"
+                  value={formData.creator_name}
+                  onChange={(e) => setFormData(prev => ({ ...prev, creator_name: e.target.value }))}
+                  className="mt-2 text-sm border-gray-600 text-white placeholder-gray-400"
+                  style={{ backgroundColor: '#141416' }}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Section 12 : Plateforme (pour les créateurs) */}
           {formData.content_type === 'creator' && (
             <div className="mb-3">
               <div className="rounded-lg border border-gray-700 p-3 space-y-3" style={{ backgroundColor: '#0f0f10' }}>
@@ -2463,7 +2839,7 @@ const Publish = () => {
                 type="submit" 
                 className="w-full" 
                 disabled={isSubmitting || 
-                         !formData.title ||
+                         (formData.content_type !== 'exemple-media' && !formData.title) ||
                          !formData.content_type ||
                          (needsNetwork && !selectedNetwork) ||
                          (formData.content_type === 'subcategory' && !formData.category_id) ||
@@ -2471,7 +2847,8 @@ const Publish = () => {
                          (formData.content_type === 'creator' && (categorySubcategoryPairs.length === 0 || categorySubcategoryPairs.some(pair => pair.subcategoryIds.length === 0))) ||
                          (formData.content_type === 'content' && (wantsToTagCreator === null || (wantsToTagCreator === true && !selectedCreator) || !formData.description)) ||
                          (formData.content_type === 'source' && !formData.url) ||
-                         (formData.content_type === 'category' && !formData.theme)}
+                         (formData.content_type === 'category' && !formData.theme) ||
+                         (formData.content_type === 'exemple-media' && (!formData.media_url || !formData.platform || (!formData.subcategory_id && !formData.subcategory_level2_id)))}
               >
                 {isSubmitting ? (
                   <>
