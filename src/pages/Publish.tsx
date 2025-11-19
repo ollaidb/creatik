@@ -354,18 +354,10 @@ const Publish = () => {
         });
         return;
       }
-      if (!formData.media_url) {
+      if (!selectedFile && !formData.media_url) {
         toast({
-          title: "URL média requise",
-          description: "Veuillez ajouter l'URL de l'image ou de la vidéo",
-          variant: "destructive"
-        });
-        return;
-      }
-      if (!formData.platform) {
-        toast({
-          title: "Plateforme requise",
-          description: "Veuillez sélectionner une plateforme (Instagram, TikTok, etc.)",
+          title: "Média requis",
+          description: "Veuillez uploader un fichier ou fournir une URL",
           variant: "destructive"
         });
         return;
@@ -1128,6 +1120,110 @@ const Publish = () => {
       } else if (formData.content_type === 'exemple-media') {
         console.log('Publication exemple média...');
         
+        // Convertir le fichier en base64 si un fichier a été sélectionné
+        let finalMediaUrl = formData.media_url && !formData.media_url.startsWith('blob:') ? formData.media_url : null;
+        let finalThumbnailUrl = formData.thumbnail_url && !formData.thumbnail_url.startsWith('blob:') ? formData.thumbnail_url : null;
+        let mediaDataBase64: string | null = null;
+        let thumbnailDataBase64: string | null = null;
+        let mediaMimeType: string | null = null;
+        
+        if (selectedFile) {
+          setIsUploading(true);
+          setUploadProgress(0);
+          
+          try {
+            // Convertir le fichier en base64
+            const reader = new FileReader();
+            
+            await new Promise<void>((resolve, reject) => {
+              reader.onload = () => {
+                const result = reader.result as string;
+                // Retirer le préfixe "data:image/jpeg;base64," ou "data:video/mp4;base64,"
+                const base64Data = result.split(',')[1];
+                mediaDataBase64 = base64Data;
+                mediaMimeType = selectedFile.type || `image/${selectedFile.name.split('.').pop()}`;
+                setUploadProgress(50);
+                resolve();
+              };
+              reader.onerror = reject;
+              reader.readAsDataURL(selectedFile);
+            });
+            
+            // Convertir la miniature en base64 si fournie
+            if (selectedThumbnailFile) {
+              const thumbnailReader = new FileReader();
+              await new Promise<void>((resolve, reject) => {
+                thumbnailReader.onload = () => {
+                  const result = thumbnailReader.result as string;
+                  const base64Data = result.split(',')[1];
+                  thumbnailDataBase64 = base64Data;
+                  setUploadProgress(100);
+                  resolve();
+                };
+                thumbnailReader.onerror = reject;
+                thumbnailReader.readAsDataURL(selectedThumbnailFile);
+              });
+            } else {
+              setUploadProgress(100);
+            }
+            
+            setIsUploading(false);
+            
+            // Nettoyer les URLs blob locales
+            if (formData.media_url.startsWith('blob:')) {
+              URL.revokeObjectURL(formData.media_url);
+            }
+            if (formData.thumbnail_url && formData.thumbnail_url.startsWith('blob:')) {
+              URL.revokeObjectURL(formData.thumbnail_url);
+            }
+            
+            console.log('✅ Fichier converti en base64, taille:', mediaDataBase64.length, 'caractères');
+            
+          } catch (convertErr) {
+            console.error('Erreur lors de la conversion en base64:', convertErr);
+            toast({
+              title: "Erreur de conversion",
+              description: "Impossible de convertir le fichier. Veuillez utiliser une URL.",
+              variant: "destructive"
+            });
+            setIsSubmitting(false);
+            setIsUploading(false);
+            return;
+          }
+        }
+        
+        // Validation : on doit avoir soit un fichier (base64), soit une URL valide
+        if (!mediaDataBase64 && !finalMediaUrl) {
+          // Si on a un fichier sélectionné mais la conversion a échoué
+          if (selectedFile) {
+            toast({
+              title: "Erreur de conversion",
+              description: "Impossible de convertir le fichier. Veuillez fournir une URL dans le champ 'Ou utilisez une URL'.",
+              variant: "destructive",
+              duration: 10000
+            });
+            setIsSubmitting(false);
+            setIsUploading(false);
+            return;
+          }
+          // Si on n'a ni fichier ni URL, erreur
+          if (!formData.media_url || formData.media_url.startsWith('blob:')) {
+            toast({
+              title: "Média requis",
+              description: "Veuillez uploader un fichier ou fournir une URL",
+              variant: "destructive"
+            });
+            setIsSubmitting(false);
+            setIsUploading(false);
+            return;
+          }
+          // Si on a une URL valide (pas blob), l'utiliser
+          if (formData.media_url && !formData.media_url.startsWith('blob:')) {
+            console.log('✅ Utilisation de l\'URL fournie:', formData.media_url);
+            finalMediaUrl = formData.media_url;
+          }
+        }
+        
         // Vérifier le nombre d'exemples existants pour cette sous-catégorie
         const targetSubcategoryId = formData.subcategory_level2_id || formData.subcategory_id;
         const { data: existingExemples, error: countError } = await supabase
@@ -1173,18 +1269,51 @@ const Publish = () => {
           title: exempleTitle,
           description: formData.description || undefined,
           media_type: formData.media_type,
-          media_url: formData.media_url,
-          thumbnail_url: formData.thumbnail_url || undefined,
-          creator_name: formData.creator_name || undefined,
-          platform: formData.platform,
           order_index: maxOrderIndex + 1
         };
+        
+        // Si on a des données base64, les utiliser, sinon utiliser l'URL
+        if (mediaDataBase64) {
+          exempleData.media_data = mediaDataBase64;
+          exempleData.media_mime_type = mediaMimeType;
+          // Ne pas définir media_url si on utilise media_data (sera null par défaut)
+          // Si la migration n'a pas été faite, on devra utiliser une URL
+        } else if (finalMediaUrl) {
+          exempleData.media_url = finalMediaUrl;
+        } else {
+          // Si ni base64 ni URL, erreur
+          toast({
+            title: "Média requis",
+            description: "Veuillez uploader un fichier ou fournir une URL",
+            variant: "destructive"
+          });
+          setIsSubmitting(false);
+          setIsUploading(false);
+          return;
+        }
+        
+        // Même logique pour la miniature (optionnel)
+        if (thumbnailDataBase64) {
+          exempleData.thumbnail_data = thumbnailDataBase64;
+          // Ne pas définir thumbnail_url si on utilise thumbnail_data
+        } else if (finalThumbnailUrl) {
+          exempleData.thumbnail_url = finalThumbnailUrl;
+        }
+        // thumbnail_url est optionnel, donc pas besoin d'erreur si absent
         
         if (formData.subcategory_level2_id) {
           exempleData.subcategory_level2_id = formData.subcategory_level2_id;
         } else {
           exempleData.subcategory_id = formData.subcategory_id;
         }
+        
+        console.log('📤 Tentative d\'insertion exemple média:', {
+          exempleData,
+          hasMediaData: !!mediaDataBase64,
+          hasMediaUrl: !!finalMediaUrl,
+          hasThumbnailData: !!thumbnailDataBase64,
+          hasThumbnailUrl: !!finalThumbnailUrl
+        });
         
         const { data: exempleMediaData, error } = await supabase
           .from('content_exemples_media')
@@ -1193,12 +1322,50 @@ const Publish = () => {
           .single();
         
         if (error) {
-          console.error('Erreur exemple média:', error);
+          console.error('❌ Erreur exemple média:', error);
+          console.error('Détails de l\'erreur:', {
+            message: error.message,
+            code: error.code,
+            details: error.details,
+            hint: error.hint
+          });
+          
+          // Message d'erreur plus détaillé pour l'utilisateur
+          let errorMessage = "Impossible de publier l'exemple.";
+          let errorDetails = "";
+          
+          if (error.code === 'PGRST204' || error.message?.includes('Could not find') || error.message?.includes('media_data') || error.message?.includes('schema cache')) {
+            errorMessage = "La colonne 'media_data' n'existe pas dans la base de données.";
+            errorDetails = "⚠️ IMPORTANT: Vous devez exécuter la migration SQL 'add-media-data-column.sql' dans Supabase SQL Editor pour ajouter le support du stockage direct des fichiers.\n\nEn attendant, vous pouvez utiliser une URL pour le média au lieu d'uploader un fichier.";
+          } else if (error.message?.includes('check_media_source') || error.message?.includes('violates check constraint')) {
+            errorMessage = "Erreur: Vous devez fournir soit un fichier uploadé, soit une URL pour le média.";
+            errorDetails = "Assurez-vous d'avoir soit uploadé un fichier, soit fourni une URL dans le champ 'Ou utilisez une URL'.";
+          } else if (error.message?.includes('Limite') || error.message?.includes('limit')) {
+            errorMessage = error.message;
+          } else if (error.message?.includes('media_url') && error.message?.includes('null') || error.code === '23502') {
+            errorMessage = "Erreur: Le champ media_url est requis.";
+            errorDetails = "Si vous avez uploadé un fichier, veuillez exécuter la migration SQL 'add-media-data-column.sql' dans Supabase. Sinon, utilisez une URL pour le média.";
+          } else if (error.code === '42501' || error.message?.includes('permission') || error.message?.includes('policy')) {
+            errorMessage = "Erreur de permissions.";
+            errorDetails = "Vérifiez que vous êtes connecté et que les politiques RLS sont correctement configurées dans Supabase.";
+          } else if (error.code === '42P01' || error.message?.includes('does not exist')) {
+            errorMessage = "La table content_exemples_media n'existe pas.";
+            errorDetails = "Veuillez exécuter le script SQL 'create-exemples-media-table.sql' dans Supabase SQL Editor.";
+          } else {
+            errorDetails = `Code: ${error.code || 'N/A'}, Message: ${error.message || 'Erreur inconnue'}`;
+          }
+          
+          toast({
+            title: "Erreur de publication",
+            description: errorDetails ? `${errorMessage}\n\n${errorDetails}` : errorMessage,
+            variant: "destructive",
+            duration: 15000
+          });
           throw error;
         }
         
         createdItemId = exempleMediaData.id;
-        console.log('Exemple média publié avec succès, ID:', createdItemId);
+        console.log('✅ Exemple média publié avec succès, ID:', createdItemId);
         toast({
           title: "Exemple publié",
           description: `L'exemple ${formData.media_type === 'image' ? 'd\'image' : 'de vidéo'} a été ajouté avec succès.`
@@ -1296,8 +1463,6 @@ const Publish = () => {
           subcategory_level2_id: subcategoryLevel2Id || null,
           platform: formData.content_type === 'creator'
             ? primaryCreatorSocialNetwork?.name || null
-            : formData.content_type === 'exemple-media'
-            ? formData.platform || null
             : selectedNetwork || null,
           url: formData.content_type === 'creator'
             ? primaryCreatorNetwork?.url || null
@@ -1374,14 +1539,14 @@ const Publish = () => {
         setNewCategoryId(null);
       } else {
         // Réinitialiser le formulaire complètement
-        setFormData({
-          title: '',
-          content_type: 'title',
-          category_id: '',
-          subcategory_id: '',
-          subcategory_level2_id: '',
-          description: '',
-          url: '',
+      setFormData({
+        title: '',
+        content_type: 'title',
+        category_id: '',
+        subcategory_id: '',
+        subcategory_level2_id: '',
+        description: '',
+        url: '',
           theme: '',
           media_url: '',
           media_type: 'image',
@@ -1389,6 +1554,8 @@ const Publish = () => {
           creator_name: '',
           platform: ''
         });
+        setSelectedFile(null);
+        setSelectedThumbnailFile(null);
         setShowAddExempleAfterSubcategory(false);
         setNewSubcategoryId(null);
         setNewSubcategoryLevel2Id(null);
@@ -2614,54 +2781,59 @@ const Publish = () => {
                 />
               </div>
 
-              {/* URL de la miniature (optionnel) */}
-              <div className="rounded-lg border border-gray-700 p-3" style={{ backgroundColor: '#0f0f10' }}>
-                <Label htmlFor="thumbnail_url" className="text-sm text-white">URL de la miniature (optionnel)</Label>
-                <Input
-                  id="thumbnail_url"
-                  type="url"
-                  placeholder="https://example.com/thumbnail.jpg"
-                  value={formData.thumbnail_url}
-                  onChange={(e) => setFormData(prev => ({ ...prev, thumbnail_url: e.target.value }))}
-                  className="mt-2 text-sm border-gray-600 text-white placeholder-gray-400"
-                  style={{ backgroundColor: '#141416' }}
-                />
-                <p className="text-xs text-gray-400 mt-1">Recommandé pour les vidéos</p>
-              </div>
+              {/* Upload de la miniature (optionnel) */}
+              {formData.media_type === 'video' && (
+                <div className="rounded-lg border border-gray-700 p-3" style={{ backgroundColor: '#0f0f10' }}>
+                  <Label htmlFor="thumbnail_file" className="text-sm text-white">Miniature de la vidéo (optionnel)</Label>
+                  <div className="mt-2 space-y-2">
+                    <Input
+                      id="thumbnail_file"
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setSelectedThumbnailFile(file);
+                          const localUrl = URL.createObjectURL(file);
+                          setFormData(prev => ({ ...prev, thumbnail_url: localUrl }));
+                        }
+                      }}
+                      className="text-sm border-gray-600 text-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-500 file:text-white hover:file:bg-blue-600"
+                      style={{ backgroundColor: '#141416' }}
+                    />
+                    {selectedThumbnailFile && (
+                      <div className="text-xs text-gray-400">
+                        Fichier sélectionné : {selectedThumbnailFile.name}
+                      </div>
+                    )}
+                    {formData.thumbnail_url && formData.thumbnail_url.startsWith('blob:') && (
+                      <div className="mt-2">
+                        <img 
+                          src={formData.thumbnail_url} 
+                          alt="Aperçu miniature" 
+                          className="max-w-full h-32 object-cover rounded-lg border border-gray-600"
+                        />
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-400 mt-2">
+                    Ou utilisez une URL :
+                  </p>
+                  <Input
+                    id="thumbnail_url"
+                    type="url"
+                    placeholder="https://example.com/thumbnail.jpg"
+                    value={formData.thumbnail_url && !formData.thumbnail_url.startsWith('blob:') ? formData.thumbnail_url : ''}
+                    onChange={(e) => {
+                      setFormData(prev => ({ ...prev, thumbnail_url: e.target.value }));
+                      setSelectedThumbnailFile(null);
+                    }}
+                    className="mt-2 text-sm border-gray-600 text-white placeholder-gray-400"
+                    style={{ backgroundColor: '#141416' }}
+                  />
+                </div>
+              )}
 
-              {/* Plateforme */}
-              <div className="rounded-lg border border-gray-700 p-3" style={{ backgroundColor: '#0f0f10' }}>
-                <Label htmlFor="platform" className="text-sm text-white">Plateforme *</Label>
-                <select
-                  id="platform"
-                  value={formData.platform}
-                  onChange={(e) => setFormData(prev => ({ ...prev, platform: e.target.value }))}
-                  className="w-full mt-2 p-2 border border-gray-600 rounded-lg text-white text-sm"
-                  style={{ backgroundColor: '#141416' }}
-                >
-                  <option value="">Sélectionner une plateforme</option>
-                  <option value="instagram">Instagram</option>
-                  <option value="tiktok">TikTok</option>
-                  <option value="youtube">YouTube</option>
-                  <option value="twitter">Twitter/X</option>
-                  <option value="facebook">Facebook</option>
-                  <option value="pinterest">Pinterest</option>
-                </select>
-              </div>
-
-              {/* Nom du créateur (optionnel) */}
-              <div className="rounded-lg border border-gray-700 p-3" style={{ backgroundColor: '#0f0f10' }}>
-                <Label htmlFor="creator_name" className="text-sm text-white">Nom du créateur (optionnel)</Label>
-                <Input
-                  id="creator_name"
-                  type="text"
-                  placeholder="Nom du créateur de l'exemple"
-                  value={formData.creator_name}
-                  onChange={(e) => setFormData(prev => ({ ...prev, creator_name: e.target.value }))}
-                  className="mt-2 text-sm border-gray-600 text-white placeholder-gray-400"
-                  style={{ backgroundColor: '#141416' }}
-                />
-              </div>
             </div>
           )}
 
@@ -2838,7 +3010,7 @@ const Publish = () => {
               <Button 
                 type="submit" 
                 className="w-full" 
-                disabled={isSubmitting || 
+                disabled={isSubmitting || isUploading || 
                          (formData.content_type !== 'exemple-media' && !formData.title) ||
                          !formData.content_type ||
                          (needsNetwork && !selectedNetwork) ||
@@ -2848,12 +3020,12 @@ const Publish = () => {
                          (formData.content_type === 'content' && (wantsToTagCreator === null || (wantsToTagCreator === true && !selectedCreator) || !formData.description)) ||
                          (formData.content_type === 'source' && !formData.url) ||
                          (formData.content_type === 'category' && !formData.theme) ||
-                         (formData.content_type === 'exemple-media' && (!formData.media_url || !formData.platform || (!formData.subcategory_id && !formData.subcategory_level2_id)))}
+                         (formData.content_type === 'exemple-media' && ((!selectedFile && !formData.media_url) || (!formData.subcategory_id && !formData.subcategory_level2_id)))}
               >
-                {isSubmitting ? (
+                {isSubmitting || isUploading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Publication en cours...
+                    {isUploading ? `Upload en cours... ${uploadProgress}%` : 'Publication en cours...'}
                   </>
                 ) : (
                   <>

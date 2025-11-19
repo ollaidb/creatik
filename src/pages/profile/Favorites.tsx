@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useSmartNavigation } from '@/hooks/useNavigation';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Plus, Heart, Search } from 'lucide-react';
+import { ArrowLeft, Plus, Heart, Search, X } from 'lucide-react';
 import { useCategoriesByTheme } from '@/hooks/useCategoriesByTheme';
 import { useAllSubcategories } from '@/hooks/useAllSubcategories';
 import { useAllSubcategoriesLevel2 } from '@/hooks/useAllSubcategoriesLevel2';
@@ -78,6 +78,7 @@ const Favorites = () => {
   const [playlists, setPlaylists] = useState<UserContentPlaylist[]>([]);
   const [isSelectModalOpen, setIsSelectModalOpen] = useState(false);
   const [selectedExemple, setSelectedExemple] = useState<{ title: string; id: string } | null>(null);
+  const [viewingExemple, setViewingExemple] = useState<any | null>(null);
   const { data: allCategories = [] } = useCategoriesByTheme('all');
   const { data: allSubcategories = [] } = useAllSubcategories();
   const { data: allSubcategoriesLevel2 = [] } = useAllSubcategoriesLevel2();
@@ -1062,13 +1063,16 @@ const Favorites = () => {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.05 }}
-                    className="relative group"
+                    className="relative group cursor-pointer"
+                    onClick={() => setViewingExemple(exemple)}
                   >
                     <div className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all duration-200">
                       <div className="aspect-square relative">
                         {exemple.media_type === 'image' ? (
                           <img
-                            src={exemple.media_url}
+                            src={exemple.media_data 
+                              ? `data:${exemple.media_mime_type || 'image/jpeg'};base64,${exemple.media_data}` 
+                              : exemple.media_url || 'https://via.placeholder.com/300x300?text=Image'}
                             alt={exemple.title}
                             className="w-full h-full object-cover"
                             onError={(e) => {
@@ -1077,9 +1081,11 @@ const Favorites = () => {
                           />
                         ) : (
                           <>
-                            {exemple.thumbnail_url ? (
+                            {exemple.thumbnail_data || exemple.thumbnail_url ? (
                               <img
-                                src={exemple.thumbnail_url}
+                                src={exemple.thumbnail_data 
+                                  ? `data:image/jpeg;base64,${exemple.thumbnail_data}` 
+                                  : exemple.thumbnail_url || 'https://via.placeholder.com/300x300?text=Video'}
                                 alt={exemple.title}
                                 className="w-full h-full object-cover"
                                 onError={(e) => {
@@ -1110,42 +1116,30 @@ const Favorites = () => {
                           </p>
                         )}
                       </div>
-                      <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleAddExempleToPublications(exemple);
-                          }}
-                          className="p-1.5 h-7 w-7 bg-white/90 dark:bg-gray-800/90 hover:bg-white dark:hover:bg-gray-800"
-                          title="Ajouter aux publications"
-                        >
-                          <Plus size={14} />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toggleExempleFavorite(exemple.id);
-                            toast({
-                              title: isExempleFavorite(exemple.id) ? "Retiré" : "Ajouté"
-                            });
-                          }}
-                          className={`p-1.5 h-7 w-7 bg-white/90 dark:bg-gray-800/90 hover:bg-white dark:hover:bg-gray-800 ${
-                            isExempleFavorite(exemple.id) 
-                              ? 'text-red-500' 
-                              : 'text-gray-400'
-                          }`}
-                          title="Retirer des favoris"
-                        >
-                          <Heart 
-                            size={14} 
-                            className={isExempleFavorite(exemple.id) ? 'fill-current' : ''}
-                          />
-                        </Button>
-                      </div>
+                        <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleExempleFavorite(exemple.id);
+                              toast({
+                                title: isExempleFavorite(exemple.id) ? "Retiré" : "Ajouté"
+                              });
+                            }}
+                            className={`p-1.5 h-7 w-7 bg-white/90 dark:bg-gray-800/90 hover:bg-white dark:hover:bg-gray-800 ${
+                              isExempleFavorite(exemple.id) 
+                                ? 'text-red-500' 
+                                : 'text-gray-400'
+                            }`}
+                            title="Retirer des favoris"
+                          >
+                            <Heart 
+                              size={14} 
+                              className={isExempleFavorite(exemple.id) ? 'fill-current' : ''}
+                            />
+                          </Button>
+                        </div>
                     </div>
                   </motion.div>
                 ))}
@@ -1360,6 +1354,99 @@ const Favorites = () => {
           </>
         )}
       </main>
+
+      {/* Modal de visualisation d'exemple */}
+      {viewingExemple && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
+          onClick={() => setViewingExemple(null)}
+        >
+          <div 
+            className="relative max-w-4xl max-h-[90vh] w-full mx-4 bg-white dark:bg-gray-900 rounded-lg overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+              <div className="flex-1 min-w-0">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
+                  {viewingExemple.title}
+                </h3>
+                {viewingExemple.description && (
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
+                    {viewingExemple.description}
+                  </p>
+                )}
+                {viewingExemple.creator_name && (
+                  <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                    Par {viewingExemple.creator_name}
+                  </p>
+                )}
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setViewingExemple(null)}
+                className="ml-4"
+              >
+                <X size={20} />
+              </Button>
+            </div>
+
+            {/* Contenu média */}
+            <div className="relative bg-black flex items-center justify-center" style={{ minHeight: '60vh' }}>
+              {viewingExemple.media_type === 'image' ? (
+                <img
+                  src={viewingExemple.media_data 
+                    ? `data:${viewingExemple.media_mime_type || 'image/jpeg'};base64,${viewingExemple.media_data}` 
+                    : viewingExemple.media_url || ''}
+                  alt={viewingExemple.title}
+                  className="max-w-full max-h-[70vh] object-contain"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = 'https://via.placeholder.com/800x600?text=Image+non+disponible';
+                  }}
+                />
+              ) : (
+                <video
+                  src={viewingExemple.media_data 
+                    ? `data:${viewingExemple.media_mime_type || 'video/mp4'};base64,${viewingExemple.media_data}` 
+                    : viewingExemple.media_url || ''}
+                  controls
+                  className="max-w-full max-h-[70vh]"
+                  onError={(e) => {
+                    console.error('Erreur de chargement de la vidéo');
+                  }}
+                >
+                  Votre navigateur ne supporte pas la lecture de vidéos.
+                </video>
+              )}
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center justify-between p-4 border-t border-gray-200 dark:border-gray-700">
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleExempleFavorite(viewingExemple.id);
+                    toast({
+                      title: isExempleFavorite(viewingExemple.id) ? "Retiré" : "Ajouté"
+                    });
+                  }}
+                  className={isExempleFavorite(viewingExemple.id) ? 'text-red-500' : ''}
+                >
+                  <Heart 
+                    size={16} 
+                    className={isExempleFavorite(viewingExemple.id) ? 'fill-current mr-2' : 'mr-2'}
+                  />
+                  {isExempleFavorite(viewingExemple.id) ? 'Retirer' : 'Ajouter aux favoris'}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modale de sélection réseau/playlist */}
       {selectedExemple && user && (
