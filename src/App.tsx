@@ -52,9 +52,11 @@ const TrendingIdeas = lazy(() => import("./pages/TrendingIdeas"));
 const WhatToPostToday = lazy(() => import("./pages/WhatToPostToday"));
 const ChallengeDetail = lazy(() => import("./pages/ChallengeDetail"));
 const CategoryInfo = lazy(() => import("./pages/Info"));
+const Collaboration = lazy(() => import("./pages/Collaboration"));
 const Events = lazy(() => import("./pages/Events"));
 const Creators = lazy(() => import("./pages/Creators"));
 const CreatorDetail = lazy(() => import("./pages/CreatorDetail"));
+const OriginalConcepts = lazy(() => import("./pages/OriginalConcepts"));
 const Notes = lazy(() => import("./pages/Notes"));
 const NotesFolders = lazy(() => import("./pages/NotesFolders"));
 const NotesInFolder = lazy(() => import("./pages/NotesInFolder"));
@@ -80,7 +82,7 @@ const Taxes = lazy(() => import("./pages/profile/Taxes"));
 const Help = lazy(() => import("./pages/profile/Help"));
 const InternationalAccount = lazy(() => import("./pages/profile/InternationalAccount"));
 const Training = lazy(() => import("./pages/profile/Training"));
-const Collaboration = lazy(() => import("./pages/profile/Collaboration"));
+const ProfileCollaboration = lazy(() => import("./pages/profile/Collaboration"));
 const DatabaseDiagnosticPage = lazy(() => import("./pages/DatabaseDiagnosticPage"));
 
 // Composant de chargement optimisé
@@ -180,6 +182,7 @@ const AppContent = () => {
                   <Route path="/category/:categoryId/subcategory/:subcategoryId" element={<Titles />} />
                   <Route path="/category/:categoryId/subcategory/:subcategoryId/exemples" element={<Exemples />} />
                   <Route path="/category/:categoryId/info" element={<CategoryInfo />} />
+                  <Route path="/category/:categoryId/subcategory/:subcategoryId/collaboration" element={<Collaboration />} />
                   <Route path="/category/:categoryId/subcategory/:subcategoryId/hooks" element={<Hooks />} />
                   {/* Communauté Routes */}
                   <Route path="/public-challenges" element={<PublicChallenges />} />
@@ -199,6 +202,7 @@ const AppContent = () => {
                   {/* Creators Route */}
                   <Route path="/creators" element={<Creators />} />
                   <Route path="/creator/:creatorId" element={<CreatorDetail />} />
+                  <Route path="/original-concepts" element={<OriginalConcepts />} />
                   {/* Accounts and Sources Routes */}
                   <Route path="/accounts" element={<Accounts />} />
                   <Route path="/sources" element={<Sources />} />
@@ -220,7 +224,7 @@ const AppContent = () => {
                   <Route path="/profile/help" element={<Help />} />
                   <Route path="/profile/international-account" element={<InternationalAccount />} />
                   <Route path="/profile/training" element={<Training />} />
-                  <Route path="/profile/collaboration" element={<Collaboration />} />
+                  <Route path="/profile/collaboration" element={<ProfileCollaboration />} />
                   <Route path="/profile/personalization" element={<Personalization />} />
                   <Route path="/profile/language" element={<Language />} />
                   <Route path="/profile/display-mode" element={<DisplayMode />} />

@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useSmartNavigation } from '@/hooks/useNavigation';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Info, Target, Settings, BookOpen, Lightbulb, Users, Star, TrendingUp, Calendar, Hash, Wrench, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Info, Target, Settings, BookOpen, Lightbulb, Users, Star, TrendingUp, Calendar, Hash, Wrench, CheckCircle, Handshake } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -11,21 +11,36 @@ import { Badge } from '@/components/ui/badge';
 import { useCategories } from '@/hooks/useCategories';
 import { useSubcategories } from '@/hooks/useSubcategories';
 import { useCategoryGuide } from '@/hooks/useCategoryGuide';
+import { useSubcategoryCollaboration } from '@/hooks/useSubcategoryCollaboration';
 import Navigation from '@/components/Navigation';
 
 const CategoryInfo = () => {
   const { categoryId, subcategoryId } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { navigateBack } = useSmartNavigation();
-  const [activeTab, setActiveTab] = useState('explication');
+  const tabParam = searchParams.get('tab');
+  const [activeTab, setActiveTab] = useState(tabParam || 'explication');
   const tabsListRef = useRef<HTMLDivElement>(null);
   
   const { data: categories } = useCategories();
   const { data: subcategories } = useSubcategories(categoryId);
   const { guide, loading: guideLoading, error: guideError } = useCategoryGuide(categoryId);
   
+  // Récupérer subcategoryId depuis les paramètres de requête si disponible
+  const subcategoryIdFromQuery = searchParams.get('subcategoryId');
+  const effectiveSubcategoryId = subcategoryId || subcategoryIdFromQuery;
+  const { collaboration, loading: collaborationLoading } = useSubcategoryCollaboration(effectiveSubcategoryId);
+  
   const currentCategory = categories?.find(cat => cat.id === categoryId);
-  const currentSubcategory = subcategories?.find(sub => sub.id === subcategoryId);
+  const currentSubcategory = subcategories?.find(sub => sub.id === effectiveSubcategoryId);
+  
+  // Mettre à jour l'onglet actif si le paramètre tab change
+  useEffect(() => {
+    if (tabParam) {
+      setActiveTab(tabParam);
+    }
+  }, [tabParam]);
 
   const handleBackClick = () => {
     if (subcategoryId) {
@@ -196,7 +211,17 @@ const CategoryInfo = () => {
       </header>
 
       <main className="max-w-4xl mx-auto p-4">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <Tabs value={activeTab} onValueChange={(value) => {
+          setActiveTab(value);
+          // Mettre à jour l'URL avec le paramètre tab sans recharger
+          const params = new URLSearchParams(searchParams);
+          if (value === 'explication') {
+            params.delete('tab');
+          } else {
+            params.set('tab', value);
+          }
+          navigate(`/category/${categoryId}/info?${params.toString()}`, { replace: true });
+        }} className="w-full">
           <div className="overflow-x-auto scrollbar-hide touch-pan-x">
             <TabsList ref={tabsListRef} className="flex w-max min-w-full mb-4 sm:mb-6 bg-transparent border-0 p-0 gap-1 sm:gap-2 scroll-smooth">
             <TabsTrigger 
@@ -210,6 +235,12 @@ const CategoryInfo = () => {
               className="flex-shrink-0 bg-transparent data-[state=active]:bg-blue-100 dark:data-[state=active]:bg-blue-900/30 data-[state=active]:text-blue-700 dark:data-[state=active]:text-blue-300 rounded-lg px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium transition-colors whitespace-nowrap min-w-fit"
             >
               Réalisation
+            </TabsTrigger>
+            <TabsTrigger 
+              value="collaboration" 
+              className="flex-shrink-0 bg-transparent data-[state=active]:bg-blue-100 dark:data-[state=active]:bg-blue-900/30 data-[state=active]:text-blue-700 dark:data-[state=active]:text-blue-300 rounded-lg px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium transition-colors whitespace-nowrap min-w-fit"
+            >
+              Collaboration
             </TabsTrigger>
             <TabsTrigger 
               value="personnalisation" 
@@ -380,6 +411,206 @@ const CategoryInfo = () => {
                         );
                       })}
                     </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Onglet Collaboration */}
+          <TabsContent value="collaboration" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Handshake className="w-5 h-5" />
+                  Types de collaboration {currentSubcategory ? `pour ${currentSubcategory.name}` : `dans ${currentCategory.name}`}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="prose dark:prose-invert max-w-none">
+                  <p className="text-lg leading-relaxed text-gray-700 dark:text-gray-300">
+                    {collaboration?.description || `Découvrez les différents types de collaboration possibles ${currentSubcategory ? `dans la sous-catégorie ${currentSubcategory.name}` : `dans la catégorie ${currentCategory?.name || ''}`}. Trouvez des partenaires et créez ensemble du contenu engageant.`}
+                  </p>
+                </div>
+                
+                {!subcategoryId && (
+                  <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg mb-4">
+                    <p className="text-sm text-blue-800 dark:text-blue-200">
+                      💡 Pour voir les types de collaboration spécifiques à une sous-catégorie, sélectionnez d'abord une sous-catégorie depuis la page des sous-catégories.
+                    </p>
+                  </div>
+                )}
+
+                {/* Types de collaboration par défaut si aucune donnée n'est disponible */}
+                {!collaborationLoading && (
+                  <div className="mt-6 space-y-6">
+                    {collaboration?.collaboration_types && collaboration.collaboration_types.length > 0 ? (
+                      collaboration.collaboration_types.map((collabType, index) => (
+                        <div key={collabType.id || index} className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                          <div className="flex items-center gap-2 mb-3">
+                            <Users className="w-5 h-5 text-blue-500" />
+                            <h3 className="text-lg font-semibold">{collabType.title}</h3>
+                            <Badge variant="outline" className="ml-auto">
+                              {collabType.type}
+                            </Badge>
+                          </div>
+                          <p className="text-gray-700 dark:text-gray-300 mb-4">
+                            {collabType.description}
+                          </p>
+
+                          {collabType.requirements && collabType.requirements.length > 0 && (
+                            <div className="mt-4">
+                              <h4 className="text-md font-semibold mb-2 flex items-center gap-2">
+                                <Target className="w-4 h-4 text-green-500" />
+                                Prérequis
+                              </h4>
+                              <div className="space-y-2">
+                                {collabType.requirements.map((req, reqIndex) => (
+                                  <div key={reqIndex} className="flex items-start gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                                    <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                                    <span className="text-sm">{req}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {collabType.benefits && collabType.benefits.length > 0 && (
+                            <div className="mt-4">
+                              <h4 className="text-md font-semibold mb-2 flex items-center gap-2">
+                                <TrendingUp className="w-4 h-4 text-blue-500" />
+                                Avantages
+                              </h4>
+                              <ul className="space-y-2">
+                                {collabType.benefits.map((benefit, benefitIndex) => (
+                                  <li key={benefitIndex} className="flex items-start gap-2 text-sm">
+                                    <Lightbulb className="w-4 h-4 text-yellow-500 mt-0.5 flex-shrink-0" />
+                                    <span>{benefit}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+
+                          {collabType.examples && collabType.examples.length > 0 && (
+                            <div className="mt-4">
+                              <h4 className="text-md font-semibold mb-2 flex items-center gap-2">
+                                <Star className="w-4 h-4 text-purple-500" />
+                                Exemples
+                              </h4>
+                              <div className="flex flex-wrap gap-2">
+                                {collabType.examples.map((example, exampleIndex) => (
+                                  <Badge key={exampleIndex} variant="secondary" className="p-2 text-sm">
+                                    {example}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ))
+                    ) : (
+                      // Types de collaboration par défaut
+                      [
+                        {
+                          id: '1',
+                          type: 'Partenariat de contenu',
+                          title: 'Création de contenu collaboratif',
+                          description: 'Collaborez avec d\'autres créateurs pour produire du contenu ensemble dans cette catégorie.',
+                          requirements: ['Audience similaire', 'Style complémentaire', 'Engagement actif'],
+                          benefits: ['Exposition mutuelle', 'Croissance de l\'audience', 'Contenu varié'],
+                          examples: ['Vidéos en duo', 'Challenges collaboratifs', 'Séries de posts']
+                        },
+                        {
+                          id: '2',
+                          type: 'Échange de compétences',
+                          title: 'Partage d\'expertise',
+                          description: 'Échangez vos compétences avec d\'autres créateurs spécialisés dans cette catégorie.',
+                          requirements: ['Expertise reconnue', 'Disponibilité', 'Bonne communication'],
+                          benefits: ['Apprentissage mutuel', 'Amélioration des compétences', 'Réseau professionnel'],
+                          examples: ['Tutoriels croisés', 'Mentorat réciproque', 'Workshops collaboratifs']
+                        },
+                        {
+                          id: '3',
+                          type: 'Projet commun',
+                          title: 'Projets collaboratifs',
+                          description: 'Lancez des projets communs avec d\'autres créateurs pour maximiser l\'impact.',
+                          requirements: ['Vision alignée', 'Engagement long terme', 'Ressources complémentaires'],
+                          benefits: ['Impact plus large', 'Ressources partagées', 'Innovation'],
+                          examples: ['Séries collaboratives', 'Événements communs', 'Produits conjoints']
+                        }
+                      ].map((collabType, index) => (
+                        <div key={collabType.id || index} className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                          <div className="flex items-center gap-2 mb-3">
+                            <Users className="w-5 h-5 text-blue-500" />
+                            <h3 className="text-lg font-semibold">{collabType.title}</h3>
+                            <Badge variant="outline" className="ml-auto">
+                              {collabType.type}
+                            </Badge>
+                          </div>
+                          <p className="text-gray-700 dark:text-gray-300 mb-4">
+                            {collabType.description}
+                          </p>
+
+                          {collabType.requirements && collabType.requirements.length > 0 && (
+                            <div className="mt-4">
+                              <h4 className="text-md font-semibold mb-2 flex items-center gap-2">
+                                <Target className="w-4 h-4 text-green-500" />
+                                Prérequis
+                              </h4>
+                              <div className="space-y-2">
+                                {collabType.requirements.map((req, reqIndex) => (
+                                  <div key={reqIndex} className="flex items-start gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                                    <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                                    <span className="text-sm">{req}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {collabType.benefits && collabType.benefits.length > 0 && (
+                            <div className="mt-4">
+                              <h4 className="text-md font-semibold mb-2 flex items-center gap-2">
+                                <TrendingUp className="w-4 h-4 text-blue-500" />
+                                Avantages
+                              </h4>
+                              <ul className="space-y-2">
+                                {collabType.benefits.map((benefit, benefitIndex) => (
+                                  <li key={benefitIndex} className="flex items-start gap-2 text-sm">
+                                    <Lightbulb className="w-4 h-4 text-yellow-500 mt-0.5 flex-shrink-0" />
+                                    <span>{benefit}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+
+                          {collabType.examples && collabType.examples.length > 0 && (
+                            <div className="mt-4">
+                              <h4 className="text-md font-semibold mb-2 flex items-center gap-2">
+                                <Star className="w-4 h-4 text-purple-500" />
+                                Exemples
+                              </h4>
+                              <div className="flex flex-wrap gap-2">
+                                {collabType.examples.map((example, exampleIndex) => (
+                                  <Badge key={exampleIndex} variant="secondary" className="p-2 text-sm">
+                                    {example}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
+
+                {collaborationLoading && (
+                  <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
+                    <p className="text-muted-foreground">Chargement des informations de collaboration...</p>
                   </div>
                 )}
               </CardContent>

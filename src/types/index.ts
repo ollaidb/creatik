@@ -76,3 +76,27 @@ export type CategoryGuide = {
   created_at: string;
   updated_at: string;
 };
+
+// Types pour les collaborations de sous-catégories
+export type CollaborationType = {
+  id: string;
+  subcategory_id: string;
+  type: string;
+  title: string;
+  description: string;
+  requirements?: string[];
+  benefits?: string[];
+  examples?: string[];
+  created_at: string;
+  updated_at: string;
+};
+
+export type SubcategoryCollaboration = {
+  id: string;
+  subcategory_id: string;
+  title: string;
+  description: string;
+  collaboration_types: CollaborationType[];
+  created_at: string;
+  updated_at: string;
+};
