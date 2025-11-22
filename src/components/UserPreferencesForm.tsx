@@ -14,6 +14,8 @@ import { useCategories } from '@/hooks/useCategories';
 import { useSubcategories } from '@/hooks/useSubcategories';
 import { useSubcategoriesLevel2 } from '@/hooks/useSubcategoriesLevel2';
 import { useCreators } from '@/hooks/useCreators';
+import { useSocialNetworks } from '@/hooks/useSocialNetworks';
+import { useThemes } from '@/hooks/useThemes';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2, X, Search, Plus } from 'lucide-react';
 
@@ -65,6 +67,8 @@ interface UserPreferencesFormData {
   preferred_subcategory_level2_id: string;
   similar_titles_ids: string[];
   inspiring_creators_ids: string[];
+  preferred_networks_ids: string[];
+  preferred_themes_ids: string[];
   final_goal: string[]; // Changé en tableau pour les checkboxes
   values: string[];
   creator_type: string;
@@ -89,6 +93,8 @@ const UserPreferencesForm = () => {
   const { data: categories } = useCategories();
   const { data: subcategories } = useSubcategories();
   const { data: creators } = useCreators();
+  const { data: socialNetworks } = useSocialNetworks();
+  const { data: themes } = useThemes();
   
   const [formData, setFormData] = useState<UserPreferencesFormData>({
     preferred_category_id: '',
@@ -96,6 +102,8 @@ const UserPreferencesForm = () => {
     preferred_subcategory_level2_id: '',
     similar_titles_ids: [],
     inspiring_creators_ids: [],
+    preferred_networks_ids: [],
+    preferred_themes_ids: [],
     final_goal: [],
     values: [],
     creator_type: '',
@@ -168,6 +176,8 @@ const UserPreferencesForm = () => {
             preferred_subcategory_level2_id: data.preferred_subcategory_level2_id || '',
             similar_titles_ids: data.similar_titles_ids || [],
             inspiring_creators_ids: data.inspiring_creators_ids || [],
+            preferred_networks_ids: data.preferred_networks_ids || [],
+            preferred_themes_ids: data.preferred_themes_ids || [],
             final_goal: Array.isArray(data.final_goal) ? data.final_goal : (data.final_goal ? [data.final_goal] : []),
             values: data.values || [],
             creator_type: data.creator_type || '',
@@ -327,6 +337,26 @@ const UserPreferencesForm = () => {
     }));
   };
 
+  // Gérer l'ajout/suppression de réseaux sociaux
+  const handleToggleNetwork = (networkId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      preferred_networks_ids: prev.preferred_networks_ids.includes(networkId)
+        ? prev.preferred_networks_ids.filter(id => id !== networkId)
+        : [...prev.preferred_networks_ids, networkId]
+    }));
+  };
+
+  // Gérer l'ajout/suppression de thèmes
+  const handleToggleTheme = (themeId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      preferred_themes_ids: prev.preferred_themes_ids.includes(themeId)
+        ? prev.preferred_themes_ids.filter(id => id !== themeId)
+        : [...prev.preferred_themes_ids, themeId]
+    }));
+  };
+
   // Sauvegarder les préférences
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -349,6 +379,8 @@ const UserPreferencesForm = () => {
         preferred_subcategory_level2_id: formData.preferred_subcategory_level2_id || null,
         similar_titles_ids: formData.similar_titles_ids || [],
         inspiring_creators_ids: formData.inspiring_creators_ids || [],
+        preferred_networks_ids: formData.preferred_networks_ids || [],
+        preferred_themes_ids: formData.preferred_themes_ids || [],
         final_goal: formData.final_goal.length > 0 ? formData.final_goal : null,
         values: formData.values || [],
         creator_type: formData.creator_type || null,
@@ -676,6 +708,44 @@ const UserPreferencesForm = () => {
                     ))}
                 </div>
               )}
+            </div>
+          </div>
+
+          {/* Réseaux sociaux préférés */}
+          <div>
+            <Label>Réseaux sociaux préférés (sélectionnez plusieurs options)</Label>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
+              {(socialNetworks || []).map(network => (
+                <div key={network.id} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`network-${network.id}`}
+                    checked={formData.preferred_networks_ids.includes(network.id)}
+                    onCheckedChange={() => handleToggleNetwork(network.id)}
+                  />
+                  <Label htmlFor={`network-${network.id}`} className="text-sm cursor-pointer">
+                    {network.display_name || network.name}
+                  </Label>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Thèmes préférés */}
+          <div>
+            <Label>Thèmes préférés (sélectionnez plusieurs options)</Label>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
+              {(themes || []).map(theme => (
+                <div key={theme.id} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`theme-${theme.id}`}
+                    checked={formData.preferred_themes_ids.includes(theme.id)}
+                    onCheckedChange={() => handleToggleTheme(theme.id)}
+                  />
+                  <Label htmlFor={`theme-${theme.id}`} className="text-sm cursor-pointer">
+                    {theme.name}
+                  </Label>
+                </div>
+              ))}
             </div>
           </div>
 

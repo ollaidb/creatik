@@ -39,9 +39,17 @@ ADD COLUMN IF NOT EXISTS similar_titles_ids UUID[] DEFAULT '{}';
 ALTER TABLE public.user_preferences
 ADD COLUMN IF NOT EXISTS inspiring_creators_ids UUID[] DEFAULT '{}';
 
+-- IDs des réseaux sociaux préférés de l'utilisateur
+ALTER TABLE public.user_preferences
+ADD COLUMN IF NOT EXISTS preferred_networks_ids UUID[] DEFAULT '{}';
+
+-- IDs des thèmes préférés de l'utilisateur
+ALTER TABLE public.user_preferences
+ADD COLUMN IF NOT EXISTS preferred_themes_ids UUID[] DEFAULT '{}';
+
 -- Objectif final du créateur
 ALTER TABLE public.user_preferences
-ADD COLUMN IF NOT EXISTS final_goal TEXT;
+ADD COLUMN IF NOT EXISTS final_goal TEXT[];
 
 -- Valeurs du créateur (tableau de valeurs)
 ALTER TABLE public.user_preferences
@@ -71,6 +79,13 @@ ON public.user_preferences(preferred_subcategory_level2_id);
 CREATE INDEX IF NOT EXISTS idx_user_preferences_creator_type 
 ON public.user_preferences(creator_type);
 
+-- Index pour les réseaux et thèmes (utilisant GIN pour les tableaux)
+CREATE INDEX IF NOT EXISTS idx_user_preferences_networks_ids 
+ON public.user_preferences USING GIN(preferred_networks_ids);
+
+CREATE INDEX IF NOT EXISTS idx_user_preferences_themes_ids 
+ON public.user_preferences USING GIN(preferred_themes_ids);
+
 -- ============================================
 -- 4. COMMENTAIRES SUR LES COLONNES
 -- ============================================
@@ -80,9 +95,10 @@ COMMENT ON COLUMN public.user_preferences.preferred_subcategory_id IS 'Sous-cat�
 COMMENT ON COLUMN public.user_preferences.preferred_subcategory_level2_id IS 'Sous-catégorie niveau 2 choisie par le créateur (si applicable)';
 COMMENT ON COLUMN public.user_preferences.similar_titles_ids IS 'IDs des titres qui ressemblent au style du créateur';
 COMMENT ON COLUMN public.user_preferences.inspiring_creators_ids IS 'IDs des créateurs vers lesquels l''utilisateur aspire';
-COMMENT ON COLUMN public.user_preferences.final_goal IS 'Objectif final du créateur';
+COMMENT ON COLUMN public.user_preferences.preferred_networks_ids IS 'IDs des réseaux sociaux préférés de l''utilisateur pour personnaliser les recommandations';
+COMMENT ON COLUMN public.user_preferences.preferred_themes_ids IS 'IDs des thèmes préférés de l''utilisateur pour personnaliser les recommandations';
+COMMENT ON COLUMN public.user_preferences.final_goal IS 'Objectifs finaux du créateur (tableau)';
 COMMENT ON COLUMN public.user_preferences.values IS 'Valeurs importantes pour le créateur';
-COMMENT ON COLUMN public.user_preferences.creation_reason IS 'Raison principale de création de contenu';
 COMMENT ON COLUMN public.user_preferences.creator_type IS 'Type de créateur : influenceur, créateur de contenu, entreprise, etc.';
 
 -- ============================================
