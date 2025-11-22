@@ -50,7 +50,191 @@ export const usePersonalizedRecommendations = (initialPage: number = 0, pageSize
       const likedTitleIds = likedTitlesResult.data?.map(t => t.item_id) || [];
       const likedCategoryIds = likedCategoriesResult.data?.map(c => c.item_id) || [];
 
+      // 2. Charger les préférences utilisateur pour la personnalisation
+      const { data: userPreferences } = await supabase
+        .from('user_preferences')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+
       let allRecommendedTitles: RecommendedTitle[] = [];
+
+      // 2.1. Si l'utilisateur a défini une catégorie préférée, c'est la priorité maximale
+      if (userPreferences?.preferred_category_id) {
+        let subcategoryIds: string[] = [];
+        
+        // Si une sous-catégorie niveau 2 est définie, prioriser celle-ci
+        if (userPreferences.preferred_subcategory_level2_id) {
+          const { data: level2Subcategory } = await supabase
+            .from('subcategories_level2')
+            .select('subcategory_id')
+            .eq('id', userPreferences.preferred_subcategory_level2_id)
+            .single();
+          
+          if (level2Subcategory?.subcategory_id) {
+            subcategoryIds = [level2Subcategory.subcategory_id];
+          }
+        } 
+        // Sinon, si une sous-catégorie niveau 1 est définie
+        else if (userPreferences.preferred_subcategory_id) {
+          subcategoryIds = [userPreferences.preferred_subcategory_id];
+        } 
+        // Sinon, prendre toutes les sous-catégories de la catégorie
+        else {
+          const { data: categorySubcategories } = await supabase
+            .from('subcategories')
+            .select('id')
+            .eq('category_id', userPreferences.preferred_category_id)
+            .limit(50);
+          
+          subcategoryIds = categorySubcategories?.map(s => s.id) || [];
+        }
+
+        if (subcategoryIds.length > 0) {
+          const excludeIds = likedTitleIds.length > 0 ? likedTitleIds : ['00000000-0000-0000-0000-000000000000'];
+          const { data: preferredTitles } = await supabase
+            .from('content_titles')
+            .select(`
+              id,
+              title,
+              subcategory_id,
+              subcategories!inner(id, name, category_id, categories(id, name))
+            `)
+            .in('subcategory_id', subcategoryIds)
+            .not('id', 'in', `(${excludeIds.join(',')})`)
+            .limit(30);
+
+          if (preferredTitles && preferredTitles.length > 0) {
+            const preferredRecommendations = preferredTitles
+              .filter((title: any) => !loadedIdsRef.current.has(title.id))
+              .map((title: any) => {
+                const subcat = title.subcategories;
+                const cat = subcat?.categories || null;
+                return {
+                  id: title.id,
+                  title: title.title,
+                  category_id: subcat?.category_id || cat?.id,
+                  subcategory_id: title.subcategory_id,
+                  category_name: cat?.name,
+                  subcategory_name: subcat?.name,
+                  relevance_score: 1.0 // Score maximum pour les préférences définies
+                };
+              });
+            
+            allRecommendedTitles = [...allRecommendedTitles, ...preferredRecommendations];
+          }
+        }
+      }
+
+      // 2.2. Si l'utilisateur a sélectionné des titres similaires, trouver des titres similaires
+      if (userPreferences?.similar_titles_ids && userPreferences.similar_titles_ids.length > 0) {
+        // Récupérer les sous-catégories des titres similaires
+        const { data: similarTitles } = await supabase
+          .from('content_titles')
+          .select('subcategory_id')
+          .in('id', userPreferences.similar_titles_ids.slice(0, 10));
+        
+        const similarSubcategoryIds = [...new Set(similarTitles?.map(t => t.subcategory_id).filter(Boolean) || [])];
+        
+        if (similarSubcategoryIds.length > 0) {
+          const excludeIds = [...likedTitleIds, ...allRecommendedTitles.map(t => t.id)].filter(Boolean);
+          const excludeCondition = excludeIds.length > 0 ? excludeIds.join(',') : '00000000-0000-0000-0000-000000000000';
+          
+          const { data: similarRecommendations } = await supabase
+            .from('content_titles')
+            .select(`
+              id,
+              title,
+              subcategory_id,
+              subcategories!inner(id, name, category_id, categories(id, name))
+            `)
+            .in('subcategory_id', similarSubcategoryIds)
+            .not('id', 'in', `(${excludeCondition})`)
+            .limit(20);
+
+          if (similarRecommendations && similarRecommendations.length > 0) {
+            const similarRecs = similarRecommendations
+              .filter((title: any) => !loadedIdsRef.current.has(title.id))
+              .map((title: any) => {
+                const subcat = title.subcategories;
+                const cat = subcat?.categories || null;
+                return {
+                  id: title.id,
+                  title: title.title,
+                  category_id: subcat?.category_id || cat?.id,
+                  subcategory_id: title.subcategory_id,
+                  category_name: cat?.name,
+                  subcategory_name: subcat?.name,
+                  relevance_score: 0.9 // Score élevé pour les titres similaires
+                };
+              });
+            
+            allRecommendedTitles = [...allRecommendedTitles, ...similarRecs];
+          }
+        }
+      }
+
+      // 2.3. Si l'utilisateur a sélectionné des créateurs inspirants, trouver leurs catégories/sous-catégories
+      if (userPreferences?.inspiring_creators_ids && userPreferences.inspiring_creators_ids.length > 0) {
+        const { data: inspiringCreators } = await supabase
+          .from('creators')
+          .select('category_id, subcategory_id')
+          .in('id', userPreferences.inspiring_creators_ids.slice(0, 10));
+        
+        const creatorCategoryIds = [...new Set(inspiringCreators?.map(c => c.category_id).filter(Boolean) || [])];
+        const creatorSubcategoryIds = [...new Set(inspiringCreators?.map(c => c.subcategory_id).filter(Boolean) || [])];
+        
+        let creatorSubcategoryIdsToUse: string[] = [];
+        
+        if (creatorSubcategoryIds.length > 0) {
+          creatorSubcategoryIdsToUse = creatorSubcategoryIds;
+        } else if (creatorCategoryIds.length > 0) {
+          const { data: categorySubcategories } = await supabase
+            .from('subcategories')
+            .select('id')
+            .in('category_id', creatorCategoryIds)
+            .limit(50);
+          
+          creatorSubcategoryIdsToUse = categorySubcategories?.map(s => s.id) || [];
+        }
+        
+        if (creatorSubcategoryIdsToUse.length > 0) {
+          const excludeIds = [...likedTitleIds, ...allRecommendedTitles.map(t => t.id)].filter(Boolean);
+          const excludeCondition = excludeIds.length > 0 ? excludeIds.join(',') : '00000000-0000-0000-0000-000000000000';
+          
+          const { data: creatorRecommendations } = await supabase
+            .from('content_titles')
+            .select(`
+              id,
+              title,
+              subcategory_id,
+              subcategories!inner(id, name, category_id, categories(id, name))
+            `)
+            .in('subcategory_id', creatorSubcategoryIdsToUse)
+            .not('id', 'in', `(${excludeCondition})`)
+            .limit(20);
+
+          if (creatorRecommendations && creatorRecommendations.length > 0) {
+            const creatorRecs = creatorRecommendations
+              .filter((title: any) => !loadedIdsRef.current.has(title.id))
+              .map((title: any) => {
+                const subcat = title.subcategories;
+                const cat = subcat?.categories || null;
+                return {
+                  id: title.id,
+                  title: title.title,
+                  category_id: subcat?.category_id || cat?.id,
+                  subcategory_id: title.subcategory_id,
+                  category_name: cat?.name,
+                  subcategory_name: subcat?.name,
+                  relevance_score: 0.85 // Score élevé pour les créateurs inspirants
+                };
+              });
+            
+            allRecommendedTitles = [...allRecommendedTitles, ...creatorRecs];
+          }
+        }
+      }
 
       // 3. Si l'utilisateur a liké des catégories, récupérer les titres de ces catégories
       if (likedCategoryIds.length > 0) {
