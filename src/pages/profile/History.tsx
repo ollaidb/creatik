@@ -1,172 +1,115 @@
-
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Button } from '@/components/ui/button';
+import { useVisitHistory, VisitItem } from '@/hooks/useVisitHistory';
+
 import { Card, CardContent } from '@/components/ui/card';
-import { ArrowLeft, Plus, Clock, Search, Trash2 } from 'lucide-react';
+import { Clock, Eye } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import Navigation from '@/components/Navigation';
-import StickyHeader from '@/components/StickyHeader';
-import { useAuth } from '@/hooks/useAuth';
-import { useSearchHistory } from '@/hooks/useSearchHistory';
 
-const History = () => {
+const History: React.FC = () => {
+  const { visits, loading, clearHistory } = useVisitHistory();
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const { history, clearHistory } = useSearchHistory();
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1
+  const getVisitLocation = (visit: VisitItem) => {
+    const primaryLabel = visit.title?.trim();
+    const description = visit.description?.trim();
+
+    const cleanedDescription = description?.replace(/^Visite de\s+/i, '').trim();
+
+    if (visit.type !== 'search') {
+      if (cleanedDescription) {
+        return cleanedDescription;
+      }
+      if (description && description !== visit.url) {
+        return description;
       }
     }
-  };
 
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.5 }
+    if (primaryLabel && primaryLabel.toLowerCase() !== 'page visitée') {
+      return primaryLabel;
     }
+
+    if (description) {
+      return description;
+    }
+
+    return visit.url;
   };
 
-  const formatTimestamp = (timestamp: string) => {
-    const date = new Date(timestamp);
-    return date.toLocaleDateString('fr-FR', {
-      day: '2-digit',
-      month: '2-digit',
+  const formatVisitDate = (timestamp: string) => {
+    return new Date(timestamp).toLocaleDateString('fr-FR', {
+      day: 'numeric',
+      month: 'long',
       year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
     });
   };
 
-  if (!user) {
+  if (loading) {
     return (
-      <div className="min-h-screen pb-20">
-        <StickyHeader showSearchBar={false} />
-        
-        <header className="bg-background border-b p-4 flex items-center justify-between">
-          <div className="flex items-center">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={() => navigate('/profile')} 
-              className="mr-2"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <h1 className="text-xl font-semibold">Historique</h1>
+      <div className="min-h-screen bg-white dark:bg-slate-900">
+        <div className="container mx-auto px-4 py-8">
+          <div className="flex items-center justify-center h-64">
+            <div className="flex items-center space-x-2 text-gray-900 dark:text-white">
+              <Clock className="w-6 h-6 animate-spin" />
+              <span>Chargement de l'historique...</span>
+            </div>
           </div>
-        </header>
-
-        <main className="max-w-4xl mx-auto p-4 flex flex-col items-center justify-center h-60">
-          <Clock className="w-16 h-16 text-gray-300 mb-4" />
-          <h3 className="text-lg font-medium mb-2">Connexion requise</h3>
-          <p className="text-muted-foreground text-center mb-4">
-            Connectez-vous pour voir votre historique de recherche
-          </p>
-          <Button onClick={() => navigate('/profile')}>
-            Se connecter
-          </Button>
-        </main>
-
-        <Navigation />
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen pb-20">
-      <StickyHeader showSearchBar={false} />
-      
-      <header className="bg-background border-b p-4 flex items-center justify-between">
-        <div className="flex items-center">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={() => navigate('/profile')} 
-            className="mr-2"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <h1 className="text-xl font-semibold">Historique</h1>
+    <div className="min-h-screen bg-white dark:bg-slate-900">
+      <div className="container mx-auto px-4 py-6">
+        <div className="flex items-center space-x-2 mb-6">
+          <div className="flex items-center space-x-2">
+            <Eye className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+              Historique des visites
+            </h1>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          {history.length > 0 && (
-            <Button 
-              variant="outline"
-              size="sm"
-              onClick={clearHistory}
-              className="flex items-center gap-2"
-            >
-              <Trash2 className="h-4 w-4" />
-              Effacer
-            </Button>
-          )}
-          <Button 
-            size="sm"
-            onClick={() => navigate('/publish')}
-            className="flex items-center gap-2"
-          >
-            <Plus className="h-4 w-4" />
-            Publier
-          </Button>
-        </div>
-      </header>
 
-      <main className="max-w-4xl mx-auto p-4">
-        {history.length > 0 ? (
-          <motion.div
-            className="space-y-4"
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-          >
-            {history.map((item) => (
-              <motion.div key={item.id} variants={itemVariants}>
-                <Card className="hover:shadow-lg transition-shadow duration-300">
-                  <CardContent className="p-4">
-                    <div className="flex items-start space-x-4">
-                      <div className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800">
-                        <Search className="w-5 h-5 text-blue-500" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-lg truncate">{item.query}</h3>
-                        <p className="text-muted-foreground text-sm">Recherche effectuée</p>
-                        <div className="flex items-center mt-2 text-xs text-muted-foreground">
-                          <Clock className="w-3 h-3 mr-1" />
-                          {formatTimestamp(item.timestamp)}
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </motion.div>
-        ) : (
-          <div className="flex flex-col items-center justify-center h-60 text-center">
-            <Clock className="w-16 h-16 text-gray-300 mb-4" />
-            <h3 className="text-lg font-medium">Aucun historique</h3>
-            <p className="text-muted-foreground mt-2">
-              Votre historique de recherche apparaîtra ici
+        {visits.length === 0 ? (
+          <div className="text-center py-12">
+            <Eye className="w-16 h-16 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+              Aucun historique
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400 mb-4">
+              Vos visites et clics apparaîtront ici
             </p>
-            <Button 
-              onClick={() => navigate('/')} 
-              className="mt-4"
-              variant="outline"
+            <Button
+              onClick={() => navigate('/')}
+              className="bg-purple-600 hover:bg-purple-700 text-white"
             >
               Commencer à explorer
             </Button>
           </div>
+        ) : (
+          <div className="space-y-3">
+            {visits.map((visit) => (
+              <Card 
+                key={visit.id} 
+                className="bg-gray-50 dark:bg-slate-800 border-gray-200 dark:border-slate-700 hover:shadow-md transition-shadow cursor-pointer"
+                onClick={() => navigate(visit.url)}
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between gap-4 text-sm">
+                    <p className="font-semibold text-gray-900 dark:text-white truncate">
+                      {getVisitLocation(visit)}
+                    </p>
+                    <span className="text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                      {formatVisitDate(visit.timestamp)}
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         )}
-      </main>
-
+      </div>
       <Navigation />
     </div>
   );

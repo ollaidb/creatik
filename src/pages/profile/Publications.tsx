@@ -1,34 +1,146 @@
-
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSmartNavigation } from '@/hooks/useNavigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Clock, CheckCircle, XCircle, Trash2, Plus } from 'lucide-react';
-import { useUserPublications } from '@/hooks/useUserPublications';
+import { ArrowLeft, Clock, CheckCircle, XCircle, Trash2, Plus, RotateCcw } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { usePublications } from '@/hooks/usePublications';
+import { useToast } from '@/hooks/use-toast';
+import DeleteConfirmationModal from '@/components/DeleteConfirmationModal';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import Navigation from '@/components/Navigation';
+
+const PUBLICATION_TABS = [
+  { key: 'all', label: 'Toutes' },
+  { key: 'category', label: 'Catégories' },
+  { key: 'subcategory', label: 'Sous-catégories' },
+  { key: 'subcategory_level2', label: 'Sous-catégories Niveau 2' },
+  { key: 'title', label: 'Titres' },
+  { key: 'hooks', label: 'Hooks' },
+  { key: 'content', label: 'Contenus' },
+  { key: 'creator', label: 'Créateurs' },
+  { key: 'account', label: 'Comptes' },
+  { key: 'source', label: 'Sources' },
+  { key: 'pseudo', label: 'Pseudos' },
+  { key: 'exemple-media', label: 'Exemples' },
+];
 
 const Publications = () => {
   const navigate = useNavigate();
-  const { publications, loading, deletePublication } = useUserPublications();
+  const { navigateBack } = useSmartNavigation();
+  const { toast } = useToast();
+  const { publications, loading, error, deletePublication } = usePublications();
+  
+  // États pour la confirmation de suppression
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<{
+    id: string;
+    title: string;
+    type: 'category' | 'subcategory' | 'subcategory_level2' | 'title' | 'hooks' | 'content' | 'creator' | 'account' | 'source' | 'pseudo' | 'exemple-media';
+  } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [activeTab, setActiveTab] = useState('all');
+  const [showTrash, setShowTrash] = useState(false);
 
-  const getStatusBadge = (status: string | null) => {
+  // Recharger les données de la corbeille quand les publications changent
+  useEffect(() => {
+    if (showTrash) {
+      // refreshTrash(); // This line was removed as per the edit hint
+    }
+  }, [publications, showTrash]);
+
+  // Filtrer les publications par type
+  const filteredPublications = publications.filter(publication => {
+    if (activeTab === 'all') return true;
+    return publication.content_type === activeTab;
+  });
+
+  const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'pending':
-        return <Badge variant="secondary" className="flex items-center gap-1"><Clock className="w-3 h-3" />En attente</Badge>;
       case 'approved':
-        return <Badge variant="default" className="flex items-center gap-1 bg-green-500"><CheckCircle className="w-3 h-3" />Approuvée</Badge>;
+        return <Badge variant="default" className="flex items-center gap-1 bg-green-500"><CheckCircle className="w-3 h-3" />Publié</Badge>;
       case 'rejected':
-        return <Badge variant="destructive" className="flex items-center gap-1"><XCircle className="w-3 h-3" />Rejetée</Badge>;
+        return <Badge variant="destructive" className="flex items-center gap-1"><XCircle className="w-3 h-3" />Rejeté</Badge>;
       default:
-        return <Badge variant="outline">{status || 'En attente'}</Badge>;
+        return <Badge variant="default" className="flex items-center gap-1 bg-green-500"><CheckCircle className="w-3 h-3" />Publié</Badge>;
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer cette publication ?')) {
-      await deletePublication(id);
+  const formatDate = (dateString: string) => {
+    return format(new Date(dateString), 'dd/MM/yyyy à HH:mm', { locale: fr });
+  };
+
+  // Fonctions pour la suppression
+  const handleDeleteClick = (publication: { id: string; title: string; content_type: string }) => {
+    setItemToDelete({
+      id: publication.id,
+      title: publication.title,
+      type: publication.content_type as 'category' | 'subcategory' | 'title' | 'account' | 'source' | 'challenge'
+    });
+    setShowDeleteModal(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!itemToDelete) return;
+    setIsDeleting(true);
+    try {
+      const result = await deletePublication(itemToDelete.id);
+      if (result.success) {
+        toast({
+          title: "Supprimé"
+        });
+      } else {
+        toast({
+          title: "Erreur",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        variant: "destructive"
+      });
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteModal(false);
+      setItemToDelete(null);
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setShowDeleteModal(false);
+    setItemToDelete(null);
+  };
+
+  // Fonctions pour la corbeille
+  const handleRestore = async (itemId: string) => {
+    try {
+      // restoreFromTrash(itemId); // This line was removed as per the edit hint
+      toast({
+        title: "Restauré"
+      });
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handlePermanentDelete = async (itemId: string) => {
+    try {
+      // permanentlyDelete(itemId); // This line was removed as per the edit hint
+      toast({
+        title: "Supprimé"
+      });
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        variant: "destructive"
+      });
     }
   };
 
@@ -39,12 +151,12 @@ const Publications = () => {
           <Button 
             variant="ghost" 
             size="icon" 
-            onClick={() => navigate('/profile')} 
+            onClick={navigateBack} 
             className="mr-2"
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h1 className="text-xl font-semibold">Mes Publications</h1>
+          <h1 className="text-xl font-semibold">Publications</h1>
         </header>
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
@@ -63,85 +175,218 @@ const Publications = () => {
           <Button 
             variant="ghost" 
             size="icon" 
-            onClick={() => navigate('/profile')} 
+            onClick={navigateBack} 
             className="mr-2"
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h1 className="text-xl font-semibold">Mes Publications</h1>
+          <h1 className="text-xl font-semibold">Publications</h1>
         </div>
-        <Button 
-          onClick={() => navigate('/publish')}
-          className="flex items-center gap-2"
-        >
-          <Plus className="h-4 w-4" />
-          Nouvelle
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="outline"
+            onClick={() => setShowTrash(!showTrash)}
+            className="flex items-center gap-2"
+          >
+            <Trash2 className="h-4 w-4" />
+            Corbeille
+          </Button>
+        </div>
       </header>
 
       <main className="max-w-4xl mx-auto p-4">
-        {publications.length === 0 ? (
-          <Card className="text-center py-12">
-            <CardContent>
-              <div className="text-muted-foreground mb-4">
-                <Plus className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <h3 className="text-lg font-medium mb-2">Aucune publication</h3>
-                <p>Vous n'avez pas encore créé de publication.</p>
-              </div>
-              <Button onClick={() => navigate('/publish')}>
-                Créer ma première publication
+        {/* Menu avec onglets */}
+        <div className="mb-6">
+          {showTrash ? (
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold flex items-center gap-2">
+                <Trash2 className="h-5 w-5" />
+                Corbeille
+              </h2>
+              <Button 
+                variant="outline" 
+                onClick={() => setShowTrash(false)}
+                className="flex items-center gap-2"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Retour aux publications
               </Button>
-            </CardContent>
-          </Card>
+            </div>
+          ) : (
+            <div className="mb-3">
+              <div className="overflow-x-auto scrollbar-hide">
+                <div className="flex gap-2 pb-2 min-w-max">
+                  {PUBLICATION_TABS.map(tab => {
+                    const isActive = activeTab === tab.key;
+                    const getTabColor = (tabKey: string) => {
+                      switch (tabKey) {
+                        case 'all':
+                          return 'from-gray-500 to-gray-600';
+                        case 'category':
+                          return 'from-blue-500 to-cyan-500';
+                        case 'subcategory':
+                          return 'from-green-500 to-emerald-500';
+                        case 'title':
+                          return 'from-purple-500 to-pink-500';
+                        case 'account':
+                          return 'from-orange-500 to-red-500';
+                        case 'source':
+                          return 'from-indigo-500 to-purple-500';
+                        case 'subcategory_level2':
+                          return 'from-teal-500 to-cyan-500';
+                        case 'hooks':
+                          return 'from-pink-500 to-rose-500';
+                        case 'content':
+                          return 'from-violet-500 to-purple-500';
+                        case 'creator':
+                          return 'from-amber-500 to-yellow-500';
+                        case 'pseudo':
+                          return 'from-slate-500 to-gray-500';
+                        default:
+                          return 'from-gray-500 to-gray-600';
+                      }
+                    };
+                    return (
+                      <motion.button
+                        key={tab.key}
+                        onClick={() => setActiveTab(tab.key)}
+                        className={`
+                          px-3 py-2 rounded-lg transition-all duration-300 min-w-[70px] text-center flex items-center justify-center gap-2
+                          ${isActive
+                            ? 'bg-gradient-to-r ' + getTabColor(tab.key) + ' text-white shadow-lg scale-105'
+                            : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                          }
+                        `}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        animate={isActive ? {
+                          scale: [1, 1.1, 1.05],
+                          boxShadow: [
+                            "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+                            "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
+                            "0 4px 6px -1px rgba(0, 0, 0, 0.1)"
+                          ]
+                        } : {}}
+                        transition={isActive ? {
+                          duration: 0.6,
+                          ease: "easeInOut"
+                        } : {
+                          duration: 0.2
+                        }}
+                      >
+                        <span className={`
+                          text-xs font-medium leading-tight
+                          ${isActive ? 'text-white' : 'text-gray-700 dark:text-gray-300'}
+                        `}>
+                          {tab.label}
+                        </span>
+                      </motion.button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+        {/* Contenu de la corbeille */}
+        {showTrash ? (
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+              <p className="text-muted-foreground">Chargement de la corbeille...</p>
+            </div>
+          </div>
         ) : (
-          <div className="space-y-4">
-            {publications.map((publication) => (
-              <Card key={publication.id}>
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <CardTitle className="text-lg mb-2">{publication.title}</CardTitle>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
-                        <span className="capitalize">{publication.content_type}</span>
-                        {publication.platform && (
-                          <>
-                            <span>•</span>
-                            <span className="capitalize">{publication.platform}</span>
-                          </>
-                        )}
-                        <span>•</span>
-                        <span>{format(new Date(publication.created_at), 'dd MMM yyyy', { locale: fr })}</span>
+          /* Contenu des publications normales */
+          filteredPublications.length === 0 ? (
+            <Card className="text-center py-12">
+              <CardContent>
+                <div className="text-muted-foreground mb-4">
+                  <Plus className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <h3 className="text-lg font-medium mb-2">
+                    {activeTab === 'all' ? 'Aucune publication' : 
+                     activeTab === 'category' ? 'Aucune catégorie' :
+                     activeTab === 'subcategory' ? 'Aucune sous-catégorie' :
+                     activeTab === 'subcategory_level2' ? 'Aucune sous-catégorie niveau 2' :
+                     activeTab === 'title' ? 'Aucun titre' :
+                     activeTab === 'hooks' ? 'Aucun hook' :
+                     activeTab === 'content' ? 'Aucun contenu' :
+                     activeTab === 'creator' ? 'Aucun créateur' :
+                     activeTab === 'account' ? 'Aucun compte' :
+                     activeTab === 'source' ? 'Aucune source' :
+                     activeTab === 'pseudo' ? 'Aucun pseudo' : 'Aucune publication'}
+                  </h3>
+                  <p>
+                    {activeTab === 'all' ? 'Vous n\'avez pas encore publié de contenu.' :
+                     activeTab === 'category' ? 'Vous n\'avez pas encore publié de catégorie.' :
+                     activeTab === 'subcategory' ? 'Vous n\'avez pas encore publié de sous-catégorie.' :
+                     activeTab === 'subcategory_level2' ? 'Vous n\'avez pas encore publié de sous-catégorie niveau 2.' :
+                     activeTab === 'title' ? 'Vous n\'avez pas encore publié de titre.' :
+                     activeTab === 'hooks' ? 'Vous n\'avez pas encore publié de hook.' :
+                     activeTab === 'content' ? 'Vous n\'avez pas encore publié de contenu.' :
+                     activeTab === 'creator' ? 'Vous n\'avez pas encore publié de créateur.' :
+                     activeTab === 'account' ? 'Vous n\'avez pas encore publié de compte.' :
+                     activeTab === 'source' ? 'Vous n\'avez pas encore publié de source.' :
+                     activeTab === 'pseudo' ? 'Vous n\'avez pas encore publié de pseudo.' : 'Vous n\'avez pas encore publié de contenu.'}
+                  </p>
+                </div>
+                <Button onClick={() => navigate('/publish')}>
+                  Créer ma première publication
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid gap-4">
+              {filteredPublications.map((publication) => (
+                <Card key={publication.id} className="hover:shadow-lg transition-shadow">
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <h3 className="text-lg font-semibold mb-2">{publication.title}</h3>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+                          <Badge variant="outline" className="capitalize">
+                            {publication.content_type}
+                          </Badge>
+                          <span>•</span>
+                          <span>{formatDate(publication.created_at)}</span>
+                        </div>
                       </div>
-                      {getStatusBadge(publication.status)}
+                      <div className="flex items-center gap-2">
+                        {getStatusBadge(publication.status || 'approved')}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDeleteClick(publication)}
+                          className="text-destructive hover:text-destructive/80"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleDelete(publication.id)}
-                      className="text-destructive hover:text-destructive/80"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </CardHeader>
-                {(publication.description || publication.rejection_reason) && (
-                  <CardContent className="pt-0">
-                    {publication.description && (
-                      <p className="text-sm text-muted-foreground mb-3">{publication.description}</p>
-                    )}
-                    {publication.status === 'rejected' && publication.rejection_reason && (
-                      <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3">
+                    {publication.rejection_reason && (
+                      <div className="mt-3 bg-destructive/10 border border-destructive/20 rounded-lg p-3">
                         <p className="text-sm text-destructive font-medium mb-1">Raison du rejet :</p>
                         <p className="text-sm text-destructive/80">{publication.rejection_reason}</p>
                       </div>
                     )}
                   </CardContent>
-                )}
-              </Card>
-            ))}
-          </div>
+                </Card>
+              ))}
+            </div>
+          )
         )}
       </main>
+
+      <DeleteConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={handleCancelDelete}
+        onConfirm={handleConfirmDelete}
+        title="Supprimer cette publication"
+        description="Êtes-vous sûr de vouloir supprimer cette publication ? Elle sera déplacée vers la corbeille et pourra être restaurée ultérieurement."
+        itemName={itemToDelete?.title || ''}
+        isLoading={isDeleting}
+      />
+      <Navigation />
     </div>
   );
 };

@@ -1,59 +1,75 @@
-
-import React from "react";
-import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
-import FunctionalSearchBar from "./FunctionalSearchBar";
+import React from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import IntelligentSearchBar from './IntelligentSearchBar';
+import { Button } from '@/components/ui/button';
+import { BookOpen } from 'lucide-react';
 
 interface StickyHeaderProps {
-  showSearchBar?: boolean;
+  title?: string;
+  onSearch?: (query: string) => void;
 }
 
-const StickyHeader: React.FC<StickyHeaderProps> = ({ showSearchBar = true }) => {
+const StickyHeader: React.FC<StickyHeaderProps> = ({ onSearch }) => {
+  const location = useLocation();
   const navigate = useNavigate();
 
-  const handleLogoClick = () => {
-    if (window.location.pathname === '/') {
-      // Si on est déjà sur la page d'accueil, remonter en haut
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+  const handleSearch = (query: string) => {
+    if (location.pathname === '/') {
+      // Sur la page d'accueil, utiliser le callback
+      if (onSearch) {
+        onSearch(query);
+      }
     } else {
-      // Sinon, naviguer vers l'accueil
-      navigate('/');
+      // Sur les autres pages, naviguer vers la page de recherche
+      navigate(`/search?search=${encodeURIComponent(query)}`);
     }
   };
 
-  const handleSearch = (query: string) => {
-    // Naviguer vers la page d'accueil avec la recherche
-    navigate(`/?search=${encodeURIComponent(query)}`);
-  };
-
   return (
-    <div className="sticky top-0 z-50 bg-gradient-to-r from-[#f8f9fa] to-[#e9ecef] dark:from-creatik-dark dark:to-[#2C2C54]/80 shadow-sm">
-      <div className="creatik-container py-4">
-        <div className="flex items-center justify-between gap-4">
-          {/* Logo cliquable avec animation */}
-          <motion.h1 
-            className="text-3xl font-bold bg-gradient-to-r from-creatik-primary to-creatik-secondary bg-clip-text text-transparent cursor-pointer hover:opacity-80 transition-opacity select-none"
-            onClick={handleLogoClick}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ 
-              scale: 0.95,
-              rotate: [0, -5, 5, -3, 3, 0],
-              transition: { duration: 0.5 }
-            }}
-            transition={{ type: "spring", stiffness: 400, damping: 10 }}
-          >
-            CréaTik
-          </motion.h1>
-          
-          {/* SearchBar */}
-          {showSearchBar && (
-            <div className="flex-1 max-w-2xl">
-              <FunctionalSearchBar onSearch={handleSearch} />
-            </div>
-          )}
+    <header className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
+      <div className="container mx-auto px-4">
+        <div className="flex items-center justify-between h-16">
+          {/* Logo et Icône Notes */}
+          <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              className="text-xl font-bold"
+              onClick={() => navigate('/')}
+            >
+              Creatik
+            </Button>
+            
+            {/* Icône Notes */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 rounded-lg hover:bg-accent"
+              onClick={() => navigate('/notes')}
+                                   title="Notes"
+            >
+              <BookOpen className="h-5 w-5" />
+            </Button>
+          </div>
+
+          {/* Barre de recherche - Version Desktop */}
+          <div className="hidden md:flex flex-1 max-w-4xl mx-16">
+            <IntelligentSearchBar onSearch={handleSearch} />
+          </div>
+
+          {/* Barre de recherche - Version Mobile */}
+          <div className="md:hidden flex-1 mx-4">
+            <IntelligentSearchBar 
+              onSearch={handleSearch}
+              placeholder="Rechercher..."
+              className="w-full"
+            />
+          </div>
+
+          {/* Espace vide pour équilibrer - Desktop seulement */}
+          <div className="hidden md:block w-20"></div>
         </div>
       </div>
-    </div>
+    </header>
   );
 };
 

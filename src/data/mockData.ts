@@ -1,5 +1,4 @@
 import { Category, ContentIdea, Challenge } from "../types";
-
 export const categories: Category[] = [
   { id: "education", name: "Éducation", color: "primary" },
   { id: "information", name: "Information", color: "orange" },
@@ -14,7 +13,7 @@ export const categories: Category[] = [
   { id: "lire", name: "Lire", color: "green" },
   { id: "art", name: "Art", color: "pink" },
   { id: "dilemme", name: "Dilemme", color: "primary" },
-  { id: "defis", name: "Défis / Challenge", color: "orange" },
+  { id: "defis", name: "Défis / Communauté", color: "orange" },
   { id: "meme", name: "Page Meme", color: "green" },
   { id: "classement", name: "Classement", color: "pink" },
   { id: "danse", name: "Danse", color: "primary" },
@@ -62,7 +61,6 @@ export const categories: Category[] = [
   { id: "recommandation", name: "Recommandation", color: "green" },
   { id: "rage-bait", name: "Rage bait", color: "pink" },
 ];
-
 export const contentIdeas: ContentIdea[] = [
   {
     id: "1",
@@ -129,7 +127,7 @@ export const contentIdeas: ContentIdea[] = [
   },
   {
     id: "8",
-    title: "Challenge fitness en 7 jours",
+    title: "Communauté fitness en 7 jours",
     description: "Montrez les progrès et résultats d'un défi fitness court mais intense.",
     platform: "all",
     type: "trending",
@@ -137,7 +135,6 @@ export const contentIdeas: ContentIdea[] = [
     popularity: 91
   },
 ];
-
 export const challenges: Challenge[] = [
   {
     id: "1",
@@ -155,20 +152,18 @@ export const challenges: Challenge[] = [
   },
   {
     id: "3",
-    title: "Challenge des 5 tendances",
+    title: "Communauté des 5 tendances",
     description: "Intégrez 5 tendances actuelles dans une seule vidéo cohérente de moins de 2 minutes.",
     difficulty: "hard",
     category: "trending"
   }
 ];
-
 // Fonction pour simuler des recommandations personnalisées basées sur les catégories visitées
 export const getPersonalizedRecommendations = (visitedCategories: string[]): ContentIdea[] => {
   if (visitedCategories.length === 0) {
     // Si aucune catégorie visitée, retourner quelques idées populaires
     return contentIdeas.filter(idea => idea.popularity > 85).slice(0, 4);
   }
-
   // Sinon, filtrer les idées basées sur les catégories visitées
   return contentIdeas
     .filter(idea => visitedCategories.includes(idea.category))

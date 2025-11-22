@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useThemes } from '@/hooks/useThemes';
 import {
@@ -24,13 +23,13 @@ const ThemeSelector = ({ selectedTheme, onThemeChange }: ThemeSelectorProps) => 
   }
 
   return (
-    <Select value={selectedTheme || 'all'} onValueChange={onThemeChange}>
+    <Select value={selectedTheme || ''} onValueChange={onThemeChange}>
       <SelectTrigger className="w-48">
         <SelectValue placeholder="Sélectionner un thème" />
       </SelectTrigger>
       <SelectContent>
         {themes?.map((theme) => (
-          <SelectItem key={theme.id} value={theme.name === 'Tout' ? 'all' : theme.id}>
+          <SelectItem key={theme.id} value={theme.id}>
             {theme.name}
           </SelectItem>
         ))}

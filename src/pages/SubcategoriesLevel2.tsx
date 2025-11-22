@@ -1,0 +1,256 @@
+import React, { useState } from 'react';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useSmartNavigation } from '@/hooks/useNavigation';
+import { motion } from 'framer-motion';
+import { ArrowLeft, Plus, Heart, Filter } from 'lucide-react';
+import { useSubcategoriesLevel2 } from '@/hooks/useSubcategoriesLevel2';
+import { useCategories } from '@/hooks/useCategories';
+import { useSubcategory } from '@/hooks/useSubcategory';
+import { useFavorites } from '@/hooks/useFavorites';
+import { Button } from '@/components/ui/button';
+import LocalSearchBar from '@/components/LocalSearchBar';
+import Navigation from '@/components/Navigation';
+import { getNetworkDisplayName } from '@/utils/networkUtils';
+
+const SubcategoriesLevel2 = () => {
+  const { categoryId, subcategoryId } = useParams();
+  const navigate = useNavigate();
+  const { navigateBack } = useSmartNavigation();
+  const [searchParams] = useSearchParams();
+  const selectedNetwork = searchParams.get('network') || 'all';
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortOrder, setSortOrder] = useState<'alphabetical' | 'priority' | 'recent'>('priority');
+  const { data: subcategoriesLevel2, isLoading, isError, error } = useSubcategoriesLevel2(subcategoryId);
+  const { data: categories } = useCategories();
+  const { data: currentSubcategory } = useSubcategory(subcategoryId);
+  const currentCategory = categories?.find(cat => cat.id === categoryId);
+  const { favorites, toggleFavorite, isFavorite } = useFavorites('subcategory_level2');
+  
+  // Utiliser les données en cache même si isLoading est vrai
+  const displaySubcategories = subcategoriesLevel2 || [];
+  const isCriticalLoading = isLoading && !subcategoriesLevel2;
+  
+  // Fonction de tri
+  const getSortedSubcategories = (subcategories: Array<{id: string, name: string, created_at?: string}>) => {
+    if (!subcategories) return [];
+    
+    switch (sortOrder) {
+      case 'alphabetical':
+        return [...subcategories].sort((a, b) => a.name.localeCompare(b.name));
+      case 'recent':
+        return [...subcategories].sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
+      case 'priority':
+      default:
+        return subcategories;
+    }
+  };
+
+  // Fonction pour changer l'ordre de tri
+  const handleSortChange = () => {
+    const sortOptions: Array<'alphabetical' | 'priority' | 'recent'> = ['priority', 'alphabetical', 'recent'];
+    const currentIndex = sortOptions.indexOf(sortOrder);
+    const nextIndex = (currentIndex + 1) % sortOptions.length;
+    setSortOrder(sortOptions[nextIndex]);
+  };
+
+  const filteredSubcategories = displaySubcategories.filter(subcategory => 
+    subcategory.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const handleBackClick = () => {
+    navigate(`/category/${categoryId}/subcategories?network=${selectedNetwork}`);
+  };
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0 }
+  };
+
+  // Afficher les erreurs
+  if (isError && !subcategoriesLevel2) {
+    const errorMessage = error instanceof Error ? error.message : 'Erreur lors du chargement';
+    return (
+      <div className="min-h-screen">
+        <div className="sticky top-0 z-50 bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border px-4 py-3">
+          <div className="flex items-center gap-3">
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={handleBackClick} 
+              className="p-2 h-10 w-10 rounded-full text-foreground hover:bg-accent"
+            >
+              <ArrowLeft size={20} />
+            </Button>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-lg font-semibold text-foreground truncate">Erreur</h1>
+            </div>
+          </div>
+        </div>
+        <div className="px-4 py-4">
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+            <h2 className="text-lg font-semibold text-red-800 dark:text-red-200 mb-2">Erreur de chargement</h2>
+            <p className="text-red-600 dark:text-red-300 mb-4">{errorMessage}</p>
+            <Button onClick={() => window.location.reload()} variant="outline" size="sm">Réessayer</Button>
+          </div>
+        </div>
+        <Navigation />
+      </div>
+    );
+  }
+  
+  // Afficher le chargement uniquement si aucune donnée en cache
+  if (isCriticalLoading) {
+    return (
+      <div className="min-h-screen">
+        <div className="sticky top-0 z-50 bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border px-4 py-3">
+          <div className="flex items-center gap-3">
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={handleBackClick} 
+              className="p-2 h-10 w-10 rounded-full text-foreground hover:bg-accent"
+            >
+              <ArrowLeft size={20} />
+            </Button>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-lg font-semibold text-foreground truncate">
+                {currentSubcategory?.name || 'Chargement...'}
+              </h1>
+            </div>
+          </div>
+        </div>
+        <div className="px-4 py-4">
+          <div className="animate-pulse">
+            <div className="h-8 bg-gray-200 rounded w-1/3 mb-6"></div>
+            <div className="space-y-4">
+              {[...Array(10)].map((_, i) => (
+                <div key={i} className="h-16 bg-gray-200 rounded"></div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen pb-20">
+      {/* Header fixe pour mobile */}
+              <div className="sticky top-0 z-50 bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border px-4 py-3">
+        <div className="flex items-center gap-3">
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={handleBackClick} 
+            className="p-2 h-10 w-10 rounded-full text-foreground hover:bg-accent"
+          >
+            <ArrowLeft size={20} />
+          </Button>
+          <div className="flex-1 min-w-0">
+            <h1 className="text-lg font-semibold text-foreground truncate">
+              {currentSubcategory?.name || 'Sous-catégories 2'}
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              {filteredSubcategories.length} sous-catégories
+            </p>
+            {/* Indicateur du réseau social sélectionné */}
+            {selectedNetwork !== 'all' && (
+              <p className="text-xs text-primary font-medium">
+                {getNetworkDisplayName(selectedNetwork)}
+              </p>
+            )}
+          </div>
+          <Button 
+            size="sm"
+            onClick={() => navigate('/publish')}
+            className="px-3 py-2 h-auto rounded-full"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Publier
+          </Button>
+        </div>
+      </div>
+      {/* Contenu principal */}
+      <div className="px-4 py-4">
+        {/* Barre de recherche intelligente */}
+        <div className="mb-6">
+          <div className="max-w-lg mx-auto md:max-w-2xl">
+            <div className="flex items-center gap-2">
+              <Button 
+                variant="ghost"
+                size="sm"
+                onClick={handleSortChange}
+                className="p-2 h-10 w-10 rounded-full"
+                title={`Trié par ${sortOrder === 'alphabetical' ? 'ordre alphabétique' : sortOrder === 'priority' ? 'priorité' : 'récent'}`}
+              >
+                <Filter size={20} />
+              </Button>
+              <LocalSearchBar 
+                value={searchTerm}
+                onChange={setSearchTerm}
+                placeholder="Rechercher une sous-catégorie..."
+                className="flex-1"
+              />
+            </div>
+          </div>
+        </div>
+        {/* Liste des sous-catégories niveau 2 */}
+        <motion.div 
+          className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
+          {getSortedSubcategories(filteredSubcategories).map((subcategory) => (
+            <motion.div key={subcategory.id} variants={itemVariants}>
+              <div 
+                onClick={() => navigate(`/category/${categoryId}/subcategory/${subcategoryId}/subcategory-level2/${subcategory.id}?network=${selectedNetwork}`)}
+                className="relative overflow-hidden rounded-xl cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-lg group h-20 sm:h-24 md:h-28 bg-transparent border-4"
+                style={{ borderColor: '#b6b6b6' }}
+              >
+                {/* Icône cœur en haut à droite */}
+                <div
+                  className="absolute top-2 right-2 z-10"
+                  onClick={e => { e.stopPropagation(); toggleFavorite(subcategory.id); }}
+                >
+                  <Heart className={isFavorite(subcategory.id) ? 'w-3 h-3 sm:w-4 sm:h-4 text-red-500 fill-red-500' : 'w-3 h-3 sm:w-4 sm:h-4 text-gray-300'} />
+                </div>
+                <div className="p-4 h-full flex flex-col justify-center items-center text-center">
+                  <h3 className="text-gray-900 dark:text-white font-semibold text-base md:text-lg leading-tight text-center">
+                    {subcategory.name}
+                  </h3>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </motion.div>
+        {/* Message si pas de sous-catégories */}
+        {getSortedSubcategories(filteredSubcategories).length === 0 && (
+          <div className="text-center py-12">
+            <div className="text-gray-500 dark:text-gray-400 mb-4 text-sm">
+              {searchTerm ? 'Aucune sous-catégorie trouvée pour cette recherche' : 'Aucune sous-catégorie disponible pour cette catégorie'}
+            </div>
+            {searchTerm && (
+              <Button onClick={() => setSearchTerm('')} className="text-sm">
+                Effacer la recherche
+              </Button>
+            )}
+          </div>
+        )}
+      </div>
+      <Navigation />
+    </div>
+  );
+};
+
+export default SubcategoriesLevel2; 

@@ -1,19 +1,19 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSmartNavigation } from '@/hooks/useNavigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Plus, Mail, MessageCircle, Bug, Lightbulb } from 'lucide-react';
+import { ArrowLeft, Mail, MessageCircle, Bug, Lightbulb } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Navigation from '@/components/Navigation';
-import StickyHeader from '@/components/StickyHeader';
 
 const Contact = () => {
   const navigate = useNavigate();
+  const { navigateBack } = useSmartNavigation();
   const { toast } = useToast();
   const [formData, setFormData] = useState({
     name: '',
@@ -22,23 +22,19 @@ const Contact = () => {
     category: '',
     message: ''
   });
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // Ici on traiterait normalement l'envoi du message
-    console.log('Message envoyé:', formData);
     toast({
-      title: "Message envoyé",
-      description: "Nous vous répondrons dans les plus brefs délais."
+      title: "Envoyé"
     });
     setFormData({ name: '', email: '', subject: '', category: '', message: '' });
   };
-
   const contactOptions = [
     {
       icon: MessageCircle,
       title: 'Question générale',
-      description: 'Pour toute question sur CréaTik'
+      description: 'Pour toute question sur Kreea'
     },
     {
       icon: Bug,
@@ -56,33 +52,21 @@ const Contact = () => {
       description: 'Aide technique et assistance'
     }
   ];
-
   return (
     <div className="min-h-screen pb-20">
-      <StickyHeader showSearchBar={false} />
-      
       <header className="bg-background border-b p-4 flex items-center justify-between">
         <div className="flex items-center">
           <Button 
             variant="ghost" 
             size="icon" 
-            onClick={() => navigate('/profile')} 
+            onClick={navigateBack} 
             className="mr-2"
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <h1 className="text-xl font-semibold">Contact</h1>
         </div>
-        <Button 
-          size="sm"
-          onClick={() => navigate('/publish')}
-          className="flex items-center gap-2"
-        >
-          <Plus className="h-4 w-4" />
-          Publier
-        </Button>
       </header>
-
       <main className="max-w-4xl mx-auto p-4 space-y-6">
         {/* Options de contact */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -100,7 +84,6 @@ const Contact = () => {
             </Card>
           ))}
         </div>
-
         {/* Formulaire de contact */}
         <Card>
           <CardHeader>
@@ -129,7 +112,6 @@ const Contact = () => {
                   />
                 </div>
               </div>
-
               <div>
                 <Label htmlFor="category">Catégorie</Label>
                 <Select 
@@ -147,7 +129,6 @@ const Contact = () => {
                   </SelectContent>
                 </Select>
               </div>
-
               <div>
                 <Label htmlFor="subject">Sujet</Label>
                 <Input
@@ -157,7 +138,6 @@ const Contact = () => {
                   required
                 />
               </div>
-
               <div>
                 <Label htmlFor="message">Message</Label>
                 <Textarea
@@ -168,7 +148,6 @@ const Contact = () => {
                   required
                 />
               </div>
-
               <Button type="submit" className="w-full">
                 Envoyer le message
               </Button>
@@ -176,10 +155,8 @@ const Contact = () => {
           </CardContent>
         </Card>
       </main>
-
       <Navigation />
     </div>
   );
 };
-
 export default Contact;

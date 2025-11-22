@@ -1,7 +1,7 @@
-
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Heart } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { getCategoryHexColorByIndex } from '@/utils/categoryColors';
 
 interface FavoriteCardProps {
   category: {
@@ -9,25 +9,35 @@ interface FavoriteCardProps {
     name: string;
     color: string;
   };
+  index: number; // Ajout de l'index de position
   onClick: () => void;
   className?: string;
 }
 
-const FavoriteCard: React.FC<FavoriteCardProps> = ({ category, onClick, className }) => {
-  const getGradientClass = (color: string) => {
-    switch (color) {
-      case 'primary':
-        return 'from-blue-500 to-purple-600';
-      case 'orange':
-        return 'from-orange-400 to-red-500';
-      case 'green':
-        return 'from-green-400 to-teal-500';
-      case 'pink':
-        return 'from-pink-400 to-rose-500';
-      default:
-        return 'from-blue-500 to-purple-600';
-    }
-  };
+const FavoriteCard: React.FC<FavoriteCardProps> = ({ category, index, onClick, className }) => {
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  // Détecter le mode sombre/clair
+  useEffect(() => {
+    const checkDarkMode = () => {
+      const isDark = document.documentElement.classList.contains('dark');
+      setIsDarkMode(isDark);
+    };
+
+    checkDarkMode();
+    
+    // Observer les changements de classe
+    const observer = new MutationObserver(checkDarkMode);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class']
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
+  // Obtenir la couleur selon le mode et l'index de position
+  const categoryHexColor = getCategoryHexColorByIndex(index, isDarkMode);
 
   return (
     <div
@@ -37,16 +47,23 @@ const FavoriteCard: React.FC<FavoriteCardProps> = ({ category, onClick, classNam
       )}
       onClick={onClick}
     >
-      <div className={`absolute inset-0 bg-gradient-to-br ${getGradientClass(category.color)} opacity-90`} />
+      <div 
+        className="absolute inset-0 opacity-90"
+        style={{
+          backgroundColor: categoryHexColor
+        }}
+      />
       <div className="relative p-4 h-full flex flex-col justify-center items-center text-center min-h-[100px]">
         <div className="absolute top-2 right-2">
           <Heart 
-            className="w-4 h-4 text-white fill-white opacity-80 group-hover:opacity-100 transition-opacity"
+            className="w-4 h-4 text-white fill-red-500"
           />
         </div>
-        <h3 className="text-white font-semibold text-sm leading-tight">
+        <div className="w-full h-full flex items-center justify-center">
+          <h3 className="font-semibold text-lg leading-tight text-center break-words text-white">
           {category.name}
         </h3>
+        </div>
       </div>
     </div>
   );
